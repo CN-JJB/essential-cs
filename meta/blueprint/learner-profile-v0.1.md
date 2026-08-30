@@ -1,6 +1,6 @@
 # Essential CS Learner Profile v0.1
 
-Status: **Blueprint v0.1 — READY FOR LEAD REVIEW**
+Status: **Blueprint v0.1 — LEAD-ACCEPTED** (not VERIFIED/released)
 Purpose: define the learner/course entry contract precisely. This document elaborates D-002 without widening prerequisites.
 
 ## Primary learner
