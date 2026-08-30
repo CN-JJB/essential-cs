@@ -26,13 +26,27 @@ Four edge types are used. Only **hard prerequisite** edges constrain ordering; t
 
 ## 2. Structured Prerequisite Edges (Module Level)
 
-### Stage Dependency Chain (all H)
+### Stage dependency summary
+
+The **default learner-visible narrative order** remains:
 
 ```
 S1 → S2 → S3 → S4 → S5 → S6 → S7
 ```
 
-Each Stage's capability is a genuine prerequisite for the next. There is **no Stage-skipping path** that preserves a complete shared world model (Invariant 9). The only permitted compression is within a Stage (Module reordering), not across the chain.
+That line is a recommended traversal, **not a claim that every adjacent Stage pair is a hard prerequisite**. The authoritative hard constraints come from the Module-level DAG below.
+
+At Stage granularity, the important hard structure is:
+
+```
+S1 → S2 → S3
+           ├─→ S4 ─┐
+           └─→ S5 ─┴─→ S6 → S7
+```
+
+`S4` (Network & Web) and `S5` (Data & Concurrency) are partially independent after `S3`: database storage/transactions and core concurrency do not logically require the browser/Web Stage, while distributed systems in `S6` requires inputs from **both** the networking path (`M10`) and the data/concurrency path (`M14`, `M15`). The default course may still teach S4 before S5 for the request-centric narrative, but that ordering must not be mislabeled as `H`.
+
+A complete shared Core traversal still includes both S4 and S5 before the distributed/synthesis end of the course; this distinction separates **curriculum completeness** from **hard prerequisite semantics**.
 
 ### Module-level edges
 
@@ -263,13 +277,13 @@ Only cross-Module hard prerequisites are listed (intra-Module is implied by Modu
 ## 5. Cycle Check
 
 ### Method
-The Module-level graph was serialized as a DAG and checked for cycles manually by topological ordering. A cycle would appear as: an edge `A → B ... → A`. Because every module's hard `H` edges point **forward** in the Stage order (S1→S2→...→S7) and Modules within a Stage are numbered so that an `H` edge never points backward to a higher-numbered Module *within the same Stage* (e.g., `M08 → M09` is forward), the graph is acyclic by construction within Stages; and Stage order is strictly forward.
+The Module-level graph was serialized as a DAG and checked for cycles manually by topological ordering. A cycle would appear as: an edge `A → B ... → A`. The Module-level `H` edges were checked against a topological ordering. Modules within a Stage never create a backward hard edge, and every cross-Stage hard edge goes from an earlier prerequisite region to a later dependent region. The Stage labels remain a default narrative order, while the Module DAG is authoritative for actual prerequisite semantics.
 
 ### Result: **No cycles found.**
 
 ### Manual verification detail
 1. **Within-Stage ordering:** All intra-Stage `H` edges are `< earlier Module` → `< later Module>` (M00→M01→M02; M03→M04→M05; M06→M07→M08→M09; M10→M11→M12; M13→M14(+M15); M16→M17→M18 and M16→M19→M20; M21→M22→M23→M24). No backward `H` edge exists inside any Stage. Soft edges never create cycles because they too point forward (M01→M02, M04→M05, M04→M09, etc.).
-2. **Cross-Stage:** All cross-Stage `H` edges go from a lower Stage to a higher Stage (S3→S4→S5→S6→S7). No `H` edge points backward across Stages.
+2. **Cross-Stage:** All cross-Stage `H` edges go from an earlier-numbered Stage to a later-numbered Stage, but there is intentionally **no hard S4→S5 Stage edge**. S4 and S5 are parallel prerequisite branches after S3 and both feed S6 through specific Module edges. No `H` edge points backward across Stages.
 3. **Soft edges checked:** The single potentially-backward soft edge is `M03 → M15` (soft) and `M12 → M15` (soft) — both forward. `M09 → M10` (soft) forward. `M04 → M09` (soft) forward. All other soft edges are forward. No backward soft edges.
 4. **Revisit edges:** `R` edges are explicitly *not* dependencies (they are non-ordering), so they cannot form cycles. They are conceptually "the same concept reappears" — inherently acyclic.
 
@@ -317,7 +331,7 @@ A "hidden prerequisite" is a concept the learner will need but that has no expli
 | U1 | Stage count (7) and exact boundary between S4/S5 (browser before DB or DB before browser) | Design judgment; the audit (#2) may prefer DB immediately after OS (the classic DBMS course path), which would reorder S4/S5. | High — changes Module chain (S5 vs S4 first) |
 | U2 | Whether Concurrency should be its own Stage or remain inside S5 (with DB) | R3 shows concurrency as a hard prereq to distribution; but M14/M15 can be taught in either order (M14 before M15 or M15 before M14). | Medium |
 | U3 | Whether Distributed Systems and Modern Infrastructure are one Stage (S6) or two | #3 and the audit may separate them; current proposal merges because M16–M20 are tightly coupled and M19/M20 need M16's failure model. | Medium |
-| U4 | Exact lesson count (58) and per-Module distribution | Not learner-validated; Lead decides final granularity. | Medium |
+| U4 | Exact lesson count (70) and per-Module distribution | Not learner-validated; Lead decides final granularity. | Medium |
 | U5 | Whether the "Mini Cloud App" checkpoint cadence (per-Stage or per-Module) should drive Stage naming | #3 owns this. | Low (for #1) |
 | U6 | Latency-constant set (R11) — which values become canonical, when re-verified | Hardware-dependent; Living Curriculum Policy says CURRENT with review. | Low-Medium |
 | U7 | Whether the Introduction's "question set" (M00) is a concept, a tool, or a thread | Not yet decided in the Concept Registry. | Low |
