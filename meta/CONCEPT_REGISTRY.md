@@ -174,8 +174,8 @@ State; Abstraction; Representation; Indirection; Caching; Concurrency; Isolation
 ### EC-CON-017 信任边界 — Trust Boundary (qualifiers: process, browser, service, user, data)
 
 - **Definition:** A boundary where authority, trust assumptions, or enforcement responsibility changes; inputs crossing it need explicit validation/authorization and outputs need bounded exposure.
-- **First home:** M21, `L21-01` (earlier M07/M11/M12/M19 uses are descriptive cases, not another definition).
-- **Revisits:** M22 composition/authz; M23 technology judgment; M24; P2/P8/P9.
+- **First home:** M07, `L07-01`. Virtual-memory/process isolation provides the first concrete protection boundary: introduce the trust-boundary definition here while explicitly distinguishing an isolation boundary from a trust boundary (they often coincide, but neither implies the other).
+- **Revisits:** M11 TLS/certificate trust; M12 origin/site isolation; M19 deployment/supply-chain boundaries; M21 threat-model/crypto synthesis; M22 composition/authz; M23 technology judgment; M24; P2/P8/P9.
 - **Related:** Interface, Isolation, Specification, Failure.
 - **Common confusions:** trust boundary vs network boundary; authentication alone; encryption alone; "internal" means trusted.
 - **Big Ideas:** Interface, Isolation, Specification, Failure.
