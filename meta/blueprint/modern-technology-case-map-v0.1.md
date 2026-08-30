@@ -386,3 +386,158 @@ Evolution lens：
 | Evolution | Limitation addressed | Gains | New costs / moved complexity |
 |---|---|---|---|
 | process → VM / container | environment/isolation/reproducibility boundary | stronger/repeatable execution boundary | image/runtime/guest/host dependency、state confusion、ops |
+| direct server → reverse proxy/CDN | routing/policy/cache/geography | policy centralization、reuse、latency opportunity | extra trust/failure/cache correctness |
+| single DB → replication/sharding/distributed DB | availability/read locality/capacity/geography | redundancy/scale | coordination、lag、partition behavior、ops/cost |
+| blocking thread-per-request → async/event-loop | waiting concurrency cost | fewer blocked threads / explicit scheduling | cancellation/backpressure/state-machine complexity |
+| HTTP/1.1 transport expression → HTTP/2 → HTTP/3/QUIC | concurrency/transport limitations | multiplexing / transport evolution | framing/flow control/QUIC implementation complexity |
+| manual deployment → reproducible build/CI/deployment automation | drift、repeatability、late feedback | repeatable artifacts/checks | pipeline/config/supply-chain complexity |
+
+Lens 不允许写成“旧=差，新=好”。每次 evolution 都必须有 constraint、evidence 和 When NOT to use。
+
+## 8. Scale Threshold discipline
+
+Technology Card 必须问：
+
+> **At what scale or constraint does this technology become a problem worth solving?**
+
+Blueprint 阶段默认使用 qualitative threshold，除非 authoritative、current、context-specific 数值确实有教学价值。
+
+禁止：
+
+- “超过 X QPS 就应该 Redis”；
+- “三个服务就应该 Kubernetes”；
+- “数据大了就应该 Spark”；
+- “上云就应该 managed DB”；
+- “分布式就应该 Kafka”；
+- “现代系统必须微服务”。
+
+可接受：
+
+- measured query latency 已由 repeated-read work 主导，且允许明确 staleness；
+- synchronous work 超过 request latency budget，需要 durable asynchronous handoff；
+- single-node availability/failure model 不满足 requirement；
+- data scan/aggregation workload 明显不适合 row-oriented transactional path；
+- manual environment drift 已经破坏 reproducibility；
+- cross-boundary failure 无法由 local evidence 定位，需要 richer telemetry。
+
+## 9. Evidence expectations
+
+对于 `CURRENT CASE` / product case，至少区分：
+
+- **PRINCIPLE**：stable principle；
+- **SPECIFICATION**：协议/格式/guarantee；
+- **IMPLEMENTATION**：具体项目如何实现；
+- **CURRENT PRACTICE**：当前版本/部署/生态现实。
+
+Case evidence 应尽量包含：
+
+- authoritative source；
+- checked date；
+- actual version/environment（如实际运行）；
+- observation/measurement；
+- constraint；
+- alternative；
+- failure/uncertainty；
+- product-neutral stable principle。
+
+当前页面、版本、licensing、产品 feature、adoption/positioning 不得从模型记忆写成事实。
+
+## 10. Live current-source verification
+
+本 map 在 **2026-08-30** 对影响分类的 current claims 做了 live check。主要 authoritative sources：
+
+### Protocols / Web
+
+- IETF RFC 9110 — HTTP Semantics: <https://www.rfc-editor.org/rfc/rfc9110.html>
+- IETF RFC 9112 — HTTP/1.1: <https://www.rfc-editor.org/rfc/rfc9112.html>
+- IETF RFC 9113 — HTTP/2: <https://www.rfc-editor.org/rfc/rfc9113.html>
+- IETF RFC 9114 — HTTP/3: <https://www.rfc-editor.org/rfc/rfc9114.html>
+- IETF RFC 9000 — QUIC: <https://www.rfc-editor.org/rfc/rfc9000.html>
+- IETF RFC 9293 — TCP: <https://www.rfc-editor.org/rfc/rfc9293.html>
+- IETF RFC 8446 — TLS 1.3: <https://www.rfc-editor.org/rfc/rfc8446.html>
+
+### Databases / messaging
+
+- SQLite query planner / EXPLAIN QUERY PLAN: <https://www.sqlite.org/queryplanner.html>, <https://www.sqlite.org/eqp.html>
+- SQLite transaction/isolation docs: <https://www.sqlite.org/lang_transaction.html>, <https://www.sqlite.org/isolation.html>
+- PostgreSQL current transaction isolation / EXPLAIN docs: <https://www.postgresql.org/docs/current/transaction-iso.html>, <https://www.postgresql.org/docs/current/sql-explain.html>
+- Redis current data types / Streams / persistence docs: <https://redis.io/docs/latest/develop/data-types/>, <https://redis.io/docs/latest/develop/data-types/streams/>, <https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/>
+- Apache Kafka current design/documentation: <https://kafka.apache.org/documentation/>, <https://kafka.apache.org/40/design/design/>
+- RabbitMQ reliability / acknowledgements: <https://www.rabbitmq.com/docs/reliability>, <https://www.rabbitmq.com/docs/confirms>
+- Raft publication hub / original paper route: <https://raft.github.io/>
+
+### Browser / runtime / infrastructure
+
+- Chromium multi-process architecture / Site Isolation: <https://www.chromium.org/developers/design-documents/multi-process-architecture/>, <https://www.chromium.org/developers/design-documents/site-isolation/>
+- Rust Book `Send` / `Sync`: <https://doc.rust-lang.org/book/ch16-04-extensible-concurrency-sync-and-send.html>
+- OCI Image / Runtime specifications: <https://specs.opencontainers.org/image-spec/>, <https://specs.opencontainers.org/runtime-spec/>
+- Docker current container concept docs: <https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/>
+- Kubernetes Concepts: <https://kubernetes.io/docs/concepts/>
+
+### Observability / build / analytics
+
+- OpenTelemetry Signals / docs: <https://opentelemetry.io/docs/concepts/signals/>, <https://opentelemetry.io/docs/>
+- Prometheus data model: <https://prometheus.io/docs/concepts/>
+- GNU Make docs: <https://www.gnu.org/software/make/>
+- GitHub Actions docs: <https://docs.github.com/en/actions>
+- DuckDB official site/docs entry: <https://duckdb.org/>
+- ClickHouse official site/docs entry: <https://clickhouse.com/>
+- Apache Spark official site: <https://spark.apache.org/>
+- BigQuery docs: <https://cloud.google.com/bigquery/docs>
+- Snowflake architecture docs: <https://docs.snowflake.com/en/user-guide/intro-key-concepts>
+
+这些来源用于约束分类，不把 artifact 变成 citation catalog。后续 Module Research Dossier 仍需按具体 claim 再查 primary/official sources。
+
+## 11. Living Curriculum integration
+
+默认 review expectation：
+
+- **STABLE**：约 18–24 个月，或 relevant major spec/mechanism change；
+- **CURRENT**：约 6–12 个月；
+- **FRONTIER**：约 3–6 个月；
+- runnable Labs：continuous CI/smoke + periodic human/AI review。
+
+`CURRENT CASE` review 重点不是“产品还火不火”，而是：
+
+- 该 case 是否仍真实、可维护、可复现；
+- 是否仍最好地暴露 stable principle；
+- docs/source/license 是否变化；
+- 是否出现更简单、开放、教学效果更好的替代 case；
+- current implementation claim 是否已经过时；
+- case 是否在不知不觉中变成 hidden prerequisite。
+
+STABLE mechanism 不应因为某个产品换版本而改写；产品 freshness 不能硬编码进 stable concept。
+
+## 12. Explicit non-admissions
+
+本 map **不**：
+
+- 让 PostgreSQL 取代 Required SQLite baseline；
+- 让 Redis 成为 Core cache/DB requirement；
+- 让 Kafka/RabbitMQ/Redis Streams/cloud queue 成为 M18/P9 prerequisite；
+- 让 Kubernetes 成为 M19 canonical platform；
+- 让任何 cloud vendor account 成为 Core requirement；
+- 让 Docker 成为 native Linux 之前的隐藏 prerequisite；
+- 要求 full consensus implementation；
+- 把 browser case 扩成 HCI Core track；
+- 把 AI/LLM/prompt engineering 扩成 Core；
+- pin OQ-BP-006 exact versions；
+- 把“more modern/newer”写成默认 better。
+
+## 13. Architecture preservation
+
+本文没有：
+
+- 修改 Stage 名称/顺序；
+- 修改 Module DAG；
+- 增删 Module；
+- 修改 competencies；
+- 修改 Concept Registry；
+- 修改 Required/Optional Labs 或 Source Expeditions；
+- 修改 P0–P9；
+- 决定 OQ-BP-001；
+- 决定 OQ-BP-003；
+- pin OQ-BP-006；
+- 创建 vendor certification content。
+
+其唯一职责是为后续 Research Dossier / Module work 提供一个可审查的 **stable principle ↔ case ↔ boundary ↔ review cadence** 架构。
