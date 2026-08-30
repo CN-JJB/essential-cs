@@ -730,7 +730,7 @@ The original Issue #1 proposal-level questions were answered by the reconciliati
 | OQ-6 | Audit findings | Resolved: `audit-to-architecture-disposition-v0.1.md` + this map §10 (above). |
 | OQ-7 | S4/S5 order (browser vs DB first) | Resolved: request-centric default narrative is pedagogical preference (OQ-BP-004); no `H` edge; learner may follow either branch. |
 | OQ-8 | Compression of S5/S6 | Not compressed as a separate track; S4/S5 partial independence exists, but a complete shared traversal still requires both before S6 synthesis (DAG facts, not a time budget). |
-| OQ-9 | Napkin-math constants | Still open at implementation time: latency constant set (R11) is CURRENT and hardware-dependent; pinning/baselining deferred to module dossiers + Living Curriculum review (adjacent to OQ-BP-006). |
+| OQ-9 | Napkin-math constants | **Resolved as a separate question:** hardware-dependent latency/cost constants are implementation-time baselines governed by OQ-BP-006, module Research Dossiers, and Living Curriculum review. Do not maintain a second Open Question for them. |
 
 **Remaining architecture-level Open Questions** are tracked in `meta/OPEN_QUESTIONS.md` (OQ-BP-001 bounded AI literacy; OQ-BP-003 human-facing/accessibility boundary; OQ-BP-006 environment versions).
 
