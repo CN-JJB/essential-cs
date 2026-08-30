@@ -69,7 +69,7 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 - **Proposed name:** 计算的底座 — Foundations of Computation
 - **Rationale:** The learner already programs; this Stage gives them the representational substrate (what a bit, a byte, an integer really is) and the formal lens (what computation means), before any machine is introduced. This is what makes later "the CPU executes instructions" land as mechanism rather than as assertion.
 - **Included macro areas:** 00 The Map; 01 Information & Representation; 02 Computation & Algorithms.
-- **Entry assumptions:** Basic programming (variables, loops, functions, can run Python/JS); high-school math (D-002). No formal CS background.
+- **Entry assumptions:** Basic programming as defined by D-002 (variables, control flow, functions, can run a small Python/JS program); high-school mathematics. Bridge/diagnostic is optional and skippable, outside the Core DAG.
 - **Major capability gained:** **Trace & Explain** at the representation level — the learner can state what a number/text/serialized object *is* in memory, estimate sizes, and explain what "big-O" and a data structure really do rather than recite.
 - **Stage System Checkpoint idea:** Given a file (e.g., a PNG, a JSON, a UTF-8 text), ask the learner to estimate its byte size, then explain how many bits/bytes a `uint64` or a Unicode code point occupies; then predict/count how many comparisons a given loop performs and justify its complexity. A "representation↔size" and "algorithm cost" checkpoint combined.
 - **Exit criteria:** Can (a) convert between representations and explain two's-complement/UTF-8/endianness; (b) estimate sizes and compute time complexity of a simple program; (c) use hashtable/list/tree and state the trade-off; (d) observe a debugger/`gdb`-style state and explain where a variable lives. (No requirement to write a compiler or build a CPU yet.)
@@ -80,7 +80,7 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 - **Proposed name:** 机器 — The Machine (ISA, Execution, Memory Hierarchy, Language→Machine)
 - **Rationale:** The machine is the pivot. Here the learner watches source become instructions, an instruction become data movement, and memory become a multi-level hierarchy. This is the canonical "CSAPP moment" (R1): what the CPU actually does with your program.
 - **Included macro areas:** 03 Machine; 04 Languages, Runtime & Compiler.
-- **Entry assumptions:** Completion of S1 (or equivalent: representation, complexity, data structures) plus basic ability to run a shell (introduced in S1's observe phase) and to read tiny amounts of C/assembly (introduced inside this Stage).
+- **Entry assumptions:** Use the Module DAG rather than a blanket Stage gate: M01 and M02 are the hard inputs to M03 (with M00 upstream). M00 L00-02 provides the evidence/tooling workflow. Minimal C/assembly needed in S2 is introduced inside the Stage, not assumed on entry.
 - **Major capability gained:** **Observe & Diagnose** at machine level — the learner can use `objdump`/`gdb`/`strace`-adjacent tools to see what a compiled program does, identify where a variable lives, and diagnose what a segfault/stack overflow actually is.
 - **Stage System Checkpoint idea:** Take the learner's small program; have them disassemble a function, predict register/memory behavior, then use `gdb` to confirm; then predict the effect of a cache-locality change on runtime and measure it with `perf stat`/timing.
 - **Exit criteria:** Can (a) read simple assembly and explain register/memory/stack/wall-clock; (b) explain the memory hierarchy (levels, sizes, latency) and why cache matters (estimate: one cache miss = ~100 arithmetic ops-scale); (c) explain what a compiler does in broad terms and run a simple disassembly; (d) explain the distinction between stack vs heap lifetime and what a leak/overflow means.
@@ -91,7 +91,7 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 - **Proposed name:** 操作系统与持久化 — OS: Processes, Memory, Files (with Storage Systems as a direct extension)
 - **Rationale:** The OS is the multiplexer that makes one machine serve many programs; storage is what makes data survive. The learner's "program" is finally embedded in an environment with a scheduler, a page table, file descriptors, and a filesystem.
 - **Included macro areas:** 05 Operating Systems; 06 Storage Systems.
-- **Entry assumptions:** S2, plus enough multi-file/programming maturity to write small C/Python programs that use syscalls (open/read/write/fork/exec). No requirement to write a full kernel.
+- **Entry assumptions:** Use the Module DAG rather than a blanket S2-complete gate: M03 is hard for M06 and M04 is hard for M07; M05 is only soft/preferred for M06. Tiny C/tool usage needed by activities is introduced just in time; no prior syscall-level or multi-file C fluency is assumed.
 - **Major capability gained:** **Trace & Diagnose** across the process/memory/files boundary — the learner can follow a syscall, explain process vs thread, read a page table conceptually, and diagnose a file I/O or memory issue with real tools.
 - **Stage System Checkpoint idea:** Use `strace`, `pstree`/`ps`, `/proc`, and filesystem tools to answer: "when my Python program reads a file, what syscalls happen, where does the data live at each step (page cache → filesystem → block device), and what happens if I lose power?"
 - **Exit criteria:** Can (a) explain process vs thread, virtual memory, page table, and why isolation matters; (b) explain filesystems (directories, inode-like structure, POSIX-like API) at a mechanism level and trace a read; (c) explain why an SSD differs from an HDD and what durability means; (d) use `strace`/`dmesg`-family tools to *diagnose* a real system-level issue; (e) estimate storage/IO latency and cost.
@@ -102,7 +102,7 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 - **Proposed name:** 网络与浏览器 — Networking, the Web, and the Browser as an Integrated System Case
 - **Rationale:** A request from a browser to a server is the canonical modern end-to-end trace. With OS + storage under the belt, the learner can now attribute each delay/hop to a real mechanism (DNS, TCP handshake, TLS, cache hit/miss, web proxy, CDN), and the Browser becomes the case that *integrates* the previous pieces.
 - **Included macro areas:** 07 Networking; 08 Web & Browser Platform.
-- **Entry assumptions:** S3 (processes, files, syscalls) and S1/S2 fundamentals. Ability to run a shell, a simple HTTP server, and read tiny HTTP headers.
+- **Entry assumptions:** Use the Module DAG: M06 is hard for M10; M07 becomes hard before M12 through the browser-isolation path. Shell/evidence workflow comes from M00 L00-02. HTTP-server/header literacy is taught in M11, not assumed on entry.
 - **Major capability gained:** **Trace & Explain** an end-to-end request; **Estimate** network latency/bandwidth/cost.
 - **Stage System Checkpoint idea:** The learner instruments a real browser page load (Chrome DevTools/network panel + `curl` + a local server), traces `DNS → TCP → TLS → HTTP → render`, and explains/measures where time goes; then quantifies the cost of a cache miss / extra round trip / too-large asset.
 - **Exit criteria:** Can (a) explain IP/DNS/TCP or QUIC/TLS/HTTP and their failure modes; (b) run a real HTTP request through a proxy and trace it; (c) explain what a browser does on load (parse, DOM, render, lay out, paint) and the modern multi-process/site-isolation reality (R8); (d) explain request/response caching, CSP, CORS as interactive mechanisms; (e) estimate end-to-end latency from components.
@@ -113,7 +113,7 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 - **Proposed name:** 数据与并发 — Databases, Transactions, and Concurrency
 - **Rationale:** With network + browser complete, persistence and concurrency become the two hard mysteries: "why is my data in two places inconsistent?" and "why does my program sometimes do the wrong thing?" Both are answered with a shared toolbox (atomicity, isolation, ordering, locks, invariants) that the later distributed Stage will reuse.
 - **Included macro areas:** 09 Databases; 10 Concurrency.
-- **Entry assumptions:** S4 (or S3 if the learner takes the DB-before-browser branch — see Dependency Graph note). Filesystem/OS model from S3 is required.
+- **Entry assumptions:** Use the Module DAG: M08 and M09 are hard for M13; M13 and M09 are hard for M14; M06 is hard for M15. S4 is not a hard prerequisite, and M14↔M15 ordering remains soft/preferred rather than mandatory.
 - **Major capability gained:** **Correctness & Judge** at the data/concurrency level — the learner can state a transaction's invariants, explain an isolation level, and diagnose a data race.
 - **Stage System Checkpoint idea:** The learner operates a real DB (SQLite/Postgres) and a real concurrent Python program: predicts an anomaly (dirty read / lost update / race), makes it happen, then explains the isolation mechanism that fixes it; then uses `strace`/`pg_stat`-style tools to see where locking happens.
 - **Exit criteria:** Can (a) explain B-tree indexes, storage engine basics, query planning in broad strokes, and write structured SQL; (b) state ACID, explain isolation levels and their trade-off with performance; (c) explain threads vs processes, a lock, an atomic operation, and what idempotency means; (d) diagnose a race in a small program and justify the fix; (e) estimate storage/DB cost at different scales.
@@ -124,7 +124,7 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 - **Proposed name:** 分布式系统与现代基础设施 — Distributed Systems, Cloud, and Infrastructure Engineering
 - **Rationale:** The learner now has the single-system and the concurrency/transaction tools. This Stage extends them across machines: partial failure, replication, consensus, consistency, queues, and the container/cloud/deployment layer that makes modern operation real.
 - **Included macro areas:** 11 Distributed Systems; 12 Modern Infrastructure.
-- **Entry assumptions:** S5. Also a comfortable base in S3 (processes) and S4 (network) applied across machines.
+- **Entry assumptions:** Use the Module DAG: M10 and M15 are hard for M16; M16 and M14 are hard for M17; M17 is hard for M18; M16/M06/M07/M08 are hard for M19; M19 and M16 are hard for M20. The S4 and S5 branches both contribute required inputs, but Stage narrative is not itself a hard edge.
 - **Major capability gained:** **Judge & Estimate** at scale — the learner can reason about partial failure, choose between replication/consistency models, and explain why a cloud deployment fails the way it does.
 - **Stage System Checkpoint idea:** The learner runs a small replicated service (e.g., a demo KV store with 3 replicas via a course-provided lab, or an adapted classic), kills a replica/partition, and explains the consistency state they observe; then estimates the cost/availability trade-off of a chosen replication factor.
 - **Exit criteria:** Can (a) explain partial failure, retries, idempotency, and chaos-style failure intuition; (b) explain replication (async/sync), consensus (Raft/Paxos), consistency models (linearizability ↔ eventual), and the CAP-style trade-off; (c) explain queues, message brokers, and at-least/at-most/exactly-once semantics; (d) explain containers/virtualization/cloud deployment and observability (metrics/traces/logs) well enough to diagnose an infrastructure-level problem; (e) estimate availability, cost, and performance of a distributed design.
@@ -135,7 +135,7 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 - **Proposed name:** 安全综合与系统判断 — Security Synthesis, Systems Thinking & Judgment, Final Defense
 - **Rationale:** The final Stage deliberately *revisits* the whole spine through the security lens (trust boundaries, crypto *use*, authn/authz, secure composition), then synthesizes the entire curriculum into judgment questions (measurement, cost, failure, technology evaluation) and the System Defense.
 - **Included macro areas:** 13 Security Synthesis; 14 Systems Thinking & Judgment; 15 Final System Defense.
-- **Entry assumptions:** S6 (or S4/S5-complete in a compressed path — see Dependency Graph). The learner must be able to connect the full chain before specializing.
+- **Entry assumptions:** Default narrative follows S6, but hard ordering remains the Module DAG: M21 requires M11/M07/M12; M22 requires M21/M11/M12; M23 requires M20/M21; M24 requires M23. A complete shared traversal is required for course completion, not encoded as an extra hidden Stage H edge.
 - **Major capability gained:** **Judge & Learn-New-Tech** at the whole-system level — the learner can evaluate a technology/architecture against the Technology Evaluation Framework (D-015) and defend a real design decision.
 - **Stage System Checkpoint idea:** A "technology evaluation case" exercise: given a real (possibly unreal) system scenario, the learner uses the Technology Card structure (Problem → Mechanism → Gains → Costs → Failure → When-not-to-use → Stable Principle) to evaluate and defend a choice; plus a security *review* of a small course-owned vulnerable app (safe target).
 - **Exit criteria:** Can (a) identify a trust boundary and state what must be true for the system to remain secure; (b) explain where/when to use crypto primitives (not implement them); (c) explain authn/authz and common composition failures (SQL-i, XSS, SSRF, CSRF, insecure deserialization, supply chain); (d) run the Technology Evaluation Framework on a familiar technology and defend the judgment; (e) produce a coherent System Defense of a Mini Cloud App architecture with trade-off reasoning.
@@ -179,11 +179,11 @@ S1 → S2 → S3
 
 ## 4. Detailed Module Map
 
-Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a Stage. Within a Stage, Modules are ordered; cross-Stage ordering follows the dependency chain.
+Module IDs are proposal labels (`M00`..`M24`), each mapped to a macro area and a Stage. Within a Stage, Modules are ordered; cross-Stage ordering follows the dependency chain.
 
 ### S1 · M00 — The Map & How Computing Systems Connect (Area 00)
 - **Purpose / mental-model contribution:** The learner's first whole-system map: a request goes through layers (client → network → server → storage), and abstractions hide mechanisms. Establish the "where is the time going / data going / state / failure" question set (Technology Evaluation Framework course questions).
-- **Prerequisites:** Entry-level programming; none of this course.
+- **Prerequisites (authoritative Module DAG):** Hard — none. Entry baseline — D-002 basic programming; Bridge/diagnostic is optional/skippable and outside the DAG.
 - **Key concepts:** system map (whole system mental model); abstraction; interface; indirection; state; Mini Cloud App as recurring integration surface (placeholder only).
 - **Competencies:** Trace (first), Explain (first), Observe (first use of a real tool).
 - **Horizontal threads first introduced/revisited:** Technical Literacy (FIRST-INTRO); API/Interface Design (FIRST-INTRO); Napkin Math (FIRST-INTRO — order of magnitude); Failure (FIRST-INTRO — "systems fail"); Debugging (FIRST-INTRO — what debugging is).
@@ -195,7 +195,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S1 · M01 — Bits, Bytes & Representation (Area 01)
 - **Purpose / mental-model contribution:** What a `1` and a `0` are; how integers, text (UTF-8), and binary files are represented; endianness; serialization; size estimation. This is the substrate of everything later.
-- **Prerequisites:** M00.
+- **Prerequisites (authoritative Module DAG):** Hard — M00. Soft/preferred — none. No other Module relationship on this line is mandatory.
 - **Key concepts:** bit, byte, binary, two's-complement, unsigned/signed, character encoding (UTF-8), serialization, endianness, base conversion; size in bytes.
 - **Competencies:** Trace (bits through representation), Explain (representation), Estimate (byte sizes), Correctness (invariant: representation must be unambiguous).
 - **Horizontal threads:** Correctness & Invariants (FIRST-INTRO — representation must round-trip); Technical Literacy (revisit); Napkin Math (revisit — size estimates).
@@ -206,7 +206,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S1 · M02 — Computation & Complexity (Area 02)
 - **Purpose / mental-model contribution:** What "computation" is conceptually (a function/algorithm), abstraction of operations, complexity as *growth*, and the standard containers (array/list/hash/stack/queue/tree) with their trade-offs.
-- **Prerequisites:** M01 (or at least integer/representation basics).
+- **Prerequisites (authoritative Module DAG):** Hard — M00. Soft/preferred — M01. No other Module relationship on this line is mandatory.
 - **Key concepts:** algorithm, complexity, big-O, data structures (array, hash table, linked list, stack/queue, tree), recursion; state/specification; intuitive model of computation; tractability/limits intuition.
 - **Competencies:** Trace (data structure operations), Explain, Estimate (operation counts), Correctness (invariants of a data structure).
 - **Reconciled outcomes (R1 + R9, Issue #9):** `L02-01` explicitly owns the just-in-time applied discrete/asymptotic toolkit — counting, asymptotic growth, order-of-magnitude scheduling — and `L02-03` protects the **intuitive** model of computation (what a computation/algorithm is), **expression limits** (what "expressible/representable" means), **tractability** (why some problems are hard), and a **decidability intuition** (some questions are not answerable this way). The algorithm ↔ language/runtime connection is established here and confirmed at M05 (`L05-01..03`): representing a problem correctly then stating how a representation or language choice changes cost or expressibility. Formal automata theory, reductions, computability proofs stay Deep Dive. No math prerequisite gate before M01.
@@ -218,7 +218,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S2 · M03 — Machine: ISA & Execution (Area 03)
 - **Purpose / mental-model contribution:** The CPU executes instructions; registers, stack, heap, call frame; memory addressing; the fetch-decode-execute loop conceptually; what `main`→`call`→`return` really does.
-- **Prerequisites:** M01 (representation), M02 (basic complexity), and the ability to read tiny C (introduced here; D-008 minimal C).
+- **Prerequisites (authoritative Module DAG):** Hard — M02, M01. Soft/preferred — none. No other Module relationship on this line is mandatory.
 - **Key concepts:** ISA; register; instruction; stack frame; program counter; memory/address; assembly (basic); `objdump`; syscall (preview); endianness (revisit).
 - **Competencies:** Trace (instruction/control flow), Observe (`objdump`/`gdb`), Explain, Diagnose (segfault/stack overflow).
 - **Horizontal threads:** Failure (revisit — crash as signal); Debugging (FIRST-INTRO — using gdb); Technical Literacy (revisit); API/Interface Design (revisit — ABI as interface).
@@ -229,7 +229,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S2 · M04 — Memory Hierarchy & Locality (Area 03)
 - **Purpose / mental-model contribution:** Memory isn't one thing: cache (L1/L2/L3) → RAM → disk; latency ladder; locality; why a reordered loop or a contiguous array is dramatically faster.
-- **Prerequisites:** M03 (machine basics), M01 (sizes/units).
+- **Prerequisites (authoritative Module DAG):** Hard — M03. Soft/preferred — none. No other Module relationship on this line is mandatory.
 - **Key concepts:** memory hierarchy, cache, locality, cache line, latency ladder, RAM vs storage, spatial/temporal locality, performance measurement; measured variation: repeated measurements, distributions, median/percentiles when useful, uncertainty/variation, inference limits.
 - **Competencies:** Observe (perf stat / timing), Diagnose (cache-miss-bound performance), Estimate (hierarchy latency trade-off), Explain (why cache works).
 - **Reconciled first home (R1 + R7, Issue #9):** `L04-02` is the canonical first assessed home of the **applied measurement-uncertainty toolkit** (repeated measurements; distributions; median; percentiles when useful; uncertainty/variation; inference limits; order-of-magnitude reasoning) and of the **experimental pattern**: question/hypothesis → baseline → controlled change → metric/environment/workload → repetitions/distribution when relevant → observation → competing explanation → bounded conclusion. Reliability/failure probability stays just-in-time (M16/M17) where a mechanism requires it. No standalone mathematics Module; no statistics sequence; no math gate.
@@ -241,7 +241,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S2 · M05 — Languages, VM & Compiler Pipeline (Area 04)
 - **Purpose / mental-model contribution:** Source → tokens → AST → IR → machine code; what an interpreter/runtime (Python/JVM/JS engine) actually does; the gap between "language" and "machine". Establish that a language is a *convention for an interface*, and a compiler/runtime is a *translation* with choices.
-- **Prerequisites:** M03 (machine), M04 (memory), M02 (basic).
+- **Prerequisites (authoritative Module DAG):** Hard — M03. Soft/preferred — M04. No other Module relationship on this line is mandatory.
 - **Key concepts:** lexer/parser/AST (per R9/R4), intermediate representation, compiler, interpreter, runtime (GC, JIT, event loop), ABI, source mapping; closure (concept-level).
 - **Competencies:** Trace (source → machine), Explain (compilation), Learn-New-Tech (read a language/compiler behavior), Observe (disassembly of a higher-level language).
 - **Reconciled outcome (R9, Issue #9):** the algorithm ↔ language/runtime connection established in M02 is confirmed here — how a source-level construct becomes a representation, a runtime mechanism, and a machine instruction; a language construct's cost/expressibility consequences. Exit evidence is a source-to-runtime trace and one verified language/runtime claim (from documentation or source), not parser vocabulary recall. Formal type theory, GC internals, and compiler construction remain Deep Dive. Guardrail: no vocabulary-only assessment (matches #15 §3.1).
@@ -253,7 +253,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S3 · M06 — Processes, Syscalls & Execution Context (Area 05)
 - **Purpose / mental-model contribution:** The OS is the multiplexer. What a process is, how a program becomes a running process, syscalls as the OS API, fork/exec, process isolation, and simple scheduling intuition.
-- **Prerequisites:** M03, M05 (or at least M03) + ability to compile tiny C.
+- **Prerequisites (authoritative Module DAG):** Hard — M03. Soft/preferred — M05. No other Module relationship on this line is mandatory.
 - **Key concepts:** process; syscall; kernel/user mode; process table; fork/exec; PCB; exit status; scheduling (round-robin priority intuition); signals (light).
 - **Competencies:** Trace (syscall path), Observe (strace/ps/pstree), Diagnose (zombie/exit/block), Explain.
 - **Horizontal threads:** Failure (revisit — crash, exit codes); Debugging (revisit — strace); API/Interface Design (revisit — syscall as interface); Software Engineering (FIRST-INTRO — process structuring); Correctness (revisit).
@@ -264,7 +264,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S3 · M07 — Virtual Memory & Isolation (Area 05)
 - **Purpose / mental-model contribution:** Every process has its own address space; the page table is the mechanism; virtual memory is why isolation, sharing, and memory-mapped files work; plus dynamic memory (heap) and allocation failure.
-- **Prerequisites:** M04 (memory hierarchy), M06 (processes), M03 (machine).
+- **Prerequisites (authoritative Module DAG):** Hard — M06, M04. Soft/preferred — none. No other Module relationship on this line is mandatory.
 - **Key concepts:** virtual memory, address space, page table, page fault, TLB, memory-mapped file, malloc/heap, out-of-memory, copy-on-write (light); **trust boundary** as the first concrete security-boundary concept, explicitly distinguished from isolation.
 - **Competencies:** Trace (address → physical), Explain (isolation/security of memory), Diagnose (OOM/segfault), Estimate (memory needs).
 - **Horizontal threads:** Security (FIRST-INTRO — memory isolation as the first concrete protection boundary; define **trust boundary** here and state that isolation boundary ≠ trust boundary by default); Correctness (revisit); Debugging (revisit); Cost (revisit — memory as resource).
@@ -275,7 +275,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S3 · M08 — Files, Filesystems & System I/O (Area 05/06)
 - **Purpose / mental-model contribution:** The file interface (POSIX-like: open/read/write/close, directory, inode), how a filesystem organizes blocks, and how syscalls meet storage.
-- **Prerequisites:** M06 (processes/syscalls), M07 (memory).
+- **Prerequisites (authoritative Module DAG):** Hard — M06. Soft/preferred — M07. No other Module relationship on this line is mandatory.
 - **Key concepts:** file; fd; directory; inode; path; mount; metadata; permissions; buffered I/O; page cache; block device (mechanism-level); special files (/dev, pipes).
 - **Competencies:** Trace (read path), Explain (filesystem), Diagnose (I/O error, permission, disk full), Observe (strace file ops).
 - **Horizontal threads:** API/Interface Design (revisit — file interface); Correctness (revisit — file state invariant); Failure (revisit — I/O failure); Technical Literacy (revisit).
@@ -286,7 +286,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S3 · M09 — Storage Engine & Durable Storage (Area 06)
 - **Purpose / mental-model contribution:** What "durable" means; the mechanics of HDD vs SSD vs object storage; write amplification; filesystem journaling/durability trade-off; and why crashes lose data.
-- **Prerequisites:** M08 (files), M04 (memory hierarchy, re-used for latency ladder), M01.
+- **Prerequisites (authoritative Module DAG):** Hard — M08. Soft/preferred — M04. No other Module relationship on this line is mandatory.
 - **Key concepts:** durability, fsync/barrier, write-ahead log (concept), HDD vs SSD (seek/erase, wear leveling), storage cost/latency ladder; object storage vs block vs file; RAID concept (brief).
 - **Competencies:** Judge (durability trade-off), Estimate (storage latency/cost), Explain, Diagnose (data-loss scenario).
 - **Horizontal threads:** Failure (revisit — data-loss failure model); Cost / Resource Economics (FIRST-INTRO — storage cost per GB); Correctness (revisit — durability invariant); Measurement (revisit).
@@ -297,7 +297,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S4 · M10 — Networking I: IP, DNS & Transport (Area 07)
 - **Purpose / mental-model contribution:** How packets cross the world; IP addressing/routing; DNS; TCP (reliability, handshake, congestion intuition) and UDP; TCP vs UDP trade-off; sockets API.
-- **Prerequisites:** M06 (processes), M08 (I/O), M09 (storage — used for latency ladder), basic network literacy from everyday use.
+- **Prerequisites (authoritative Module DAG):** Hard — M06. Soft/preferred — M09, M08. No other Module relationship on this line is mandatory.
 - **Key concepts:** IP; subnet (light); routing; DNS; packet; port; TCP (3-way handshake, segments, retransmission, flow/congestion light); UDP; socket; LOCALHOST.
 - **Competencies:** Trace (request → socket → network), Observe (`ss`/`tcpdump`-light/`nc`), Diagnose (timeout/connection-refused), Estimate (RTT, bandwidth-delay product light).
 - **Horizontal threads:** Failure (revisit — network failure modes); Measurement (revisit — RTT); API/Interface Design (revisit — sockets); Technical Literacy (revisit).
@@ -308,7 +308,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S4 · M11 — Networking II: TLS, HTTP, CDN & Proxies (Area 07)
 - **Purpose / mental-model contribution:** What makes a network channel *authenticated/encrypted*; the HTTP request-response model; caching; proxies/CDNs; headers; and the transport evolution TCP → TLS → QUIC/HTTP-3.
-- **Prerequisites:** M10 (transport), M05 (runtime), M07 (isolation).
+- **Prerequisites (authoritative Module DAG):** Hard — M10. Soft/preferred — none. No other Module relationship on this line is mandatory.
 - **Key concepts:** TLS (handshake concept, cert/CA, encryption-in- transit), HTTP request/response (methods, status, headers), caching (ETag/Last-Modified), proxy, CDN, HTTP/2 vs HTTP/3 (QUIC), WebSocket (brief).
 - **Competencies:** Trace (request through proxy/cache), Judge (cache vs no-cache, HTTP version choice), Explain, Observe (`curl -v`, browser network panel).
 - **Horizontal threads:** Security (revisit — TLS as transport security, cert verification); Measurement (revisit — time-to-first-byte); API/Interface Design (revisit — HTTP as API surface); Privacy/Data Responsibility (FIRST-INTRO — data in transit, cookies).
@@ -319,7 +319,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S4 · M12 — Web & Browser: The Integrated Case (Area 08)
 - **Purpose / mental-model contribution:** A browser is a multi-process OS-for-web-content (R8): browser process, sandboxed renderers, networking, storage, rendering pipeline (parse→DOM→render→layout→paint per R9), JS runtime/event loop, and the security model (origin, CORS, CSP, same-origin policy). This is the integration case — never web-dev training (D-006).
-- **Prerequisites:** M10/M11 (network), M05 (runtime), M07 (isolation), M02 (data structures).
+- **Prerequisites (authoritative Module DAG):** Hard — M11, M07. Soft/preferred — M05, M02. No other Module relationship on this line is mandatory.
 - **Key concepts:** browser process architecture; renderer/site isolation; DOM; rendering pipeline; event loop; origin/same-origin policy; CORS; CSP; cookies/storage (localStorage, IndexedDB); performance API (navigation timing).
 - **Competencies:** Trace (a page load across processes), Observe (DevTools, performance panel), Diagnose (render-blocking JS, script order), Explain (browser security model), Judge (web platform trade-offs).
 - **Horizontal threads:** Security (revisit — same-origin, CORS, CSP); Concurrency (FIRST-INTRO preview — event loop); Observability/Measurement (revisit — navigation timing); Software Engineering (revisit — JS module practices light); Privacy (revisit — third-party cookies).
@@ -330,7 +330,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S5 · M13 — Databases: Storage & Indexing (Area 09)
 - **Purpose / mental-model contribution:** What a database actually is under the hood: pages, B-tree indexes, heap/log storage, buffer pool; the relational model and SQL; why indexes speed reads and slow writes.
-- **Prerequisites:** M08/M09 (files/storage), M04 (memory hierarchy), M02 (data structures).
+- **Prerequisites (authoritative Module DAG):** Hard — M08, M09. Soft/preferred — M04. No other Module relationship on this line is mandatory.
 - **Key concepts:** DBMS; relational model; SQL; page; heap; B-tree/B+ tree; hash index; buffer pool; query planner (concept); storage engine (row vs column); schema invariant; source-of-truth vs derived data.
 - **Competencies:** Explain (index mechanism), Observe (`EXPLAIN`/`EXPLAIN QUERY PLAN`), Judge (index trade-off), Estimate (page/IO cost), Trace (query → index → page).
 - **Reconciled first home (R6, Issue #9):** `L13-03` extends the schema-invariant lesson to protect: **schema evolution** (changing fields/constraints over time), **reader/writer compatibility** (old readers vs new writers and vice versa), **migration/backfill trade-offs** (delay, downtime, complexity — migrate only when there is a real evolution need), **source-of-truth vs derived data** (one authoritative copy; derived data is recomputable), and **lightweight provenance** (where the value came from, which version/assumptions shaped it — PROV-DM as conceptual vocabulary only). Representation/model distinction rides on M01 `L01-04` + M13 `L13-02`; compatibility revisits at M16 `L16-02`; derived data at M18; provenance at M19/M23. Bounded carefully: one evolving schema, one derived view, one provenance record — **not** schema-registry operations, not Data Engineering, no PROV ontology, no lineage platform, no NoSQL family survey.
@@ -342,7 +342,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S5 · M14 — Databases: Transactions, Recovery & Isolation (Area 09)
 - **Purpose / mental-model contribution:** ACID; atomicity via write-ahead log; isolation levels and which anomalies each prevents; locking vs MVCC; what "durable" commits; and the trade-off between isolation and concurrency.
-- **Prerequisites:** M13 (storage/indexing), M09 (durability), M15-concurrency preview (or taught with it).
+- **Prerequisites (authoritative Module DAG):** Hard — M13, M09. Soft/preferred — none. No other Module relationship on this line is mandatory.
 - **Key concepts:** transaction; ACID; WAL; commit; isolation levels (read uncommitted → serializable); anomaly (dirty read, lost update, skew); MVCC (concept); locks; deadlock (light); idempotency (preview).
 - **Competencies:** Correctness (state transaction invariants), Judge (isolation trade-off), Diagnose (anomaly in a concurrent run), Explain.
 - **Horizontal threads:** Correctness & Invariants (revisit — transaction invariants); Concurrency (FIRST-INTRO — as DB isolation); Failure (revisit — crash recovery); Measurement (revisit — isolation vs throughput).
@@ -353,7 +353,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S5 · M15 — Concurrency: Threads, Races & Synchronization (Area 10)
 - **Purpose / mental-model contribution:** Why parallel code is hard: threads, shared state, races, atomicity, locks, condition variables, deadlock; and the async/event-loop alternative (from M12's event loop).
-- **Prerequisites:** M06 (processes), M03 (machine), M14 (as motivating case: DB isolation), M05 (runtime).
+- **Prerequisites (authoritative Module DAG):** Hard — M06. Soft/preferred — M14, M03, M12. No other Module relationship on this line is mandatory.
 - **Key concepts:** thread; race condition; atomicity; mutex; condition variable; deadlock (light); semaphore (concept); shared vs concurrent; GIL (as Python reality); async/await/event loop (revisit).
 - **Competencies:** Correctness (specify a thread-safe invariant), Diagnose (find a race), Explain (locking semantics), Judge (lock vs async).
 - **Horizontal threads:** Concurrency (FIRST-INTRO as a *coherent* topic — with M14); Correctness (revisit); Failure (revisit — race as deadly subtle bug); Measurement (revisit — scaling); Debugging (revisit — race detectors, `pytest`-with-threads stress).
@@ -364,7 +364,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S6 · M16 — Distributed Systems Foundations: Partial Failure & RPC (Area 11)
 - **Purpose / mental-model contribution:** The defining constraint: machines fail independently; you cannot know both "is it done?" and "did it succeed?" — hence retries, timeouts, idempotency, at-least-once. RPC as the distributed function-call abstraction.
-- **Prerequisites:** M15 (concurrency), M10/M11 (network), M05 (runtime), M14 (transactions as motivating case).
+- **Prerequisites (authoritative Module DAG):** Hard — M15, M10. Soft/preferred — M14. No other Module relationship on this line is mandatory.
 - **Key concepts:** partial failure; timeout; retry; idempotency; distributed semantics; RPC (concept + a real framework); network partition; ambiguity of failure (unavailable vs slow).
 - **Competencies:** Trace (a distributed call), Judge (retry/idempotency design), Explain (why failure is fundamental), Estimate (availability math).
 - **Horizontal threads:** Failure (FIRST-INTRO at scale — partial failure); Correctness (revisit — idempotency as invariant); Debugging (revisit — distributed tracing); Measurement (revisit — timeouts); Software Engineering (revisit).
@@ -375,7 +375,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S6 · M17 — Replication, Consistency & Consensus (Area 11)
 - **Purpose / mental-model contribution:** Replication for availability/durability; consistency models (strong ↔ eventual, linearizability); consensus (Raft/Paxos intuitive); why "CAP" is a trade-off framing, not a law (R3, R7).
-- **Prerequisites:** M16 (partial failure/RPC), M14 (transactions), M09 (durability).
+- **Prerequisites (authoritative Module DAG):** Hard — M16, M14. Soft/preferred — M09. No other Module relationship on this line is mandatory.
 - **Key concepts:** replication (sync/async, leader/follower); consistency (linearizability ↔ eventual); quorum; consensus (Raft/Paxos intuitive); split brain; availability vs consistency trade-off.
 - **Competencies:** Judge (choose consistency model), Explain (consensus mechanism), Diagnose (a replication anomaly), Estimate (availability/cost).
 - **Reconciled boundary (R10/R11, Issue #9):** consensus **concept** is Core here: why coordination is hard, what consensus buys/costs, when replication/consistency choices apply. No full Raft/Paxos implementation is required for M17 exit. The accepted hands-on boundary is **bounded observation/case** — Source Expedition EXP-05 (replication/transactions/logging case) and the SQLite transaction/recovery evidence (LAB-REQ-05) as the local-scale analogue; full consensus implementation/proofs are Deep Dive (R11). No Registry ID for Consensus in the first population (deferred explicitly; concept stays Core at M17).
@@ -387,7 +387,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S6 · M18 — Distributed State & Coordination (Area 11)
 - **Purpose / mental-model contribution:** Queues, brokers, and coordination services; exactly-once semantics and their limits; distributed transactions/2PC (concept) and why they are used sparingly; event sourcing/streams as a consistency pattern.
-- **Prerequisites:** M17 (consensus/consistency), M14 (transactions), M16.
+- **Prerequisites (authoritative Module DAG):** Hard — M17. Soft/preferred — M14. No other Module relationship on this line is mandatory.
 - **Key concepts:** queue; broker; at-least/at-most/exactly-once; saga (light); 2PC (concept); distributed lock (light); stream/event log; ordering.
 - **Competencies:** Judge (choose sync call vs durable job table vs queue), Explain (delivery-semantics limits), Diagnose (duplicate/out-of-order processing), Observe (bounded local delivery evidence without requiring a specific broker product).
 - **Horizontal threads:** Concurrency (revisit — ordering), Failure (revisit — duplicate delivery), Cost (revisit — broker cost), Software Engineering (revisit).
@@ -398,7 +398,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S6 · M19 — Infrastructure: Containers, Virtualization & Deployment (Area 12)
 - **Purpose / mental-model contribution:** The modern runtime environment of production code: containers as OS-level virtualization (namespaces + cgroups), VMs, images, registries, and the deployment/CI/CD pipeline; what "the cloud" actually does and what it costs.
-- **Prerequisites:** M06/M07 (processes/memory), M08 (files), M16 (partial failure) — infra needs the failure model.
+- **Prerequisites (authoritative Module DAG):** Hard — M16, M06, M07, M08. Soft/preferred — none. No other Module relationship on this line is mandatory.
 - **Key concepts:** container; image; namespaces; cgroups; Docker/OCI (as case); VM vs container; cloud/region/AZ/availability zone; deployment (rolling, blue-green, canary); CI/CD (concept); IaC (concept); observability (metrics/logs/traces).
 - **Competencies:** Explain (container mechanism), Trace (a deployed request), Diagnose (deployment failure), Estimate (cost of an infra choice), Learn-New-Tech (read a deployment).
 - **Horizontal threads:** Cost / Resource Economics (revisit — cloud cost); Failure (revisit — deployment failures); Technical Literacy (revisit); Software Engineering (revisit); API/Interface Design (revisit — infra config as interface).
@@ -409,7 +409,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S6 · M20 — Observability & Reliability Engineering (Area 12)
 - **Purpose / mental-model contribution:** How to know a production system is healthy: metrics, logs, traces, alerts, SLOs, incident response, postmortems. This is the "how would I know?" question made systematic (D-014 Diagnostics).
-- **Prerequisites:** M18/M19 (state/infra), M16, M11 (measurement/tracing).
+- **Prerequisites (authoritative Module DAG):** Hard — M19, M16. Soft/preferred — M11. No other Module relationship on this line is mandatory.
 - **Key concepts:** metric; log; trace; correlation; SLO; alerting (concept); instrumentation; red-teaming light; postmortem; budgeting; clock semantics (monotonic vs wall clock).
 - **Competencies:** Diagnose (from signal to cause), Observe (a dashboard), Judge (SLO choice), Estimate (business cost of outage).
 - **Reconciled outcome (R7, Issue #9):** the experimental pattern first assessed at M04 `L04-02` is **revisited** as production-signal diagnosis at `L20-01/L20-02` (and consolidated at M23 `L23-01`). The DAG-hidden-prerequisite flag for **clock semantics** is resolved here: measuring durations requires a monotonic clock; wall-clock readings cannot time spans (Python docs: `time()` wall vs `time.monotonic()`/`perf_counter`); one light bridge, no statistics prerequisite.
@@ -421,7 +421,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S7 · M21 — Security Synthesis I: Trust & Crypto Use (Area 13)
 - **Purpose / mental-model contribution:** Security is a *system property of boundaries*, not a feature. Trust boundaries; what to do, not how to implement: symmetric/asymmetric crypto use, hashing, signatures, certificates; where "don't roll your own" applies.
-- **Prerequisites:** M11 (TLS — the crypto case already visited), M07 (isolation), M12 (same-origin).
+- **Prerequisites (authoritative Module DAG):** Hard — M11, M07, M12. Soft/preferred — M09. No other Module relationship on this line is mandatory.
 - **Key concepts:** trust-boundary **synthesis/revisit**; threat model; hash; MAC; symmetric/asymmetric; signature; cert/CA; nonce; random; secret management; defense in depth (light).
 - **Competencies:** Judge (boundary design), Explain (crypto role: confidentiality/integrity/auth), Diagnose (a misuse), Learn-New-Tech (read a crypto API).
 - **Horizontal threads:** Security (**SYNTHESIS** — M07/M11/M12/M19 boundary cases are consolidated into an explicit threat model and crypto-use judgment); Correctness (revisit — crypto invariants); Privacy (revisit — encryption ≠ anonymity).
@@ -432,7 +432,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S7 · M22 — Security Synthesis II: Authn/Authz & Secure Composition (Area 13)
 - **Purpose / mental-model contribution:** Authentication vs authorization; session/token (JWT) mechanics; injection-style vulnerabilities; composition failures (insecure deserialization, SSRF, supply chain); the safety-first defense mindset (D-012 security labs).
-- **Prerequisites:** M21, M11 (HTTP headers), M12 (browser security model), M19 (supply chain context).
+- **Prerequisites (authoritative Module DAG):** Hard — M21, M11, M12. Soft/preferred — M19. No other Module relationship on this line is mandatory.
 - **Key concepts:** authn vs authz; password hashing; session vs token; JWT (claims/signature); OAuth (concept); SQL injection; XSS; CSRF; SSRF; deserialization; CSP (revisit); least privilege; dependency/supply chain.
 - **Competencies:** Judge (secure design), Diagnose (a vulnerable app), Explain (attack → mechanism → fix), Learn-New-Tech (read a security doc).
 - **Horizontal threads:** Security (revisit/synthesis); Correctness (revisit — inputs as untrusted); Software Engineering (revisit); Technical Literacy (revisit).
@@ -443,7 +443,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S7 · M23 — Systems Thinking & Judgment (Area 14)
 - **Purpose / mental-model contribution:** Synthesize everything into judgment tools: measurement discipline, cost/resource economics, failure-mode reasoning, the Technology Evaluation Framework (D-015), and the systems questions (where is time/data/state going; where can it fail; how would I know; what must always be true; what are we paying for; at what scale does this become a problem).
-- **Prerequisites:** S6-complete (or M18/M20 if compressed path), plus M21/M22 or concurrent.
+- **Prerequisites (authoritative Module DAG):** Hard — M20, M21. Soft/preferred — M22, M17. No other Module relationship on this line is mandatory.
 - **Key concepts:** judgment; measurement methodology; cost model; failure taxonomy; technology admission (D-015 card); napkin math (consolidated); judgment under uncertainty; trade-off language; applied measurement-uncertainty toolkit (consolidated).
 - **Competencies:** Judge (the capstone competency), Estimate (consolidated), Learn-New-Tech (systematically evaluate), Explain (defend).
 - **Reconciled outcome (R1/R7, Issue #9):** `L23-01` **consolidates** the experimental pattern (first assessed at M04 `L04-02`, production-mode at M20) and the applied measurement-uncertainty toolkit — distributions/median/percentiles/uncertainty/inference limits — into one measurement methodology; clock-semantics bridge applies here as well (monotonic vs wall clock). `L23-02` evaluates technology via the Technology Evaluation Framework and (per R5) treats AI-generated claims as untrusted hypotheses verified by source/test/measurement (Current Case), without an AI module.
@@ -455,7 +455,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 ### S7 · M24 — Final System Defense (Area 15)
 - **Purpose / mental-model contribution:** A capstone not of *new* material but of *integration and articulation*: the learner defends the architecture of the Mini Cloud App using mechanisms, trade-offs, failure modes, measurement, cost, and the Technology Evaluation Framework. It is the final assessment of judgment (D-006, Invariant 1).
-- **Prerequisites:** M23 (judgment synthesis) and the complete S1–S6 chain.
+- **Prerequisites (authoritative Module DAG):** Hard — M23. Soft/preferred — M20. No other Module relationship on this line is mandatory.
 - **Key concepts:** architecture review; trade-off defense; failure/risk walkthrough; cost/scale analysis; evidence-based claims; identifying what *should* be measured.
 - **Competencies:** Judge (defended), Estimate (under uncertainty), Explain (articulate), Correctness (stated invariants), Diagnose (anticipate failures).
 - **Horizontal threads:** ALL — final synthesis (Judge + all threads).
@@ -472,6 +472,8 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 
 Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit. Mechanism classes assume the canonical Linux env (D-008).
 
+Only the **Hard prerequisites** column below encodes lesson ordering. Soft/preferred/context relationships remain non-hard and are governed by the Module DAG / FI-RV notes; they must not be inferred as new `H` edges.
+
 | Lesson ID | Module | Learner question | Primary mechanism/concept | Hard prerequisites | FI / RV | Competency gain | Active observe/build/break? |
 |---|---|---|---|---|---|---|---|
 | L00-01 | M00 | "When I open a webpage, what actually happens?" | Whole-system map; abstraction/interface/indirection; the question set | programming basics | FI: system map, abstraction, question set | Trace, Explain, Observe | Y (observe a request, break it) |
@@ -480,25 +482,25 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L01-02 | M01 | "Why is my number wrong?" (overflow) | Two's-complement, signed/unsigned, overflow | L01-01 | FI: integer representation | Correctness, Trace, Diagnose | Y (overflow demo) |
 | L01-03 | M01 | "Why does my text look broken?" | UTF-8/encoding; endianness | L01-01 | FI: text encoding | Trace, Explain, Diagnose | Y (decode/encode, break) |
 | L01-04 | M01 | "How big is this file?" | Size estimation; serialization; round-trip invariant | L01-01 | FI: size/no-serialization round-trip; RV: representational correctness | Estimate, Correctness | Y (compress/parse) |
-| L02-01 | M02 | "What does 'fast' mean for an algorithm?" | Complexity as growth; applied discrete/asymptotic toolkit: counting, order-of-magnitude scheduling (R1) | L01-01 or prior | FI: complexity; FI: asymptotic/counting toolkit (R1) | Estimate, Explain, Trace | Y (measure growth) |
+| L02-01 | M02 | "What does 'fast' mean for an algorithm?" | Complexity as growth; applied discrete/asymptotic toolkit: counting, order-of-magnitude scheduling (R1) | M00 | FI: complexity; FI: asymptotic/counting toolkit (R1) | Estimate, Explain, Trace | Y (measure growth) |
 | L02-02 | M02 | "Why is my lookup slow?" | Hash table vs list vs tree; trade-off | L02-01 | FI: standard data structures; FI: trade-off language | Judge, Explain | Y (implement/measure) |
 | L02-03 | M02 | "What is abstraction doing for me?" | Abstraction layers; interface vs implementation; **intuitive model of computation; expressibility; tractability; decidability intuition** (R9); specification + invariant + correctness canonical home | L02-02 | RV: abstraction; FI: interface/contract; FI: spec/invariant/correctness; FI: limits intuition (R9) | Explain, Judge, Correctness | Y (design a small interface) |
 | L03-01 | M03 | "What does my code actually run on?" | ISA, registers, instruction fetch-execute | L01-01, L02-02 | FI: machine model | Trace, Explain | Y (disassembly) |
 | L03-02 | M03 | "How does a function call work?" | Stack frame, call/return, stack overflow | L03-01 | FI: stack/heap/call frame | Trace, Diagnose | Y (gdb, overflow) |
 | L03-03 | M03 | "Why does my program crash?" (segfault) | Memory access; address validity | L03-02 | FI: crash as signal; RV: failure | Diagnose, Observe | Y (induce crash) |
 | L04-01 | M04 | "Why is my slow loop slow?" | Memory hierarchy; cache; latency ladder | L03-01, M01 | FI: hierarchy, locality | Observe, Diagnose, Estimate | Y (measure blocking) |
-| L04-02 | M04 | "Why does order matter?" | Locality (spatial/temporal); layout; **applied measurement-uncertainty toolkit + experimental pattern — canonical first home (R1/R7)**: baseline → controlled change → metric/environment/workload → repetitions/distribution → observation → competing explanation → bounded conclusion; repeated measurements, median/percentiles when useful, uncertainty, inference limits | L04-01 | RV: locality; FI: measurement-uncertainty toolkit (R1); FI: experimental pattern (R7); RV: measurement methodology | Diagnose, Measure, Judge, Estimate | Y (benchmark, reorder; distribution of runs) |
-| L05-01 | M05 | "How does my Python become an instruction?" | Compiler/interpreter pipeline; source→machine | L03-02, L04-01 | FI: translation/interpretation; RV: abstraction | Trace, Explain, Learn-New-Tech | Y (read bytecode/dis) |
+| L04-02 | M04 | "Why does order matter?" | Locality (spatial/temporal); layout; **applied measurement-uncertainty toolkit + experimental pattern — canonical first home (R1/R7)**: baseline → controlled change → metric/environment/workload → repetitions/distribution → observation → competing explanation → bounded conclusion; repeated measurements, median/percentiles when useful, uncertainty, inference limits | L04-01 | RV: locality; FI: measurement-uncertainty toolkit (R1); FI: experimental pattern (R7); RV: measurement methodology | Diagnose, Observe, Judge, Estimate | Y (benchmark, reorder; distribution of runs) |
+| L05-01 | M05 | "How does my Python become an instruction?" | Compiler/interpreter pipeline; source→machine | L03-02 | FI: translation/interpretation; RV: abstraction | Trace, Explain, Learn-New-Tech | Y (read bytecode/dis) |
 | L05-02 | M05 | "What is a language really?" | AST/grammar (lexer/parser concept); IR; runtime (GC/JIT) | L05-01 | FI: grammar/AST; RV: interface | Explain, Judge | Y (tiny parser) |
 | L05-03 | M05 | "Why are types useful?" | Type systems as invariants; dynamic vs static | L05-02 | FI: type as invariant | Correctness, Judge | Y (mismatch bug) |
-| L06-01 | M06 | "What is a process?" | Process; program→process; syscalls | L03-02, L05-02 | FI: process, syscall, kernel/user | Trace, Explain, Observe | Y (ps/strace) |
+| L06-01 | M06 | "What is a process?" | Process; program→process; syscalls | L03-02 | FI: process, syscall, kernel/user | Trace, Explain, Observe | Y (ps/strace) |
 | L06-02 | M06 | "How does a program start another?" | fork/exec; exit/status; shell | L06-01 | FI: fork/exec; RV: interface | Trace, Diagnose | Y (fork demo, strace) |
 | L06-03 | M06 | "How does the CPU get shared?" | Scheduling intuition; isolation | L06-02 | FI: scheduling (intuition), isolation | Explain, Judge | Y (CPU-bound vs IO) |
 | L07-01 | M07 | "How do two programs both use memory?" | Virtual memory; address space; paging concept; first concrete trust/protection boundary | L04-01, L06-01 | FI: VM concept; FI: trust boundary (distinguish from isolation); RV: isolation | Trace, Explain, Judge | Y (/proc/maps) |
 | L07-02 | M07 | "Why is my program out of memory?" | Heap/malloc; OOM; leak | L07-01 | FI: heap/OOM; RV: failure | Diagnose, Estimate | Y (memory stress) |
 | L07-03 | M07 | "What happens when I touch a bad address?" | Page fault; faults; fault handler intuition | L07-01 | RV: failure; FI: page fault | Trace, Explain, Diagnose | Y (fault observ. via tools) |
-| L08-01 | M08 | "What is a file, underneath?" | File API; fd; inode (concept); directory | L06-01, L07-01 | FI: file/dir/inode; RV: interface | Trace, Explain | Y (stat/strace) |
-| L08-02 | M08 | "Where does my file's data actually live?" | Page cache; block device; buffered I/O | L08-01, L04-01 | FI: page cache; RV: hierarchy | Trace, Explain, Measure | Y (vmstat, read timing) |
+| L08-01 | M08 | "What is a file, underneath?" | File API; fd; inode (concept); directory | L06-01 | FI: file/dir/inode; RV: interface | Trace, Explain | Y (stat/strace) |
+| L08-02 | M08 | "Where does my file's data actually live?" | Page cache; block device; buffered I/O | L08-01 | FI: page cache; RV: hierarchy | Trace, Explain, Observe | Y (vmstat, read timing) |
 | L08-03 | M08 | "Why is my file I/O slow?" | I/O error, permission, disk-full; buffering | L08-02 | RV: failure; FI: I/O failure | Diagnose, Judge | Y (induce errors) |
 | L09-01 | M09 | "What does 'durable' mean?" | Durability; fsync; WAL concept | L08-02 | FI: durability; RV: reliability | Judge, Explain | Y (kill/power-loss simulation) |
 | L09-02 | M09 | "Why is my disk fast sometimes and slow later?" | SSD vs HDD; write amplification; wear leveling | L09-01 | FI: SSD/HDD mechanism; RV: cost | Estimate, Explain, Judge | Y (latency measurement) |
@@ -506,22 +508,22 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L10-01 | M10 | "How does a message cross the internet?" | IP; routing; packet; port | L06-01 | FI: network basics | Trace, Explain | Y (traceroute, nc) |
 | L10-02 | M10 | "How does 'reliable' work over unreliable links?" | TCP handshake, segments, retransmission; UDP | L10-01 | FI: TCP/UDP; RV: reliability | Explain, Trace, Diagnose | Y (ss, local socket) |
 | L10-03 | M10 | "Why is my request timing out?" | Failure modes; timeout vs refused | L10-02 | RV: failure; FI: network diagnosis | Diagnose, Judge | Y (kill a server, observe) |
-| L11-01 | M11 | "How do I talk securely to a server?" | TLS handshake concept; CA/cert | L10-02, M07 | FI: TLS; RV: crypto primer | Trace, Explain, Judge | Y (curl -v, openssl) |
+| L11-01 | M11 | "How do I talk securely to a server?" | TLS handshake concept; CA/cert | L10-02 | FI: TLS; RV: crypto primer | Trace, Explain, Judge | Y (curl -v, openssl) |
 | L11-02 | M11 | "What is HTTP, really?" | Request/response, methods, status, headers | L11-01 | FI: HTTP; RV: API/interface | Trace, Explain, Observe | Y (curl, DevTools) |
 | L11-03 | M11 | "Why is my page slow to load?" | Caching; ETag; proxies/CDN; HTTP/2/3 | L11-02 | FI: HTTP caching; FI: QUIC/HTTP3 (STABLE, R10); RV: performance | Diagnose, Judge, Estimate | Y (cache headers, local proxy) |
-| L12-01 | M12 | "What is a browser, architecturally?" | Multi-process; renderer; browser process; site isolation | L10-02, L11-02, L07 | FI: browser architecture (R8); RV: process model | Trace, Explain, Judge | Y (DevTools/task manager) |
+| L12-01 | M12 | "What is a browser, architecturally?" | Multi-process; renderer; browser process; site isolation | L10-02, L11-02, M07 | FI: browser architecture (R8); RV: process model | Trace, Explain, Judge | Y (DevTools/task manager) |
 | L12-02 | M12 | "How does a page render?" | Rendering pipeline: parse→DOM→render→layout→paint | L12-01 | FI: rendering (R9); RV: parsing | Trace, Explain, Observe | Y (DevTools performance) |
 | L12-03 | M12 | "Why is the browser secure?" | Origin; same-origin; CORS; CSP; sandbox | L12-02, L11-02 | FI: origin/security model; RV: security | Explain, Judge, Diagnose | Y (break CORS, fix) |
-| L12-04 | M12 | "Why does my page feel slow?" | Event loop; render-blocking; JS runtime | L12-02 | FI: event loop preview; RV: concurrency | Diagnose, Measure | Y (block the main thread) |
-| L13-01 | M13 | "Why is my query fast/slow?" | B-tree; index; page/IO; EXPLAIN | L08-02, L09-02, L04 | FI: indexing/engine; RV: data structures | Explain, Observe, Estimate | Y (EXPLAIN, index measure) |
+| L12-04 | M12 | "Why does my page feel slow?" | Event loop; render-blocking; JS runtime | L12-02 | FI: event loop preview; RV: concurrency | Diagnose, Observe | Y (block the main thread) |
+| L13-01 | M13 | "Why is my query fast/slow?" | B-tree; index; page/IO; EXPLAIN | L08-02, L09-02 | FI: indexing/engine; RV: data structures | Explain, Observe, Estimate | Y (EXPLAIN, index measure) |
 | L13-02 | M13 | "What is SQL doing?" | Relational model; query plan concept; storage engine | L13-01 | FI: relational/SQL semantics | Trace, Explain, Judge | Y (query a real DB) |
 | L13-03 | M13 | "Why do my schema choices matter?" | Schema design & invariant; **schema evolution; reader/writer compatibility; migration/backfill trade-offs; source-of-truth vs derived data; lightweight provenance (R6)** | L13-02 | RV: trade-off; FI: schema invariant; FI: schema-evolution/provenance pattern (R6, application pattern — no new concept ID) | Correctness, Judge, Diagnose, Learn-New-Tech | Y (design schema, evolve it, measure) |
 | L14-01 | M14 | "What is a transaction?" | ACID; atomicity; WAL; commit | L13-02, L09-01 | FI: transaction/ACID/WAL | Correctness, Trace, Explain | Y (transaction, crash) |
-| L14-02 | M14 | "Why does concurrent access corrupt data?" | Anomalies; isolation levels; locks; MVCC | L14-01, M15-preview | FI: isolation; RV: concurrency | Diagnose, Judge, Correctness | Y (reproduce anomaly) |
+| L14-02 | M14 | "Why does concurrent access corrupt data?" | Anomalies; isolation levels; locks; MVCC | L14-01 | FI: isolation; RV: concurrency | Diagnose, Judge, Correctness | Y (reproduce anomaly) |
 | L14-03 | M14 | "How do I design an atomic write?" | Idempotency; multi-step writes; deadlock (light) | L14-02 | FI: idempotency preview; RV: invariant | Judge, Correctness | Y (write + crash test) |
-| L15-01 | M15 | "Why is my threaded code wrong?" | Threads; races; interleaving | L06-01, M14 (or L14-02) | FI: threads/race | Trace, Diagnose, Correctness | Y (race repro, stress) |
+| L15-01 | M15 | "Why is my threaded code wrong?" | Threads; races; interleaving | L06-01 | FI: threads/race | Trace, Diagnose, Correctness | Y (race repro, stress) |
 | L15-02 | M15 | "How do I make it right?" | Mutex; atomicity; conditions; deadlock | L15-01 | FI: locks; RV: correctness | Explain, Correctness, Judge | Y (fix race; deadlock observe) |
-| L15-03 | M15 | "Thread or async?" | Event loop (revisit); async/await; GIL reality | L15-02, L12-04 | FI: async/event loop synthesis; RV: concurrency | Judge, Explain | Y (async vs thread measure) |
+| L15-03 | M15 | "Thread or async?" | Event loop (revisit); async/await; GIL reality | L15-02 | FI: async/event loop synthesis; RV: concurrency | Judge, Explain | Y (async vs thread measure) |
 | L16-01 | M16 | "What is different about many machines?" | Partial failure; the fundamental ambiguity | L15-01, L10-02 | FI: partial failure; RV: failure | Judge, Explain, Trace | Y (inject partition) |
 | L16-02 | M16 | "How do I call a remote function safely?" | RPC; serialization; timeout; retry; idempotency | L16-01 | FI: RPC; RV: interface/indirection | Trace, Judge, Explain | Y (RPC with injected delay) |
 | L17-01 | M17 | "How do I keep data safe across machines?" | Replication; quorum; durability | L16-01, L09-01 | FI: replication; RV: durability | Judge, Explain | Y (bounded state/message/failure trace + EXP-05 source case; no required 3-node implementation) |
@@ -531,14 +533,14 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L18-02 | M18 | "Do I need a distributor?" | Distributed transactions/2PC concept; saga; ordering | L18-01, M14 | FI: 2PC concept; FI: saga/ordering; RV: trade-off | Judge, Explain | Y (workshop scenario) |
 | L19-01 | M19 | "What is a container?" | Container; namespaces; cgroups; image | L06-01, L07-01, L08-01 | FI: container mechanism; RV: isolation | Trace, Explain, Judge | Y (build/run container) |
 | L19-02 | M19 | "What does 'the cloud' actually mean?" | VM vs container; region/AZ; cloud pricing | L19-01 | FI: cloud model; FI: cost | Explain, Judge, Estimate | Y (deploy + cost calc) |
-| L19-03 | M19 | "How does code get to production?" | CI/CD; deployment strategies; IaC | L19-02, L16 (failure model) | FI: deployment/CI-CD; RV: failure | Explain, Judge, Diagnose | Y (pipeline demo; rollback) |
-| L20-01 | M20 | "How do I know the system is OK?" | Metrics/logs/traces; SLO; alerting; **clock semantics — monotonic vs wall clock bridge (resolves DAG §6 flag)** | L19-02, L16 | FI: observability; RV: measurement; RV: experimental pattern (R7, from M04) | Observe, Diagnose, Judge | Y (instrument, alert) |
+| L19-03 | M19 | "How does code get to production?" | CI/CD; deployment strategies; IaC | L19-02, M16 (failure model) | FI: deployment/CI-CD; RV: failure | Explain, Judge, Diagnose | Y (pipeline demo; rollback) |
+| L20-01 | M20 | "How do I know the system is OK?" | Metrics/logs/traces; SLO; alerting; **clock semantics — monotonic vs wall clock bridge (resolves DAG §6 flag)** | L19-02, M16 | FI: observability; RV: measurement; RV: experimental pattern (R7, from M04) | Observe, Diagnose, Judge | Y (instrument, alert) |
 | L20-02 | M20 | "How do I debug a production incident?" | Incident response; postmortem; correlation | L20-01 | RV: debugging (elevated); FI: SRE/incident | Diagnose, Observe, Explain | Y (controlled incident) |
 | L21-01 | M21 | "Where are the boundaries I must protect?" | Trust-boundary synthesis; threat model; defense in depth | L11-01, L07-01, L12-03 | FI: threat model/defense-in-depth synthesis; RV: trust boundary + isolation/TLS/origin cases | Judge, Explain, Diagnose | Y (threat map exercise) |
 | L21-02 | M21 | "What do I use crypto for?" | Hash/MAC/signature/symmetric; cert lifecycle | L21-01 | FI: crypto *use*; RV: TLS | Explain, Judge, Learn-New-Tech | Y (openssl, signing) |
 | L22-01 | M22 | "How do I know who is calling?" | Authn vs authz; password hashing; session/token/JWT | L21-02, L11-02 | FI: authn/authz; RV: identity | Judge, Explain | Y (token verify/forge-safe demo) |
 | L22-02 | M22 | "Why is my web app vulnerable?" | Injection; XSS; CSRF; SSRF; deserialization | L22-01, L12-03 | FI: injection/OWASP-style; RV: security composition | Diagnose, Judge, Explain | Y (safe vulnerable app, fix) |
-| L22-03 | M22 | "Why do I trust my dependencies?" | Supply chain; pinning; provenance light | L22-02, L19 | FI: supply chain; RV: trust | Learn-New-Tech, Judge | Y (dependency audit) |
+| L22-03 | M22 | "Why do I trust my dependencies?" | Supply chain; pinning; provenance light | L22-02 | FI: supply chain; RV: trust | Learn-New-Tech, Judge | Y (dependency audit) |
 | L23-01 | M23 | "How do I measure honestly?" | Measurement methodology; benchmarking rules; **consolidation of experimental pattern + measurement-uncertainty toolkit (R1/R7)** | L20-01, L04-02 (performance foundations) | RV: measurement methodology (consolidation); RV: uncertainty toolkit | Estimate, Judge, Diagnose | Y (design benchmark) |
 | L23-02 | M23 | "How do I pick a technology?" | Technology Evaluation Framework (D-015); stable principle | L23-01, S6 foundations | FI: tech evaluation; RV: judgment | Judge, Learn-New-Tech, Explain | Y (write a Technology Card) |
 | L23-03 | M23 | "What is the cost of my design?" | Cost/resource economics synthesis; napkin math at scale | L23-02 | FI: cost synthesis; RV: estimate | Estimate, Judge | Y (cost model) |
