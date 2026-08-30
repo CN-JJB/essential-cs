@@ -253,29 +253,42 @@ flowchart LR
 
 ---
 
-## 4. Important Lesson-Level Cross-Module Edges
+## 4. Lesson-Level Cross-Module Hard Prerequisites
 
-Only cross-Module hard prerequisites are listed (intra-Module is implied by Module order). These matter when a Lesson is written before its Module siblings.
+This table is **exhaustive for cross-Module references in the Preliminary Lesson Map's `Hard prerequisites` column**. It is mechanically subordinate to the Module DAG: every source below lies on an existing Module-`H` ancestry path to the target Module. Soft/preferred/context relationships are intentionally excluded and do not create lesson or Module `H` edges.
 
-| Lesson | Module | Cross-Module hard prerequisite | Reason |
+| Lesson | Module | Cross-Module hard prerequisite(s) | Authority note |
 |---|---|---|---|
-| L12-03 (browser security) | M12 | L11-02 (HTTP), L07-01 (VM/isolation) | Origin/same-origin requires HTTP semantics + address-space isolation (R8) |
-| L12-04 (event loop) | M12 | L12-02 (rendering) | Event loop is the browser's main-thread behavior; needs render pipeline context |
-| L13-01 (indexing) | M13 | L08-02 (page cache), L09-02 (storage latency), L04-01 (hierarchy) | B-tree/IO cost model needs storage & memory hierarchy |
-| L14-02 (isolation) | M14 | L13-01 (index/storage), plus M15-preview | Anomalies are *data* anomalies; need storage engine + isolation preview |
-| L15-01 (races) | M15 | L06-01 (process), L14-02 (DB anomaly) | Races need process model + the DB motivation |
-| L16-01 (partial failure) | M16 | L15-01/L15-02 (threads/locks) | Partial failure is a *concurrent* program crossing machines |
-| L17-02 (consensus) | M17 | L14-02 (isolations) + L16-01 | Needs both single-node consistency and failure framing |
-| L18-01 (queues) | M18 | L17-03 (consistency models) | Queue semantics are consistency/failure decisions |
-| L19-01 (containers) | M19 | L06-01, L07-01, L08-01 | Namespaces/cgroups/files are process/mem/file abstractions |
-| L20-01 (observability) | M20 | L16-01 (failure), L19-02 | Metrics/tracing instrument distributed failure |
-| L21-01 (trust-boundary synthesis) | M21 | L07-01 (first trust/protection boundary), L11-01 (TLS), L12-03 (origin) | M21 consolidates already-taught boundary cases into threat modeling; it is not the first definition of trust boundary |
-| L22-02 (web app vulns) | M22 | L12-03 (same-origin/CORS) | XSS/CSRF/CORS are browser-origin mechanisms |
-| L23-01 (measurement) | M23 | L20-01 (observability), L04-02 (perf) | Measurement methodology builds on both |
-| L23-02 (tech evaluation) | M23 | L16-02 (RPC) or S6 complete | Evaluating a tech needs distributed-feature understanding |
+| L01-01 | M01 | L00-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L02-01 | M02 | M00 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L03-01 | M03 | L01-01, L02-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L04-01 | M04 | L03-01, M01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L05-01 | M05 | L03-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L06-01 | M06 | L03-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L07-01 | M07 | L04-01, L06-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L08-01 | M08 | L06-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L09-01 | M09 | L08-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L10-01 | M10 | L06-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L11-01 | M11 | L10-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L12-01 | M12 | L10-02, L11-02, M07 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L12-03 | M12 | L11-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L13-01 | M13 | L08-02, L09-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L14-01 | M14 | L13-02, L09-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L15-01 | M15 | L06-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L16-01 | M16 | L15-01, L10-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L17-01 | M17 | L16-01, L09-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L18-01 | M18 | L17-03, L16-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L18-02 | M18 | M14 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L19-01 | M19 | L06-01, L07-01, L08-01 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L19-03 | M19 | M16 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L20-01 | M20 | L19-02, M16 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L21-01 | M21 | L11-01, L07-01, L12-03 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L22-01 | M22 | L21-02, L11-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L22-02 | M22 | L12-03 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L23-01 | M23 | L20-01, L04-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
+| L24-01 | M24 | L23-02 | Refines existing Module-`H` ancestry; adds no Module edge. |
 
 ---
-
 ## 5. Cycle Check
 
 ### Method
@@ -284,7 +297,7 @@ The Module-level graph was serialized as a DAG and checked for cycles manually b
 ### Result: **No cycles found.**
 
 ### Manual verification detail
-1. **Within-Stage ordering:** All intra-Stage `H` edges are `< earlier Module` → `< later Module>` (M00→M01→M02; M03→M04→M05; M06→M07→M08→M09; M10→M11→M12; M13→M14(+M15); M16→M17→M18 and M16→M19→M20; M21→M22→M23→M24). No backward `H` edge exists inside any Stage. Soft edges never create cycles because they too point forward (M01→M02, M04→M05, M04→M09, etc.).
+1. **Within-Stage ordering:** All intra-Stage `H` edges point forward in the accepted DAG (M00→M01; M03→M04; M06→M07/M08 and M08→M09; M10→M11→M12; M13→M14; M16→M17→M18 and M16→M19→M20; M21→M22 and M21/M20→M23→M24). M15 has hard input M06 and only soft/preferred ties from M14/M03/M12; there is no hidden M14↔M15 hard ordering. No backward `H` edge exists inside any Stage. Soft edges also point forward.
 2. **Cross-Stage:** All cross-Stage `H` edges go from an earlier-numbered Stage to a later-numbered Stage, but there is intentionally **no hard S4→S5 Stage edge**. S4 and S5 are parallel prerequisite branches after S3 and both feed S6 through specific Module edges. No `H` edge points backward across Stages.
 3. **Soft edges checked:** The single potentially-backward soft edge is `M03 → M15` (soft) and `M12 → M15` (soft) — both forward. `M09 → M10` (soft) forward. `M04 → M09` (soft) forward. All other soft edges are forward. No backward soft edges.
 4. **Revisit edges:** `R` edges are explicitly *not* dependencies (they are non-ordering), so they cannot form cycles. They are conceptually "the same concept reappears" — inherently acyclic.
