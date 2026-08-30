@@ -1,0 +1,81 @@
+# Decisions
+
+This file records durable project decisions. It is not a transcript of the Requirements interview.
+
+## D-001 — Project objective
+Essential CS optimizes for an accurate modern computing-system world model and independent technical judgment, not degree compression, competitive programming, framework training, or maximal hand implementation.
+
+## D-002 — Learner
+Primary learner: adult/educated learner with basic programming ability (variables, loops, functions, can run simple Python/JS) and no formal CS background. High-school mathematics is assumed; additional theory is introduced just in time.
+
+## D-003 — Organization
+Visible narrative: real systems and system journeys. Hidden coverage backbone: traditional CS disciplines.
+
+## D-004 — No global time ceiling
+Earlier 80–120 hour ideas are void. Scope is constrained by educational value, not clock time. Core/Deep Dive separation remains strict.
+
+## D-005 — Canonical teaching language
+Chinese is canonical; important terms include English on first introduction. Concepts use stable IDs and one primary translation.
+
+## D-006 — Main project
+A simple multi-user Mini Cloud App evolves across the course. It integrates concepts without turning the course into web-development training. Final assessment is a System Defense.
+
+## D-007 — Macro Core spine
+The Map → Information → Computation → Machine → PL/Runtime/Compiler → OS → Storage → Network → Web/Browser → Database → Concurrency → Distributed Systems → Modern Infrastructure → Security Synthesis → Systems Thinking/Judgment → Final System Defense.
+
+## D-008 — Tool/language baseline
+Python is the main lab language; SQL and Shell are Core tools; minimal C/Assembly is used where it reveals lower layers. Linux is the canonical systems environment, with Dev Container/Codespace and WSL/macOS convenience paths.
+
+## D-009 — Teaching loop
+Default lesson loop: Question → Mental Model → Mechanism → Observe → Build → Break → Explain → Judge → Project, with misconceptions, temporary-ignore guidance, checkpoints, and exit criteria.
+
+## D-010 — Spiral curriculum
+Use Canonical Explanation + Contextual Revisit: teach definitions/core mechanisms once, revisit through application, connection, failure, trade-offs, and deeper contexts.
+
+## D-011 — Research and evidence
+AI may write and research but is never a factual authority. Important modules require Research Dossiers. Distinguish principle/specification/implementation/current practice and explicitly mark uncertainty.
+
+## D-012 — Lab strategy
+Prefer classic, proven, real mechanisms and high-quality university/textbook/open-source/official experiments. Apply Adopt → Adapt → Build. Avoid shallow AI-generated demos.
+
+## D-013 — Living curriculum
+Distinguish STABLE / CURRENT / FRONTIER. Review cadence depends on time sensitivity. Technology may transition ACTIVE → LEGACY → HISTORICAL → RETIRED.
+
+## D-014 — Core horizontal threads
+Correctness/invariants, failure, debugging, measurement, performance, security, concurrency, cost/resource economics, technical literacy, and privacy/data responsibility recur across the Core.
+
+## D-015 — Modern technology cases
+Use a Technology Evaluation Framework: Problem, Constraints, Mechanism, Gains, Costs, Failure Modes, Alternatives, When-not-to-use, Scale Threshold, Evidence, Evolution, Stable Principle.
+
+## D-016 — Licensing
+Original educational content/curriculum/original diagrams: CC BY-SA 4.0. Original code/tools/Mini Cloud App: Apache-2.0. Third-party provenance and attribution are mandatory.
+
+## D-017 — Repository form
+Markdown-first canonical educational source. `book/` teaches, `course/` guides, `labs/` builds intuition, `project/` integrates, `research/` stores dossiers, `meta/` stores curriculum engineering state/policies.
+
+## D-018 — Multi-agent governance
+Web Lead owns curriculum architecture, dispatch, final review, simple fixes, and final visual quality. Local agents work One Issue → One Agent → One Branch/Worktree → One PR with bounded autonomy and semantic coordination.
+
+## D-019 — Review routing
+Lead Review routes to Direct Fix / Complex Rework / Architecture Escalation. Visual work and simple reliable fixes are done directly by the Web Lead; major research/design failures are re-dispatched.
+
+## D-020 — Session continuity
+GitHub is persistent project memory. User decides when to switch Web Lead chats and asks for a handoff prompt. New chats recover state from GitHub. Local-agent chat context is not project-governed.
+
+## D-021 — Prompt dispatch
+Formal prompt templates live under `meta/prompts/`. The Web Lead generates current, self-contained Task/Rework Prompts from repository state. Actual prompts are not archived by default.
+
+## D-022 — Blueprint before bulk lessons
+Requirements are complete. Curriculum Blueprint v0.1 must establish architecture, maps, policies, review/release system, and external audit before large-scale lesson drafting.
+
+## D-023 — Construction after Blueprint
+After Blueprint, build stage-by-stage vertical slices: Research → Design → Lesson → Lab → Project → Verification → Learner Test.
+
+## D-024 — v1.0 gate
+v1.0 requires complete Core spine, complete Mini Cloud App, runnable REQUIRED labs, provenance/licensing, multi-role verification, learner validation, coverage audit, functioning maintenance, and no critical blockers.
+
+## D-025 — External contributions
+Humans, AI-assisted contributors, instructors, and institutions may contribute under the same Issue/PR/evidence/DoD quality gates.
+
+## D-026 — Stable release repair
+Serious released-content errors use an Errata/Hotfix process; stable tags are not rewritten. Revert and patch releases are allowed.
