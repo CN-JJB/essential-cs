@@ -138,3 +138,251 @@ Module-level Research Dossier 若采用某个重要 case，应扩展为完整 Te
 | Lockfiles / package managers / language registries | 解析/固定依赖、获取 artifacts、复现环境 | dependency graph、version constraint、integrity/provenance、supply-chain boundary | M00/M19/M21/M23 | Current tooling family | CURRENT CASE | CURRENT | 连接 reproducibility 与 supply-chain trust | npm/pip/cargo registry 命令可替换；不把 package workflow 当 Core topic | 无外部依赖或固定 vendored fixture 时 | official format/docs + resolved dependency/provenance evidence | 6–12 个月 |
 | GitHub Actions / CI | 自动重复 build/test/check | automation as executable evidence gate; environment reproducibility; fail-fast feedback | M19；repo production workflow | CI current case | CURRENT CASE | CURRENT | 具体实现可展示 machine-checkable boundary | Actions YAML/marketplace mastery 不进 Core；可替换其他 CI | 手工一次性实验、无 repeated check need 时 | official docs + reproducible workflow/smoke output; reasoning still reviewer-required | 6–12 个月 |
 | OLTP vs OLAP; row vs column; batch vs stream; warehouse/lake; ETL/ELT | 不同 workload/data lifecycle 需要不同 layout/processing | workload shapes storage/layout/execution; derived data/provenance; latency vs throughput trade-offs | M13/M18/M23 | Moderate Core data/analytics framing | STABLE CORE MECHANISM | STABLE | 形成现代 data-system world model但不扩成 Data Engineering course | 概念先于平台；不要求构建 lakehouse/streaming platform | 没有 analytical/derived-data workload 时不引入额外 pipeline | workload + data path + latency/freshness/cost + provenance; simpler alternative | 18–24 个月 |
+| DuckDB / ClickHouse | 列式分析、本地或 server OLAP | columnar layout、vectorized/scan-heavy execution、compression/locality trade-offs | M13/M23 optional comparison | Analytical engine cases | CURRENT CASE | CURRENT | 用具体引擎对照 row-oriented OLTP baseline | 不要求命令/部署；任一 case 可替换 | 数据规模/查询形态不需要 analytical engine 时 | official docs + representative scan/aggregation workload + row/column explanation | 6–12 个月 |
+| Apache Spark | 大规模 batch/stream distributed processing | partitioned computation、shuffle、fault recovery、batch/stream trade-offs | M18/M23 Deep-Dive-adjacent case | Current analytics case, not a Core platform | CURRENT CASE | CURRENT | 可用于说明何时单机分析不够，但不把 Core 变成 Spark 课 | Spark API/cluster ops 不成为 prerequisite | 单机 SQL/DuckDB/DB 已满足数据量与时限时 | official docs + explicit scale/partition/shuffle constraint | 6–12 个月 |
+| BigQuery / Snowflake | managed analytical warehouse、separate/elastic compute/storage 等产品 abstraction | columnar/MPP analytics、managed operations、resource metering/cost | M19/M23/M24 optional case | Commercial current cases | CURRENT CASE | CURRENT | 展示 managed analytics 如何移动运维与成本责任 | 具体 vendor feature/SQL extension/account 不成为 Core | local/open analytical engine 已回答问题，或无 warehouse-scale constraint 时 | official architecture/pricing docs when used + workload/cost assumptions | 6–12 个月 |
+| AI-generated claim/code/config verification practice | 开发中会遇到生成式输出，但其正确性未知 | untrusted hypothesis → source/test/measurement/security verification | M00 L00-02；M23 L23-02 per OQ-BP-001 safe interim | Verification practice only | CURRENT CASE | CURRENT | 已接受的 current-practice 边界；强化 evidence discipline | 不把 AI fluency、prompt skill 或 model knowledge当 competency | 任务无需 AI 时无需引入；任何生成结果都不能替代证据 | 保留 generated claim 与 independent authoritative/test evidence；标 uncertainty | 6–12 个月 |
+| LLM architecture / transformer theory / prompt engineering / AI app development | 快速变化的 AI 系统与应用方法 | —；**不由本 map 决定 stable Core principle** | None; OQ-BP-001 | Excluded pending RFC/Decision | REJECT / NOT CORE | FRONTIER | OQ-BP-001 未决；本 map 无权把它们静默纳入 Core | 不得通过 technology case 侧门建立 AI Core track | 除未来 RFC 明确改变 scope 外，不进入 Core | 若研究 OQ，只用 current primary/paper evidence；本 v0.1 无 assessment claim | 3–6 个月仅用于 OQ/frontier reassessment |
+| HCI / accessibility product or browser-feature training | human-facing feedback/accessibility/consent/recovery | —；existing P2/P9 evidence hooks 不等于 settled Core track | P2/P9 hooks only; OQ-BP-003 | Excluded from admission by this map | REJECT / NOT CORE | STABLE | OQ-BP-003 未决；browser case 不能静默扩张 HCI Core | 保留现有 evidence hooks；任何新增 canonical HCI content 需 RFC/Decision | 除 existing hooks 或未来 RFC 决定外，不扩展 | 若未来评估 OQ，使用 standards/primary accessibility evidence；本 map 不创建 rubric | 18–24 个月或 OQ 状态变化 |
+
+## 3. Classification summary
+
+本 v0.1 map 共记录 **52** 个 technology cases / families：
+
+| Curriculum classification | Count | Interpretation |
+|---|---:|---|
+| STABLE CORE MECHANISM | 21 | 机制/协议/模型属于 shared world model；具体实现仍可替换 |
+| CURRENT CASE | 28 | 现实、持续使用且有教学价值的实现/产品案例；必须定期复核 |
+| FRONTIER | 0 | 本版本没有把任何 fast-moving product case 直接纳入 curriculum role |
+| DEEP DIVE | 1 | full consensus implementation；不进入 shared Core traversal |
+| REJECT / NOT CORE | 2 | LLM/prompt/AI-app track 与 HCI/accessibility product track 均不得由本 map 静默入 Core |
+
+Time class 为：**23 STABLE / 28 CURRENT / 1 FRONTIER**。这里唯一 `FRONTIER` time-class row 是被排除的 LLM/prompt/AI-app family；这不等于 curriculum classification `FRONTIER` admission。
+
+## 4. Family-level boundaries
+
+### 4.1 Data / databases
+
+Accepted boundary 保持：
+
+- **SQLite remains the Required mechanism baseline** for M13/M14 database Labs；
+- **PostgreSQL remains Optional / Current comparison**；
+- Redis / in-memory KV、distributed SQL、managed DB 可以出现为 constrained cases，但都不是 hidden prerequisite；
+- learner 先证明 workload/invariant/failure/cost constraint，再讨论 server DB、cache、replica 或 distributed DB；
+- `EXPLAIN`/query-plan output 属 implementation evidence，不应当作跨版本固定字符串；
+- database choice 必须能回答：“为什么简单单节点方案不够？”
+
+Scale Threshold 采用**约束阈值**而非伪造 universal number：
+
+- cache：先有 measured repeated-read latency/bandwidth problem 与 staleness policy；
+- replica：先有 availability/read-locality/failure constraint；
+- distributed DB：先证明 single-node limit 或 availability/geography constraint；
+- server DB：先有 concurrent/server-managed state 或具体 workload reason。
+
+### 4.2 Networking / Web
+
+稳定教学对象是 protocol semantics、transport、name resolution、security、intermediary/failure boundary。
+
+Evolution lens：
+
+- HTTP/1.1 multi-connection/pipelining limits → HTTP/2 multiplexed streams → fewer application-layer concurrency costs，但引入 framing/flow-control state；
+- TCP-based HTTP transport constraints → QUIC over UDP + HTTP/3 → stream/failure/handshake behavior 改变，同时把更多 transport complexity 移到 QUIC implementation；
+- plain HTTP → TLS-protected HTTP → confidentiality/integrity/authentication gains，同时引入 certificate/trust/handshake/operations；
+- direct origin → reverse proxy / load balancer / CDN → routing/cache/policy/distribution gains，同时增加 intermediary state、trust、failure 与 cache correctness。
+
+“新协议”不自动比旧协议更好；选择取决于 compatibility、network path、implementation maturity、operational constraints 与 measurement。
+
+### 4.3 Browser
+
+M12 教 browser as integrated system：
+
+- process model；
+- renderer/browser boundary；
+- origin/site isolation；
+- event/render/request path；
+- runtime/GC/JIT as supporting mechanism；
+- DevTools as observation surface。
+
+Chromium / Firefox / V8 / SpiderMonkey 是**现实案例**，不是 browser-product syllabus。UI、菜单、具体 optimization tier、release-specific process policy 都不能写成 timeless Core fact。
+
+**OQ-BP-003 remains unresolved.** Browser case 不得借“现代浏览器”之名新增 HCI/accessibility Core track。已接受 P2/P9 evidence hooks 可以继续存在，但本 map 不扩大它们。
+
+### 4.4 PL / runtime
+
+Stable layer：
+
+- source → representation → runtime → machine；
+- bytecode / VM；
+- JIT；
+- GC；
+- type/ownership/invariant；
+- event loop / async execution。
+
+Case layer：
+
+- Python 是 canonical main lab language；
+- C 用于暴露 low-level memory/syscall/concurrency；
+- Rust 用于 ownership/concurrency comparison；
+- Java/JVM 用于 managed runtime comparison；
+- JavaScript/V8/SpiderMonkey 用于 browser/runtime integration。
+
+课程不以语言 syntax breadth、framework、package ecosystem mastery 作为目标。
+
+### 4.5 OS / machine
+
+- Linux = canonical real systems environment，不是 Linux administration certification；
+- xv6 = bounded mechanism/source case，不是 OS curriculum 本体；
+- x86-64 / ARM / RISC-V = representative ISA cases；不要求多 ISA mastery；
+- QEMU = reproducibility/emulation case；不等于 physical hardware behavior 的全部。
+
+OQ-BP-006 继续拥有 exact Linux/base image/compiler/QEMU/RISC-V/Python/DB/browser/tool versions；本 map **不 pin 具体版本**。
+
+### 4.6 Concurrency
+
+Core 保持在可迁移机制：
+
+- interleaving；
+- atomicity；
+- synchronization；
+- invariant；
+- progress/deadlock boundary；
+- async/event-loop；
+- database isolation / serialization。
+
+LAB-REQ-03 继续使用 POSIX threads + C11 atomics 的 **defined behavior** 路径。Rust ownership 是 comparison case；课程不变成 lock-free / memory-model specialization。
+
+### 4.7 Distributed systems
+
+Accepted boundary：
+
+> **Consensus concept is Core; full consensus implementation is Deep Dive.**
+
+Core 要 learner 能解释：
+
+- partial failure / ambiguity；
+- leader/follower replication；
+- quorum / agreement 的基本作用；
+- consistency / availability / latency / cost trade-off；
+- duplicate/order/delivery semantics；
+- when coordination is unnecessary。
+
+Raft/Paxos 是可替换案例；Kafka/RabbitMQ/Redis Streams/cloud queues 是可替换 messaging cases。它们不得变成 M18/P9 的强制组件。
+
+Queue 的 scale threshold 不是“到多少 QPS”，而是：
+
+- work duration 与 request latency budget 冲突；
+- producer/consumer rates 需要 buffering/backpressure；
+- work 必须 durable/retryable；
+- asynchronous ownership transfer 的 semantics 值得额外 state/operator complexity。
+
+### 4.8 Infrastructure
+
+Stable concepts：
+
+- artifact vs process；
+- isolation；
+- image/config/state/resource boundary；
+- reproducibility；
+- deployment；
+- desired/observed state & control loop（bounded）；
+- cost/resource economics；
+- supply-chain/provenance。
+
+Case layer：
+
+- OCI specifications help keep container teaching product-neutral；
+- Docker = optional Current Case；
+- Kubernetes = Current Case only when orchestration constraint is explicit；administration breadth is Deep Dive/job-specific；
+- commercial cloud primitives = Current Cases used for responsibility/cost/managed-boundary judgment。
+
+Scale threshold examples：
+
+- container before Docker: ask whether reproducibility/isolation problem exists；
+- Kubernetes before orchestration: ask whether multiple deployable workloads, scheduling/reconciliation, failure recovery and operational team constraints justify a cluster control plane；
+- cloud managed service before vendor account: ask whether managed boundary teaches something not visible in local/open case。
+
+### 4.9 Observability
+
+Core 顺序：
+
+`Question → choose signal → instrument/observe → correlate → state missingness/overhead/privacy → explain cautiously`
+
+而不是：
+
+`buy dashboard → search graph → declare cause`
+
+Stable Core teaches structured logs / metrics / traces and correlation. OpenTelemetry、Prometheus/Grafana、vendor stacks 只作为 Current Cases。P8 仍坚持 local structured logs/timers first；不需要 backend 才能获得合格 evidence。
+
+### 4.10 Build / package / source
+
+Core concern 是：
+
+- dependency graph；
+- reproducible artifact；
+- provenance；
+- version constraint；
+- integrity；
+- reviewable change；
+- automated evidence gates。
+
+Git、GitHub、Make、package managers、registries、GitHub Actions 都只是实现/case。不要把 M00/M19 变成 workflow bureaucracy 或 vendor CI training。
+
+### 4.11 Data / analytics
+
+Accepted Core scope 保持**moderate**：
+
+- OLTP vs OLAP；
+- row vs column；
+- batch vs stream；
+- warehouse/lake；
+- ETL/ELT；
+- derived data / provenance；
+- workload → layout/execution/cost judgment。
+
+DuckDB/ClickHouse/Spark/BigQuery/Snowflake/Kafka 可作为 cases，但本课程不是 Data Engineering platform course。
+
+Evolution lens：
+
+`row-oriented OLTP baseline → analytical scan/aggregation constraint → columnar/vectorized or distributed/managed analytical abstraction → throughput/compression/scale gains → new freshness, shuffle, operations, vendor/cost complexity`
+
+优先使用更简单、可本地观察的 case；只有 constraint 要求时才升级到 distributed/managed example。
+
+## 5. AI / LLM boundary
+
+**OQ-BP-001 remains unresolved.**
+
+本 map 只承认已经 safe 的 current-practice statement：
+
+> **AI-generated claim/code/configuration is an untrusted hypothesis requiring verification.**
+
+因此：
+
+- AI-generated output verification = **CURRENT CASE / verification practice**；
+- LLM architecture = **not admitted**；
+- transformer theory = **not admitted**；
+- prompt engineering = **not admitted**；
+- AI app development = **not admitted**；
+- 本 map 不为它们创建 competency、Concept ID、Module home 或 Core requirement。
+
+如果未来 OQ-BP-001 通过 RFC/Decision 改变 scope，再更新本 map；不能反过来用本 map 预先决定 RFC。
+
+## 6. HCI / accessibility boundary
+
+**OQ-BP-003 remains unresolved.**
+
+- existing P2 denial/error/privacy interaction hooks 保留；
+- existing P9 affected-user/accessibility/consent/recovery hooks 保留；
+- browser/product cases 不新增 canonical HCI/accessibility teaching track；
+- 若 OQ-BP-003 未来被决定，再通过 architecture task 更新，而不是在 M12/product case 中顺手扩 scope。
+
+## 7. Technology Evolution Lens
+
+重要 case 应明确：
+
+`old approach → limitation → new abstraction → gains → new costs`
+
+代表性 lens：
+
+| Evolution | Limitation addressed | Gains | New costs / moved complexity |
+|---|---|---|---|
+| process → VM / container | environment/isolation/reproducibility boundary | stronger/repeatable execution boundary | image/runtime/guest/host dependency、state confusion、ops |
