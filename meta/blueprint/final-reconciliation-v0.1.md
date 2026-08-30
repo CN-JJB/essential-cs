@@ -2,11 +2,11 @@
 
 **Task:** Issue #9 — [Blueprint] Reconcile Issues #1–#4 into Blueprint v0.1 maps
 **Role:** Curriculum Architecture Integrator
-**Status:** `LEAD ACCEPTED` — canonical Blueprint integration for Issue #9; not `VERIFIED`, not released, and Blueprint v0.1 is not yet exit-complete
+**Status:** `LEAD ACCEPTED` — historical Issue #9 canonical integration record; Blueprint exit status is superseded by `meta/blueprint/final-exit-audit-v0.1.md` (Issue #23 / PR #24), which passed and closed Blueprint v0.1 on 2026-08-30; not `VERIFIED` or released
 **Date:** 2026-08-30
 **Base branch:** `origin/main` `eae3de6` (fetched before work; GitHub authoritative)
 
-This record explains what entered the canonical Blueprint and what did not. It is the single place a new Web Lead reads to understand the reconciled Blueprint without reconstructing eight proposal PRs. It is not a transcript.
+This record explains what entered the canonical Blueprint and what did not. It remains the Issue #9 integration/provenance record; for current Blueprint completion status, use `meta/blueprint/final-exit-audit-v0.1.md` and `meta/PROJECT_STATUS.md`. It is not a transcript.
 
 ---
 
