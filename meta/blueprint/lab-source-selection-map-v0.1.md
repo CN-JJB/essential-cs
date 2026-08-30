@@ -354,12 +354,17 @@ PostgreSQL, Redis, Kafka, a cloud account, or a database engine implementation.
   external-exercise source at `LAB-OPT-05`; no OSTEP file is a dependency here.
 - **Exact exercise or bounded slice:** Provide an Essential CS-owned C
   program with two bounded scenarios. First, two real pthread workers perform
-  a shared-counter read/modify/write operation; a start gate and a bounded
-  `sched_yield()` or short delay widen the race window without dictating the
-  resulting schedule. The learner observes the incorrect result, then protects
-  the update with a mutex. Second, the workers implement a two-party
-  condition-variable rendezvous: each records `before`, waits in a loop on the
-  shared `ready` predicate, then records `after`. A bounded child-process
+  a deliberately non-atomic **compound** update using C11 atomic load and store
+  operations on a shared counter (for example, relaxed `atomic_load` → bounded
+  `sched_yield()`/short delay → `atomic_store(value + 1)`). Individual memory
+  accesses therefore remain defined, while the read/modify/write as a whole can
+  still lose an update under real scheduling. The learner observes that logical
+  race, then protects the compound update with a mutex (and may compare a true
+  atomic RMW such as `atomic_fetch_add` as a bounded extension). Second, the
+  workers implement a two-party condition-variable rendezvous: the shared
+  `ready` predicate and event record are protected by a mutex, and each worker
+  waits in a `while` loop with `pthread_cond_wait` before recording `after`. A
+  bounded child-process
   watchdog may be used for a deliberately reversed two-lock variant so a
   deadlock break cannot hang the learner's shell. No event-trace simulator,
   unbounded stress loop, or web framework is used.
@@ -367,14 +372,20 @@ PostgreSQL, Redis, Kafka, a cloud account, or a database engine implementation.
   failure observable in real POSIX threads, then connect safety, progress,
   deadlock, and fairness claims to evidence and limits.
 - **Mechanism revealed:** Shared state is updated by interleaved operations;
-  a mutex excludes conflicting critical sections; a condition variable is a
-  wait/notification mechanism whose predicate remains the correctness rule;
-  real scheduling can produce both a race and a correct-looking run. Lock
+  individually atomic accesses do not make a multi-step state transition
+  atomic; a mutex excludes conflicting critical sections; a condition variable
+  is a wait/notification mechanism whose predicate remains the correctness
+  rule; real scheduling can produce both a logical race and a correct-looking
+  run. The Required evidence path deliberately avoids relying on a C/C++ data
+  race (undefined behavior), so the observed lost update can be interpreted as
+  an atomicity/interleaving failure. Lock
   ordering, progress, deadlock, and scheduler-dependent fairness are distinct
   claims.
 - **Learner outcome:** The learner can draw an observed interleaving, state the
-  counter and rendezvous invariants, reproduce a race on the canonical image,
-  repair it with a suitable synchronization primitive, and explain why one
+  counter and rendezvous invariants, reproduce a defined lost-update race on
+  the canonical image, repair it with a suitable synchronization primitive,
+  distinguish a logical race condition from a C/C++ data race/undefined
+  behavior, and explain why one
   passing run is evidence rather than proof. The learner can also state what
   the bounded activity does not establish about starvation or fairness.
 - **Mapped competencies:** Correctness, Trace, Diagnose, Explain, Judge.
@@ -408,16 +419,19 @@ PostgreSQL, Redis, Kafka, a cloud account, or a database engine implementation.
   real lost-update race, the mutex repair preserves the counter invariant, and
   the rendezvous enforces both `before` events before either `after` event.
 - **Observation:** Record the source version, compiler/platform details,
-  correct and broken outputs, a run that actually exhibits the race, the
-  interleaving table, lock/condition wait locations, final invariant checks,
+  correct and broken outputs, a run that actually exhibits the defined
+  lost-update race, the interleaving table, atomic-access and lock/condition
+  wait locations, final invariant checks,
   and whether the deadlock watchdog fired. Label scheduler observations as
   observations, not universal guarantees.
-- **Controlled break/failure:** Remove the mutex, remove or move one predicate
-  wait/notification, use `if` instead of a predicate loop as a bounded teaching
+- **Controlled break/failure:** Run the defined atomic-load/store compound
+  update without the mutex, remove or move one predicate wait/notification,
+  use `if` instead of a predicate loop as a bounded teaching
   break, or reverse lock acquisition in a disposable child. Cap repetitions,
   enforce a watchdog timeout, and terminate only the learner-owned child.
-- **Explanation/judgment:** Explain shared-state interleaving versus mutual
-  exclusion, condition predicates versus notifications, evidence versus a
+- **Explanation/judgment:** Explain logical race/atomicity failure versus a
+  language-level data race, shared-state interleaving versus mutual exclusion,
+  condition predicates versus notifications, evidence versus a
   proof of all schedules, and progress versus safety. Judge mutex/condition
   variable choices against a simpler join or sequential path. State that POSIX
   leaves waiter selection to scheduling policy and does not make this Lab a
@@ -433,11 +447,14 @@ PostgreSQL, Redis, Kafka, a cloud account, or a database engine implementation.
   POSIX Issue 8. OSTEP, Pintos, xv6, and classic synchronization texts inform
   the design and comparison but contribute no copied code, prose, tests, or
   grading infrastructure. All Lab instructions, fixture code, prompts, and
-  tests are Essential CS-authored.
+  tests are Essential CS-authored. The Required broken-counter path is designed
+  to stay within defined C semantics rather than using undefined behavior as
+  the teaching mechanism.
 - **License status:** The Open Group/POSIX specification is copyrighted and
   will be linked and paraphrased only. The future Lab's original instructions,
-  C code, fixtures, and tests are Essential CS content and should carry the
-  repository's Apache-2.0 code policy where applicable. No third-party source
+  C code, fixtures, and tests are Essential CS-authored; code/tests follow the
+  repository's Apache-2.0 policy while learner-facing instructional prose follows
+  the educational-content license policy. No third-party source
   is bundled.
 - **Redistribution/adaptation status:** **Self-contained and rights-clear for
   the original activity**, subject to the normal release review of Essential
