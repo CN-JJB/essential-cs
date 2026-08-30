@@ -36,7 +36,7 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 
 | Workstream | Owner | Status |
 |---|---|---|
-| Course Charter, Learner Profile, Learning Outcomes, Bridge artifacts | Blueprint task (after #9) | Not started — exit-criteria gaps |
+| Course Charter, Learner Profile, Learning Outcomes, Bridge artifacts | Issue #19 / PR #20 | **COMPLETE — Lead-reviewed and merged** |
 | Assessment Architecture consolidation (packet model exists in COMPETENCY_MATRIX) | Blueprint task (after #9) | Partial |
 | Modern Technology Case Map | Blueprint task (after #9) | Partial (D-015 framework + project admission table exist) |
 | OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | Open — Core-scope, not decided |
