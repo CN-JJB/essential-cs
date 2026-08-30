@@ -1,6 +1,6 @@
 # Competency Matrix
 
-Status: **Blueprint v0.1 — reconciled** (Issue #9 integration applied; Lead review pending)
+Status: **Blueprint v0.1 — reconciled, Lead-accepted** (Issue #9 integration; not RELEASED)
 
 The Curriculum Map records what is taught. This matrix records what learners must be able to do, where each competency grows, and which evidence gates prove it. It replaces the original scaffold with the integrated model from Issue #15 (accepted) plus the Issue #9 audit dispositions.
 
