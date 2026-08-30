@@ -4,9 +4,13 @@ Last updated: 2026-08-30
 
 ## Current phase
 
-**Curriculum Blueprint v0.1 — ACTIVE**
+**Curriculum Blueprint v0.1 — COMPLETE / CLOSED**
 
-Requirements / Grill Me is complete. GitHub is the persistent source of truth. The first parallel Blueprint research/design wave, reconciliation inputs (#10–#13), and **Issue #9 final canonical reconciliation have all passed Web Lead review and are merged**. Blueprint v0.1 is **not complete**: several exit criteria still lack artifacts.
+**Post-Blueprint Vertical Slice Production — ACTIVE**
+
+Requirements / Grill Me is complete. GitHub remains the persistent source of truth. Issue #23 / PR #24 completed the independent Blueprint Final Exit Audit. The audit initially found two narrow production-facing consistency blockers; Web Lead direct fixes reconciled prerequisite metadata and competency labels without changing the accepted architecture. The narrow re-audit passed **30/30 Blueprint exit criteria**, and Blueprint v0.1 closed on 2026-08-30.
+
+Blueprint closure means the project may now build and validate the curriculum through stage-by-stage vertical slices. It does **not** mean Lessons/Labs are VERIFIED or released, and it does not satisfy the later v1.0 gate.
 
 ## Completed
 
@@ -34,33 +38,32 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
   - `meta/OPEN_QUESTIONS.md` — 3 open (OQ-BP-001/003 Core-scope escalations; OQ-BP-006 versions), 3 closed with provenance (OQ-BP-002/004/005).
   - `meta/rfcs/RFC-CAND-001-bounded-ai-literacy.md` (OQ-BP-001) and `meta/rfcs/RFC-CAND-002-human-facing-boundary.md` (OQ-BP-003) — candidates only, no decision.
   - `meta/PROJECT_STATUS.md`, `meta/blueprint/WORKSTREAMS.md` — state updated.
+- **Issue #19 / PR #20 — Lead-reviewed and merged:** Course Charter, Learner Profile, Learning Outcomes, Bridge / diagnostic.
+- **Issue #21 / PR #22 — Lead-reviewed and merged:** Assessment Architecture + Modern Technology Case Map.
+- **Issue #23 / PR #24 — Final Exit Audit merged 2026-08-30:** initial audit FAIL identified narrow prerequisite/competency inconsistencies; Web Lead direct-fixed them without changing 40H/22S architecture; narrow re-audit passed 30/30 criteria; Blueprint v0.1 closed.
 
 ## Active workstream
 
-The first half of the **exit-criteria completion wave** is complete.
+The project is transitioning into the first **post-Blueprint vertical slice**.
 
-Lead-reviewed and merged in Issue #19 / PR #20:
+Completed closure sequence:
 
-- Course Charter;
-- Learner Profile;
-- consolidated Learning Outcomes;
-- Bridge / diagnostic design.
+- Issue #19 / PR #20 — Course Charter, Learner Profile, Learning Outcomes, Bridge / diagnostic;
+- Issue #21 / PR #22 — Assessment Architecture + Modern Technology Case Map;
+- Issue #23 / PR #24 — Final Exit Audit, Lead direct fixes, narrow re-audit, **PASS — BLUEPRINT v0.1 READY TO CLOSE**.
 
-The remaining Blueprint exit-criteria design artifacts were completed in Issue #21 / PR #22:
+Next work follows D-023:
 
-- Assessment Architecture;
-- Modern Technology Case Map.
+`Research → Design → Lesson → Lab → Project → Verification → Learner Validation`
 
-The next step is a **Blueprint v0.1 Final Exit Audit** against `meta/blueprint/README.md`, not another design expansion task.
-
-Architecture questions **OQ-BP-001** (bounded AI literacy) and **OQ-BP-003** (human-facing/accessibility boundary) remain RFC-gated and are not silently decided by #9. OQ-BP-006 owns implementation-time environment/version/baseline pinning.
+The first task is a bounded **Research Dossier / vertical-slice architecture task** for early Foundations/System Mechanics. Do not begin mass Lesson writing.
 
 ## Current priority
 
-1. Run the Blueprint v0.1 Final Exit Audit against `meta/blueprint/README.md`, distinguishing complete / partial / intentionally deferred criteria.
-2. Resolve OQ-BP-001 and OQ-BP-003 through Open Question → research → RFC/Decision only if the Final Exit Audit finds they block Blueprint completion; do not force a decision otherwise.
-3. Confirm OQ-BP-006 remains a deliberate implementation-time pin rather than a missing architecture artifact.
-4. If exit criteria pass, close Blueprint v0.1 and begin stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations/System Mechanics slice.
+1. Launch the first early Foundations/System Mechanics vertical-slice Research Dossier, centered on Information / Representation → Computation → early Machine, with the earliest justified Mini Cloud App P0 connection.
+2. Treat exact environment/toolchain/version pins as implementation-time work under OQ-BP-006 when the first runnable slice/preflight requires them; do not invent pins prematurely.
+3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated, non-blocking Open Questions unless an affected slice produces evidence that a Core-scope decision is required.
+4. Keep lesson production vertical and evidence-driven; no bulk Stage-wide drafting before the relevant dossier/design work.
 
 ## Current architecture attention points
 
