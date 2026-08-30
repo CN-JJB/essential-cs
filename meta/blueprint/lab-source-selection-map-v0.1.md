@@ -403,20 +403,23 @@ PostgreSQL, Redis, Kafka, a cloud account, or a database engine implementation.
 - **Setup burden:** Low. The future Lab supplies the original source, a
   bounded runner/watchdog, a smoke test, and a resettable output directory.
 - **Smoke test:** A future implementation must compile the original program,
-  observe a failing interleaving within a bounded attempt budget on the
-  canonical image, verify the repaired invariant, and terminate all local
-  children during reset.
+  confirm that the Required broken path uses defined C11 atomic accesses rather
+  than undefined unsynchronized scalar accesses, observe a lost-update
+  interleaving within a bounded attempt budget on the canonical image, verify
+  the repaired invariant, and terminate all local children during reset.
 - **Approximate runtime class:** Each run is **sub-second to seconds**; the
   bounded repetition and observation record take **low minutes**. Repetition
   increases the chance of observing an interleaving but never proves its
   absence.
 - **Prediction step:** Before running, enumerate a counter interleaving in
-  which both threads read the same value and one write is lost; predict the
-  final count range. Predict the rendezvous output and identify the predicate
-  that must be rechecked after a condition wait. Predict what the reversed
+  which both threads atomically load the same value and a later atomic store
+  overwrites the other worker's update; predict the final count range. Predict
+  the rendezvous output and identify the mutex-protected predicate that must be
+  rechecked after a condition wait. Predict what the reversed
   lock order can do and what the watchdog can and cannot establish.
 - **Expected observation:** A bounded canonical-image run produces at least one
-  real lost-update race, the mutex repair preserves the counter invariant, and
+  defined lost-update race, the mutex repair preserves the counter invariant,
+  and
   the rendezvous enforces both `before` events before either `after` event.
 - **Observation:** Record the source version, compiler/platform details,
   correct and broken outputs, a run that actually exhibits the defined
@@ -1498,11 +1501,12 @@ Lab in this map depends on an unresolved third-party assignment bundle.
   scheduling mechanism; xv6 overlaps the OS Lab; Proxy Lab is rights-uncertain
   and combines too many mechanisms.
 - **Final selection:** `LAB-REQ-03` is now **Build — Essential CS original**:
-  a small native Linux POSIX-thread activity with a real shared-counter race,
-  mutex repair, condition-variable rendezvous, and a bounded deadlock/watchdog
-  boundary. The race window may use `sched_yield()` or a bounded delay, but
-  Linux scheduling produces the observed interleaving; no simulator dictates
-  it. OSTEP is retained as optional `LAB-OPT-05` link-only evidence.
+  a small native Linux POSIX-thread activity with a defined lost-update race
+  built from C11 atomic load/store operations, mutex repair, condition-variable
+  rendezvous, and a bounded deadlock/watchdog boundary. The race window may use
+  `sched_yield()` or a bounded delay, but Linux scheduling produces the
+  observed interleaving; no simulator dictates it and no undefined C data race
+  is required. OSTEP is retained as optional `LAB-OPT-05` link-only evidence.
 - **Adopt / Adapt / Build rationale:** Adopt OSTEP only as an optional
   external activity; use POSIX as the stable specification and mechanism
   authority; Build the self-contained Required activity because no researched
