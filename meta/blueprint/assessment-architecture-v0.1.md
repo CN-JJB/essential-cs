@@ -138,7 +138,7 @@ Lesson/local check 是最短反馈环。它们不是正式考试，目标是尽�
 
 Local check 应尽量满足：
 
-1. 10–20 分钟级反馈，而非长延迟评分；
+1. 保持短反馈回路（通常是一个小任务、一次 prediction/observation 或一个明确判断点），而非长延迟评分；
 2. 给出 expected observation 或解释入口；
 3. 能定位“概念错误 / 工具错误 / environment failure”中的哪一类；
 4. 不以命令记忆、语法 trivia 或 prose polish 作为 competence proxy。
@@ -151,7 +151,7 @@ Local check 应尽量满足：
 
 规则：
 
-- 每个 Module 至少要有一个能直接指向 named capability 的 observable artifact；
+- 每个 Module 的 named capability 必须能由至少一个**已有或近邻** observable artifact 支撑；不要求为每个 Module 额外新建独立 artifact；
 - 不要求每个 Module assess 八项 competencies；
 - evidence 可以由 local check、Required Lab、Mini Cloud milestone 或 Stage packet 提供；
 - Module 如果没有 Required Lab，不因此需要造一个 Lab；
