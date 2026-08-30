@@ -100,7 +100,7 @@ Essential CS 明确不是：
 
 **v1.0 means teachable, not merely written.**
 
-只有在完整 Core spine 可教学、Mini Cloud App 演化完整、所有 REQUIRED Labs 可运行且有文档、provenance/licensing 到位、内容通过多角苲独立验证、目标学习者验证关键 Core 路径、外部覆盖审计完成、维护/复核流程实际运行、且不存在 critical blockers 时，项目才达到 v1.0 gate。
+只有在完整 Core spine 可教学、Mini Cloud App 演化完整、所有 REQUIRED Labs 可运行且有文档、provenance/licensing 到位、内容通过多角色独立验证、目标学习者验证关键 Core 路径、外部覆盖审计完成、维护/复核流程实际运行、且不存在 critical blockers 时，项目才达到 v1.0 gate。
 
 这意味着“文稿写完”不是发布条件；学习者能否稳定进入、运行、观察、诊断、解释、判断并完成 Final System Defense 才是发布条件。
 
