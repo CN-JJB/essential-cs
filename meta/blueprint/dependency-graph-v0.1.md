@@ -85,7 +85,7 @@ A complete shared Core traversal still includes both S4 and S5 before the distri
 | M06 | M15 | H | Threads are execution contexts; processes/threads distinction needs process model |
 | M03 | M15 | S | Machine-level memory (shared state) helps race intuition (soft) |
 | M12 | M15 | S | Event loop from browser is reused in async (soft) |
-| M14 | M16 | H | Distributed transactions / consistency reference: you need single-node consistency first |
+| M14 | M16 | S | Single-node transaction/isolation semantics help contextualize distributed consistency, but partial failure and RPC can be learned accurately from networking + concurrency alone |
 | M15 | M16 | H | RPC & partial failure are threaded/concurrent programs over the network |
 | M10 | M16 | H | RPC sits on the network |
 | M16 | M17 | H | Replication/consensus need partial-failure framing first |
@@ -115,7 +115,7 @@ A complete shared Core traversal still includes both S4 and S5 before the distri
 | M23 | M24 | H | Defense requires the judgement toolkit |
 | M20 | M24 | S | Evidence/observability underpins a good defense (soft) |
 
-**Total edges above (Module level):** 62 edges: 41 `H`, 21 `S`, and additional `R`/`P` relationships shown in the narrative below. The Mermaid diagram (§3) includes all 62 H/S edges.
+**Total edges above (Module level):** 62 edges: 40 `H`, 22 `S`, and additional `R`/`P` relationships shown in the narrative below. The Mermaid diagram (§3) includes all 62 H/S edges.
 
 ### Revisit (`R`) and Project (`P`) relationships (non-ordering)
 
@@ -215,7 +215,7 @@ flowchart LR
     M06 --> M15
     M03 -.-> M15
     M12 -.-> M15
-    M14 --> M16
+    M14 -.-> M16
     M15 --> M16
     M10 --> M16
     M16 --> M17
