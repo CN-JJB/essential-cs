@@ -6,7 +6,7 @@ Last updated: 2026-08-30
 
 **Curriculum Blueprint v0.1 — ACTIVE**
 
-Requirements / Grill Me is complete. GitHub is the persistent source of truth. The first parallel Blueprint research/design wave and the reconciliation inputs wave (Issues #10–#13) are merged; **Issue #9 integration has been executed and is under Lead review** (branch `blueprint/issue-9-final-reconciliation`, PR with `Closes #9`). Blueprint v0.1 is **not complete**: several exit criteria still lack artifacts.
+Requirements / Grill Me is complete. GitHub is the persistent source of truth. The first parallel Blueprint research/design wave, reconciliation inputs (#10–#13), and **Issue #9 final canonical reconciliation have all passed Web Lead review and are merged**. Blueprint v0.1 is **not complete**: several exit criteria still lack artifacts.
 
 ## Completed
 
@@ -25,7 +25,7 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
   - PR #15: Competency + Concept Registry integration (Lead direct fixes, then merged).
   - PR #16: Lab + Source Expedition selection (reworked after Lead review: 5 Required / 5 Optional / 5 Source Expeditions; Required concurrency is a self-contained Essential CS POSIX/C11 Lab; SQLite Required DB Labs; OSTEP optional/link-only; PostgreSQL optional comparison; xv6 licensing scoped separately; LAB-REQ-03 broken path uses defined C11 atomic operations, not undefined-behavior data races).
   - PR #17: Audit → Architecture disposition matrix (R1–R15 outcomes; R3/R4 escalated).
-- **Issue #9 integrated (2026-08-30) — under Lead review.** Canonical Blueprint state now includes:
+- **Issue #9 final reconciliation (PR #18) — Lead-reviewed and merged 2026-08-30.** Canonical Blueprint state now includes:
   - `meta/blueprint/final-reconciliation-v0.1.md` — integration record + canonical P0–P9 Module mapping.
   - `meta/CURRICULUM_MAP.md` — reconciled stage/module/lab/project/registry overview.
   - `meta/blueprint/core-stage-module-lesson-map-v0.1.md` and `meta/blueprint/dependency-graph-v0.1.md` — reconciled for Issue #9 (no DAG edge changes; hidden prerequisites resolved; proposal-level OQ-1–OQ-9 closed).
@@ -37,19 +37,22 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
 
 ## Active workstream
 
-- **Lead review of the Issue #9 integration PR** (`Closes #9`).
-  - verify the highest-risk integration decisions (M04 `L04-02` uncertainty-toolkit boundary, concept first-home changes, P0–P9 project-order vs DAG separation, LAB-REQ-03 defined-race design, Registry admission scope, exit-criteria gap list);
-  - the Reviewer may directly fix small inconsistencies before merge (review policy, D-018/D-019).
-- **After #9 merges** (or in parallel once unblocked), next Blueprint work:
-  - remaining exit-criteria artifacts: **Course Charter, Learner Profile, Learning Outcomes, Bridge**, partial **Assessment Architecture** and **Modern Technology Case Map** (see `final-reconciliation-v0.1.md` §11);
-  - eventually: Open Question → research → RFC/Decision for **OQ-BP-001** and **OQ-BP-003** (Core-scope; not decided by #9);
-  - environment/version pinning (OQ-BP-006) at first module dossier + lab implementation.
+Next Blueprint work is the **exit-criteria completion wave**:
+
+- Course Charter;
+- Learner Profile;
+- consolidated Learning Outcomes;
+- Bridge / diagnostic design;
+- Assessment Architecture consolidation;
+- Modern Technology Case Map.
+
+Architecture questions **OQ-BP-001** (bounded AI literacy) and **OQ-BP-003** (human-facing/accessibility boundary) remain RFC-gated and are not silently decided by #9. OQ-BP-006 owns implementation-time environment/version/baseline pinning.
 
 ## Current priority
 
-1. Lead review and merge of Issue #9 (do not mark Blueprint v0.1 complete until its exit criteria are met).
-2. Resolve architecture-level Open Questions through the required Open Question → research/RFC → Decision path (OQ-BP-001, OQ-BP-003).
-3. Produce the missing exit-criteria Blueprint artifacts (charter, learner profile, outcomes, bridge, assessment architecture, technology case map).
+1. Produce the missing exit-criteria Blueprint artifacts (charter, learner profile, outcomes, bridge, assessment architecture, technology case map).
+2. Resolve OQ-BP-001 and OQ-BP-003 through Open Question → research → RFC/Decision when needed; they do not block unrelated exit-criteria work.
+3. Re-audit Blueprint v0.1 against `meta/blueprint/README.md` and close remaining gaps.
 4. Then begin stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations/System Mechanics slice — **no large-scale lesson writing before exit criteria**.
 
 ## Current architecture attention points
@@ -58,7 +61,7 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
 - bounded HCI/accessibility/user-boundary reasoning (OQ-BP-003) — RFC candidate exists, undecided; P2/P9 evidence hooks remain interim-safe;
 - default S4/S5 learner narrative — decided (request-centric preference, not a hard dependency);
 - just-in-time applied MSF/statistics (M04 `L04-02` first home) and explicit toolchain/SDF outcomes (M00 `L00-02` + lab-entry gate);
-- canonical software/environment versions (OQ-BP-006) and latency-constant list — implementation-time;
+- canonical software/environment versions and hardware-dependent latency/cost baselines (OQ-BP-006) — implementation-time;
 - Lab implementation dossiers (setup validation, smoke tests, license/pinning audits) — post-Blueprint.
 
 ## Lifecycle
