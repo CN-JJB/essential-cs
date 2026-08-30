@@ -15,7 +15,15 @@ The four artifacts are **inputs to reconciliation**, not independently final Blu
 
 | Issue | Workstream | Dependency / coordination |
 |---|---|---|
-| #9 | Reconcile Issues #1–#4 into Blueprint v0.1 maps | Primary integration workstream; owns reconciliation, not silent Core-scope changes |
+| #9 | Reconcile Issues #1–#4 into Blueprint v0.1 maps | Parent integrator; waits for #10–#13 parallel input proposals before canonical-map integration |
+| #10 | Audit recommendations → architecture disposition matrix | Parallel-safe; separate proposal artifact |
+| #11 | Mini Cloud App P0–P9 ↔ Module/Stage alignment | Parallel-safe; separate proposal artifact |
+| #12 | Blueprint Lab + Source Expedition selection map | Parallel-safe; separate proposal artifact |
+| #13 | Competency + Concept Registry integration proposal | Parallel-safe; separate proposal artifact |
+
+### Parallel input rule
+
+Issues #10–#13 may run concurrently. Each owns only its dedicated proposal artifact and must not edit shared canonical Blueprint maps. After Lead review/merge, Issue #9 performs the single reconciliation/integration pass.
 
 ### #9 integration responsibilities
 
