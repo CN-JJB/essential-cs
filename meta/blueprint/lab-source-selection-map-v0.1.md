@@ -1,6 +1,6 @@
 # Blueprint Lab and Source Expedition Selection Map v0.1
 
-Status: **REWORK COMPLETE — READY FOR LEAD REVIEW**
+Status: **LEAD-ACCEPTED — canonical Blueprint v0.1 selection (Issue #12 / PR #16); not implemented or VERIFIED**
 
 Task: Issue #12, child of Issue #9
 Date checked: 2026-08-30
