@@ -2,9 +2,9 @@
 
 Only unresolved questions that can materially affect curriculum architecture, technical truth, or implementation should live here.
 
-## Active — Blueprint reconciliation
+## Active — post-Blueprint
 
-Issue #9 integration is applied and under Lead review. The following remain **open** — each is either a Core-scope escalation (requires RFC/Decision) or an implementation-time pin that Blueprint deliberately does not decide.
+Blueprint v0.1 passed the Final Exit Audit in Issue #23 / PR #24 and is closed. The following remain **open** after Blueprint closure — each is either a Core-scope escalation (requires RFC/Decision) or an implementation-time pin deliberately deferred to the first affected vertical slice / implementation work. Their open status does not by itself reopen Blueprint.
 
 ### OQ-BP-001 — Where does bounded AI literacy belong? (OPEN — Core-scope escalation)
 
