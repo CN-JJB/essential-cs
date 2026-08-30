@@ -42,7 +42,7 @@ Essential CS 面向有基础编程经验、希望建立现代计算系统整体�
 
 ## Practical-computing variation
 
-目标学习者可能“会冝程序”，却仍缺少稳定的实践技术流畅度。常见薄弱项包括：
+目标学习者可能“会写程序”，却仍缺少稳定的实践技术流畅度。常见薄弱项包括：
 
 - 文件、目录与相对/绝对路径；
 - terminal / shell 基本生存能力；
@@ -120,7 +120,7 @@ Essential CS 面向有基础编程经验、希望建立现代计算系统整体�
 
 ## Entry boundary
 
-如果学习者已经能稳定完成 Bridge diagnostic，应直接进入 M00。若只在一两个实践技能上薄弱，使用 targeted Bridge remediation 后进入即可。若学习者尚不能理解基本变量、函数和控制流，推荐先补齐基础编程；Essential CS Bridge 不承担 Programming 101 的职责。
+如果学习者已经具备 Bridge diagnostic 所检查的能力（无论是否实际执行 diagnostic），应直接进入 M00。若自检或 diagnostic 只暴露一两个实践技能薄弱点，使用 targeted Bridge remediation 后进入即可。若学习者尚不能理解基本变量、函数和控制流，推荐先补齐基础编程；Essential CS Bridge 不承担 Programming 101 的职责。
 
 ## Canonical references
 
