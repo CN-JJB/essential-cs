@@ -1,6 +1,6 @@
 # Essential CS Learning Outcomes v0.1
 
-Status: **Blueprint v0.1 — READY FOR LEAD REVIEW**
+Status: **Blueprint v0.1 — LEAD-ACCEPTED** (not VERIFIED/released)
 Purpose: define what successful Core completion means in observable learner behavior. [`meta/COMPETENCY_MATRIX.md`](../COMPETENCY_MATRIX.md) remains the canonical map of **where** capabilities grow; this document consolidates **what completion demonstrates**.
 
 ## Outcome architecture
