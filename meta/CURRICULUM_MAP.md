@@ -81,7 +81,7 @@ Reconciled additions (Issue #9, per accepted audit dispositions):
 
 - **Applied measurement-uncertainty toolkit** (R1/R7) — sub-thread under Measurement & Performance: repeated measurements, distributions, median/percentiles when useful, uncertainty/variation, inference limits, order-of-magnitude reasoning. First assessed home: M04 `L04-02`; revisited at M13/M16/M17/M20/M23. Reliability/failure probability remains just-in-time inside M16/M17.
 - **Experimental pattern** (R7) — question/hypothesis → baseline → controlled change → metric/environment/workload → repetitions/distribution when relevant → observation → competing explanation → bounded conclusion. First assessed home: M04 `L04-02`; revisited at M20 `L20-01`; consolidated at M23 `L23-01`.
-- **Horizontal security/privacy evidence** (R8) — first intros M07 (`L07-01`), M11 (`L11-01`), M12 (`L12-03`), plus M19 `L19-03` supply chain; evidence required at P0–P9; synthesis at M21/M22; judgment at M23/M24. Accessibility stays with OQ-BP-003, not resolved by security.
+- **Horizontal security/privacy evidence** (R8) — M07 `L07-01` is the first concrete **trust-boundary** home (while distinguishing trust from isolation); M11 TLS and M12 origin/site isolation revisit it; M19 adds deployment/supply-chain boundaries; synthesis at M21/M22; judgment at M23/M24. Evidence is required across P0–P9. Accessibility stays with OQ-BP-003, not resolved by security.
 
 ## Mini Cloud App (P0–P9)
 
@@ -142,7 +142,7 @@ No Required Lab bundles third-party material with unresolved reuse rights. OSTEP
 
 ## Concept Registry
 
-Initial canonical population: 18 concepts `EC-CON-001`–`EC-CON-018` (the 15 Big Ideas as concepts + Process, Durability, Trust Boundary as concepts only). Big Ideas remain 15; no new Big Idea was created.
+Initial canonical population: 18 concepts `EC-CON-001`–`EC-CON-018` (the 15 Big Ideas as concepts + Process, Durability, Trust Boundary as concepts only). Big Ideas remain 15; no new Big Idea was created. Trust Boundary's first home is M07 `L07-01`; M21 is its security-synthesis revisit.
 
 Deferred from first population (explicit): `Consensus` (concept is Core at M17 per R10; stable ID deferred), schema-evolution/provenance (application pattern over Representation/State/Interface/Invariant), AI-literacy/HCI concepts (OQ-BP-001 / OQ-BP-003 RFC-gated). No product names/commands/frameworks are concept IDs.
 
