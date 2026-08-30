@@ -4,22 +4,19 @@ Date: 2026-08-30
 
 ## Current phase
 
-**Curriculum Blueprint v0.1 — initialization / first construction session**
+**Curriculum Blueprint v0.1 — ACTIVE**
 
-## Completed before this handoff
+Requirements / Grill Me is complete. The repository is now initialized as the persistent project state.
 
-The Requirements / Grill Me phase is complete. The user accepted the final batch of governance decisions and requested that durable project state be written to GitHub before switching chats.
+## Completed
 
-Repository initialization has persisted:
+The following are persisted in GitHub:
 
-- project identity and root agent instructions;
-- Curriculum Invariants;
-- durable Decisions;
-- Project Status / Open Questions;
-- Blueprint v0.1 exit criteria;
-- initial Curriculum Map;
-- initial Competency Matrix;
-- initial Concept Registry structure;
+- root project identity and agent instructions;
+- Curriculum Invariants and durable Decisions;
+- Project Status and Open Questions;
+- Blueprint v0.1 exit criteria and workstreams;
+- initial Curriculum Map, Competency Matrix, and Concept Registry;
 - Research & Source Policy;
 - Lab Design Policy;
 - Review Policy;
@@ -30,27 +27,49 @@ Repository initialization has persisted:
 - Release & Maintenance Policy;
 - Definition of Done;
 - Visual & Writing Policy;
-- Prompt templates/specification.
+- Repository Architecture;
+- Agent Capability Registry scaffold;
+- prompt templates/specification;
+- PR/Issue templates;
+- attribution and dual-license intent.
+
+## Active Issues
+
+- **#1** — Design detailed Core stages, Module/Lesson map, and dependency graph.
+- **#2** — External Curriculum Coverage Audit v0.1.
+- **#3** — Design Mini Cloud App evolution map.
+- **#4** — Research classic labs and Source Expedition candidates.
+
+Issues #1–#4 are intentionally parallel-safe during research/design. Their outputs require Lead reconciliation before Blueprint completion.
 
 ## Important operating model
 
-The user uses the Web Lead as the overall curriculum architect/reviewer/dispatcher.
+The Web Lead is the overall curriculum architect, reviewer, dispatcher, visual editor, and final quality gate.
 
-The user can give the Web Lead's generated prompts to one or multiple Local AIs that can operate the local computer/repository.
+The user can give Web Lead-generated prompts to one or multiple Local AIs that operate the local computer/repository.
 
-Local AIs return work via GitHub. The Web Lead reviews it.
+Local AIs return work through GitHub branches/PRs. The Web Lead reviews Task Contract ↔ Completion Report ↔ Actual Diff.
 
-The Web Lead should directly fix simple/reliable issues and personally handle final images/visuals. Complex rework is re-dispatched.
+The Web Lead should directly fix simple/reliable issues and personally handle final images/visuals. Complex rework is re-dispatched with a structured Rework Prompt.
 
-The user decides when a Web Lead chat is too long and asks for a handoff prompt.
+The user decides when a Web Lead chat is long enough and asks for a handoff prompt.
 
-## Next priorities
+## Next action
 
-1. Inspect current repository tree and Issues.
-2. Create/organize Blueprint v0.1 work Issues.
-3. Dispatch bounded Local Agent tasks for Blueprint architecture research, external curriculum audit, Mini Cloud App evolution research/design, and lab/source candidate research where parallel-safe.
-4. Do not bulk-write Lessons.
-5. Review returned Local Agent PRs against the repository policies.
+Start the new Web Lead session by reading the repository state and active Issues.
+
+Then, unless the repository has materially changed, prepare directly copyable Local Agent Task Prompts for Issues #1–#4 (or a sensible subset matching the user's available Local AIs), including:
+
+- branch/worktree guidance;
+- read-first files;
+- work claims;
+- allowed/forbidden edits;
+- required research/deliverables;
+- verification;
+- Completion Report;
+- parallel/dependency notes.
+
+Do not continue Requirements interviewing and do not bulk-write Lessons.
 
 ## Do not forget
 
