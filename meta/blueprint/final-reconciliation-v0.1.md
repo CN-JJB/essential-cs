@@ -223,7 +223,7 @@ Source: `lab-source-selection-map-v0.1.md` (accepted). Summary:
 - **Accepted:** 18 concepts EC-CON-001–018 — the 15 Big Ideas as concepts plus Process (EC-CON-018), Durability (EC-CON-016), Trust Boundary (EC-CON-017).
 - **Big Ideas unchanged:** 15; Process/Durability/Trust Boundary are concepts, not Big Ideas (explicitly recorded in the Registry).
 - **Deferred (with reasons recorded):** Consensus (concept Core at M17 per R10, ID deferred per #15 §8.5); schema-evolution/provenance (application pattern over existing Representation/State/Interface/Invariant; R6); Queue/Replication/Transaction/RPC/Container/Observability IDs; AI/model/evaluation concepts (OQ-BP-001); HCI/accessibility/consent concepts (OQ-BP-003); applied statistics/uncertainty concepts (toolkit under Estimate, R1).
-- **First-home changes applied:** Invariant/Correctness/Specification → M02 `L02-03` (M01 application-only); Failure → M03 `L03-03` (M00 preview); Isolation → M07 `L07-01`; Concurrency → M15 `L15-01`; Consistency → M14 `L14-02`; Caching → M04 `L04-01`; Locality → M04 `L04-02`; Trust Boundary → M21 `L21-01`; Durability → M09 `L09-01`; Process → M06 `L06-01`.
+- **First-home changes applied:** Invariant/Correctness/Specification → M02 `L02-03` (M01 application-only); Failure → M03 `L03-03` (M00 preview); Isolation → M07 `L07-01`; **Trust Boundary → M07 `L07-01` as the first concrete protection/trust boundary, explicitly distinguished from isolation; M21 is synthesis**; Concurrency → M15 `L15-01`; Consistency → M14 `L14-02`; Caching → M04 `L04-01`; Locality → M04 `L04-02`; Durability → M09 `L09-01`; Process → M06 `L06-01`.
 - **Hygiene:** zero product names/commands/frameworks/vendors as IDs; no new ID in any RFC-gated area.
 
 ## 10. Architecture escalations (explicit, unresolved)
@@ -278,7 +278,7 @@ Source: `lab-source-selection-map-v0.1.md` (accepted). Summary:
 
 **Assumptions:** (1) merged #5–#8/#14–#17 represent the accepted input set as of `origin/main` `eae3de6`; (2) the corrected DAG semantics recorded in PROJECT_STATUS (S4/S5 partial independence; M14→M16 soft, M14→M17 hard) are the authoritative Lead fixes — preserved; (3) Issue #9 does not itself make a Core-scope decision beyond what the accepted disposition matrix permitted; (4) "canonical" here means canonical-in-Blueprint (under Lead review), not VERIFIED-and-released; (5) Chinese canonical names in the Registry follow D-005 and the #15 proposal text (Lead may refine terminology at dossier time).
 
-**Open questions:** OQ-BP-001, OQ-BP-003 (escalations, RFC candidates created); OQ-BP-006 (implementation-time pin); plus Proposal OQ-9 latency constants (implementation-time).
+**Open questions:** OQ-BP-001, OQ-BP-003 (architecture escalations, RFC candidates created); OQ-BP-006 (implementation-time environment/baseline pin). The former Proposal OQ-9 latency-constant question is **subsumed by OQ-BP-006 + module-dossier/Living Curriculum baselining**, not maintained as a separate durable Open Question.
 
 **Prompt deviations:** none material. The allow-list's "update cross-reference metadata in accepted Blueprint artifacts only when mechanically stale" was interpreted narrowly — no acceptance-level substance was changed in `mini-cloud-app-evolution-v0.1.md`, `mini-cloud-curriculum-alignment-v0.1.md`, or `lab-source-selection-map-v0.1.md`.
 
