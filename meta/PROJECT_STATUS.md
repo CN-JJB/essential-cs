@@ -37,12 +37,17 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
 
 ## Active workstream
 
-Next Blueprint work is the **exit-criteria completion wave**:
+The first half of the **exit-criteria completion wave** is complete.
+
+Lead-reviewed and merged in Issue #19 / PR #20:
 
 - Course Charter;
 - Learner Profile;
 - consolidated Learning Outcomes;
-- Bridge / diagnostic design;
+- Bridge / diagnostic design.
+
+The remaining Blueprint exit-criteria design work is now:
+
 - Assessment Architecture consolidation;
 - Modern Technology Case Map.
 
@@ -50,7 +55,7 @@ Architecture questions **OQ-BP-001** (bounded AI literacy) and **OQ-BP-003** (hu
 
 ## Current priority
 
-1. Produce the missing exit-criteria Blueprint artifacts (charter, learner profile, outcomes, bridge, assessment architecture, technology case map).
+1. Produce the remaining exit-criteria Blueprint artifacts: Assessment Architecture and Modern Technology Case Map.
 2. Resolve OQ-BP-001 and OQ-BP-003 through Open Question → research → RFC/Decision when needed; they do not block unrelated exit-criteria work.
 3. Re-audit Blueprint v0.1 against `meta/blueprint/README.md` and close remaining gaps.
 4. Then begin stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations/System Mechanics slice — **no large-scale lesson writing before exit criteria**.
