@@ -1,6 +1,6 @@
 # Essential CS Course Charter v0.1
 
-Status: **Blueprint v0.1 — READY FOR LEAD REVIEW**
+Status: **Blueprint v0.1 — LEAD-ACCEPTED** (not VERIFIED/released)
 Purpose: define the durable course promise and boundary. Constitutional rules remain in [`meta/CURRICULUM_INVARIANTS.md`](../CURRICULUM_INVARIANTS.md); this document does not replace them.
 
 ## Mission
