@@ -1,6 +1,6 @@
 # Blueprint v0.1 Final Exit Audit
 
-Status: **READY FOR LEAD REVIEW**
+Status: **LEAD REVIEW COMPLETE — PASS after bounded direct fixes**
 Role: Independent Blueprint Exit Auditor / Curriculum Quality Gate
 Repository: CN-JJB/essential-cs
 Issue: #23 — [Blueprint] Final Exit Audit v0.1
@@ -22,7 +22,7 @@ Authority was interpreted in this order:
 3. canonical Blueprint artifacts identified by meta/blueprint/final-reconciliation-v0.1.md;
 4. accepted research/proposal artifacts as evidence and rationale, but not as independent decision authority.
 
-The audit tests existence, coherence, authority, cross-artifact consistency, and sufficiency for the next production phase. It does not repair architecture.
+The independent audit tests existence, coherence, authority, cross-artifact consistency, and sufficiency for the next production phase. It initially reported two narrow blocker classes. The Web Lead independently validated them, applied bounded direct fixes on PR #24 without changing the accepted Module H/S edge set, and then re-audited only the affected criteria plus structural invariants.
 
 GitHub state checked before audit:
 
@@ -34,21 +34,24 @@ GitHub state checked before audit:
 
 ## 2. Final verdict
 
-**Gate result: FAIL.**
+**Gate result: PASS after Web Lead direct-fix and narrow re-audit.**
 
-Most Blueprint architecture is complete and production-oriented. The independently recomputed Module DAG is sound: **25 nodes, 62 H/S edges, 40 Hard, 22 Soft, acyclic**. The curriculum structure remains **7 Stages / 25 Modules / 70 unique preliminary Lessons**. The Mini Cloud App, Lab/Source Expedition selection, assessment architecture, technology map, governance system, and open-question boundaries are sufficiently defined for Blueprint purposes.
+The independent auditor's initial FAIL was directionally correct: production-facing prerequisite metadata and three noncanonical competency labels contradicted already-accepted architecture. The Web Lead reviewed the claims rather than accepting the verdict automatically, confirmed the root defects, and found several additional instances in the same class (malformed shorthand prerequisite IDs and one extra Soft relationship inside the Hard column).
 
-However, the canonical dependency/lesson artifacts do not currently express one authoritative prerequisite model:
+The fixes were strictly reconciliatory:
 
-- the detailed Module map labels several Soft or absent DAG relationships as Prerequisites;
-- the Lesson Map labels cross-Module relationships Hard prerequisites even when the Module DAG classifies the same dependency as Soft or does not contain it;
-- dependency-graph-v0.1.md §4 itself calls some lesson-level cross-Module relationships hard while its Module-level graph says otherwise;
-- the M14/M15 area retains a M15-preview hard prerequisite on L14-02 while L15-01 in turn names L14-02 as hard, despite the reconciled Module decision explicitly keeping M14/M15 ordering Soft;
-- the Lesson Map's Competency gain column uses Measure in three rows even though the canonical system defines exactly eight competencies and has no Measure competency.
+- **no Stage, Module, Lesson, competency, Lab, project milestone, Concept, or Open Question was added or removed;**
+- the Module DAG remains **25 nodes / 62 H+S edges / 40 Hard / 22 Soft / acyclic**;
+- all Module prerequisite prose now names Hard vs Soft/preferred relationships from that DAG explicitly;
+- Stage entry assumptions no longer create hidden prerequisites beyond the Learner Profile / Module DAG;
+- the Lesson Map retains **70 unique preliminary Lessons**, and every cross-Module item in its **Hard prerequisites** column is supported by Module-H ancestry;
+- Dependency Graph §4 is now an exhaustive synchronized view of those cross-Module hard references (**28/28**);
+- malformed shorthand prerequisite references (`L07`, `L16`, `L19`) and `M15-preview` are gone;
+- `Measure` is no longer used as a competency; the three affected Lesson rows map to existing canonical competencies.
 
-These are narrow repairable defects, not reasons to redesign the curriculum. But they are **production-facing authority contradictions**: a vertical-slice designer should not have to decide whether the Module DAG, Module prose, or Lesson Hard prerequisites column is the real prerequisite contract.
+The remaining open questions are still correctly bounded: OQ-BP-001 and OQ-BP-003 remain RFC-gated and non-blocking for the first slice; OQ-BP-006 remains an implementation-time environment/version pin.
 
-**Final gate question:** the first early Foundations/System Mechanics slice is architecturally viable, and the open questions do not require a large-scale architecture cycle. Nevertheless, formal Blueprint closure and production should wait for the smallest prerequisite/competency reconciliation described in §10.
+**Final gate question:** Blueprint v0.1 is coherent and complete enough to begin the first stage-by-stage vertical slice without reopening large-scale curriculum architecture.
 
 ## 3. Exit Criteria Matrix
 
@@ -59,10 +62,10 @@ These are narrow repairable defects, not reasons to redesign the curriculum. But
 | 3 | Learner Profile | COMPLETE | meta/blueprint/learner-profile-v0.1.md; meta/DECISIONS.md D-002/D-008 | Entry ability and non-prerequisites are explicit; no formal CS, C, Linux, networking, database, shell, Git, cloud, or professional-engineering prerequisite is assumed. | Validate against real learners later. | Non-blocking: learner contract is sufficient for design. |
 | 4 | Learning Outcomes | COMPLETE | meta/blueprint/learning-outcomes-v0.1.md; meta/COMPETENCY_MATRIX.md | Observable graduate outcomes are defined for exactly the eight canonical competencies with evidence and non-evidence examples. | Learner validation belongs to later gates. | Non-blocking: outcomes can drive module/assessment production. |
 | 5 | Big Ideas | COMPLETE | meta/CONCEPT_REGISTRY.md | Exactly 15 Big Ideas are named. Process, Durability, and Trust Boundary are explicitly concepts, not additional Big Ideas. | None. | Non-blocking: the conceptual spine is bounded. |
-| 6 | Core Stage / Module Map | **PARTIAL — BLOCKING** | meta/CURRICULUM_MAP.md; meta/blueprint/core-stage-module-lesson-map-v0.1.md; meta/blueprint/dependency-graph-v0.1.md | Stage/Module identities agree structurally: 7 Stages and M00–M24 map consistently. | **Smallest remedy:** in core-stage-module-lesson-map-v0.1.md, correct stale M00..M30 wording and rewrite Stage Entry assumptions / Module Prerequisites so Hard prerequisites exactly follow the authoritative DAG; label Soft/context/previews as non-hard. Do not add H edges unless separately decided. | Blocking: current prose can make Soft or absent relationships look mandatory and reintroduce hidden prerequisites during production. |
-| 7 | Lesson Map | **PARTIAL — BLOCKING** | meta/blueprint/core-stage-module-lesson-map-v0.1.md §5; meta/blueprint/dependency-graph-v0.1.md §4 | Exactly 70 preliminary Lesson rows exist; IDs are unique; no bulk Lesson prose has begun. | **Smallest remedy:** reconcile the Hard prerequisites column against Module H ancestry and the graph's lesson-edge table; demote unsupported hard labels to Soft/context/revisit, define or remove M15-preview, and make the two artifacts enumerate the same cross-Module hard relationships. | Blocking: 10 cross-Module prerequisite references across 9 Lesson rows are labeled hard without Module-H support, so the Lesson production order is not authoritative. |
-| 8 | Dependency Graph | **PARTIAL — BLOCKING** | meta/blueprint/dependency-graph-v0.1.md; meta/CURRICULUM_MAP.md | The Module graph is independently verified: 25 nodes, 62 H/S edges, 40 H, 22 S, acyclic; H/S/R/P meanings and S4/S5 partial independence are clear. | **Smallest remedy:** reconcile §4 lesson-level hard prerequisite claims with the authoritative Module H/S model and the Lesson Map, then rerun Module and Lesson topological checks. Preserve the 40H/22S set unless a deliberate architecture decision says otherwise. | Blocking: the graph artifact is internally split—its Module DAG is correct, but its lesson-level hard-edge section creates hidden mandatory relationships, including the M14/M15 preview conflict. |
-| 9 | Competency Matrix | **PARTIAL — BLOCKING** | meta/COMPETENCY_MATRIX.md; meta/blueprint/learning-outcomes-v0.1.md; meta/blueprint/assessment-architecture-v0.1.md; meta/blueprint/core-stage-module-lesson-map-v0.1.md | Learning Outcomes, Competency Matrix, Assessment Architecture, and Final System Defense consistently use exactly Trace, Explain, Observe, Diagnose, Correctness, Judge, Estimate, Learn-New-Tech; I/P/A semantics are coherent and sparse. | **Smallest remedy:** replace the noncanonical Measure entries in the Lesson Map's Competency gain column at L04-02, L08-02, and L12-04 with the intended existing canonical competency/competencies, using the Matrix as authority. | Blocking: a production-facing competency column currently appears to introduce a ninth competency even though the canonical taxonomy forbids one. |
+| 6 | Core Stage / Module Map | COMPLETE | meta/CURRICULUM_MAP.md; meta/blueprint/core-stage-module-lesson-map-v0.1.md; meta/blueprint/dependency-graph-v0.1.md | 7 Stages and M00–M24 remain structurally aligned. Module prerequisite prose now explicitly separates Hard from Soft/preferred using the authoritative 40H/22S DAG; Stage entry assumptions no longer create hidden skill gates; stale M00..M30 wording is corrected to M00–M24. | None at Blueprint level. | Non-blocking: production has one authoritative prerequisite contract. |
+| 7 | Lesson Map | COMPLETE | meta/blueprint/core-stage-module-lesson-map-v0.1.md §5; meta/blueprint/dependency-graph-v0.1.md §4 | Exactly 70 preliminary Lesson rows remain unique. Every cross-Module Hard prerequisite is supported by Module-H ancestry; unsupported Soft/context references and malformed shorthand IDs were removed from the Hard column. | Lesson merge/split refinement remains module-dossier work. | Non-blocking: lesson production order is now mechanically consistent with the Module DAG. |
+| 8 | Dependency Graph | COMPLETE | meta/blueprint/dependency-graph-v0.1.md; meta/CURRICULUM_MAP.md | The Module graph remains 25 nodes / 62 H+S / 40 H / 22 S / acyclic. §4 now exhaustively mirrors all 28 cross-Module hard references from the Lesson Map and adds no new Module edge; M14/M15 remains soft/preferred rather than hidden-hard. | None at Blueprint level. | Non-blocking: Module and Lesson dependency authority are synchronized. |
+| 9 | Competency Matrix | COMPLETE | meta/COMPETENCY_MATRIX.md; meta/blueprint/learning-outcomes-v0.1.md; meta/blueprint/assessment-architecture-v0.1.md; meta/blueprint/core-stage-module-lesson-map-v0.1.md | All production-facing competency fields now use exactly Trace, Explain, Observe, Diagnose, Correctness, Judge, Estimate, Learn-New-Tech. L04-02/L08-02/L12-04 were reconciled to existing competencies; no ninth competency was introduced. | None at Blueprint level. | Non-blocking: competency taxonomy is single-source consistent. |
 | 10 | Mini Cloud App Evolution Map | COMPLETE | meta/blueprint/mini-cloud-app-evolution-v0.1.md; meta/blueprint/final-reconciliation-v0.1.md §6; meta/blueprint/mini-cloud-curriculum-alignment-v0.1.md | P0–P9 all exist, project order is explicitly not the curriculum DAG, Beyond-the-Project cases recur, conditional technology stays conditional, and P9 permits rejection. | Project implementation later. | Non-blocking: the project is integrative rather than a Web-development spine. |
 | 11 | Lab Map | COMPLETE | meta/blueprint/lab-source-selection-map-v0.1.md; meta/CURRICULUM_MAP.md | Exactly 5 Required and 5 Optional Labs are selected. Required HTTP, xv6 syscall, POSIX/C11 concurrency, SQLite query/index, and SQLite transaction/recovery boundaries are explicit. | Runnable fixtures, setup validation, smoke tests, and final pins belong to Lab dossiers/implementation. | Non-blocking: Blueprint requires a coherent selection map, not implemented Labs. |
 | 12 | Source Expedition Map | COMPLETE | meta/blueprint/lab-source-selection-map-v0.1.md; meta/CURRICULUM_MAP.md | Exactly 5 bounded Source Expeditions are selected with source routes, limits, and stopping points. | Recheck live source paths/licenses when implemented. | Non-blocking: routes are bounded enough to design later activities. |
@@ -87,8 +90,8 @@ These are narrow repairable defects, not reasons to redesign the curriculum. But
 
 Classification counts:
 
-- **COMPLETE: 26**
-- **PARTIAL — BLOCKING: 4**
+- **COMPLETE: 30**
+- **PARTIAL — BLOCKING: 0**
 - **INTENTIONALLY DEFERRED — NON-BLOCKING: 0**
 - **NOT APPLICABLE: 0**
 - **Total: 30**
@@ -110,13 +113,14 @@ Independent parsing of current canonical maps found:
 
 The learner-facing Stage narrative is coherent: S1–S3 establish foundations/single-system mechanics; S4 and S5 are partially independent branches; S6 joins network/data/concurrency for distributed/infrastructure reasoning; S7 synthesizes security and judgment.
 
-The blocker is not the count or Stage story. It is the prerequisite metadata inside the detailed map:
+The initial audit found prerequisite metadata drift in the detailed map. Web Lead direct-fix resolved it without altering architecture:
 
-- §4 still says Module IDs are M00..M30, while the canonical set is M00–M24;
-- Module Prerequisites bullets mix Hard, Soft, and context-only references without distinguishing them;
-- Stage entry prose can imply skills the Learner Profile says are taught inside Core (for example syscall-level C/Python fluency before S3, or simple HTTP-server/header fluency before S4).
+- the stale M00..M30 marker is corrected to M00–M24;
+- every Module prerequisite bullet now states authoritative **Hard** and **Soft/preferred** inputs from the Module DAG;
+- Stage entry assumptions explicitly defer to Module-H semantics and no longer assume syscall-level C/Python or HTTP-server/header fluency before those capabilities are taught;
+- Bridge remains optional/skippable and outside the Core DAG.
 
-Those statements are unsafe for production while the Module DAG is supposed to be authoritative.
+The Stage story and production prerequisite contract are now aligned.
 
 ### 4.2 Dependency DAG
 
@@ -148,20 +152,19 @@ Semantic checks:
 - Required-Lab entry discipline is not a Module H edge;
 - P0–P9 project ordering is explicitly not the curriculum DAG.
 
-**Lesson-level authority defect:** the Lesson Map has 10 cross-Module prerequisite references across 9 rows labeled Hard prerequisites without a supporting Module-H ancestry relationship. Examples include:
+**Lesson-level narrow re-audit:** the Web Lead confirmed the original mismatch class and also found malformed shorthand tokens (`L07`, `L16`, `L19`) plus one additional Soft relationship (`M19 → M22`) embedded in a Hard cell. All instances were reconciled to the existing Module-H authority.
 
-- L02-01 hard-requiring L01-01 while M01→M02 is Soft;
-- L05-01 hard-requiring L04-01 while M04→M05 is Soft;
-- L06-01 hard-requiring L05-02 while M05→M06 is Soft;
-- L08-01 hard-requiring L07-01 while M07→M08 is Soft;
-- L11-01 naming M07 hard although no M07→M11 dependency exists;
-- L14-02 naming M15-preview hard although there is no M15→M14 H edge;
-- L15-01 naming M14/L14-02 hard although M14→M15 is Soft;
-- L15-03 hard-requiring L12-04 while M12→M15 is Soft.
+Post-fix checks:
 
-The Dependency Graph §4 also contains cross-Module hard claims unsupported by the Module H graph, including L13-01 ← L04-01 (M04→M13 is Soft), L14-02 ← M15-preview (no M15→M14 edge), and L15-01 ← L14-02 (M14→M15 is Soft).
+- 70 Lesson IDs remain unique;
+- cross-Module Hard prerequisites with unsupported Module-H ancestry: **0**;
+- malformed shorthand prerequisite IDs: **0**;
+- `M15-preview`: **0**;
+- Dependency Graph §4 cross-Module rows vs Lesson Map: **28/28 exact synchronization**;
+- Module H/S edge set: unchanged at **40/22**;
+- H-only and H+S cycle checks: acyclic.
 
-The exact Lesson-ID hard-reference graph (70 nodes, 91 explicit Lesson-ID references) is acyclic when opaque Module tokens such as M15-preview are ignored. That does **not** cure the authority problem: M15-preview is precisely an undefined hidden prerequisite, and the Module DAG is documented as authoritative.
+No Lesson-level fix created a new Module prerequisite.
 
 ### 4.3 Competencies
 
@@ -186,7 +189,7 @@ The Assessment Architecture preserves sparse evidence: Modules/Stages do not ass
 
 The Final System Defense assesses all eight through trace/state/invariant/failure/measurement/cost/trade-off/unknowns evidence and does not reward infrastructure count.
 
-**Blocking vocabulary leak:** core-stage-module-lesson-map-v0.1.md §5 uses Measure in the Competency gain column at L04-02, L08-02, and L12-04. Measure is a useful activity/thread word but is not one of the eight canonical competencies. Production should not start from a table that can be read as defining a ninth competency.
+**Resolved vocabulary leak:** the initial audit correctly found `Measure` in the Competency gain column at L04-02, L08-02, and L12-04. Web Lead direct-fix mapped those rows to existing canonical competencies (`Observe` where measurement evidence is the activity) while preserving the intended Diagnose/Judge/Estimate/Trace/Explain mappings. A post-fix scan finds no noncanonical competency label in the Lesson competency column.
 
 ### 4.4 Big Ideas / Concept Registry
 
@@ -391,10 +394,14 @@ These should be cleaned after the audit but do not independently invalidate arch
 
 ### Material contradictions
 
-1. **Prerequisite authority split** — core-stage-module-lesson-map-v0.1.md and dependency-graph-v0.1.md disagree with the authoritative Module H/S semantics, including lesson-level hard labels and M14/M15 preview ordering. This can change production sequence and is blocking.
-2. **Competency taxonomy leak** — three Lesson rows use Measure in a column named Competency gain, while the canonical taxonomy has exactly eight competencies. This can create a false ninth competency in production and is blocking.
+The two material contradiction classes found by the independent audit are **resolved on PR #24**:
 
-No other material contradiction found in the audited scope.
+1. **Prerequisite authority split — resolved:** Module prose, Lesson Hard prerequisites, and Dependency Graph §4 now follow the same 40H/22S authority; no Module edge changed.
+2. **Competency taxonomy leak — resolved:** the three `Measure` labels were mapped back to canonical competencies; the taxonomy remains exactly eight.
+
+Additional same-root inconsistencies found during Lead review (malformed shorthand prerequisite IDs and the M19→M22 Soft relation in a Hard cell) were also fixed. No other material contradiction was found in the audited scope.
+
+One additional governance-only stale marker was found: meta/blueprint/lab-source-selection-map-v0.1.md still says `REWORK COMPLETE — READY FOR LEAD REVIEW` despite PR #16 having been Lead-accepted and merged. This does not affect Lab architecture and should be cleaned during Blueprint closure status updates.
 
 ## 9. Blueprint vs v1.0 Boundary
 
@@ -414,119 +421,134 @@ It does **not** require:
 
 The v1.0 policy is appropriately stronger: complete teachable Core, complete Mini Cloud App evolution, runnable Required Labs, provenance/licensing, multi-role verification, real target-learner validation, external coverage audit, functioning maintenance, and no critical blockers.
 
-The present FAIL is therefore **not** caused by missing v1.0 evidence. It is caused by an unresolved Blueprint-level authority contract in the maps used to produce the course.
+The initial FAIL was not caused by missing v1.0 evidence. Its two Blueprint-level authority defects have now been resolved by bounded Lead fixes, so v1.0-only obligations remain correctly deferred.
 
-## 10. Blocking Findings
+## 10. Lead Direct-Fix Resolution and Narrow Re-Audit
 
-### B-01 — Canonical prerequisite semantics are not single-source consistent
+### R-01 — Prerequisite authority reconciliation — RESOLVED
 
-**Exact issue:** Module DAG says only H constrains order, but detailed Module Prerequisites, Lesson Hard prerequisites, and Dependency Graph §4 contain Soft/absent relationships labeled mandatory. The M14/M15 preview wording is the clearest contradiction.
+The independent audit correctly identified that the detailed map and lesson-level graph could overstate Soft/context relationships as mandatory. Web Lead review accepted the current **25-node / 40H / 22S** Module DAG as the already-decided authority and changed no edges.
 
-**Artifacts:**
+Direct fixes:
 
-- meta/blueprint/core-stage-module-lesson-map-v0.1.md
-- meta/blueprint/dependency-graph-v0.1.md
+1. corrected M00..M30 → M00–M24;
+2. rewrote all 25 Module prerequisite bullets to state Hard vs Soft/preferred inputs from the DAG;
+3. rewrote Stage entry assumptions so they cannot silently strengthen the Learner Profile or Bridge;
+4. removed unsupported Soft/context references from Lesson **Hard prerequisites**;
+5. removed `M15-preview` and malformed shorthand prerequisite IDs;
+6. synchronized Dependency Graph §4 exhaustively to the Lesson Map's cross-Module hard references;
+7. corrected cycle-check prose that could imply an M14→M15 hard relation.
 
-**Why it blocks:** a stage/module/lesson designer cannot safely determine prerequisite order without interpreting conflicts. That is exactly the architecture work Blueprint is supposed to settle before production.
+Narrow re-audit result:
 
-**Smallest repair:**
+- 70 Lessons / 70 unique IDs;
+- unsupported cross-Module Hard references: 0;
+- malformed prerequisite shorthand: 0;
+- Lesson Map ↔ Dependency Graph §4 cross-Module sync: 28/28;
+- Module edges: 62 = 40H + 22S, unchanged;
+- H-only and H+S DAG: acyclic.
 
-1. keep the current 25-node / 40H / 22S Module DAG as authority unless Lead explicitly decides otherwise;
-2. in the detailed map, split Prerequisites into true Hard vs Soft/preferred/context references or otherwise label semantics unambiguously;
-3. in the Lesson Map, retype unsupported Hard prerequisites;
-4. remove/define M15-preview so M14/M15 does not carry a hidden hard cycle/ordering;
-5. make Dependency Graph §4 and Lesson Map list the same cross-Module hard relationships;
-6. rerun Module and Lesson topological checks.
+### R-02 — Competency vocabulary reconciliation — RESOLVED
 
-**Routing:** **Web Lead direct-fix** is sufficient if this is purely reconciliation to the already accepted H/S semantics. If any proposed correction changes the Module H/S edge set, stop and route that edge change through a bounded architecture task rather than silently changing it.
+`Measure` was an activity/thread label leaking into a competency-typed column, not an intended ninth competency.
 
-**Re-audit scope:** criteria 6–8 only, plus structural counts and cycle checks; no full external research redo if H/S decisions remain unchanged.
+Direct fixes:
 
-### B-02 — Noncanonical Measure competency appears in the Lesson Map
+- L04-02 → Diagnose, Observe, Judge, Estimate;
+- L08-02 → Trace, Explain, Observe;
+- L12-04 → Diagnose, Observe.
 
-**Exact issue:** L04-02, L08-02, and L12-04 use Measure in the Competency gain column, while the canonical taxonomy contains only eight competencies.
+Post-fix scan of all 70 Lesson competency fields finds only the eight canonical competencies.
 
-**Artifact:**
+### Routing conclusion
 
-- meta/blueprint/core-stage-module-lesson-map-v0.1.md
-
-**Why it blocks:** vertical-slice designers could treat Measure as a ninth assessment outcome, undermining the authoritative Competency Matrix.
-
-**Smallest repair:** replace Measure with the appropriate existing canonical competency/competencies according to meta/COMPETENCY_MATRIX.md; do not add a competency.
-
-**Routing:** **Web Lead direct-fix**.
-
-**Re-audit scope:** criterion 9 plus a repository scan of competency-typed fields for noncanonical labels.
+Both findings were **SIMPLE FIX / Web Lead direct-fix**, not architecture escalation. No RFC, new curriculum task, or broad re-audit is required.
 
 ## 11. Post-Blueprint Transition Recommendation
 
-Not issued while the gate is FAIL.
+The gate now passes. Blueprint closure should proceed with status cleanup, then the first post-Blueprint vertical slice should begin under the existing workflow:
 
-After B-01 and B-02 are repaired and the narrow re-audit passes, the existing policy already supports the intended early Foundations/System Mechanics vertical slice; no new large-scale architecture cycle should be necessary.
+`Research → Design → Lesson → Lab → Project → Verification → Learner Validation`
+
+The first task should be a **Research Dossier / vertical-slice architecture task**, not bulk Lesson writing. The accepted pilot direction is early Foundations/System Mechanics, centered on:
+
+- Information / Representation;
+- Computation;
+- Machine;
+- the earliest justified Mini Cloud App connection.
+
+Post-Blueprint implementation work remains intentionally deferred to its owning phase: exact environment/version pins (OQ-BP-006), preflight/Dev Container, runnable Lab fixtures and smoke tests, full Lesson prose, visuals, website rendering, learner pilots, and release/provenance checks.
+
+OQ-BP-001 and OQ-BP-003 remain open and RFC-gated; Blueprint closure does not silently decide them.
 
 ## 12. Verification
 
-Performed against current GitHub state and independently parsed artifact contents:
+Initial independent-audit checks remain valid for the unaffected criteria. Web Lead narrow re-audit additionally performed against PR #24 after direct fixes:
 
-1. confirmed Issue #23 open;
-2. confirmed Issues #9/#19/#21 closed and their PRs #18/#20/#22 merged;
-3. confirmed audited main SHA d2d468ae09c2c90bbacb167533a584836e83449d;
-4. confirmed current Blueprint exit list has exactly 30 criteria;
-5. counted 7 Stages, 25 Modules, 70 preliminary Lesson rows, 70 unique Lesson IDs;
-6. compared all 25 detailed Module→Stage assignments to meta/CURRICULUM_MAP.md: no mismatches;
-7. parsed all 62 Module H/S edges: 40 Hard, 22 Soft;
-8. independently ran H-only and H+S topological checks: acyclic;
-9. checked H/S/R/P semantics, S4/S5 partial independence, Bridge non-DAG status, and project non-DAG status;
-10. checked Lesson Hard prerequisites against Module-H ancestry and found the blocking mismatch described above;
-11. checked exactly eight canonical competencies across Learning Outcomes, Competency Matrix, Assessment Architecture, and Final System Defense;
-12. scanned the Lesson Map competency column and found the three Measure leaks described above;
-13. counted 15 Big Ideas and 18 initial canonical Concept Registry entries;
-14. confirmed Trust Boundary first home M07 L07-01 and M21 synthesis/revisit;
-15. scanned all 18 Related Concept fields for competency leakage: none found;
-16. confirmed P0–P9 = 10 milestones and project order is not a curriculum DAG;
-17. confirmed 5 Required / 5 Optional / 5 Source Expeditions;
-18. confirmed LAB-REQ-03 uses defined C11 atomic accesses rather than plain-C UB as canonical evidence;
-19. recomputed Technology Map table counts: 52 total; 21 Stable Core Mechanism / 28 Current Case / 1 Deep Dive / 2 current non-admissions; 23 Stable / 28 Current / 1 Frontier time classes;
-20. confirmed Bridge is skippable, outside the DAG, and does not pin OQ-BP-006;
-21. confirmed OQ-BP-001 and OQ-BP-003 remain undecided RFC candidates with safe interim states;
-22. confirmed OQ-BP-006 remains an implementation-time pin;
-23. scanned Project Status, Workstreams, Open Questions, reconciliation, prompts/handoffs, and governance for stale state;
-24. confirmed no bulk Lesson/Lab/project implementation exists in the repository tree.
+1. confirmed 30 Blueprint exit criteria remain present exactly once in the matrix;
+2. confirmed 7 Stages / 25 Modules / 70 preliminary Lessons / 70 unique Lesson IDs;
+3. confirmed all 25 detailed Module→Stage assignments remain unchanged;
+4. parsed the authoritative Module edge table: 62 H/S = 40 Hard + 22 Soft;
+5. independently reran H-only and H+S reachability/cycle checks: acyclic;
+6. confirmed all Module prerequisite prose now distinguishes Hard vs Soft/preferred and matches the incoming DAG edges;
+7. scanned all Lesson Hard prerequisite fields against Module-H ancestry: 0 unsupported cross-Module relationships;
+8. scanned prerequisite fields for malformed shorthand IDs: 0;
+9. confirmed `M15-preview` is absent;
+10. compared Lesson Map cross-Module hard references with Dependency Graph §4: 28 rows vs 28 rows, exact match;
+11. confirmed the dependency graph still preserves S4/S5 partial independence and contains no M14↔M15 hard ordering;
+12. scanned all 70 Lesson competency fields against the canonical eight: 0 noncanonical labels;
+13. reconfirmed 15 Big Ideas / 18 Concept Registry entries and Trust Boundary first home M07 L07-01;
+14. reconfirmed P0–P9, 5 Required / 5 Optional / 5 Source Expeditions, LAB-REQ-03 defined-C11 boundary, and Technology Map counts;
+15. reconfirmed Bridge is skippable/outside the DAG and OQ-BP-001/003/006 remain unresolved in their accepted categories;
+16. confirmed no bulk Lesson/Lab/project implementation was added by the Lead repair.
 
-Pre-PR repository/diff verification is recorded in the Completion Report below and repeated in the PR body.
+The direct fix changed only prerequisite/competency metadata and the audit record; it did not alter settled curriculum architecture.
 
 ## 13. Completion Report
 
 ### Status
 
-READY FOR LEAD REVIEW
+LEAD REVIEW COMPLETE — READY TO MERGE
 
 ### Deliverable
 
 meta/blueprint/final-exit-audit-v0.1.md
 
-### Files changed
+### Final PR diff
 
-Exactly one content file:
+Agent submission initially changed exactly one content file:
 
 - meta/blueprint/final-exit-audit-v0.1.md
 
+Web Lead direct review added bounded fixes to:
+
+- meta/blueprint/core-stage-module-lesson-map-v0.1.md
+- meta/blueprint/dependency-graph-v0.1.md
+
+No Stage/Module/Lesson count, Module H/S edge, Lab/Project/Concept/Open Question, policy, or release architecture changed.
+
 ### Exit-criterion classification counts
 
-- COMPLETE: 26
-- PARTIAL — BLOCKING: 4
+- COMPLETE: 30
+- PARTIAL — BLOCKING: 0
 - INTENTIONALLY DEFERRED — NON-BLOCKING: 0
 - NOT APPLICABLE: 0
 - Total: 30
 
 ### Blocking findings
 
-- B-01: prerequisite semantics are inconsistent across the canonical Module/Lesson map and Dependency Graph lesson-level hard-edge section.
-- B-02: Measure appears as a noncanonical competency in three Lesson Map rows.
+None remaining.
+
+### Resolved findings
+
+- prerequisite semantics reconciled to the existing authoritative Module DAG;
+- Lesson Hard prerequisites and Dependency Graph §4 synchronized;
+- malformed shorthand prerequisite IDs removed;
+- noncanonical `Measure` competency labels mapped to canonical competencies.
 
 ### Intentionally deferred findings
 
-Post-Blueprint dossiers, exact environment pins, Dev Container/preflight implementation, runnable Lab code/fixtures/smoke tests, optional third-party rights checks, Lesson prose, diagrams, website, learner pilots, learner-validation evidence, freshness reviews, and final release-license checks are coherently owned by later production/release/maintenance phases.
+Post-Blueprint dossiers, exact environment pins, Dev Container/preflight implementation, runnable Lab code/fixtures/smoke tests, optional third-party rights checks, Lesson prose, diagrams, website, learner pilots, learner-validation evidence, freshness reviews, and final release-license checks remain coherently owned by later phases.
 
 ### Structural consistency
 
@@ -546,45 +568,24 @@ Post-Blueprint dossiers, exact environment pins, Dev Container/preflight impleme
 
 ### Open Question analysis
 
-- OQ-BP-001: non-blocking on its own; safe interim state + RFC gate; no need to decide before the early first slice.
-- OQ-BP-003: non-blocking on its own; P2/P9 hooks + RFC gate; no need to decide before the early first slice.
-- OQ-BP-006: intentionally deferred implementation-time pin; becomes blocking only when a runnable environment/Lab needs exact versions.
+- OQ-BP-001: non-blocking on its own; safe interim state + RFC gate.
+- OQ-BP-003: non-blocking on its own; P2/P9 hooks + RFC gate.
+- OQ-BP-006: intentionally implementation-time; pin when the first runnable environment/Lab requires exact versions.
 
-### Stale-state findings
+### Stale-state cleanup after merge
 
-Cosmetic/governance cleanup:
-
-- Project Status still says several exit criteria “lack artifacts”;
-- Open Questions still says Issue #9 is under Lead review;
-- final reconciliation §11 is an explicit historical post-#9 gap snapshot;
-- dated Requirements handoff is historical, not current authority.
-
-Material contradictions:
-
-- prerequisite authority split across canonical map/graph artifacts;
-- noncanonical Measure competency labels.
+- Project Status must stop saying exit-criteria artifacts are missing and mark Blueprint closed.
+- Workstreams must mark Final Exit Audit / Blueprint v0.1 complete.
+- Open Questions should remove the stale “Issue #9 under Lead review” line while preserving all three open questions.
+- lab-source-selection-map-v0.1.md should update its stale top status marker from “READY FOR LEAD REVIEW” to Lead-accepted/canonical.
+- final-reconciliation-v0.1.md §11 remains a historical post-#9 snapshot; add a narrow supersession note only if needed to prevent future misreading.
 
 ### Verification performed
 
-See §12. Final branch-level git diff --check, one-file compare, and matrix-count validation are required before PR creation and must pass.
+See §12.
 
-### Assumptions
+### Lead decision
 
-- The current 25-node / 40H / 22S Module DAG is the intended authority because the canonical artifacts repeatedly say Module-level H edges are authoritative and Issue #9 explicitly preserved that edge set.
-- M15-preview is not intended to silently create a new Module H dependency; if Lead intends otherwise, that is an architecture decision and the re-audit scope expands.
-- Historical artifacts remain useful provenance when their time scope is explicit; they are not treated as current authority over GitHub state.
+The auditor's initial FAIL was accepted as a valid detection of narrow blocking inconsistencies, not as a reason to reopen architecture. The inconsistencies were simple, directly repairable, and are now resolved. No further Blueprint-wide audit loop is justified.
 
-### Prompt deviations
-
-None in content scope. Repository changes are restricted to this audit file; no canonical architecture, status, policy, Open Question, Lesson, Lab, or project implementation file is modified.
-
-### Recommended Web Lead focus
-
-1. Whether the prerequisite contradiction is correctly treated as a Blueprint blocker rather than harmless wording.
-2. Whether any lesson-level relationship currently labeled Hard was actually intended to change the Module H/S edge set.
-3. Whether Measure is clearly a stale activity label rather than an intended competency.
-4. Whether stale status text could still mislead future Agents after the narrow repair.
-5. Whether the first vertical slice can begin immediately after these direct fixes without another architecture cycle.
-6. Whether the auditor was appropriately non-blocking on OQ-BP-001/OQ-BP-003/OQ-BP-006 and post-Blueprint implementation work.
-
-FAIL — BLUEPRINT v0.1 REMAINS ACTIVE
+PASS — BLUEPRINT v0.1 READY TO CLOSE
