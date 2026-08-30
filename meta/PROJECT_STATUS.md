@@ -20,6 +20,13 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
   - PR #6: External Curriculum Coverage Audit v0.1.
   - PR #7: Mini Cloud App evolution map.
   - PR #8: Classic Lab + Source Expedition candidate research.
+- **Issue #9 reconciliation proposals reviewed (2026-08-30):**
+  - PR #14 / Issue #11 — Mini Cloud App ↔ curriculum alignment: Lead-accepted and squash-merged.
+  - PR #15 / Issue #13 — Competency + Concept Registry integration: Lead direct fixes applied, then squash-merged.
+  - PR #16 / Issue #12 — Lab + Source Expedition selection: **CHANGES REQUIRED**; remains open for complex rework.
+    - Required Core work cannot outsource a mandatory Lab to an unresolved-license, link-only external assignment.
+    - The Required Lab set must include real Database mechanism work consistent with Database being a major Core area.
+    - xv6 course-page reuse/license claims require exact evidence or an explicit uncertainty downgrade.
 - Lead direct fixes during review:
   - corrected Stage narrative vs hard-dependency semantics in the dependency graph;
   - corrected `M14 → M16` from hard to soft while preserving `M14 → M17` as the consistency hard dependency;
