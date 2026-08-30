@@ -2,7 +2,7 @@
 
 **Task:** Issue #9 — [Blueprint] Reconcile Issues #1–#4 into Blueprint v0.1 maps
 **Role:** Curriculum Architecture Integrator
-**Status:** `READY FOR LEAD REVIEW` — not `VERIFIED`, not canonical-process-complete
+**Status:** `LEAD ACCEPTED` — canonical Blueprint integration for Issue #9; not `VERIFIED`, not released, and Blueprint v0.1 is not yet exit-complete
 **Date:** 2026-08-30
 **Base branch:** `origin/main` `eae3de6` (fetched before work; GitHub authoritative)
 
