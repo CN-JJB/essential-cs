@@ -77,7 +77,7 @@ State; Abstraction; Representation; Indirection; Caching; Concurrency; Isolation
 - **Definition:** A constrained choice where gaining one property changes cost, risk, complexity, or another property. A trade-off requires a stated constraint; it is not a synonym for compromise or preference.
 - **First home:** M02, `L02-02`.
 - **Revisits:** M04, M09, M11, M13, M14, M17, M18, M19, M23, M24.
-- **Related:** Estimate, Specification, Correctness.
+- **Related:** State, Specification, Correctness.
 - **Common confusions:** "pros and cons" without a constraint; trade-off vs arbitrary compromise.
 - **Big Ideas:** Trade-off.
 
@@ -131,7 +131,7 @@ State; Abstraction; Representation; Indirection; Caching; Concurrency; Isolation
 - **Definition:** The tendency for related accesses or communication to occur near one another in time, space, or placement, allowing lower resource cost. Locality can be exploited by a cache but is not itself a cache.
 - **First home:** M04, `L04-02`.
 - **Revisits:** M08 disk/file access; M13 index/data layout; M17 replica placement; M23.
-- **Related:** Caching, Estimate, Trade-off.
+- **Related:** Caching, Representation, Trade-off.
 - **Common confusions:** locality vs proximity alone; locality vs caching mechanism.
 - **Big Ideas:** Locality.
 
