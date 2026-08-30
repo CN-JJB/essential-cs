@@ -46,19 +46,21 @@ Lead-reviewed and merged in Issue #19 / PR #20:
 - consolidated Learning Outcomes;
 - Bridge / diagnostic design.
 
-The remaining Blueprint exit-criteria design work is now:
+The remaining Blueprint exit-criteria design artifacts were completed in Issue #21 / PR #22:
 
-- Assessment Architecture consolidation;
+- Assessment Architecture;
 - Modern Technology Case Map.
+
+The next step is a **Blueprint v0.1 Final Exit Audit** against `meta/blueprint/README.md`, not another design expansion task.
 
 Architecture questions **OQ-BP-001** (bounded AI literacy) and **OQ-BP-003** (human-facing/accessibility boundary) remain RFC-gated and are not silently decided by #9. OQ-BP-006 owns implementation-time environment/version/baseline pinning.
 
 ## Current priority
 
-1. Produce the remaining exit-criteria Blueprint artifacts: Assessment Architecture and Modern Technology Case Map.
-2. Resolve OQ-BP-001 and OQ-BP-003 through Open Question → research → RFC/Decision when needed; they do not block unrelated exit-criteria work.
-3. Re-audit Blueprint v0.1 against `meta/blueprint/README.md` and close remaining gaps.
-4. Then begin stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations/System Mechanics slice — **no large-scale lesson writing before exit criteria**.
+1. Run the Blueprint v0.1 Final Exit Audit against `meta/blueprint/README.md`, distinguishing complete / partial / intentionally deferred criteria.
+2. Resolve OQ-BP-001 and OQ-BP-003 through Open Question → research → RFC/Decision only if the Final Exit Audit finds they block Blueprint completion; do not force a decision otherwise.
+3. Confirm OQ-BP-006 remains a deliberate implementation-time pin rather than a missing architecture artifact.
+4. If exit criteria pass, close Blueprint v0.1 and begin stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations/System Mechanics slice.
 
 ## Current architecture attention points
 
