@@ -35,6 +35,15 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
   - pinned the concurrency lab candidate to OSTEP v1.10 Threads (Semaphores) Homework (Code);
   - normalized missing Completion Reports for PRs #7/#8.
 
+- **PR #17 / Issue #10 — Audit → Architecture disposition matrix:** Lead-reviewed and squash-merged.
+  - R1 applied measurement/statistics → bounded Core addition.
+  - R6 schema evolution/provenance → bounded Core addition.
+  - R2/R7/R8/R9/R10 → integrate existing Core.
+  - R5/R13 → Current Case.
+  - R11/R12/R14 → Deep Dive.
+  - R15 → Reject from v0.1 Core.
+  - R3 human-facing/accessibility boundary and R4 bounded AI literacy remain explicit architecture escalations for #9/RFC handling.
+
 ## Active workstream
 
 - **#9 — [Blueprint] Reconcile Issues #1–#4 into Blueprint v0.1 maps**
