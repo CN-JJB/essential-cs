@@ -1,6 +1,6 @@
 # Curriculum Map
 
-Status: **Blueprint v0.1 — reconciled** (Issue #9 integration applied; Lead review pending)
+Status: **Blueprint v0.1 — reconciled, Lead-accepted** (Issue #9 integration; Blueprint remains ACTIVE until exit criteria are complete)
 
 This is the canonical reference for what the Core teaches, in which Stage order,
 through which Modules, Labs, Source Expeditions, and Mini Cloud App milestones.
