@@ -44,7 +44,7 @@ Blueprint closure means the project may now build and validate the curriculum th
 
 ## Active workstream
 
-The project is transitioning into the first **post-Blueprint vertical slice**.
+The project is in the first **post-Blueprint vertical slice**. **Issue #25 — Foundations/System Mechanics Vertical-Slice Research Dossier v0.1 is OPEN** and owns the current production research task.
 
 Completed closure sequence:
 
@@ -60,7 +60,7 @@ The first task is a bounded **Research Dossier / vertical-slice architecture tas
 
 ## Current priority
 
-1. Launch the first early Foundations/System Mechanics vertical-slice Research Dossier, centered on Information / Representation → Computation → early Machine, with the earliest justified Mini Cloud App P0 connection.
+1. Execute **Issue #25**: the first early Foundations/System Mechanics vertical-slice Research Dossier, centered on M00–M04 (Information / Representation → Computation → Machine / Locality), with the earliest justified Mini Cloud App P0 connection.
 2. Treat exact environment/toolchain/version pins as implementation-time work under OQ-BP-006 when the first runnable slice/preflight requires them; do not invent pins prematurely.
 3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated, non-blocking Open Questions unless an affected slice produces evidence that a Core-scope decision is required.
 4. Keep lesson production vertical and evidence-driven; no bulk Stage-wide drafting before the relevant dossier/design work.
