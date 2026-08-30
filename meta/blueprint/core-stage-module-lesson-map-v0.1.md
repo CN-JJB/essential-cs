@@ -189,7 +189,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Horizontal threads first introduced/revisited:** Technical Literacy (FIRST-INTRO); API/Interface Design (FIRST-INTRO); Napkin Math (FIRST-INTRO — order of magnitude); Failure (FIRST-INTRO — "systems fail"); Debugging (FIRST-INTRO — what debugging is).
 - **Reconciled explicit learner outcomes (R2 toolchain, Issue #9):** `L00-02` must produce observable outcomes — shell/task execution; reading an unfamiliar code/file; debugger-light investigation; Git evidence; reproducibility/version/environment record; running a baseline and preserving evidence. The minimal form is one reproducible investigation: read an unfamiliar file → run a command → controlled change → record it in Git → run it → save an environment/version/evidence record. Not a command encyclopedia. A REQUIRED-lab entry gate (get repository, run documented preflight check, reproduce baseline, save evidence record; environment preflight repeated at M03/M06/M13) may reference these abilities but is course discipline, **not** a DAG edge and not a new Module.
 - **Likely hands-on mechanism class:** Observe a real HTTP request against a local demo service; use a shell; break the service and observe the failure.
-- **Mini Cloud App integration:** placeholder — see Issue #3 (the app is introduced as the recurring project surface here).
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any production system reading.
 - **Core vs Deep Dive boundary:** Deep Dive: system-design interview prep, architecture pattern catalogs.
 
@@ -200,7 +200,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (bits through representation), Explain (representation), Estimate (byte sizes), Correctness (invariant: representation must be unambiguous).
 - **Horizontal threads:** Correctness & Invariants (FIRST-INTRO — representation must round-trip); Technical Literacy (revisit); Napkin Math (revisit — size estimates).
 - **Likely hands-on mechanism class:** Use Python (`struct`, `bytes`, `int.to_bytes`) and real binary files; observe hexdump; break a serialization and watch it fail.
-- **Mini Cloud App integration:** placeholder — store/display a user's data and observe encoding.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** data formats, wire protocols, file parsing, security (integer overflow).
 - **Core vs Deep Dive:** Deep Dive: floating-point deep dive, arbitrary precision, compression theory (LZ/entropy).
 
@@ -212,7 +212,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Reconciled outcomes (R1 + R9, Issue #9):** `L02-01` explicitly owns the just-in-time applied discrete/asymptotic toolkit — counting, asymptotic growth, order-of-magnitude scheduling — and `L02-03` protects the **intuitive** model of computation (what a computation/algorithm is), **expression limits** (what "expressible/representable" means), **tractability** (why some problems are hard), and a **decidability intuition** (some questions are not answerable this way). The algorithm ↔ language/runtime connection is established here and confirmed at M05 (`L05-01..03`): representing a problem correctly then stating how a representation or language choice changes cost or expressibility. Formal automata theory, reductions, computability proofs stay Deep Dive. No math prerequisite gate before M01.
 - **Horizontal threads:** Correctness & Invariants (revisit — loop invariants); Napkin Math (revisit); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** Implement a small data structure or measure a sort on inputs of different sizes; observe scaling behavior; use a profiler-light timing.
-- **Mini Cloud App integration:** placeholder — choose a data structure for the app's data and justify.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any programming, algorithm choice, interview/fundamentals.
 - **Core vs Deep Dive:** Deep Dive: graph algorithms, advanced algorithmic design (DP, NP-completeness theory).
 
@@ -223,7 +223,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (instruction/control flow), Observe (`objdump`/`gdb`), Explain, Diagnose (segfault/stack overflow).
 - **Horizontal threads:** Failure (revisit — crash as signal); Debugging (FIRST-INTRO — using gdb); Technical Literacy (revisit); API/Interface Design (revisit — ABI as interface).
 - **Likely hands-on mechanism class:** Disassemble a tiny C function (real); `gdb` step-through; induce a stack overflow and observe; optional CPU simulator only where hardware is unavailable.
-- **Mini Cloud App integration:** placeholder — none required; mechanism only.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** debugging, crash analysis, performance, security (buffer overflow).
 - **Core vs Deep Dive:** Deep Dive: logic gates → ALU → Verilog-level CPU design; branch prediction; pipelining. (Nand2Tetris optional core-adjacent excursion.)
 
@@ -235,7 +235,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Reconciled first home (R1 + R7, Issue #9):** `L04-02` is the canonical first assessed home of the **applied measurement-uncertainty toolkit** (repeated measurements; distributions; median; percentiles when useful; uncertainty/variation; inference limits; order-of-magnitude reasoning) and of the **experimental pattern**: question/hypothesis → baseline → controlled change → metric/environment/workload → repetitions/distribution when relevant → observation → competing explanation → bounded conclusion. Reliability/failure probability stays just-in-time (M16/M17) where a mechanism requires it. No standalone mathematics Module; no statistics sequence; no math gate.
 - **Horizontal threads:** Measurement & Performance (FIRST-INTRO — a real measured difference); Napkin Math (revisit — 100 ns vs 1 ms); Correctness (revisit — cache coherence intuition); Cost/Resource Economics (revisit).
 - **Likely hands-on mechanism class:** Cache-blocking / array-of-structs vs struct-of-arrays timing measurement; `perf` if available; memory-latency microbenchmark.
-- **Mini Cloud App integration:** placeholder — serve a hot endpoint from memory and measure.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any performance work, data layout, system design.
 - **Core vs Deep Dive:** Deep Dive: cache coherence protocols, cache-set-associativity math, SIMD/vectorization.
 
@@ -247,7 +247,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Reconciled outcome (R9, Issue #9):** the algorithm ↔ language/runtime connection established in M02 is confirmed here — how a source-level construct becomes a representation, a runtime mechanism, and a machine instruction; a language construct's cost/expressibility consequences. Exit evidence is a source-to-runtime trace and one verified language/runtime claim (from documentation or source), not parser vocabulary recall. Formal type theory, GC internals, and compiler construction remain Deep Dive. Guardrail: no vocabulary-only assessment (matches #15 §3.1).
 - **Horizontal threads:** API/Interface Design (revisit — language/runtime interface); Correctness (revisit — type systems as invariants); Debugging (revisit — stack traces, symbols); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** Compile (or use a real compiler for) a tiny program and inspect the pipeline; use Python `dis` or a small interpreter-writing exercise; optional simple tokenizer/parser with a course skeleton.
-- **Mini Cloud App integration:** placeholder — observe the app's runtime (Python/JS) behavior.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any language choice, JIT/GC behavior, framework internals.
 - **Core vs Deep Dive:** Deep Dive: full compiler design (Nand2Tetris Part II), type-system theory, GC internals, JIT compilation.
 
@@ -258,7 +258,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (syscall path), Observe (strace/ps/pstree), Diagnose (zombie/exit/block), Explain.
 - **Horizontal threads:** Failure (revisit — crash, exit codes); Debugging (revisit — strace); API/Interface Design (revisit — syscall as interface); Software Engineering (FIRST-INTRO — process structuring); Correctness (revisit).
 - **Likely hands-on mechanism class:** `fork()`/`exec()` demo; `strace` a real command; `ps`/`/proc` observation.
-- **Mini Cloud App integration:** placeholder — observe the app server's processes/threads.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** server management, containerization, debugging.
 - **Core vs Deep Dive:** Deep Dive: scheduler internals, kernel module development, real-time scheduling.
 
@@ -269,7 +269,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (address → physical), Explain (isolation/security of memory), Diagnose (OOM/segfault), Estimate (memory needs).
 - **Horizontal threads:** Security (FIRST-INTRO — memory isolation as the first concrete protection boundary; define **trust boundary** here and state that isolation boundary ≠ trust boundary by default); Correctness (revisit); Debugging (revisit); Cost (revisit — memory as resource).
 - **Likely hands-on mechanism class:** `/proc/<pid>/maps`; observe a growing process; `valgrind`/ASan for heap errors; memory-limit demo.
-- **Mini Cloud App integration:** placeholder — observe the app's memory under load.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** memory tuning, container limits, security exploits.
 - **Core vs Deep Dive:** Deep Dive: full page-table implementation, swap/paging policies, hardware TLB details.
 
@@ -280,7 +280,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (read path), Explain (filesystem), Diagnose (I/O error, permission, disk full), Observe (strace file ops).
 - **Horizontal threads:** API/Interface Design (revisit — file interface); Correctness (revisit — file state invariant); Failure (revisit — I/O failure); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** `strace` a file read; create a small filesystem image or inspect `dd`/`debugfs`-style structures; observe page cache with `vmstat`.
-- **Mini Cloud App integration:** placeholder — observe the app's file uploads/static serving.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any file-backed code, config management, containers.
 - **Core vs Deep Dive:** Deep Dive: journaling internals, FFS/ext4 on-disk structures, FUSE.
 
@@ -291,7 +291,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Judge (durability trade-off), Estimate (storage latency/cost), Explain, Diagnose (data-loss scenario).
 - **Horizontal threads:** Failure (revisit — data-loss failure model); Cost / Resource Economics (FIRST-INTRO — storage cost per GB); Correctness (revisit — durability invariant); Measurement (revisit).
 - **Likely hands-on mechanism class:** measure fsync vs no-fsync under a kill/power-loss simulation (safe, local); compare SSD vs HDD-like behavior on the course VM; inspect an object store endpoint.
-- **Mini Cloud App integration:** placeholder — decide where the app's files live (local disk vs object store) and justify.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** backups, database durability, cloud storage costs.
 - **Core vs Deep Dive:** Deep Dive: RAID internals, FTL/switching (SSD), erasure coding, log-structured storage.
 
@@ -302,7 +302,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (request → socket → network), Observe (`ss`/`tcpdump`-light/`nc`), Diagnose (timeout/connection-refused), Estimate (RTT, bandwidth-delay product light).
 - **Horizontal threads:** Failure (revisit — network failure modes); Measurement (revisit — RTT); API/Interface Design (revisit — sockets); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** run a local TCP/UDP server/client; `ss`, `nc`, `traceroute`; observe TCP handshake in a packet trace (local).
-- **Mini Cloud App integration:** placeholder — observe the app's server socket.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any client/server, debugging, firewall/DNS issues.
 - **Core vs Deep Dive:** Deep Dive: congestion control, network QoS, BGP/global routing, packet-sniffing tools beyond `tcpdump` basics.
 
@@ -313,7 +313,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (request through proxy/cache), Judge (cache vs no-cache, HTTP version choice), Explain, Observe (`curl -v`, browser network panel).
 - **Horizontal threads:** Security (revisit — TLS as transport security, cert verification); Measurement (revisit — time-to-first-byte); API/Interface Design (revisit — HTTP as API surface); Privacy/Data Responsibility (FIRST-INTRO — data in transit, cookies).
 - **Likely hands-on mechanism class:** `curl -v` and browser DevTools trace a real page; run a local proxy or use an HTTPS endpoint; observe caching headers with a local cache; break an HTTPS handshake (course-safe, local).
-- **Mini Cloud App integration:** placeholder — serve the app over HTTPS locally.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** web APIs, debugging 40x/50x, front-end performance.
 - **Core vs Deep Dive:** Deep Dive: TLS 1.3 internals, certificate pinning, CDN internals, HTTP/3 stream scheduling.
 
@@ -324,7 +324,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (a page load across processes), Observe (DevTools, performance panel), Diagnose (render-blocking JS, script order), Explain (browser security model), Judge (web platform trade-offs).
 - **Horizontal threads:** Security (revisit — same-origin, CORS, CSP); Concurrency (FIRST-INTRO preview — event loop); Observability/Measurement (revisit — navigation timing); Software Engineering (revisit — JS module practices light); Privacy (revisit — third-party cookies).
 - **Likely hands-on mechanism class:** DevTools Performance/Network panels; run a local page and observe render blocking; inspect `chrome://process-internals` behavior conceptually; simple JS event-loop demo; break a CORS request and explain.
-- **Mini Cloud App integration:** placeholder — the app's own front-end behavior on this project.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any web app work, browser debugging, web security.
 - **Core vs Deep Dive:** Deep Dive: CSS layout internals (Flex/Grid), web performance budgets, rendering engine source expeditions.
 
@@ -336,7 +336,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Reconciled first home (R6, Issue #9):** `L13-03` extends the schema-invariant lesson to protect: **schema evolution** (changing fields/constraints over time), **reader/writer compatibility** (old readers vs new writers and vice versa), **migration/backfill trade-offs** (delay, downtime, complexity — migrate only when there is a real evolution need), **source-of-truth vs derived data** (one authoritative copy; derived data is recomputable), and **lightweight provenance** (where the value came from, which version/assumptions shaped it — PROV-DM as conceptual vocabulary only). Representation/model distinction rides on M01 `L01-04` + M13 `L13-02`; compatibility revisits at M16 `L16-02`; derived data at M18; provenance at M19/M23. Bounded carefully: one evolving schema, one derived view, one provenance record — **not** schema-registry operations, not Data Engineering, no PROV ontology, no lineage platform, no NoSQL family survey.
 - **Horizontal threads:** Measurement (revisit — query timing); Correctness (revisit — schema invariants); API/Interface Design (revisit — SQL as interface); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** operate a real Postgres/SQLite; `EXPLAIN` a query; create/drop indexes and measure; observe buffer cache activity.
-- **Mini Cloud App integration:** placeholder — the app's data model + a query that needs an index.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any data work, ORM debugging, schema design.
 - **Core vs Deep Dive:** Deep Dive: custom B-tree implementation, columnar/LSM engines, vector indexing.
 
@@ -347,7 +347,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Correctness (state transaction invariants), Judge (isolation trade-off), Diagnose (anomaly in a concurrent run), Explain.
 - **Horizontal threads:** Correctness & Invariants (revisit — transaction invariants); Concurrency (FIRST-INTRO — as DB isolation); Failure (revisit — crash recovery); Measurement (revisit — isolation vs throughput).
 - **Likely hands-on mechanism class:** run concurrent transactions in Postgres/SQLite; cause a lost update / dirty read; observe locking; kill a transaction mid-flight and recover; map to WAL.
-- **Mini Cloud App integration:** placeholder — make an app write atomic (transfer/balance) and test a crash.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** payment/booking systems, any multi-step write, accounting.
 - **Core vs Deep Dive:** Deep Dive: MVCC internals, serializable snapshot isolation, distributed transactions.
 
@@ -358,7 +358,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Correctness (specify a thread-safe invariant), Diagnose (find a race), Explain (locking semantics), Judge (lock vs async).
 - **Horizontal threads:** Concurrency (FIRST-INTRO as a *coherent* topic — with M14); Correctness (revisit); Failure (revisit — race as deadly subtle bug); Measurement (revisit — scaling); Debugging (revisit — race detectors, `pytest`-with-threads stress).
 - **Likely hands-on mechanism class:** write a threaded counter with a race, observe it misbehave, fix with a lock, then use a race detector / stress test; compare to an async solution.
-- **Mini Cloud App integration:** placeholder — make the app's counter/concurrency surface behave correctly.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any backend, any multi-threaded service, async code.
 - **Core vs Deep Dive:** Deep Dive: lock-free programming, memory models, transactional memory, futex internals.
 
@@ -369,7 +369,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Trace (a distributed call), Judge (retry/idempotency design), Explain (why failure is fundamental), Estimate (availability math).
 - **Horizontal threads:** Failure (FIRST-INTRO at scale — partial failure); Correctness (revisit — idempotency as invariant); Debugging (revisit — distributed tracing); Measurement (revisit — timeouts); Software Engineering (revisit).
 - **Likely hands-on mechanism class:** run a two-process RPC (gRPC/Thrift or Python) with an injected network delay/partition; observe retries/timeouts; explain idempotency with a course-safe demo.
-- **Mini Cloud App integration:** placeholder — the app's client↔server RPC boundary.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** microservices, API calls, third-party service failures.
 - **Core vs Deep Dive:** Deep Dive: distributed consensus detail, fault-tolerant RPC research.
 
@@ -380,8 +380,8 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Judge (choose consistency model), Explain (consensus mechanism), Diagnose (a replication anomaly), Estimate (availability/cost).
 - **Reconciled boundary (R10/R11, Issue #9):** consensus **concept** is Core here: why coordination is hard, what consensus buys/costs, when replication/consistency choices apply. No full Raft/Paxos implementation is required for M17 exit. The accepted hands-on boundary is **bounded observation/case** — Source Expedition EXP-05 (replication/transactions/logging case) and the SQLite transaction/recovery evidence (LAB-REQ-05) as the local-scale analogue; full consensus implementation/proofs are Deep Dive (R11). No Registry ID for Consensus in the first population (deferred explicitly; concept stays Core at M17).
 - **Horizontal threads:** Correctness (revisit — replicated invariants); Failure (revisit — partition); Concurrency (revisit — ordering); Cost (revisit — replication cost).
-- **Likely hands-on mechanism class:** run a course-provided 3-node demo KV with a voter; kill a node; observe read-your-writes drift; simple Raft-style reasoning exercise. (This is Adopt/Adapt territory per D-012 — final lab selection belongs to #4.)
-- **Mini Cloud App integration:** placeholder — where the app's data lives and who owns consistency.
+- **Likely hands-on mechanism class:** bounded state/message/failure traces plus the accepted `EXP-05` Source Expedition; optionally observe a rights-cleared/local replication case later if a Module Dossier justifies it. No required 3-node service and no Raft/Paxos implementation in Core.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** etcd/ZooKeeper/consensus-based stores; databases.
 - **Core vs Deep Dive:** Deep Dive: full Raft implementation, Byzantine fault tolerance, distributed storage research.
 
@@ -389,10 +389,10 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Purpose / mental-model contribution:** Queues, brokers, and coordination services; exactly-once semantics and their limits; distributed transactions/2PC (concept) and why they are used sparingly; event sourcing/streams as a consistency pattern.
 - **Prerequisites:** M17 (consensus/consistency), M14 (transactions), M16.
 - **Key concepts:** queue; broker; at-least/at-most/exactly-once; saga (light); 2PC (concept); distributed lock (light); stream/event log; ordering.
-- **Competencies:** Judge (choose queue vs DB), Explain (exactly-once illusion), Diagnose (duplicate processing), Observe (run a broker demo).
+- **Competencies:** Judge (choose sync call vs durable job table vs queue), Explain (delivery-semantics limits), Diagnose (duplicate/out-of-order processing), Observe (bounded local delivery evidence without requiring a specific broker product).
 - **Horizontal threads:** Concurrency (revisit — ordering), Failure (revisit — duplicate delivery), Cost (revisit — broker cost), Software Engineering (revisit).
-- **Likely hands-on mechanism class:** local message queue (e.g., Kafka/Redis Streams-lite or a classic course queue) with duplicated delivery; observe idempotency.
-- **Mini Cloud App integration:** placeholder — the app's async boundary.
+- **Likely hands-on mechanism class:** bounded local duplicate-delivery/idempotency case using the simplest mechanism that preserves the lesson (for example a course-owned durable job-table/queue fixture). A broker may appear only as a replaceable Current Case; Kafka/Redis or any specific broker is not a Core prerequisite.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** event-driven systems, workflows, outbox patterns.
 - **Core vs Deep Dive:** Deep Dive: exactly-once frameworks, event sourcing internals, consensus protocols beyond RAFT.
 
@@ -403,7 +403,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Explain (container mechanism), Trace (a deployed request), Diagnose (deployment failure), Estimate (cost of an infra choice), Learn-New-Tech (read a deployment).
 - **Horizontal threads:** Cost / Resource Economics (revisit — cloud cost); Failure (revisit — deployment failures); Technical Literacy (revisit); Software Engineering (revisit); API/Interface Design (revisit — infra config as interface).
 - **Likely hands-on mechanism class:** build a small container locally; observe namespaces/cgroups in the course VM; deploy a two-container service; break the network path and observe.
-- **Mini Cloud App integration:** placeholder — deploy the app in a container.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any production deployment, DevOps, platform engineering.
 - **Core vs Deep Dive:** Deep Dive: Kubernetes internals, service mesh, real IaC design complex.
 
@@ -415,7 +415,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Reconciled outcome (R7, Issue #9):** the experimental pattern first assessed at M04 `L04-02` is **revisited** as production-signal diagnosis at `L20-01/L20-02` (and consolidated at M23 `L23-01`). The DAG-hidden-prerequisite flag for **clock semantics** is resolved here: measuring durations requires a monotonic clock; wall-clock readings cannot time spans (Python docs: `time()` wall vs `time.monotonic()`/`perf_counter`); one light bridge, no statistics prerequisite.
 - **Horizontal threads:** Measurement & Performance (revisit — the "how long/where time" question formalized); Failure (revisit — incident); Software Engineering (revisit); Cost (revisit).
 - **Likely hands-on mechanism class:** instrument a small service with metrics/logs/traces; create an alert; run a controlled failure; read a real postmortem (course-owned or classic).
-- **Mini Cloud App integration:** placeholder — the app gets an observability surface.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** SRE, any production debugging.
 - **Core vs Deep Dive:** Deep Dive: distributed tracing internals, alert tuning, chaos engineering.
 
@@ -426,7 +426,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Judge (boundary design), Explain (crypto role: confidentiality/integrity/auth), Diagnose (a misuse), Learn-New-Tech (read a crypto API).
 - **Horizontal threads:** Security (**SYNTHESIS** — M07/M11/M12/M19 boundary cases are consolidated into an explicit threat model and crypto-use judgment); Correctness (revisit — crypto invariants); Privacy (revisit — encryption ≠ anonymity).
 - **Likely hands-on mechanism class:** use a standard library (Python `cryptography`) for signing/verifying and encrypting; observe a failed verification; inspect a TLS certificate with `openssl`.
-- **Mini Cloud App integration:** placeholder — the app's authentication/secrets surface.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any security review, password handling, API auth.
 - **Core vs Deep Dive:** Deep Dive: crypto implementation, side-channel attacks, post-quantum.
 
@@ -437,7 +437,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Competencies:** Judge (secure design), Diagnose (a vulnerable app), Explain (attack → mechanism → fix), Learn-New-Tech (read a security doc).
 - **Horizontal threads:** Security (revisit/synthesis); Correctness (revisit — inputs as untrusted); Software Engineering (revisit); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** use a course-owned vulnerable app (safe target, D-012) to observe an injection/XSS; then fix it; then write a threat-model card. **No penetration-testing training.**
-- **Mini Cloud App integration:** placeholder — the app's authz surface.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any app development, security reviews, OWASP awareness.
 - **Core vs Deep Dive:** Deep Dive: formal security proofs, binary exploitation beyond intro, red-team training (rejected as Core).
 
@@ -449,7 +449,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Reconciled outcome (R1/R7, Issue #9):** `L23-01` **consolidates** the experimental pattern (first assessed at M04 `L04-02`, production-mode at M20) and the applied measurement-uncertainty toolkit — distributions/median/percentiles/uncertainty/inference limits — into one measurement methodology; clock-semantics bridge applies here as well (monotonic vs wall clock). `L23-02` evaluates technology via the Technology Evaluation Framework and (per R5) treats AI-generated claims as untrusted hypotheses verified by source/test/measurement (Current Case), without an AI module.
 - **Horizontal threads:** ALL threads converge here (synthesis); Measurement & Performance (revisit — methodology); Cost (revisit — models); Failure (revisit — taxonomy); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** a technology evaluation case study (write a full Technology Card on a real/current technology); a measurement methodology exercise (design a benchmark that answers a question).
-- **Mini Cloud App integration:** placeholder — the app's architectural judgment in the defense.
+- **Mini Cloud App integration:** Use the accepted P0–P9 mapping in `meta/blueprint/final-reconciliation-v0.1.md` §6. This Module is a project application/revisit only where that mapping names it; project milestone order is not a curriculum DAG edge.
 - **Beyond-the-Project relevance:** any engineering leadership, architecture reviews, technology selection.
 - **Core vs Deep Dive:** Deep Dive: formal architecture-role studies, research-style measurement.
 
@@ -527,7 +527,7 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L17-01 | M17 | "How do I keep data safe across machines?" | Replication; quorum; durability | L16-01, L09-01 | FI: replication; RV: durability | Judge, Explain | Y (bounded state/message/failure trace + EXP-05 source case; no required 3-node implementation) |
 | L17-02 | M17 | "How do machines agree?" | Consensus concept (Raft/Paxos intuitive): what it buys/costs, leader election, bounded worked trace (R10) | L17-01 | FI: consensus (concept; Registry ID deferred); RV: correctness | Explain, Trace, Judge | Y (worked trace / failure scenario; no implementation) |
 | L17-03 | M17 | "How consistent is 'strong enough'?" | Consistency models; linearizability ↔ eventual; CAP framing | L17-02 | FI: consistency models; RV: trade-off | Judge, Explain | Y (observe read-your-writes) |
-| L18-01 | M18 | "How do services delegate work?" | Queue; broker; at-least/on/once semantics | L17-03, L16-02 | FI: queue semantics; RV: failure | Judge, Explain, Trace | Y (broker demo, duplicates) |
+| L18-01 | M18 | "How do services delegate work?" | Queue; durable handoff; at-least/at-most/exactly-once claims and limits | L17-03, L16-02 | FI: delivery/queue semantics; RV: failure | Judge, Explain, Trace | Y (bounded duplicate-delivery case; no broker product required) |
 | L18-02 | M18 | "Do I need a distributor?" | Distributed transactions/2PC concept; saga; ordering | L18-01, M14 | FI: 2PC concept; FI: saga/ordering; RV: trade-off | Judge, Explain | Y (workshop scenario) |
 | L19-01 | M19 | "What is a container?" | Container; namespaces; cgroups; image | L06-01, L07-01, L08-01 | FI: container mechanism; RV: isolation | Trace, Explain, Judge | Y (build/run container) |
 | L19-02 | M19 | "What does 'the cloud' actually mean?" | VM vs container; region/AZ; cloud pricing | L19-01 | FI: cloud model; FI: cost | Explain, Judge, Estimate | Y (deploy + cost calc) |
