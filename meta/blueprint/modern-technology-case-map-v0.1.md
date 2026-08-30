@@ -462,7 +462,7 @@ Case evidence 应尽量包含：
 - SQLite transaction/isolation docs: <https://www.sqlite.org/lang_transaction.html>, <https://www.sqlite.org/isolation.html>
 - PostgreSQL current transaction isolation / EXPLAIN docs: <https://www.postgresql.org/docs/current/transaction-iso.html>, <https://www.postgresql.org/docs/current/sql-explain.html>
 - Redis current data types / Streams / persistence docs: <https://redis.io/docs/latest/develop/data-types/>, <https://redis.io/docs/latest/develop/data-types/streams/>, <https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/>
-- Apache Kafka current design/documentation: <https://kafka.apache.org/documentation/>, <https://kafka.apache.org/40/design/design/>
+- Apache Kafka current documentation (version-neutral entry; follow the current release's Design section): <https://kafka.apache.org/documentation/>
 - RabbitMQ reliability / acknowledgements: <https://www.rabbitmq.com/docs/reliability>, <https://www.rabbitmq.com/docs/confirms>
 - Raft publication hub / original paper route: <https://raft.github.io/>
 
