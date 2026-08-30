@@ -1,6 +1,6 @@
 # Concept Registry
 
-Status: **Blueprint v0.1 — initial canonical population** (Issue #9 integration applied; Lead review pending)
+Status: **Blueprint v0.1 — initial canonical population, Lead-accepted** (Issue #9 integration; concept boundaries remain revisable through formal review)
 
 The Concept Registry is stricter than a glossary. It prevents canonical definitions from drifting across modules. **Teach once, revisit many times.**
 A concept's core definition/mechanism has one primary teaching home. Other lessons/labs/projects include a short recap and context-specific application, but never a second full canonical explanation.
