@@ -1,6 +1,6 @@
 # Essential CS Bridge and Diagnostic v0.1
 
-Status: **Blueprint v0.1 — LEAD-REVIEWED DRAFT**
+Status: **Blueprint v0.1 — LEAD-ACCEPTED** (not VERIFIED/released)
 Purpose: 为已经具备基础编程能力、但实践技术流畅度不均衡的学习者提供可跳过的入口诊断（diagnostic）与定向补桥（Bridge）。它**不是**隐藏 Stage、先修 Module、Programming 101，也不改变 Core DAG。
 
 ## Bridge principle
