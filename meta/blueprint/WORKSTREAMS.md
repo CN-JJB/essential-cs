@@ -20,7 +20,7 @@ The four artifacts are **inputs** to reconciliation; the reconciled state is can
 | #12 | Blueprint Lab + Source Expedition selection map | Completed; PR #16 merged (5 Required / 5 Optional / 5 Source Expeditions; POSIX-thread Build correction) |
 | #13 | Competency + Concept Registry integration proposal | Completed; PR #15 merged (competency table, evidence packets, 18-concept proposal) |
 
-## Issue #9 reconciliation — INTEGRATED (under Lead review)
+## Issue #9 reconciliation — COMPLETE / LEAD-ACCEPTED
 
 Issue #9 performed the single Canonical modification pass on top of the merged inputs:
 
@@ -30,18 +30,17 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 - created `meta/rfcs/RFC-CAND-001-bounded-ai-literacy.md` and `meta/rfcs/RFC-CAND-002-human-facing-boundary.md` (candidates, no decision);
 - did not alter Lab selection, Mini Cloud App evolution/accepted alignment content, policies, invariants, decisions, or licensing.
 
-**Status:** READY FOR LEAD REVIEW (one PR, `Closes #9`). Do not mark `VERIFIED` before Lead review.
+**Status:** PR #18 Lead-reviewed and merged. The reconciled Blueprint architecture is canonical for v0.1 planning, but course content remains unverified/unreleased and Blueprint exit criteria are still incomplete.
 
 ## Remaining Blueprint work
 
 | Workstream | Owner | Status |
 |---|---|---|
-| Lead review of the #9 PR (direct-fix small inconsistencies; escalate large ones) | Web Lead | Pending — current primary workstream |
 | Course Charter, Learner Profile, Learning Outcomes, Bridge artifacts | Blueprint task (after #9) | Not started — exit-criteria gaps |
 | Assessment Architecture consolidation (packet model exists in COMPETENCY_MATRIX) | Blueprint task (after #9) | Partial |
 | Modern Technology Case Map | Blueprint task (after #9) | Partial (D-015 framework + project admission table exist) |
 | OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | Open — Core-scope, not decided |
-| OQ-BP-006 environment/version pinning + latency-constant list | Module dossiers + lab implementation | Open — implementation-time |
+| OQ-BP-006 environment/version + hardware-dependent baseline pinning | Module dossiers + lab implementation | Open — implementation-time |
 | Stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations slice | Post-Blueprint | Blocked on exit criteria |
 
 ## Rules for the next phase
