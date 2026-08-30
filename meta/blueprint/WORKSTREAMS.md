@@ -9,44 +9,44 @@
 | #3 | Mini Cloud App evolution map | Completed; PR #7 merged |
 | #4 | Classic lab and Source Expedition candidate research | Completed; PR #8 merged after exact concurrency-source fix |
 
-The four artifacts are **inputs to reconciliation**, not independently final Blueprint architecture.
+The four artifacts are **inputs** to reconciliation; the reconciled state is canonical, not each proposal alone.
 
-## Active integration wave
+## Integration wave — COMPLETE
 
-| Issue | Workstream | Dependency / coordination |
+| Issue | Workstream | Result |
 |---|---|---|
-| #9 | Reconcile Issues #1–#4 into Blueprint v0.1 maps | Parent integrator; waits for #10–#13 parallel input proposals before canonical-map integration |
-| #10 | Audit recommendations → architecture disposition matrix | Parallel-safe; separate proposal artifact |
-| #11 | Mini Cloud App P0–P9 ↔ Module/Stage alignment | Parallel-safe; separate proposal artifact |
-| #12 | Blueprint Lab + Source Expedition selection map | Parallel-safe; separate proposal artifact |
-| #13 | Competency + Concept Registry integration proposal | Parallel-safe; separate proposal artifact |
+| #10 | Audit recommendations → architecture disposition matrix | Completed; PR #17 merged (R1–R15 disposed; R3/R4 escalated to OQ-BP-003/OQ-BP-001) |
+| #11 | Mini Cloud App P0–P9 ↔ Module/Stage alignment | Completed; PR #14 merged (per-milestone design; Technology Admission) |
+| #12 | Blueprint Lab + Source Expedition selection map | Completed; PR #16 merged (5 Required / 5 Optional / 5 Source Expeditions; POSIX-thread Build correction) |
+| #13 | Competency + Concept Registry integration proposal | Completed; PR #15 merged (competency table, evidence packets, 18-concept proposal) |
 
-### Parallel input rule
+## Issue #9 reconciliation — INTEGRATED (under Lead review)
 
-Issues #10–#13 may run concurrently. Each owns only its dedicated proposal artifact and must not edit shared canonical Blueprint maps. After Lead review/merge, Issue #9 performs the single reconciliation/integration pass.
+Issue #9 performed the single Canonical modification pass on top of the merged inputs:
 
-### #9 integration responsibilities
+- created `meta/blueprint/final-reconciliation-v0.1.md` (integration record + canonical P0–P9 Module mapping);
+- reconciled `meta/CURRICULUM_MAP.md`, `meta/COMPETENCY_MATRIX.md`, `meta/CONCEPT_REGISTRY.md`, `meta/OPEN_QUESTIONS.md`;
+- updated the two Issue #1 maps (Lesson map, dependency graph) for resolved hidden prerequisites and disposition outcomes — **no DAG edge changed; graph re-verified acyclic**;
+- created `meta/rfcs/RFC-CAND-001-bounded-ai-literacy.md` and `meta/rfcs/RFC-CAND-002-human-facing-boundary.md` (candidates, no decision);
+- did not alter Lab selection, Mini Cloud App evolution/accepted alignment content, policies, invariants, decisions, or licensing.
 
-- reconcile audit recommendations R1–R15 against the detailed Module/Lesson proposal;
-- keep the Module DAG authoritative and distinguish hard prerequisites from preferred narrative;
-- map Mini Cloud App P0–P9 to the reconciled architecture;
-- turn lab/source research into a Blueprint selection map using Adopt → Adapt → Build;
-- integrate Stage/Module/Lab/Project competency coverage;
-- seed stable Concept Registry first-introduction/revisit decisions;
-- escalate Core-scope conflicts through Open Question → RFC/Decision.
+**Status:** READY FOR LEAD REVIEW (one PR, `Closes #9`). Do not mark `VERIFIED` before Lead review.
 
-## Parallel plan
+## Remaining Blueprint work
 
-Avoid parallel edits to the same canonical Blueprint maps while #9 is active.
+| Workstream | Owner | Status |
+|---|---|---|
+| Lead review of the #9 PR (direct-fix small inconsistencies; escalate large ones) | Web Lead | Pending — current primary workstream |
+| Course Charter, Learner Profile, Learning Outcomes, Bridge artifacts | Blueprint task (after #9) | Not started — exit-criteria gaps |
+| Assessment Architecture consolidation (packet model exists in COMPETENCY_MATRIX) | Blueprint task (after #9) | Partial |
+| Modern Technology Case Map | Blueprint task (after #9) | Partial (D-015 framework + project admission table exist) |
+| OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | Open — Core-scope, not decided |
+| OQ-BP-006 environment/version pinning + latency-constant list | Module dossiers + lab implementation | Open — implementation-time |
+| Stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations slice | Post-Blueprint | Blocked on exit criteria |
 
-Targeted research may run in parallel only when #9 or an Open Question identifies a bounded evidence gap and the research has a separate file/ownership claim.
+## Rules for the next phase
 
-## Semantic ownership
-
-- Issue #1 artifact remains the proposed curriculum/dependency architecture input.
-- Issue #2 remains audit evidence and does not silently rewrite architecture.
-- Issue #3 owns the proposed Mini Cloud App evolution logic, not Core scope.
-- Issue #4 owns candidate research, not final Lab implementation.
-- Issue #9 owns **reconciliation proposals**; major Core-scope changes still require the repository's architecture decision path.
-
-No large-scale Lesson writing begins until Blueprint v0.1 exit criteria are satisfied.
+- The Module DAG remains authoritative; Stage narrative is not dependency; S4/S5 partial independence preserved.
+- `meta/blueprint/final-reconciliation-v0.1.md` is the record of which proposal artifacts became canonical and what remains proposal-only.
+- No large-scale Lesson writing begins until Blueprint v0.1 exit criteria are satisfied (`meta/blueprint/README.md`; gap list in `final-reconciliation-v0.1.md` §11).
+- Any change to Core scope (incl. decisions inside the two RFC candidates) proceeds through `Open Question → Research → RFC/Decision`.

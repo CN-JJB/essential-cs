@@ -1,9 +1,9 @@
 # Core Dependency Graph v0.1
 
-Status: **PROPOSAL — Blueprint v0.1, Issue #1**
-Author: Local Agent (Curriculum Architecture Research & Design)
+Status: **RECONCILED — Blueprint v0.1, Issue #9 Lead-accepted (not VERIFIED)**
+Author: Local Agent (Curriculum Architecture Research & Design); Issue #9 integration applied by Curriculum Architecture Integrator
 Date: 2026-08-30
-Scope: Explicit prerequisite relationships between Stages, Modules, and important Lessons. Companion to `core-stage-module-lesson-map-v0.1.md`. For dependency reasoning — not a final lesson list.
+Scope: Explicit prerequisite relationships between Stages, Modules, and important Lessons. Companion to `core-stage-module-lesson-map-v0.1.md`. Original Issue #1 proposal with the Lead-corrected semantics retained; Issue #9 reconciliation outcomes (hidden-prerequisite resolutions, U-table updates, explicit narrative-vs-H separation) applied. For dependency reasoning — not a final lesson list.
 
 ---
 
@@ -45,6 +45,8 @@ S1 → S2 → S3
 ```
 
 `S4` (Network & Web) and `S5` (Data & Concurrency) are partially independent after `S3`: database storage/transactions and core concurrency do not logically require the browser/Web Stage, while distributed systems in `S6` requires inputs from **both** the networking path (`M10`) and the data/concurrency path (`M14`, `M15`). The default course may still teach S4 before S5 for the request-centric narrative, but that ordering must not be mislabeled as `H`.
+
+**Issue #9 narrative decision (OQ-BP-004 resolved):** the request-centric default (`S4` before `S5`) is **pedagogical preference only**; a state-centric path (`M13`–`M15` after `S3`, then `M10`–`M12`) is equally supported by the DAG. No Stage-narrative change is encoded as an edge. Recommended first-time learner path and hard structure are stated separately in `core-stage-module-lesson-map-v0.1.md` §3 and `meta/CURRICULUM_MAP.md`.
 
 A complete shared Core traversal still includes both S4 and S5 before the distributed/synthesis end of the course; this distinction separates **curriculum completeness** from **hard prerequisite semantics**.
 
@@ -100,7 +102,7 @@ A complete shared Core traversal still includes both S4 and S5 before the distri
 | M19 | M20 | H | Observability instruments infrastructure |
 | M16 | M20 | H | Tracing/correlation need the distributed failure model |
 | M11 | M20 | S | Navigation timing/HTTP metrics enrich observability (soft) |
-| M11 | M21 | H | TLS is the crypto-use case; trust boundary makes no sense without transport security |
+| M11 | M21 | H | M21 is the **security synthesis**: TLS/certificates from M11 provide a concrete crypto/trust case before threat-model and crypto-use consolidation; the trust-boundary concept itself does not depend on transport security |
 | M07 | M21 | H | Memory isolation is the security boundary origin |
 | M12 | M21 | H | Browser origin/same-origin is the most familiar trust boundary |
 | M09 | M21 | S | Data-at-rest durability ties to confidentiality (soft) |
@@ -267,7 +269,7 @@ Only cross-Module hard prerequisites are listed (intra-Module is implied by Modu
 | L18-01 (queues) | M18 | L17-03 (consistency models) | Queue semantics are consistency/failure decisions |
 | L19-01 (containers) | M19 | L06-01, L07-01, L08-01 | Namespaces/cgroups/files are process/mem/file abstractions |
 | L20-01 (observability) | M20 | L16-01 (failure), L19-02 | Metrics/tracing instrument distributed failure |
-| L21-01 (trust boundary) | M21 | L11-01 (TLS), L12-03 (origin) | Trust boundaries rely on transport crypto + web identity |
+| L21-01 (trust-boundary synthesis) | M21 | L07-01 (first trust/protection boundary), L11-01 (TLS), L12-03 (origin) | M21 consolidates already-taught boundary cases into threat modeling; it is not the first definition of trust boundary |
 | L22-02 (web app vulns) | M22 | L12-03 (same-origin/CORS) | XSS/CSRF/CORS are browser-origin mechanisms |
 | L23-01 (measurement) | M23 | L20-01 (observability), L04-02 (perf) | Measurement methodology builds on both |
 | L23-02 (tech evaluation) | M23 | L16-02 (RPC) or S6 complete | Evaluating a tech needs distributed-feature understanding |
@@ -316,43 +318,44 @@ A "hidden prerequisite" is a concept the learner will need but that has no expli
 | **What "consistency" means before databases** | Nuance | M00 introduces "state"; the *canonical* consistency concept first lands in M14 (DB isolation), then M17 (distributed). M00/M02 only preview. This is intentional (teach once at M14). |
 | **Git / version control** (needed for any lab, CI/CD M19) | MINOR | M00-L00-02 first intro; M19/L19-03 revisits for CI/CD. Not missing, but should be hard-prereq for M19 via L00-02. |
 
-**Conclusion:** 4 flagged items need Lead attention:
-1. **Shell/git tooling strength** (elevate as explicit lab prerequisite; first home L00-02).
-2. **Statistics for measurement** (suggested bridge in L23-01 / L04-02; verify with #2).
-3. **Clock semantics (wall vs monotonic)** (suggested in L20-01).
-4. **Linux/dev-container environment repetition** (repeat at M03/M06 Stage boundaries).
+**Conclusion — all 4 flagged items resolved in Issue #9 integration (not closed by assumption, closed by decision):**
+
+1. **Shell/git tooling strength** → explicit learner outcomes at `L00-02` (R2: shell/task execution, code/file reading, debugger-light investigation, Git evidence, reproducibility/version/environment record, baseline + evidence preservation), plus a **REQUIRED-lab entry gate** (repository + preflight + baseline + evidence record). The gate is course discipline — deliberately **not** a Module `H` edge.
+2. **Statistics for measurement** → canonical first home now `M04 L04-02` (R1: repeated measurements, distributions, median/percentiles when useful, uncertainty/variation, inference limits, order-of-magnitude reasoning), revisits M13/M16/M17/M20/M23; reliability/failure probability returns just-in-time inside M16/M17. No standalone mathematics Module, no math gate, no formal prerequisite.
+3. **Clock semantics (wall vs monotonic)** → resolved at `M20 L20-01` (observability) with consolidation at `M23 L23-01`; one light bridge, no statistics prerequisite.
+4. **Linux/dev-container environment repetition** → environment preflight documented in the lab-entry gate and repeated at Stage boundaries M03/M06/M13; canonical Linux remains the environment (D-008).
 
 ---
 
-## 7. Known Uncertainties
+## 7. Known Uncertainties — resolution status after Issue #9
 
-| # | Uncertainty | Rationale | Impact |
+| # | Uncertainty | Rationale | Resolution (Issue #9) |
 |---|---|---|---|
-| U1 | Stage count (7) and exact boundary between S4/S5 (browser before DB or DB before browser) | Design judgment; the audit (#2) may prefer DB immediately after OS (the classic DBMS course path), which would reorder S4/S5. | High — changes Module chain (S5 vs S4 first) |
-| U2 | Whether Concurrency should be its own Stage or remain inside S5 (with DB) | R3 shows concurrency as a hard prereq to distribution; but M14/M15 can be taught in either order (M14 before M15 or M15 before M14). | Medium |
-| U3 | Whether Distributed Systems and Modern Infrastructure are one Stage (S6) or two | #3 and the audit may separate them; current proposal merges because M16–M20 are tightly coupled and M19/M20 need M16's failure model. | Medium |
-| U4 | Exact lesson count (70) and per-Module distribution | Not learner-validated; Lead decides final granularity. | Medium |
-| U5 | Whether the "Mini Cloud App" checkpoint cadence (per-Stage or per-Module) should drive Stage naming | #3 owns this. | Low (for #1) |
-| U6 | Latency-constant set (R11) — which values become canonical, when re-verified | Hardware-dependent; Living Curriculum Policy says CURRENT with review. | Low-Medium |
-| U7 | Whether the Introduction's "question set" (M00) is a concept, a tool, or a thread | Not yet decided in the Concept Registry. | Low |
-| U8 | Whether M05 (languages/runtime) should be before or after M06 (processes) | Both orders exist in strong curricula (R1 does languages/runtime before OS; R2 does OS fundamentals before a language/runtime course). The current spine (D-007) puts PL before OS. Current proposal keeps the spine order but flags that the *runtime* half of M05 (GC/JIT) could move to M06+M12 if the audit prefers. | Medium |
-| U9 | Whether M09 (storage) is inside S3 or S4 | Storage is the OS-adjacent persistence; keeping it in S3 avoids separating it from M08 files. But some curricula place storage systems with databases (M13) or with distributed (M17). | Medium |
-| U10 | Deep-Dive boundary of Nand2Tetris (R4): optional excursion vs separate path | R4 is a full construction; the Core only needs mechanism. Whether a learner who *wants* it should take it as a side-path is a Lead decision. | Low |
+| U1 | Stage count (7) and exact S4/S5 boundary | Design judgment; audit relevance | **Resolved:** 7 Stages retained; S4/S5 partial independence confirmed (no H edge either way); audit preferred no reorder. Default narrative decided separately (see §2 note). |
+| U2 | Concurrency as own Stage vs inside S5 | M14/M15 both feed distribution | **Resolved:** stays inside S5; M14→M15 and M15→M14 orderings are both soft — no H edge between them; LAB-REQ-03 (threads) and LAB-REQ-05 (transactions) are parallel companions in S5. |
+| U3 | S6 as one Stage or two | Tight coupling M16–M20 | **Resolved:** one Stage S6, five Modules. |
+| U4 | Exact lesson count / granularity | Not learner-validated | **Resolved at Blueprint:** 70 preliminary entries for dependency reasoning; final merge/split deferred to module dossiers. |
+| U5 | Mini Cloud checkpoint cadence drives Stage naming | #3 ownership | **Resolved:** no — P0–P9 anchor to Module IDs/macro areas (#14); Stage names unchanged. |
+| U6 | Latency-constant set (R11) | Hardware-dependent | **Resolved at architecture level:** exact values are implementation-time baselines under OQ-BP-006 + module dossiers/Living Curriculum review; no separate curriculum dependency or Open Question. |
+| U7 | M00 "question set": concept, tool, or thread | Registry decision | **Resolved:** tool/thread (Technology Evaluation question set), not a concept ID. |
+| U8 | M05 before or after M06 | Both orders exist | **Resolved:** spine order kept (M05 in S2 before M06 in S3, per D-007); M03→M05 H and M05→M06 S as originally proposed. Runtime half stays in M05; no move required. |
+| U9 | M09 inside S3 or S4 | Adjacent-persistence grouping | **Resolved:** stays in S3 beside M08 (files); DB (M13) revisits from it. |
+| U10 | Nand2Tetris Deep-Dive boundary | Full construction vs mechanism | **Resolved:** Deep Dive/optional excursion; rejected from Required Labs by #16; no digital-logic track in Core. |
 
 ---
 
-## 8. Reconciliation Points (repeated from Deliverable A for review convenience)
+## 8. Reconciliation Points — RESOLVED (Issue #9)
 
-- **#2 audit:** recheck U1/U2/U8 hidden prerequisites (statistics, clock semantics); recheck whether Stage boundaries match the audit's external coverage recommendation.
-- **#3 Mini Cloud App:** the graph's `P` edges are placeholders — no curriculum dependency, only surface locations. Stage names are provisional; #3 should anchor to macro area IDs.
-- **#4 labs:** every Module names a mechanism *class*; final lab selection (Adopt/Adapt/Build) is #4 + Lead, especially for M17 (3-node replication demo), M16 (RPC fault injection), M13 (`EXPLAIN` indexing), M12 (DevTools/security model).
+- **#2 audit:** recommendations R1–R15 disposed in `audit-to-architecture-disposition-v0.1.md`; the effects on this graph were: hidden-prerequisite flags resolved (§6), U-table updated (§7), **no edge changed**. Reliability/failure-probability math stays inside M16/M17; no math gate.
+- **#3 Mini Cloud App:** the graph's `P` relationships remain integration-only (no curriculum dependency, only surface locations). #14 anchored P0–P9 to macro area IDs/Module IDs; canonical mapping in `final-reconciliation-v0.1.md` §6. Project order is explicitly not a curriculum DAG.
+- **#4 labs:** mechanism *classes* became the accepted selection map (`lab-source-selection-map-v0.1.md`): LAB-REQ-01 `M11`, LAB-REQ-02 `M06`, LAB-REQ-03 `M15`, LAB-REQ-04 `M13`, LAB-REQ-05 `M14`; optional/expeditions as mapped in `meta/CURRICULUM_MAP.md`. No Lab code implemented. The M17 hands-on boundary is EXP-05 Source Expedition + LAB-REQ-05 local analogue, not a 3-node implementation.
 
 ---
 
 ## 9. Verification Record (for this deliverable)
 
-**Checks performed:**
-- Dependency graph serialized; **no cycles** confirmed (both by construction and by an automated topological check, §5).
+**Checks (original + Issue #9 re-run, 2026-08-30):**
+- Dependency graph serialized; **no cycles** confirmed (both by construction and by an automated topological check, §5). Re-verified after Issue #9 integration: no edges were added, removed, or retyped; first-introduction changes (M04 `L04-02`, M13 `L13-03`, M00 `L00-02`) are intra-Module and cannot affect the Module-level DAG.
 - Mermaid edge set verified to exactly match the structured table edge set (62/62, verified programmatically).
 - Every macro area `00–15` is present in the Module map (§2 of Deliverable A) and appears in the graph.
 - Every Stage has an explicit capability gain (§3 of Deliverable A).
