@@ -1,6 +1,6 @@
 # Core Dependency Graph v0.1
 
-Status: **RECONCILED — Blueprint v0.1, Issue #9 integration applied (not VERIFIED; Lead review pending)**
+Status: **RECONCILED — Blueprint v0.1, Issue #9 Lead-accepted (not VERIFIED)**
 Author: Local Agent (Curriculum Architecture Research & Design); Issue #9 integration applied by Curriculum Architecture Integrator
 Date: 2026-08-30
 Scope: Explicit prerequisite relationships between Stages, Modules, and important Lessons. Companion to `core-stage-module-lesson-map-v0.1.md`. Original Issue #1 proposal with the Lead-corrected semantics retained; Issue #9 reconciliation outcomes (hidden-prerequisite resolutions, U-table updates, explicit narrative-vs-H separation) applied. For dependency reasoning — not a final lesson list.
