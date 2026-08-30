@@ -42,7 +42,7 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 | Final Exit Audit | Issue #23 / PR #24 | **COMPLETE — PASS after Lead direct fixes; Blueprint v0.1 closed** |
 | OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | **OPEN — non-blocking until an affected slice requires a Core-scope decision** |
 | OQ-BP-006 environment/version + hardware-dependent baseline pinning | First Module dossier + environment/Lab implementation | **OPEN — intentionally implementation-time** |
-| Stage-by-stage vertical slices | Post-Blueprint | **UNBLOCKED — begin with early Foundations/System Mechanics Research Dossier** |
+| Stage-by-stage vertical slices | Issue #25 begins the first post-Blueprint slice | **ACTIVE — Foundations/System Mechanics Research Dossier (M00–M04 + bounded P0)** |
 
 ## Final Blueprint gate — PASSED
 
