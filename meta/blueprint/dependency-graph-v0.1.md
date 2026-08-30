@@ -102,7 +102,7 @@ A complete shared Core traversal still includes both S4 and S5 before the distri
 | M19 | M20 | H | Observability instruments infrastructure |
 | M16 | M20 | H | Tracing/correlation need the distributed failure model |
 | M11 | M20 | S | Navigation timing/HTTP metrics enrich observability (soft) |
-| M11 | M21 | H | TLS is the crypto-use case; trust boundary makes no sense without transport security |
+| M11 | M21 | H | M21 is the **security synthesis**: TLS/certificates from M11 provide a concrete crypto/trust case before threat-model and crypto-use consolidation; the trust-boundary concept itself does not depend on transport security |
 | M07 | M21 | H | Memory isolation is the security boundary origin |
 | M12 | M21 | H | Browser origin/same-origin is the most familiar trust boundary |
 | M09 | M21 | S | Data-at-rest durability ties to confidentiality (soft) |
@@ -269,7 +269,7 @@ Only cross-Module hard prerequisites are listed (intra-Module is implied by Modu
 | L18-01 (queues) | M18 | L17-03 (consistency models) | Queue semantics are consistency/failure decisions |
 | L19-01 (containers) | M19 | L06-01, L07-01, L08-01 | Namespaces/cgroups/files are process/mem/file abstractions |
 | L20-01 (observability) | M20 | L16-01 (failure), L19-02 | Metrics/tracing instrument distributed failure |
-| L21-01 (trust boundary) | M21 | L11-01 (TLS), L12-03 (origin) | Trust boundaries rely on transport crypto + web identity |
+| L21-01 (trust-boundary synthesis) | M21 | L07-01 (first trust/protection boundary), L11-01 (TLS), L12-03 (origin) | M21 consolidates already-taught boundary cases into threat modeling; it is not the first definition of trust boundary |
 | L22-02 (web app vulns) | M22 | L12-03 (same-origin/CORS) | XSS/CSRF/CORS are browser-origin mechanisms |
 | L23-01 (measurement) | M23 | L20-01 (observability), L04-02 (perf) | Measurement methodology builds on both |
 | L23-02 (tech evaluation) | M23 | L16-02 (RPC) or S6 complete | Evaluating a tech needs distributed-feature understanding |
