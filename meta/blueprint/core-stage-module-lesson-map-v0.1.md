@@ -1,9 +1,9 @@
 # Core Stage / Module / Lesson Map v0.1
 
-Status: **PROPOSAL — Blueprint v0.1, Issue #1**
-Author: Local Agent (Curriculum Architecture Research & Design)
+Status: **RECONCILED — Blueprint v0.1, Issue #9 integration applied (not VERIFIED; Lead review pending)**
+Author: Local Agent (Curriculum Architecture Research & Design); Issue #9 integration applied by Curriculum Architecture Integrator
 Date: 2026-08-30
-Scope: Proposed learner-visible Stages, Modules, and preliminary Lesson boundaries beneath the accepted macro Core spine (D-007). This is a proposal for Lead reconciliation — not an independently final curriculum, and not a set of Lessons.
+Scope: Learner-visible Stages, Modules, and preliminary Lesson boundaries beneath the accepted macro Core spine (D-007). Original Issue #1 proposal content; the Issue #9 reconciliation outcomes (audit dispositions R1–R15, #14/#15/#16 accepted artifacts, hidden-prerequisite resolutions) have been applied on top. Still not a set of Lessons and not `VERIFIED`.
 
 ---
 
@@ -27,7 +27,7 @@ These principles are derived from the Curriculum Invariants and Decisions and ap
 
 **P8. Mini Cloud App integration hooks only.** This proposal states *where* the Mini Cloud App can naturally integrate (as a recurring hands-on surface for observing mechanisms), but does not design its feature sequence (Issue #3 owns that).
 
-**P9. Chinese canonical, English terms introduced with the concept (D-005).** Every canonical concept is introduced in Chinese with its English term. The concept IDs below are provisional labels for dependency reasoning, not final Registry IDs.
+**P9. Chinese canonical, English terms introduced with the concept (D-005).** Every canonical concept is introduced in Chinese with its English term. Since Issue #9, the canonical concept IDs live in `meta/CONCEPT_REGISTRY.md` (`EC-CON-001`–`EC-CON-018`); the §8 first-introduction table below uses those Registry IDs.
 
 ---
 
@@ -162,7 +162,18 @@ Stage IDs are stable proposal labels (`S1`..`S7`). Each Stage maps the accepted 
 | 14 Systems Thinking & Judgment | S7 |
 | 15 Final System Defense | S7 |
 
-**Stage dependency chain (hard):** S1 → S2 → S3 → S4 → S5 → S6 → S7 (each Stage's capability is a genuine prerequisite for the next; no Stage can be skipped without returning for the missing mechanism).
+**Stage dependency (corrected — Issue #9 keeps the Lead-fixed semantics):**
+
+```
+S1 → S2 → S3
+           ├─→ S4 ─┐
+           └─→ S5 ─┴─→ S6 → S7
+```
+
+- **Hard prerequisites:** `S1 → S2 → S3`; `S3 → S4` and `S3 → S5` (each Stage's capability is a genuine prerequisite for the next Stage it must feed); `S4 & S5 → S6` (distributed systems needs both the networking path and the data/concurrency path); `S6 → S7`.
+- **S4 / S5 are partially independent after S3.** There is **no hard `S4 → S5` Stage edge**.
+- **Default first-time learner narrative (pedagogical preference, not `H`):** `S1 → S2 → S3 → S4 → S5 → S6 → S7` (request-centric journey). A state-centric learner may run `S1 → S2 → S3 → S5 → S4 → S6 → S7`; a compressed branch may not skip S4 or S5 entirely before S6.
+- The **Module DAG** (`dependency-graph-v0.1.md`) remains authoritative for actual prerequisite semantics; the narrative choice is recorded under OQ-BP-004 as resolved (preference, not dependency).
 
 ---
 
@@ -176,6 +187,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Key concepts:** system map (whole system mental model); abstraction; interface; indirection; state; Mini Cloud App as recurring integration surface (placeholder only).
 - **Competencies:** Trace (first), Explain (first), Observe (first use of a real tool).
 - **Horizontal threads first introduced/revisited:** Technical Literacy (FIRST-INTRO); API/Interface Design (FIRST-INTRO); Napkin Math (FIRST-INTRO — order of magnitude); Failure (FIRST-INTRO — "systems fail"); Debugging (FIRST-INTRO — what debugging is).
+- **Reconciled explicit learner outcomes (R2 toolchain, Issue #9):** `L00-02` must produce observable outcomes — shell/task execution; reading an unfamiliar code/file; debugger-light investigation; Git evidence; reproducibility/version/environment record; running a baseline and preserving evidence. The minimal form is one reproducible investigation: read an unfamiliar file → run a command → controlled change → record it in Git → run it → save an environment/version/evidence record. Not a command encyclopedia. A REQUIRED-lab entry gate (get repository, run documented preflight check, reproduce baseline, save evidence record; environment preflight repeated at M03/M06/M13) may reference these abilities but is course discipline, **not** a DAG edge and not a new Module.
 - **Likely hands-on mechanism class:** Observe a real HTTP request against a local demo service; use a shell; break the service and observe the failure.
 - **Mini Cloud App integration:** placeholder — see Issue #3 (the app is introduced as the recurring project surface here).
 - **Beyond-the-Project relevance:** any production system reading.
@@ -195,8 +207,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S1 · M02 — Computation & Complexity (Area 02)
 - **Purpose / mental-model contribution:** What "computation" is conceptually (a function/algorithm), abstraction of operations, complexity as *growth*, and the standard containers (array/list/hash/stack/queue/tree) with their trade-offs.
 - **Prerequisites:** M01 (or at least integer/representation basics).
-- **Key concepts:** algorithm, complexity, big-O, data structures (array, hash table, linked list, stack/queue, tree), recursion; state/specification.
+- **Key concepts:** algorithm, complexity, big-O, data structures (array, hash table, linked list, stack/queue, tree), recursion; state/specification; intuitive model of computation; tractability/limits intuition.
 - **Competencies:** Trace (data structure operations), Explain, Estimate (operation counts), Correctness (invariants of a data structure).
+- **Reconciled outcomes (R1 + R9, Issue #9):** `L02-01` explicitly owns the just-in-time applied discrete/asymptotic toolkit — counting, asymptotic growth, order-of-magnitude scheduling — and `L02-03` protects the **intuitive** model of computation (what a computation/algorithm is), **expression limits** (what "expressible/representable" means), **tractability** (why some problems are hard), and a **decidability intuition** (some questions are not answerable this way). The algorithm ↔ language/runtime connection is established here and confirmed at M05 (`L05-01..03`): representing a problem correctly then stating how a representation or language choice changes cost or expressibility. Formal automata theory, reductions, computability proofs stay Deep Dive. No math prerequisite gate before M01.
 - **Horizontal threads:** Correctness & Invariants (revisit — loop invariants); Napkin Math (revisit); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** Implement a small data structure or measure a sort on inputs of different sizes; observe scaling behavior; use a profiler-light timing.
 - **Mini Cloud App integration:** placeholder — choose a data structure for the app's data and justify.
@@ -217,8 +230,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S2 · M04 — Memory Hierarchy & Locality (Area 03)
 - **Purpose / mental-model contribution:** Memory isn't one thing: cache (L1/L2/L3) → RAM → disk; latency ladder; locality; why a reordered loop or a contiguous array is dramatically faster.
 - **Prerequisites:** M03 (machine basics), M01 (sizes/units).
-- **Key concepts:** memory hierarchy, cache, locality, cache line, latency ladder, RAM vs storage, spatial/temporal locality, performance measurement.
+- **Key concepts:** memory hierarchy, cache, locality, cache line, latency ladder, RAM vs storage, spatial/temporal locality, performance measurement; measured variation: repeated measurements, distributions, median/percentiles when useful, uncertainty/variation, inference limits.
 - **Competencies:** Observe (perf stat / timing), Diagnose (cache-miss-bound performance), Estimate (hierarchy latency trade-off), Explain (why cache works).
+- **Reconciled first home (R1 + R7, Issue #9):** `L04-02` is the canonical first assessed home of the **applied measurement-uncertainty toolkit** (repeated measurements; distributions; median; percentiles when useful; uncertainty/variation; inference limits; order-of-magnitude reasoning) and of the **experimental pattern**: question/hypothesis → baseline → controlled change → metric/environment/workload → repetitions/distribution when relevant → observation → competing explanation → bounded conclusion. Reliability/failure probability stays just-in-time (M16/M17) where a mechanism requires it. No standalone mathematics Module; no statistics sequence; no math gate.
 - **Horizontal threads:** Measurement & Performance (FIRST-INTRO — a real measured difference); Napkin Math (revisit — 100 ns vs 1 ms); Correctness (revisit — cache coherence intuition); Cost/Resource Economics (revisit).
 - **Likely hands-on mechanism class:** Cache-blocking / array-of-structs vs struct-of-arrays timing measurement; `perf` if available; memory-latency microbenchmark.
 - **Mini Cloud App integration:** placeholder — serve a hot endpoint from memory and measure.
@@ -230,6 +244,7 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 - **Prerequisites:** M03 (machine), M04 (memory), M02 (basic).
 - **Key concepts:** lexer/parser/AST (per R9/R4), intermediate representation, compiler, interpreter, runtime (GC, JIT, event loop), ABI, source mapping; closure (concept-level).
 - **Competencies:** Trace (source → machine), Explain (compilation), Learn-New-Tech (read a language/compiler behavior), Observe (disassembly of a higher-level language).
+- **Reconciled outcome (R9, Issue #9):** the algorithm ↔ language/runtime connection established in M02 is confirmed here — how a source-level construct becomes a representation, a runtime mechanism, and a machine instruction; a language construct's cost/expressibility consequences. Exit evidence is a source-to-runtime trace and one verified language/runtime claim (from documentation or source), not parser vocabulary recall. Formal type theory, GC internals, and compiler construction remain Deep Dive. Guardrail: no vocabulary-only assessment (matches #15 §3.1).
 - **Horizontal threads:** API/Interface Design (revisit — language/runtime interface); Correctness (revisit — type systems as invariants); Debugging (revisit — stack traces, symbols); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** Compile (or use a real compiler for) a tiny program and inspect the pipeline; use Python `dis` or a small interpreter-writing exercise; optional simple tokenizer/parser with a course skeleton.
 - **Mini Cloud App integration:** placeholder — observe the app's runtime (Python/JS) behavior.
@@ -316,8 +331,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S5 · M13 — Databases: Storage & Indexing (Area 09)
 - **Purpose / mental-model contribution:** What a database actually is under the hood: pages, B-tree indexes, heap/log storage, buffer pool; the relational model and SQL; why indexes speed reads and slow writes.
 - **Prerequisites:** M08/M09 (files/storage), M04 (memory hierarchy), M02 (data structures).
-- **Key concepts:** DBMS; relational model; SQL; page; heap; B-tree/B+ tree; hash index; buffer pool; query planner (concept); storage engine (row vs column).
-- **Competencies:** Explain (index mechanism), Observe (`EXPLAIN`, `pg_stat_statements`-light), Judge (index trade-off), Estimate (page/IO cost), Trace (query → index → page).
+- **Key concepts:** DBMS; relational model; SQL; page; heap; B-tree/B+ tree; hash index; buffer pool; query planner (concept); storage engine (row vs column); schema invariant; source-of-truth vs derived data.
+- **Competencies:** Explain (index mechanism), Observe (`EXPLAIN`/`EXPLAIN QUERY PLAN`), Judge (index trade-off), Estimate (page/IO cost), Trace (query → index → page).
+- **Reconciled first home (R6, Issue #9):** `L13-03` extends the schema-invariant lesson to protect: **schema evolution** (changing fields/constraints over time), **reader/writer compatibility** (old readers vs new writers and vice versa), **migration/backfill trade-offs** (delay, downtime, complexity — migrate only when there is a real evolution need), **source-of-truth vs derived data** (one authoritative copy; derived data is recomputable), and **lightweight provenance** (where the value came from, which version/assumptions shaped it — PROV-DM as conceptual vocabulary only). Representation/model distinction rides on M01 `L01-04` + M13 `L13-02`; compatibility revisits at M16 `L16-02`; derived data at M18; provenance at M19/M23. Bounded carefully: one evolving schema, one derived view, one provenance record — **not** schema-registry operations, not Data Engineering, no PROV ontology, no lineage platform, no NoSQL family survey.
 - **Horizontal threads:** Measurement (revisit — query timing); Correctness (revisit — schema invariants); API/Interface Design (revisit — SQL as interface); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** operate a real Postgres/SQLite; `EXPLAIN` a query; create/drop indexes and measure; observe buffer cache activity.
 - **Mini Cloud App integration:** placeholder — the app's data model + a query that needs an index.
@@ -360,8 +376,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S6 · M17 — Replication, Consistency & Consensus (Area 11)
 - **Purpose / mental-model contribution:** Replication for availability/durability; consistency models (strong ↔ eventual, linearizability); consensus (Raft/Paxos intuitive); why "CAP" is a trade-off framing, not a law (R3, R7).
 - **Prerequisites:** M16 (partial failure/RPC), M14 (transactions), M09 (durability).
-- **Key concepts:** replication (sync/async, leader/follower); consistency (linearizability ↔ eventual); quorum; consensus (Raft steps intuitively); split brain; availability vs consistency trade-off.
+- **Key concepts:** replication (sync/async, leader/follower); consistency (linearizability ↔ eventual); quorum; consensus (Raft/Paxos intuitive); split brain; availability vs consistency trade-off.
 - **Competencies:** Judge (choose consistency model), Explain (consensus mechanism), Diagnose (a replication anomaly), Estimate (availability/cost).
+- **Reconciled boundary (R10/R11, Issue #9):** consensus **concept** is Core here: why coordination is hard, what consensus buys/costs, when replication/consistency choices apply. No full Raft/Paxos implementation is required for M17 exit. The accepted hands-on boundary is **bounded observation/case** — Source Expedition EXP-05 (replication/transactions/logging case) and the SQLite transaction/recovery evidence (LAB-REQ-05) as the local-scale analogue; full consensus implementation/proofs are Deep Dive (R11). No Registry ID for Consensus in the first population (deferred explicitly; concept stays Core at M17).
 - **Horizontal threads:** Correctness (revisit — replicated invariants); Failure (revisit — partition); Concurrency (revisit — ordering); Cost (revisit — replication cost).
 - **Likely hands-on mechanism class:** run a course-provided 3-node demo KV with a voter; kill a node; observe read-your-writes drift; simple Raft-style reasoning exercise. (This is Adopt/Adapt territory per D-012 — final lab selection belongs to #4.)
 - **Mini Cloud App integration:** placeholder — where the app's data lives and who owns consistency.
@@ -393,8 +410,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S6 · M20 — Observability & Reliability Engineering (Area 12)
 - **Purpose / mental-model contribution:** How to know a production system is healthy: metrics, logs, traces, alerts, SLOs, incident response, postmortems. This is the "how would I know?" question made systematic (D-014 Diagnostics).
 - **Prerequisites:** M18/M19 (state/infra), M16, M11 (measurement/tracing).
-- **Key concepts:** metric; log; trace; correlation; SLO; alerting (concept); instrumentation; red-teaming light; postmortem; budgeting.
+- **Key concepts:** metric; log; trace; correlation; SLO; alerting (concept); instrumentation; red-teaming light; postmortem; budgeting; clock semantics (monotonic vs wall clock).
 - **Competencies:** Diagnose (from signal to cause), Observe (a dashboard), Judge (SLO choice), Estimate (business cost of outage).
+- **Reconciled outcome (R7, Issue #9):** the experimental pattern first assessed at M04 `L04-02` is **revisited** as production-signal diagnosis at `L20-01/L20-02` (and consolidated at M23 `L23-01`). The DAG-hidden-prerequisite flag for **clock semantics** is resolved here: measuring durations requires a monotonic clock; wall-clock readings cannot time spans (Python docs: `time()` wall vs `time.monotonic()`/`perf_counter`); one light bridge, no statistics prerequisite.
 - **Horizontal threads:** Measurement & Performance (revisit — the "how long/where time" question formalized); Failure (revisit — incident); Software Engineering (revisit); Cost (revisit).
 - **Likely hands-on mechanism class:** instrument a small service with metrics/logs/traces; create an alert; run a controlled failure; read a real postmortem (course-owned or classic).
 - **Mini Cloud App integration:** placeholder — the app gets an observability surface.
@@ -426,8 +444,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S7 · M23 — Systems Thinking & Judgment (Area 14)
 - **Purpose / mental-model contribution:** Synthesize everything into judgment tools: measurement discipline, cost/resource economics, failure-mode reasoning, the Technology Evaluation Framework (D-015), and the systems questions (where is time/data/state going; where can it fail; how would I know; what must always be true; what are we paying for; at what scale does this become a problem).
 - **Prerequisites:** S6-complete (or M18/M20 if compressed path), plus M21/M22 or concurrent.
-- **Key concepts:** judgment; measurement methodology; cost model; failure taxonomy; technology admission (D-015 card); napkin math (consolidated); judgment under uncertainty; trade-off language.
+- **Key concepts:** judgment; measurement methodology; cost model; failure taxonomy; technology admission (D-015 card); napkin math (consolidated); judgment under uncertainty; trade-off language; applied measurement-uncertainty toolkit (consolidated).
 - **Competencies:** Judge (the capstone competency), Estimate (consolidated), Learn-New-Tech (systematically evaluate), Explain (defend).
+- **Reconciled outcome (R1/R7, Issue #9):** `L23-01` **consolidates** the experimental pattern (first assessed at M04 `L04-02`, production-mode at M20) and the applied measurement-uncertainty toolkit — distributions/median/percentiles/uncertainty/inference limits — into one measurement methodology; clock-semantics bridge applies here as well (monotonic vs wall clock). `L23-02` evaluates technology via the Technology Evaluation Framework and (per R5) treats AI-generated claims as untrusted hypotheses verified by source/test/measurement (Current Case), without an AI module.
 - **Horizontal threads:** ALL threads converge here (synthesis); Measurement & Performance (revisit — methodology); Cost (revisit — models); Failure (revisit — taxonomy); Technical Literacy (revisit).
 - **Likely hands-on mechanism class:** a technology evaluation case study (write a full Technology Card on a real/current technology); a measurement methodology exercise (design a benchmark that answers a question).
 - **Mini Cloud App integration:** placeholder — the app's architectural judgment in the defense.
@@ -456,19 +475,19 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | Lesson ID | Module | Learner question | Primary mechanism/concept | Hard prerequisites | FI / RV | Competency gain | Active observe/build/break? |
 |---|---|---|---|---|---|---|---|
 | L00-01 | M00 | "When I open a webpage, what actually happens?" | Whole-system map; abstraction/interface/indirection; the question set | programming basics | FI: system map, abstraction, question set | Trace, Explain, Observe | Y (observe a request, break it) |
-| L00-02 | M00 | "How do I investigate something I don't understand?" | Tooling: shell, code, debugger-light, git | L00-01 | FI: Technical Literacy basics; Debugging intro | Observe, Learn-New-Tech | Y (use shell, git) |
+| L00-02 | M00 | "How do I investigate something I don't understand?" | Tooling: shell/task execution; reading unfamiliar code/file; debugger-light investigation; Git evidence; reproducibility/version/environment record; run baseline + preserve evidence (R2); AI-generated output = untrusted hypothesis (R5) | L00-01 | FI: Technical Literacy basics; Debugging intro; source-verification habit | Observe, Learn-New-Tech, Explain, Diagnose | Y (use shell, git; reproducible investigation) |
 | L01-01 | M01 | "What is a bit, really?" | Bit/byte/binary; counting | L00-01 | FI: representation | Trace, Explain, Estimate | Y (hexdump) |
 | L01-02 | M01 | "Why is my number wrong?" (overflow) | Two's-complement, signed/unsigned, overflow | L01-01 | FI: integer representation | Correctness, Trace, Diagnose | Y (overflow demo) |
 | L01-03 | M01 | "Why does my text look broken?" | UTF-8/encoding; endianness | L01-01 | FI: text encoding | Trace, Explain, Diagnose | Y (decode/encode, break) |
 | L01-04 | M01 | "How big is this file?" | Size estimation; serialization; round-trip invariant | L01-01 | FI: size/no-serialization round-trip; RV: representational correctness | Estimate, Correctness | Y (compress/parse) |
-| L02-01 | M02 | "What does 'fast' mean for an algorithm?" | Complexity as growth, big-O | L01-01 or prior | FI: complexity | Estimate, Explain, Trace | Y (measure growth) |
+| L02-01 | M02 | "What does 'fast' mean for an algorithm?" | Complexity as growth; applied discrete/asymptotic toolkit: counting, order-of-magnitude scheduling (R1) | L01-01 or prior | FI: complexity; FI: asymptotic/counting toolkit (R1) | Estimate, Explain, Trace | Y (measure growth) |
 | L02-02 | M02 | "Why is my lookup slow?" | Hash table vs list vs tree; trade-off | L02-01 | FI: standard data structures; FI: trade-off language | Judge, Explain | Y (implement/measure) |
-| L02-03 | M02 | "What is abstraction doing for me?" | Abstraction layers; interface vs implementation | L02-02 | RV: abstraction; FI: interface/contract | Explain, Judge | Y (design a small interface) |
+| L02-03 | M02 | "What is abstraction doing for me?" | Abstraction layers; interface vs implementation; **intuitive model of computation; expressibility; tractability; decidability intuition** (R9); specification + invariant + correctness canonical home | L02-02 | RV: abstraction; FI: interface/contract; FI: spec/invariant/correctness; FI: limits intuition (R9) | Explain, Judge, Correctness | Y (design a small interface) |
 | L03-01 | M03 | "What does my code actually run on?" | ISA, registers, instruction fetch-execute | L01-01, L02-02 | FI: machine model | Trace, Explain | Y (disassembly) |
 | L03-02 | M03 | "How does a function call work?" | Stack frame, call/return, stack overflow | L03-01 | FI: stack/heap/call frame | Trace, Diagnose | Y (gdb, overflow) |
 | L03-03 | M03 | "Why does my program crash?" (segfault) | Memory access; address validity | L03-02 | FI: crash as signal; RV: failure | Diagnose, Observe | Y (induce crash) |
 | L04-01 | M04 | "Why is my slow loop slow?" | Memory hierarchy; cache; latency ladder | L03-01, M01 | FI: hierarchy, locality | Observe, Diagnose, Estimate | Y (measure blocking) |
-| L04-02 | M04 | "Why does order matter?" | Locality (spatial/temporal); layout | L04-01 | RV: locality; FI: performance measurement methodology | Diagnose, Measure, Judge | Y (benchmark, reorder) |
+| L04-02 | M04 | "Why does order matter?" | Locality (spatial/temporal); layout; **applied measurement-uncertainty toolkit + experimental pattern — canonical first home (R1/R7)**: baseline → controlled change → metric/environment/workload → repetitions/distribution → observation → competing explanation → bounded conclusion; repeated measurements, median/percentiles when useful, uncertainty, inference limits | L04-01 | RV: locality; FI: measurement-uncertainty toolkit (R1); FI: experimental pattern (R7); RV: measurement methodology | Diagnose, Measure, Judge, Estimate | Y (benchmark, reorder; distribution of runs) |
 | L05-01 | M05 | "How does my Python become an instruction?" | Compiler/interpreter pipeline; source→machine | L03-02, L04-01 | FI: translation/interpretation; RV: abstraction | Trace, Explain, Learn-New-Tech | Y (read bytecode/dis) |
 | L05-02 | M05 | "What is a language really?" | AST/grammar (lexer/parser concept); IR; runtime (GC/JIT) | L05-01 | FI: grammar/AST; RV: interface | Explain, Judge | Y (tiny parser) |
 | L05-03 | M05 | "Why are types useful?" | Type systems as invariants; dynamic vs static | L05-02 | FI: type as invariant | Correctness, Judge | Y (mismatch bug) |
@@ -496,7 +515,7 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L12-04 | M12 | "Why does my page feel slow?" | Event loop; render-blocking; JS runtime | L12-02 | FI: event loop preview; RV: concurrency | Diagnose, Measure | Y (block the main thread) |
 | L13-01 | M13 | "Why is my query fast/slow?" | B-tree; index; page/IO; EXPLAIN | L08-02, L09-02, L04 | FI: indexing/engine; RV: data structures | Explain, Observe, Estimate | Y (EXPLAIN, index measure) |
 | L13-02 | M13 | "What is SQL doing?" | Relational model; query plan concept; storage engine | L13-01 | FI: relational/SQL semantics | Trace, Explain, Judge | Y (query a real DB) |
-| L13-03 | M13 | "Why do my schema choices matter?" | Schema design; column vs row; trade-off | L13-02 | RV: trade-off; FI: schema invariant | Correctness, Judge | Y (design schema, measure) |
+| L13-03 | M13 | "Why do my schema choices matter?" | Schema design & invariant; **schema evolution; reader/writer compatibility; migration/backfill trade-offs; source-of-truth vs derived data; lightweight provenance (R6)** | L13-02 | RV: trade-off; FI: schema invariant; FI: schema-evolution/provenance pattern (R6, application pattern — no new concept ID) | Correctness, Judge, Diagnose, Learn-New-Tech | Y (design schema, evolve it, measure) |
 | L14-01 | M14 | "What is a transaction?" | ACID; atomicity; WAL; commit | L13-02, L09-01 | FI: transaction/ACID/WAL | Correctness, Trace, Explain | Y (transaction, crash) |
 | L14-02 | M14 | "Why does concurrent access corrupt data?" | Anomalies; isolation levels; locks; MVCC | L14-01, M15-preview | FI: isolation; RV: concurrency | Diagnose, Judge, Correctness | Y (reproduce anomaly) |
 | L14-03 | M14 | "How do I design an atomic write?" | Idempotency; multi-step writes; deadlock (light) | L14-02 | FI: idempotency preview; RV: invariant | Judge, Correctness | Y (write + crash test) |
@@ -506,27 +525,29 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L16-01 | M16 | "What is different about many machines?" | Partial failure; the fundamental ambiguity | L15-01, L10-02 | FI: partial failure; RV: failure | Judge, Explain, Trace | Y (inject partition) |
 | L16-02 | M16 | "How do I call a remote function safely?" | RPC; serialization; timeout; retry; idempotency | L16-01 | FI: RPC; RV: interface/indirection | Trace, Judge, Explain | Y (RPC with injected delay) |
 | L17-01 | M17 | "How do I keep data safe across machines?" | Replication; quorum; durability | L16-01, L09-01 | FI: replication; RV: durability | Judge, Explain | Y (3-node demo, kill) |
-| L17-02 | M17 | "How do machines agree?" | Consensus (Raft concept); leader election | L17-01 | FI: consensus; RV: correctness | Explain, Trace, Judge | Y (Raft exercise) |
+| L17-02 | M17 | "How do machines agree?" | Consensus concept (Raft/Paxos intuitive): what it buys/costs, leader election, bounded worked trace (R10) | L17-01 | FI: consensus (concept; Registry ID deferred); RV: correctness | Explain, Trace, Judge | Y (worked trace / failure scenario; no implementation) |
 | L17-03 | M17 | "How consistent is 'strong enough'?" | Consistency models; linearizability ↔ eventual; CAP framing | L17-02 | FI: consistency models; RV: trade-off | Judge, Explain | Y (observe read-your-writes) |
 | L18-01 | M18 | "How do services delegate work?" | Queue; broker; at-least/on/once semantics | L17-03, L16-02 | FI: queue semantics; RV: failure | Judge, Explain, Trace | Y (broker demo, duplicates) |
 | L18-02 | M18 | "Do I need a distributor?" | Distributed transactions/2PC concept; saga; ordering | L18-01, M14 | FI: 2PC concept; FI: saga/ordering; RV: trade-off | Judge, Explain | Y (workshop scenario) |
 | L19-01 | M19 | "What is a container?" | Container; namespaces; cgroups; image | L06-01, L07-01, L08-01 | FI: container mechanism; RV: isolation | Trace, Explain, Judge | Y (build/run container) |
 | L19-02 | M19 | "What does 'the cloud' actually mean?" | VM vs container; region/AZ; cloud pricing | L19-01 | FI: cloud model; FI: cost | Explain, Judge, Estimate | Y (deploy + cost calc) |
 | L19-03 | M19 | "How does code get to production?" | CI/CD; deployment strategies; IaC | L19-02, L16 (failure model) | FI: deployment/CI-CD; RV: failure | Explain, Judge, Diagnose | Y (pipeline demo; rollback) |
-| L20-01 | M20 | "How do I know the system is OK?" | Metrics/logs/traces; SLO; alerting | L19-02, L16 | FI: observability; RV: measurement | Observe, Diagnose, Judge | Y (instrument, alert) |
+| L20-01 | M20 | "How do I know the system is OK?" | Metrics/logs/traces; SLO; alerting; **clock semantics — monotonic vs wall clock bridge (resolves DAG §6 flag)** | L19-02, L16 | FI: observability; RV: measurement; RV: experimental pattern (R7, from M04) | Observe, Diagnose, Judge | Y (instrument, alert) |
 | L20-02 | M20 | "How do I debug a production incident?" | Incident response; postmortem; correlation | L20-01 | RV: debugging (elevated); FI: SRE/incident | Diagnose, Observe, Explain | Y (controlled incident) |
 | L21-01 | M21 | "Where are the boundaries I must protect?" | Trust boundary; threat model; defense in depth | L11-01, L07-03, L12-03 | FI: security synthesis; RV: crypto roles | Judge, Explain, Diagnose | Y (threat map exercise) |
 | L21-02 | M21 | "What do I use crypto for?" | Hash/MAC/signature/symmetric; cert lifecycle | L21-01 | FI: crypto *use*; RV: TLS | Explain, Judge, Learn-New-Tech | Y (openssl, signing) |
 | L22-01 | M22 | "How do I know who is calling?" | Authn vs authz; password hashing; session/token/JWT | L21-02, L11-02 | FI: authn/authz; RV: identity | Judge, Explain | Y (token verify/forge-safe demo) |
 | L22-02 | M22 | "Why is my web app vulnerable?" | Injection; XSS; CSRF; SSRF; deserialization | L22-01, L12-03 | FI: injection/OWASP-style; RV: security composition | Diagnose, Judge, Explain | Y (safe vulnerable app, fix) |
 | L22-03 | M22 | "Why do I trust my dependencies?" | Supply chain; pinning; provenance light | L22-02, L19 | FI: supply chain; RV: trust | Learn-New-Tech, Judge | Y (dependency audit) |
-| L23-01 | M23 | "How do I measure honestly?" | Measurement methodology; benchmarking rules | L20-01, L04-02 (performance foundations) | FI: measurement methodology (synthesis); RV: measurement | Estimate, Judge, Diagnose | Y (design benchmark) |
+| L23-01 | M23 | "How do I measure honestly?" | Measurement methodology; benchmarking rules; **consolidation of experimental pattern + measurement-uncertainty toolkit (R1/R7)** | L20-01, L04-02 (performance foundations) | RV: measurement methodology (consolidation); RV: uncertainty toolkit | Estimate, Judge, Diagnose | Y (design benchmark) |
 | L23-02 | M23 | "How do I pick a technology?" | Technology Evaluation Framework (D-015); stable principle | L23-01, S6 foundations | FI: tech evaluation; RV: judgment | Judge, Learn-New-Tech, Explain | Y (write a Technology Card) |
 | L23-03 | M23 | "What is the cost of my design?" | Cost/resource economics synthesis; napkin math at scale | L23-02 | FI: cost synthesis; RV: estimate | Estimate, Judge | Y (cost model) |
 | L24-01 | M24 | "Can I defend an architecture?" | System Defense; trade-off reasoning; failure walkthrough | L23-02 | RV: all synthesis | Judge, Explain, Diagnose, Estimate | Y (defense session) |
 | L24-02 | M24 | "What should I measure before I ship?" | Evidence-based claims; what to measure | L24-01 | RV: measurement; FI: evidence discipline | Judge, Diagnose | Y (design a pre-ship check) |
 
-**Lesson count (proposal):** 70 entries (S1: 9, S2: 8, S3: 12, S4: 10, S5: 9, S6: 12, S7: 10). This is an intentionally preliminary granularity — the Lead may merge/split. The map is for dependency reasoning, not a locked lesson list.
+**Lesson count (reconciled):** 70 entries (S1: 9, S2: 8, S3: 12, S4: 10, S5: 9, S6: 12, S7: 10). This is an intentionally preliminary granularity — the Lead may merge/split at module-dossier time. The map is for dependency reasoning, not a locked lesson list.
+
+**Course-discipline annotation (not a lesson row):** all REQUIRED Labs carry a **lab-entry gate** (obtain repository → run documented preflight check → reproduce baseline → save an environment/version/evidence record; environment preflight repeated at M03/M06/M13). This is course discipline, **not** a Module `H` edge and not a new lesson; R2/Issue #9 integration.
 
 ---
 
@@ -615,29 +636,40 @@ D-014 names the threads; the Curriculum Map adds API/Interface Design, Software 
 
 ---
 
-## 8. Tentative Canonical First-Introductions & Revisits
+## 8. Canonical First-Introductions & Revisits
 
-This is the "teach once" table (Invariant 11, D-010). Final canonical definitions and Registry IDs belong to the Concept Registry work, not this proposal.
+This is the "teach once" table (Invariant 11, D-010). The stable definitions/canonical explanations live in `meta/CONCEPT_REGISTRY.md` (IDs `EC-CON-001`–`EC-CON-018`); this table is the locations table reconciled in Issue #9.
 
-| Concept (EN; CN 建议) | Primary home (FI) | Subsequent revisits (RV) |
+| Concept (EN; CN canonical) | Registry ID | Primary home (FI) | Subsequent revisits (RV) |
+|---|---|---|---|
+| Abstraction 抽象 | EC-CON-002 | M00 | M02, M05, M12, M16, M19, M23 |
+| Interface 接口 | EC-CON-005 | M00 | M02, M06, M08, M11, M13, M16, M19 |
+| Indirection 间接 | EC-CON-004 | M00 | M05, M07, M11, M16, M23 |
+| Representation 表示 | EC-CON-003 | M01 | M03 (instructions), M05 (IR), M13 (tuples), M16 (serialization) |
+| State 状态 | EC-CON-001 | M00 | M02, M06, M13, M14, M15, M17, M23 |
+| Invariant 不变量 | EC-CON-008 | M02 (`L02-03`; M01 is application only) | M05 (types), M07 (isolation), M13–M15, M17, M21–M22, M23 |
+| Specification 规格 | EC-CON-007 | M02 (`L02-03`) | M14 (transactions), M15 (thread safety), M21 (threat model) |
+| Correctness 正确性 | EC-CON-009 | M02 (`L02-03`; M01 supplies evidence) | M07, M13–M17, M21–M23 |
+| Caching 缓存 | EC-CON-011 | M04 | M08 (page cache), M11 (HTTP cache, CDN), M13 (buffer pool), M17 (consistency), M19 |
+| Locality 局部性 | EC-CON-012 | M04 | M08 (disk locality), M13 (index locality), M23 |
+| Trade-off 权衡 | EC-CON-006 | M02 (`L02-02`) | M04, M09, M11, M13, M14, M17, M18, M19, M23 |
+| Failure 故障 | EC-CON-010 | M03 (`L03-03`; M00 is preview) | M06–M20 (everywhere), M23–M24 |
+| Isolation 隔离 | EC-CON-013 | M07 (`L07-01`; M06 process boundary is preview) | M12 (browser), M14 (transactions), M15 (threads), M16–M17, M21, M22 |
+| Concurrency 并发 | EC-CON-015 | M15 (`L15-01`; M12 event loop / M14 overlap are previews) | M16–M18, M20, M23 |
+| Consistency 一致性 | EC-CON-014 | M14 (`L14-02`) | M17 (replicated, changed guarantee), M18, M23 |
+| Trust boundary 信任边界 | EC-CON-017 | M21 | M22, M23, M24 |
+| Durability 持久性/耐久性 | EC-CON-016 | M09 (`L09-01`) | M14 (WAL), M17 (replication), M24 |
+| Process 进程 | EC-CON-018 | M06 (`L06-01`) | M07 (address spaces), M12 (browser processes), M16–M17, M19 (containers), M24 |
+
+**Issue #9 additions (concepts without new Registry IDs; patterns or thread-level homes):**
+
+| Pattern / thread | Home (FI) | Revisits |
 |---|---|---|
-| Abstraction 抽象 | M00 | M02, M05, M12, M16, M19, M23 |
-| Interface 接口 | M00 | M02, M06, M08, M11, M13, M16, M19 |
-| Indirection 间接 | M00 | M05, M07, M11, M16, M23 |
-| Representation 表示 | M01 | M03 (instructions), M05 (IR), M13 (tuples), M16 (serialization) |
-| State 状态 | M00 | M02, M06, M13, M14, M15, M17, M23 |
-| Invariant 不变量 | M01/M02 | M05 (types), M07 (isolation), M13–M15, M17, M21–M22, M23 |
-| Specification 规格 | M02 | M14 (transactions), M15 (thread safety), M21 (threat model) |
-| Correctness 正确性 | M01/M02 | M07, M13–M17, M21–M23 |
-| Caching 缓存 | M04 | M08 (page cache), M11 (HTTP cache, CDN), M13 (buffer pool), M17 (consistency), M19 |
-| Locality 局部性 | M04 | M08 (disk locality), M13 (index locality), M23 |
-| Trade-off 权衡 | M02 | M04, M09, M11, M13, M14, M17, M18, M19, M23 |
-| Failure 故障 | M00/M03 | M06–M20 (everywhere), M23–M24 |
-| Isolation 隔离 | M06/M07 | M12 (browser), M14 (transactions), M15 (threads), M16–M17, M21, M22 |
-| Concurrency 并发 | M12 (preview) / M14–M15 | M16–M18, M20, M23 |
-| Consistency 一致性 | M14 (DB isolation) | M17 (distributed), M18, M23 |
-| Trust boundary 信任边界 | M21 | M22, M23, M24 |
-| Durability 持久性/耐久性 | M09 | M14 (WAL), M17 (replication), M24 |
+| Applied measurement-uncertainty toolkit (R1) | M04 `L04-02` | M13 (selectivity/cost), M16/M17 (availability math, just-in-time), M19 (cloud cost), M20 (latency distributions), M23 (consolidation) |
+| Experimental measurement pattern (R7) | M04 `L04-02` (first assessed) | M20 (`L20-01` production signals), M23 `L23-01` (consolidation) |
+| Schema evolution / provenance (R6, application pattern over State/Representation/Interface/Invariant) | M13 `L13-03` | M16 (serialization compatibility), M18 (derived/event data), M19/M23 (supply/source provenance), P0/P4/P6/P9 |
+| Toolchain investigative loop (R2) | M00 `L00-02` | every REQUIRED lab (entry gate), M03/M06/M13 env preflight, M19 `L19-03` packaging, M23 `L23-02` source verification |
+| Consensus concept (R10; Registry ID deferred) | M17 `L17-02` | M18, M23, M24 |
 
 **Harmful-duplication note:** The same concept (e.g., Caching, Isolation, Failure) must never get a *second* full canonical explanation. Every later location uses one-sentence recap + context-specific application.
 
@@ -661,45 +693,46 @@ The following are **tempting conventional-degree items that should probably rema
 | Kubernetes/service-mesh ops mastery | Current Case / Deep Dive | M19 gives container/cloud mechanism; Kubernetes specifics are a specialization with fast decay (FRONTIER). |
 | Type-system theory / PL research | Deep Dive | M05 teaches why types matter as invariants; theory is specialization. |
 | Full storage-engine implementation (LSM, erasure coding) | Deep Dive | M09/M13 teach judgment; implementation is specialization. |
-| ML/AI **content** (introducing models) | Out of scope for Core spine (Current Case reference only) | The Core is a systems curriculum; AI appears as a technology case in M23 if at all. |
+| ML/AI **content** (introducing models) | NOT Core (Current Case only; OQ-BP-001 escalation) | R4 disposition: bounded AI literacy is an RFC-gated architecture question. Safe interim: AI-generated output = untrusted hypothesis verified by source/test/measurement (R5 Current Case at M00 `L00-02` / M23 `L23-02`). No ML math, no LLM architecture, no prompt-engineering catalog, no vendor survey. |
+| Applied probability/statistics/math sequences (discrete-math course, calculus, inferential-statistics course) | NOT Core (just-in-time toolkit) | R1 disposition: only the M04 `L04-02` applied-uncertainty toolkit + in-context estimation; no math gate before M01. |
+| Full consensus implementation (Raft/Paxos build, proofs) | Deep Dive | R11 disposition: concept stays Core at M17; implementation/proofs after a complete shared model; EXP-05 explores the case. |
+| Schema-registry operations / Data Engineering / lineage platforms | NOT Core | R6 disposition: bounded M13 `L13-03` application pattern; no PROV ontology, no data-platform training. |
 | Front-end performance budgets | Deep Dive | M12 covers measurement; budgets are practice. |
 
 **Core boundary test applied:** a topic is Core only if removing it would break the learner's ability to connect the main modern chain (a request through a browser, into a web server, a cache, a DB, a queue, object storage, and back) with accurate mechanism + judgment. Everything else is either a Current Case (reality-aware reference) or Deep Dive.
 
 ---
 
-## 10. Points Requiring Reconciliation (with #2, #3, #4)
+## 10. Reconciliation With #2/#3/#4 — RESOLVED (Issue #9)
 
-### With Issue #2 (External Curriculum Coverage Audit)
-- **Recheck:** the Stage boundary set (7 Stages) against the audit's external curriculum coverage findings — the audit may reveal a *whole field* currently absent from the Core spine (e.g., formal verification, hardware-only topics, or an entire modern area like AI systems) that the Core must absorb before Stage 7.
-- **Recheck:** whether the Dependency Graph omits a *hidden prerequisite* the audit identifies (e.g., linear algebra for the ML/current-technology case, or statistics for measurement).
-- **Recheck:** Module depth — the audit may show Core M05 (languages/runtime) is over- or under-scoped relative to what a complete modern worldview requires.
-- **Recheck:** the Core/Deep Dive boundary table — the audit may place items differently (e.g., recommend digital logic as Core or clearly Deep Dive).
+### With Issue #2 (External Curriculum Coverage Audit) — resolved via #10 disposition matrix (PR #17) + this map
+- Audit recommendations R1–R15 were given one disposition each in `audit-to-architecture-disposition-v0.1.md` (5 integrate-existing, 2 bounded additions, 2 current case, 3 deep dive, 1 reject, 2 escalations). The non-escalated outcomes are integrated above: R1 (§ M04), R2 (§ M00), R6 (§ M13), R7 (§ M04), R8 (§ horizontal threads), R9 (§ M02/M05), R10 (§ M17); R5/R13 are Current Case discipline; R11/R12/R14 Deep Dive; R15 rejected. R3/R4 remain architecture escalations (OQ-BP-003 / OQ-BP-001, RFC candidates in `meta/rfcs/`).
 
-### With Issue #3 (Mini Cloud App Evolution)
-- **Neutral integration hooks only.** The proposal states *where* the app can surface (M00 intro, every Stage's checkpoint, M24 capstone) but does **not** design its feature sequence.
-- **Reconciliation:** #3 must anchor its milestones to macro area IDs (e.g., "the app gains a DB-backed endpoint during M13–M14") rather than to my final Stage names, in case Stages are renamed during Lead review.
-- **The app must never become the teaching vehicle** (D-006): it is the recurring *observation surface* and final capstone, not the lesson.
+### With Issue #3 (Mini Cloud App Evolution) — resolved via #14 alignment (PR #14) + §6 of `final-reconciliation-v0.1.md`
+- The app surfaces at M00 intro, every Stage checkpoint, and the M24 capstone; P0–P9 milestones are anchored to macro area IDs and Module IDs (not Stage names); the app is the recurring *observation surface* and final capstone, never the lesson (D-006). Canonical per-milestone mapping: `final-reconciliation-v0.1.md` §6.
 
-### With Issue #4 (Classic labs / Source Expedition research)
-- **Mechanism classes are named; final labs are not.** Every Module's "likely hands-on mechanism class" is a *class* (e.g., "observe a real filesystem read", "run a 3-node replication demo"), explicitly not a specific lab selection.
-- **Reconciliation:** #4 should identify Adopt/Adapt/Build candidates for these mechanism classes (esp. R1/R2/R3/R4/R6/R7-style labs: CSAPP labs, OSTEP projects, 6.824 labs, Nand2Tetris, 15-445 projects), then Lead resolves which become REQUIRED.
+### With Issue #4 (Classic labs / Source Expedition research) — resolved via #16 selection map (PR #16)
+- Mechanism *classes* above became the accepted selection: **5 Required Labs, 5 Optional Labs, 5 Source Expeditions** (Adopt → Adapt → Build) per `lab-source-selection-map-v0.1.md`. No Lab is implemented in Blueprint. Every Module not represented by a selected Lab keeps its mechanism class, project checkpoint, or Source Expedition.
 
 ---
 
-## 11. Unresolved Architecture Questions
+## 11. Proposal-Level Open Questions — RESOLVED (Issue #9)
 
-These are deliberately *not* answered here (the Task Contract prohibits silently deciding beyond authority):
+The original Issue #1 proposal-level questions were answered by the reconciliation wave:
 
-- **OQ-1. Stage boundaries/names.** Exact Stage count (7) and names are a design judgment; learner validation and the audit may shift them. Should S4 (Network+Web) and S5 (Data+Concurrency) be merged, or should Concurrency separate from Databases?
-- **OQ-2. Lesson granularity.** 58 preliminary lessons is a hypothesis. The Lead should decide whether 2–3 lessons per Module is the right default; the rough distribution (S1: 6, S2: 8, S3: 11, S4: 8, S5: 9, S6: 10, S7: 6) is intentionally uneven.
-- **OQ-3. First Concept Registry population.** Which concepts get `id`s first, and whether M00's "question set" or M01's "representation" is concept #1. This proposal marks FI locations only.
-- **OQ-4. Where specific hands-on experiences belong.** The mechanism classes are named; exact labs await #4 + Lead.
-- **OQ-5. Alignment with Mini Cloud App map.** Whether the app's evolution should follow Stage granularity (7 checkpoints) or area granularity (16 checkpoints) is a #3 decision.
-- **OQ-6. External audit findings.** Everything in §10-marked-recheck may move once #2 lands.
-- **OQ-7. Stage 5 ordering (DB before/after browser).** The dependency graph treats S3→S5 as a parallel option (DB can follow OS directly), but the default spine (S4 before S5) reflects a request-centric narrative. Does the audit prefer the DB or the browser first after OS?
-- **OQ-8. Compression of S5/S6 for time-restricted paths.** Are there legitimate "Core complete world model" shortcuts for a learner who cannot afford the full S5–S6 depth, or must they remain full?
-- **OQ-9. Napkin math constants.** Which latency numbers become canonical course constants (R11), and what is the refresh cadence (CURRENT, per Living Curriculum Policy)?
+| OQ | Question | Resolution |
+|---|---|---|
+| OQ-1 | Stage boundaries/names | 7 Stages confirmed; corrections only to dependency semantics, not Stage count/names. S4/S5 remain separate; Concurrency stays inside S5 (M14/M15 parallel, both soft/partial, no `H` either way). Learner validation may still refine names post-construction. |
+| OQ-2 | Lesson granularity | 70 preliminary Lesson entries (S1: 9, S2: 8, S3: 12, S4: 10, S5: 9, S6: 12, S7: 10); granularity is blueprint-level for dependency reasoning; final merge/split decisions happen at module-dossier time, not in Blueprint. |
+| OQ-3 | First Concept Registry population | Resolved: 18 concepts (`EC-CON-001`–`EC-CON-018`; see `meta/CONCEPT_REGISTRY.md`); M00 question set is a tool/thread, not a concept. |
+| OQ-4 | Where specific hands-on experiences belong | Resolved: 5 Required / 5 Optional / 5 Source Expeditions (`lab-source-selection-map-v0.1.md`); no Lab implemented in Blueprint. |
+| OQ-5 | Mini Cloud checkpoint granularity | Resolved: #14 anchors P0–P9 to Module IDs and macro areas (not Stage names); canonical mapping in `final-reconciliation-v0.1.md` §6. |
+| OQ-6 | Audit findings | Resolved: `audit-to-architecture-disposition-v0.1.md` + this map §10 (above). |
+| OQ-7 | S4/S5 order (browser vs DB first) | Resolved: request-centric default narrative is pedagogical preference (OQ-BP-004); no `H` edge; learner may follow either branch. |
+| OQ-8 | Compression of S5/S6 | Not compressed as a separate track; S4/S5 partial independence exists, but a complete shared traversal still requires both before S6 synthesis (DAG facts, not a time budget). |
+| OQ-9 | Napkin-math constants | Still open at implementation time: latency constant set (R11) is CURRENT and hardware-dependent; pinning/baselining deferred to module dossiers + Living Curriculum review (adjacent to OQ-BP-006). |
+
+**Remaining architecture-level Open Questions** are tracked in `meta/OPEN_QUESTIONS.md` (OQ-BP-001 bounded AI literacy; OQ-BP-003 human-facing/accessibility boundary; OQ-BP-006 environment versions).
 
 ---
 
@@ -718,4 +751,6 @@ See `dependency-graph-v0.1.md` §§5–9 for graph-specific checks and the Compl
 - External factual claims verified against R1–R12 (fetched 2026-08-30).
 - `book/`, `course/`, `labs/`, `project/`, canonical meta files: **unchanged** (only the two new proposal files created).
 
-**What was NOT verified:** (a) real learner validation (not yet possible); (b) external audit findings (#2 parallel); (c) Mini Cloud App feature sequence (#3); (d) labs (#4); (e) final Concept Registry IDs.
+**What was NOT verified (original proposal):** (a) real learner validation (not yet possible); (b) external audit findings (#2 parallel); (c) Mini Cloud App feature sequence (#3); (d) labs (#4); (e) final Concept Registry IDs.
+
+**Issue #9 re-verification (2026-08-30):** (b) resolved via PR #17 dispositions and integrated in §§4/9/10 above; (c) resolved via PR #14 and canonical mapping in `final-reconciliation-v0.1.md` §6; (d) resolved via PR #16 selection map (5/5/5; no code implemented); (e) resolved via `meta/CONCEPT_REGISTRY.md` first population (18 IDs). Items (a) learner validation, plus environment/version pinning and napkin-math constants, remain post-Blueprint/implementation work.
