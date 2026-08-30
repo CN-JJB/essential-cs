@@ -120,8 +120,8 @@ Single-process, locally bounded, deliberately simple notes/bookmarks service. P 
 
 - **Mechanism exposed:** identity; authn vs authz; effective user; trust boundary; least privilege; sessions/tokens as state; private vs shared visibility; revocation; denial behavior; untrusted client claims.
 - **Competency:** Judge (boundary design); Correctness (authorization invariant); Explain (what the service trusts); Diagnose (cross-user bypass); Learn-New-Tech (read a security API).
-- **Canonical dependency:** after P0 ownership; M01 `L01-01` (input boundaries); M13 (DB-integrated authz) optional; **M21** `L21-01` is the hard prerequisite for the canonical M22 `L22-01/02` security sequence — but **not** for a bounded early fixed-user authorization fixture.
-- **First intro vs revisit:** early fixture = integration/preview; canonical authn/authz/crypto = M21/M22 (S7).
+- **Canonical dependency:** after P0 ownership; M01 `L01-01` (input boundaries); **M07 `L07-01` supplies the canonical trust-boundary concept**; M13 (DB-integrated authz) optional. M21 remains the hard prerequisite for the canonical M22 `L22-01/02` threat/crypto/authn/authz security sequence, but not for a bounded early fixed-user authorization fixture.
+- **First intro vs revisit:** trust boundary is already canonical at M07; the early fixture applies/previews identity and authorization; M21/M22 later synthesize threat/crypto/authn/authz.
 - **Deliberately not added:** OAuth providers; enterprise identity; password-reset email; WAFs; threat hunting; real identity; public exposure; token products for résumé value.
 - **When NOT to add authentication:** before the ownership invariant is understood; never a real identity provider on a teaching app.
 - **Beyond-the-Project:** file permissions; database roles; mobile capabilities; package signing; OS privilege boundaries.
