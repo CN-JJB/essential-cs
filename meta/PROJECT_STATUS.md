@@ -23,10 +23,11 @@ Requirements / Grill Me is complete. GitHub is the persistent source of truth. T
 - **Issue #9 reconciliation proposals reviewed (2026-08-30):**
   - PR #14 / Issue #11 — Mini Cloud App ↔ curriculum alignment: Lead-accepted and squash-merged.
   - PR #15 / Issue #13 — Competency + Concept Registry integration: Lead direct fixes applied, then squash-merged.
-  - PR #16 / Issue #12 — Lab + Source Expedition selection: **CHANGES REQUIRED**; remains open for complex rework.
-    - Required Core work cannot outsource a mandatory Lab to an unresolved-license, link-only external assignment.
-    - The Required Lab set must include real Database mechanism work consistent with Database being a major Core area.
-    - xv6 course-page reuse/license claims require exact evidence or an explicit uncertainty downgrade.
+  - PR #16 / Issue #12 — Lab + Source Expedition selection: reworked, Lead-reviewed, and squash-merged.
+    - Required concurrency is now a self-contained Essential CS POSIX/C11 Lab; OSTEP remains optional/link-only evidence.
+    - Required Database coverage now includes real SQLite query/index and transaction/isolation/rollback/recovery Labs; PostgreSQL remains optional.
+    - xv6 course-page licensing is scoped separately from the MIT-licensed xv6 software and linked/generated assets.
+    - Lead corrected the Required concurrency design to avoid teaching a plain-C data race/undefined behavior as if it were only an interleaving; the broken path now uses defined C11 atomic load/store operations to demonstrate lost-update atomicity.
 - Lead direct fixes during review:
   - corrected Stage narrative vs hard-dependency semantics in the dependency graph;
   - corrected `M14 → M16` from hard to soft while preserving `M14 → M17` as the consistency hard dependency;
