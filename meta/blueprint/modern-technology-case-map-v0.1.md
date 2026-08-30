@@ -1,6 +1,6 @@
 # Modern Technology Case Map v0.1
 
-Status: **Blueprint v0.1 — Issue #21 draft; READY FOR LEAD REVIEW, not VERIFIED**
+Status: **Blueprint v0.1 — LEAD-ACCEPTED** (not VERIFIED/released)
 
 本文件回答：
 
