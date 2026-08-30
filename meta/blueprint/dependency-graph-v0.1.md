@@ -336,7 +336,7 @@ A "hidden prerequisite" is a concept the learner will need but that has no expli
 | U3 | S6 as one Stage or two | Tight coupling M16–M20 | **Resolved:** one Stage S6, five Modules. |
 | U4 | Exact lesson count / granularity | Not learner-validated | **Resolved at Blueprint:** 70 preliminary entries for dependency reasoning; final merge/split deferred to module dossiers. |
 | U5 | Mini Cloud checkpoint cadence drives Stage naming | #3 ownership | **Resolved:** no — P0–P9 anchor to Module IDs/macro areas (#14); Stage names unchanged. |
-| U6 | Latency-constant set (R11) | Hardware-dependent | **Remains open (implementation-time):** canonical list + refresh cadence deferred to dossiers/Living Curriculum review (adjacent to OQ-BP-006). |
+| U6 | Latency-constant set (R11) | Hardware-dependent | **Resolved at architecture level:** exact values are implementation-time baselines under OQ-BP-006 + module dossiers/Living Curriculum review; no separate curriculum dependency or Open Question. |
 | U7 | M00 "question set": concept, tool, or thread | Registry decision | **Resolved:** tool/thread (Technology Evaluation question set), not a concept ID. |
 | U8 | M05 before or after M06 | Both orders exist | **Resolved:** spine order kept (M05 in S2 before M06 in S3, per D-007); M03→M05 H and M05→M06 S as originally proposed. Runtime half stays in M05; no move required. |
 | U9 | M09 inside S3 or S4 | Adjacent-persistence grouping | **Resolved:** stays in S3 beside M08 (files); DB (M13) revisits from it. |
