@@ -265,9 +265,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S3 · M07 — Virtual Memory & Isolation (Area 05)
 - **Purpose / mental-model contribution:** Every process has its own address space; the page table is the mechanism; virtual memory is why isolation, sharing, and memory-mapped files work; plus dynamic memory (heap) and allocation failure.
 - **Prerequisites:** M04 (memory hierarchy), M06 (processes), M03 (machine).
-- **Key concepts:** virtual memory, address space, page table, page fault, TLB, memory-mapped file, malloc/heap, out-of-memory, copy-on-write (light).
+- **Key concepts:** virtual memory, address space, page table, page fault, TLB, memory-mapped file, malloc/heap, out-of-memory, copy-on-write (light); **trust boundary** as the first concrete security-boundary concept, explicitly distinguished from isolation.
 - **Competencies:** Trace (address → physical), Explain (isolation/security of memory), Diagnose (OOM/segfault), Estimate (memory needs).
-- **Horizontal threads:** Security (FIRST-INTRO — memory isolation as security boundary); Correctness (revisit); Debugging (revisit); Cost (revisit — memory as resource).
+- **Horizontal threads:** Security (FIRST-INTRO — memory isolation as the first concrete protection boundary; define **trust boundary** here and state that isolation boundary ≠ trust boundary by default); Correctness (revisit); Debugging (revisit); Cost (revisit — memory as resource).
 - **Likely hands-on mechanism class:** `/proc/<pid>/maps`; observe a growing process; `valgrind`/ASan for heap errors; memory-limit demo.
 - **Mini Cloud App integration:** placeholder — observe the app's memory under load.
 - **Beyond-the-Project relevance:** memory tuning, container limits, security exploits.
@@ -422,9 +422,9 @@ Module IDs are proposal labels (`M00`..`M30`), each mapped to a macro area and a
 ### S7 · M21 — Security Synthesis I: Trust & Crypto Use (Area 13)
 - **Purpose / mental-model contribution:** Security is a *system property of boundaries*, not a feature. Trust boundaries; what to do, not how to implement: symmetric/asymmetric crypto use, hashing, signatures, certificates; where "don't roll your own" applies.
 - **Prerequisites:** M11 (TLS — the crypto case already visited), M07 (isolation), M12 (same-origin).
-- **Key concepts:** trust boundary; threat model; hash; MAC; symmetric/asymmetric; signature; cert/CA; nonce; random; secret management; defense in depth (light).
+- **Key concepts:** trust-boundary **synthesis/revisit**; threat model; hash; MAC; symmetric/asymmetric; signature; cert/CA; nonce; random; secret management; defense in depth (light).
 - **Competencies:** Judge (boundary design), Explain (crypto role: confidentiality/integrity/auth), Diagnose (a misuse), Learn-New-Tech (read a crypto API).
-- **Horizontal threads:** Security (FIRST-INTRO as a *synthesis* — many earlier touchpoints now consolidated); Correctness (revisit — crypto invariants); Privacy (revisit — encryption ≠ anonymity).
+- **Horizontal threads:** Security (**SYNTHESIS** — M07/M11/M12/M19 boundary cases are consolidated into an explicit threat model and crypto-use judgment); Correctness (revisit — crypto invariants); Privacy (revisit — encryption ≠ anonymity).
 - **Likely hands-on mechanism class:** use a standard library (Python `cryptography`) for signing/verifying and encrypting; observe a failed verification; inspect a TLS certificate with `openssl`.
 - **Mini Cloud App integration:** placeholder — the app's authentication/secrets surface.
 - **Beyond-the-Project relevance:** any security review, password handling, API auth.
@@ -494,7 +494,7 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L06-01 | M06 | "What is a process?" | Process; program→process; syscalls | L03-02, L05-02 | FI: process, syscall, kernel/user | Trace, Explain, Observe | Y (ps/strace) |
 | L06-02 | M06 | "How does a program start another?" | fork/exec; exit/status; shell | L06-01 | FI: fork/exec; RV: interface | Trace, Diagnose | Y (fork demo, strace) |
 | L06-03 | M06 | "How does the CPU get shared?" | Scheduling intuition; isolation | L06-02 | FI: scheduling (intuition), isolation | Explain, Judge | Y (CPU-bound vs IO) |
-| L07-01 | M07 | "How do two programs both use memory?" | Virtual memory; address space; paging concept | L04-01, L06-01 | FI: VM concept; RV: isolation | Trace, Explain, Judge | Y (/proc/maps) |
+| L07-01 | M07 | "How do two programs both use memory?" | Virtual memory; address space; paging concept; first concrete trust/protection boundary | L04-01, L06-01 | FI: VM concept; FI: trust boundary (distinguish from isolation); RV: isolation | Trace, Explain, Judge | Y (/proc/maps) |
 | L07-02 | M07 | "Why is my program out of memory?" | Heap/malloc; OOM; leak | L07-01 | FI: heap/OOM; RV: failure | Diagnose, Estimate | Y (memory stress) |
 | L07-03 | M07 | "What happens when I touch a bad address?" | Page fault; faults; fault handler intuition | L07-01 | RV: failure; FI: page fault | Trace, Explain, Diagnose | Y (fault observ. via tools) |
 | L08-01 | M08 | "What is a file, underneath?" | File API; fd; inode (concept); directory | L06-01, L07-01 | FI: file/dir/inode; RV: interface | Trace, Explain | Y (stat/strace) |
@@ -534,7 +534,7 @@ Legend: `FI` = would be canonical first-introduction; `RV` = contextual revisit.
 | L19-03 | M19 | "How does code get to production?" | CI/CD; deployment strategies; IaC | L19-02, L16 (failure model) | FI: deployment/CI-CD; RV: failure | Explain, Judge, Diagnose | Y (pipeline demo; rollback) |
 | L20-01 | M20 | "How do I know the system is OK?" | Metrics/logs/traces; SLO; alerting; **clock semantics — monotonic vs wall clock bridge (resolves DAG §6 flag)** | L19-02, L16 | FI: observability; RV: measurement; RV: experimental pattern (R7, from M04) | Observe, Diagnose, Judge | Y (instrument, alert) |
 | L20-02 | M20 | "How do I debug a production incident?" | Incident response; postmortem; correlation | L20-01 | RV: debugging (elevated); FI: SRE/incident | Diagnose, Observe, Explain | Y (controlled incident) |
-| L21-01 | M21 | "Where are the boundaries I must protect?" | Trust boundary; threat model; defense in depth | L11-01, L07-03, L12-03 | FI: security synthesis; RV: crypto roles | Judge, Explain, Diagnose | Y (threat map exercise) |
+| L21-01 | M21 | "Where are the boundaries I must protect?" | Trust-boundary synthesis; threat model; defense in depth | L11-01, L07-01, L12-03 | FI: threat model/defense-in-depth synthesis; RV: trust boundary + isolation/TLS/origin cases | Judge, Explain, Diagnose | Y (threat map exercise) |
 | L21-02 | M21 | "What do I use crypto for?" | Hash/MAC/signature/symmetric; cert lifecycle | L21-01 | FI: crypto *use*; RV: TLS | Explain, Judge, Learn-New-Tech | Y (openssl, signing) |
 | L22-01 | M22 | "How do I know who is calling?" | Authn vs authz; password hashing; session/token/JWT | L21-02, L11-02 | FI: authn/authz; RV: identity | Judge, Explain | Y (token verify/forge-safe demo) |
 | L22-02 | M22 | "Why is my web app vulnerable?" | Injection; XSS; CSRF; SSRF; deserialization | L22-01, L12-03 | FI: injection/OWASP-style; RV: security composition | Diagnose, Judge, Explain | Y (safe vulnerable app, fix) |
@@ -657,7 +657,7 @@ This is the "teach once" table (Invariant 11, D-010). The stable definitions/can
 | Isolation 隔离 | EC-CON-013 | M07 (`L07-01`; M06 process boundary is preview) | M12 (browser), M14 (transactions), M15 (threads), M16–M17, M21, M22 |
 | Concurrency 并发 | EC-CON-015 | M15 (`L15-01`; M12 event loop / M14 overlap are previews) | M16–M18, M20, M23 |
 | Consistency 一致性 | EC-CON-014 | M14 (`L14-02`) | M17 (replicated, changed guarantee), M18, M23 |
-| Trust boundary 信任边界 | EC-CON-017 | M21 | M22, M23, M24 |
+| Trust boundary 信任边界 | EC-CON-017 | M07 (`L07-01`; first concrete protection/trust boundary, not identical to isolation) | M11, M12, M19, M21 (synthesis), M22, M23, M24 |
 | Durability 持久性/耐久性 | EC-CON-016 | M09 (`L09-01`) | M14 (WAL), M17 (replication), M24 |
 | Process 进程 | EC-CON-018 | M06 (`L06-01`) | M07 (address spaces), M12 (browser processes), M16–M17, M19 (containers), M24 |
 
