@@ -1,6 +1,6 @@
 # Core Stage / Module / Lesson Map v0.1
 
-Status: **RECONCILED — Blueprint v0.1, Issue #9 integration applied (not VERIFIED; Lead review pending)**
+Status: **RECONCILED — Blueprint v0.1, Issue #9 Lead-accepted (not VERIFIED; not lesson prose)**
 Author: Local Agent (Curriculum Architecture Research & Design); Issue #9 integration applied by Curriculum Architecture Integrator
 Date: 2026-08-30
 Scope: Learner-visible Stages, Modules, and preliminary Lesson boundaries beneath the accepted macro Core spine (D-007). Original Issue #1 proposal content; the Issue #9 reconciliation outcomes (audit dispositions R1–R15, #14/#15/#16 accepted artifacts, hidden-prerequisite resolutions) have been applied on top. Still not a set of Lessons and not `VERIFIED`.
