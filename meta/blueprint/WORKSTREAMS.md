@@ -30,26 +30,36 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 - created `meta/rfcs/RFC-CAND-001-bounded-ai-literacy.md` and `meta/rfcs/RFC-CAND-002-human-facing-boundary.md` (candidates, no decision);
 - did not alter Lab selection, Mini Cloud App evolution/accepted alignment content, policies, invariants, decisions, or licensing.
 
-**Status:** PR #18 Lead-reviewed and merged. The reconciled Blueprint architecture is canonical for v0.1 planning, but course content remains unverified/unreleased and Blueprint exit criteria are still incomplete.
+**Status:** PR #18 Lead-reviewed and merged. This remains the canonical Issue #9 integration record; final Blueprint exit status is owned by Issue #23 / PR #24.
 
-## Remaining Blueprint work
+## Remaining Blueprint work — COMPLETE / DEFERRED BY DESIGN
 
 | Workstream | Owner | Status |
 |---|---|---|
 | Course Charter, Learner Profile, Learning Outcomes, Bridge artifacts | Issue #19 / PR #20 | **COMPLETE — Lead-reviewed and merged** |
 | Assessment Architecture consolidation | Issue #21 / PR #22 | **COMPLETE — Lead-reviewed and merged** |
 | Modern Technology Case Map | Issue #21 / PR #22 | **COMPLETE — Lead-reviewed and merged** |
-| OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | Open — Core-scope, not decided |
-| OQ-BP-006 environment/version + hardware-dependent baseline pinning | Module dossiers + lab implementation | Open — implementation-time |
-| Stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations slice | Post-Blueprint | Blocked on exit criteria |
+| Final Exit Audit | Issue #23 / PR #24 | **COMPLETE — PASS after Lead direct fixes; Blueprint v0.1 closed** |
+| OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | **OPEN — non-blocking until an affected slice requires a Core-scope decision** |
+| OQ-BP-006 environment/version + hardware-dependent baseline pinning | First Module dossier + environment/Lab implementation | **OPEN — intentionally implementation-time** |
+| Stage-by-stage vertical slices | Post-Blueprint | **UNBLOCKED — begin with early Foundations/System Mechanics Research Dossier** |
 
-## Final Blueprint gate
+## Final Blueprint gate — PASSED
 
-The primary remaining work is a **Blueprint v0.1 Final Exit Audit** against `meta/blueprint/README.md`. It must classify every exit criterion as complete, partial/blocking, or intentionally deferred to implementation, and must not expand scope merely to make the checklist look complete.
+Issue #23 / PR #24 audited all 30 criteria in `meta/blueprint/README.md`. The independent audit initially reported four blocking criterion rows caused by two narrow inconsistency classes. Web Lead direct fixes preserved the accepted architecture, and the narrow re-audit finished at:
+
+- COMPLETE: 30
+- PARTIAL — BLOCKING: 0
+- INTENTIONALLY DEFERRED — NON-BLOCKING: 0
+- NOT APPLICABLE: 0
+
+Final recommendation: **PASS — BLUEPRINT v0.1 READY TO CLOSE**.
+
+Blueprint v0.1 is therefore **COMPLETE / CLOSED**.
 
 ## Rules for the next phase
 
 - The Module DAG remains authoritative; Stage narrative is not dependency; S4/S5 partial independence preserved.
-- `meta/blueprint/final-reconciliation-v0.1.md` is the record of which proposal artifacts became canonical and what remains proposal-only.
-- No large-scale Lesson writing begins until Blueprint v0.1 exit criteria are satisfied (`meta/blueprint/README.md`; gap list in `final-reconciliation-v0.1.md` §11).
+- `meta/blueprint/final-reconciliation-v0.1.md` remains the Issue #9 integration/provenance record; `meta/blueprint/final-exit-audit-v0.1.md` owns the Blueprint exit result.
+- Blueprint exit criteria are satisfied. Begin with a bounded early vertical-slice Research Dossier; do **not** translate closure into mass Lesson writing.
 - Any change to Core scope (incl. decisions inside the two RFC candidates) proceeds through `Open Question → Research → RFC/Decision`.
