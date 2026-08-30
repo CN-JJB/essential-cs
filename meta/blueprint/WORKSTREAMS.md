@@ -37,11 +37,15 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 | Workstream | Owner | Status |
 |---|---|---|
 | Course Charter, Learner Profile, Learning Outcomes, Bridge artifacts | Issue #19 / PR #20 | **COMPLETE — Lead-reviewed and merged** |
-| Assessment Architecture consolidation (packet model exists in COMPETENCY_MATRIX) | Blueprint task (after #9) | Partial |
-| Modern Technology Case Map | Blueprint task (after #9) | Partial (D-015 framework + project admission table exist) |
+| Assessment Architecture consolidation | Issue #21 / PR #22 | **COMPLETE — Lead-reviewed and merged** |
+| Modern Technology Case Map | Issue #21 / PR #22 | **COMPLETE — Lead-reviewed and merged** |
 | OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | Open — Core-scope, not decided |
 | OQ-BP-006 environment/version + hardware-dependent baseline pinning | Module dossiers + lab implementation | Open — implementation-time |
 | Stage-by-stage vertical slices (Research → Design → Lesson → Lab → Project → Verification → Learner Validation) from an early Foundations slice | Post-Blueprint | Blocked on exit criteria |
+
+## Final Blueprint gate
+
+The primary remaining work is a **Blueprint v0.1 Final Exit Audit** against `meta/blueprint/README.md`. It must classify every exit criterion as complete, partial/blocking, or intentionally deferred to implementation, and must not expand scope merely to make the checklist look complete.
 
 ## Rules for the next phase
 
