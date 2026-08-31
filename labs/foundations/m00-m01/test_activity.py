@@ -70,6 +70,19 @@ class ActivityTests(unittest.TestCase):
         )
         self.assertIn("break.utf8.error=UnicodeDecodeError", completed.stdout)
 
+    def test_cli_break_record_rejects_truncation(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "activity.py", "break-record"],
+            cwd=HERE,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        self.assertIn("break.record.original_bytes=14", completed.stdout)
+        self.assertIn("break.record.truncated_bytes=13", completed.stdout)
+        self.assertIn("break.record.error=ValueError", completed.stdout)
+        self.assertIn("record length does not match text_len", completed.stdout)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
