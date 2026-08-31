@@ -44,26 +44,27 @@ Blueprint closure means the project may now build and validate the curriculum th
 
 ## Active workstream
 
-The project is in the first **post-Blueprint vertical slice**. **Issue #25 — Foundations/System Mechanics Vertical-Slice Research Dossier v0.1 is OPEN** and owns the current production research task.
+The project is in the first **post-Blueprint vertical slice**. **Issue #25 / PR #26 — Foundations/System Mechanics Vertical-Slice Research Dossier v0.1 is COMPLETE / LEAD-ACCEPTED**, and **Issue #27 — Foundations/System Mechanics Vertical-Slice Design v0.1 is OPEN** and owns the current Design step.
 
 Completed closure sequence:
 
 - Issue #19 / PR #20 — Course Charter, Learner Profile, Learning Outcomes, Bridge / diagnostic;
 - Issue #21 / PR #22 — Assessment Architecture + Modern Technology Case Map;
-- Issue #23 / PR #24 — Final Exit Audit, Lead direct fixes, narrow re-audit, **PASS — BLUEPRINT v0.1 READY TO CLOSE**.
+- Issue #23 / PR #24 — Final Exit Audit, Lead direct fixes, narrow re-audit, **PASS — BLUEPRINT v0.1 READY TO CLOSE**;
+- Issue #25 / PR #26 — Foundations/System Mechanics Research Dossier v0.1, Lead-reviewed, narrow provenance fixes applied, merged with **READY FOR DESIGN**.
 
 Next work follows D-023:
 
 `Research → Design → Lesson → Lab → Project → Verification → Learner Validation`
 
-The first task is a bounded **Research Dossier / vertical-slice architecture task** for early Foundations/System Mechanics. Do not begin mass Lesson writing.
+The Research step for the first slice is complete. The current task is the bounded **Design** pass for M00–M04. Do not begin learner-facing Lesson prose, runnable Lab/project implementation, or mass Lesson writing before the Design contract is Lead-accepted.
 
 ## Current priority
 
-1. Execute **Issue #25**: the first early Foundations/System Mechanics vertical-slice Research Dossier, centered on M00–M04 (Information / Representation → Computation → Machine / Locality), with the earliest justified Mini Cloud App P0 connection.
-2. Treat exact environment/toolchain/version pins as implementation-time work under OQ-BP-006 when the first runnable slice/preflight requires them; do not invent pins prematurely.
+1. Execute **Issue #27**: the Foundations/System Mechanics vertical-slice Design for M00–M04, using the accepted Research Dossier to define Module activity/evidence contracts, the compact S1 / early-S2 evidence packet, first-slice preflight, the bounded M03 x86-64 observation path, M04 locality measurement design, and bounded P0 checkpoints.
+2. Treat exact environment/toolchain/version pins as implementation-time work under OQ-BP-006 when the first runnable slice/preflight requires them; Issue #27 may define capability checks and a baseline family but must not silently close OQ-BP-006.
 3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated, non-blocking Open Questions unless an affected slice produces evidence that a Core-scope decision is required.
-4. Keep lesson production vertical and evidence-driven; no bulk Stage-wide drafting before the relevant dossier/design work.
+4. Keep production vertical and evidence-driven; no bulk Stage-wide Lesson drafting before Issue #27 is Lead-accepted.
 
 ## Current architecture attention points
 
