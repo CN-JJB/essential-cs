@@ -185,6 +185,21 @@ def command_ranges() -> None:
     print(f"int16.-2.hex={minus_two.hex()}")
 
 
+def command_break_record() -> None:
+    record = current_record(accept_record(load_input()))
+    payload = serialize_record(record)
+    truncated = payload[:-1]
+    print(f"break.record.original_bytes={len(payload)}")
+    print(f"break.record.truncated_bytes={len(truncated)}")
+    print(f"break.record.hex={hex_bytes(truncated)}")
+    try:
+        deserialize_record(truncated)
+    except (UnicodeDecodeError, ValueError) as exc:
+        print(f"break.record.error={exc.__class__.__name__}: {exc}")
+        return
+    raise AssertionError("truncated record unexpectedly decoded")
+
+
 def command_load() -> None:
     payload = load_payload()
     record = deserialize_record(payload)
@@ -195,7 +210,7 @@ def command_load() -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ["run", "inspect", "endian", "break-endian", "break-utf8", "ranges", "load"]:
+    for name in ["run", "inspect", "endian", "break-endian", "break-utf8", "break-record", "ranges", "load"]:
         sub.add_parser(name)
     return parser
 
@@ -208,6 +223,7 @@ def main(argv: list[str] | None = None) -> int:
         "endian": command_endian,
         "break-endian": command_break_endian,
         "break-utf8": command_break_utf8,
+        "break-record": command_break_record,
         "ranges": command_ranges,
         "load": command_load,
     }
