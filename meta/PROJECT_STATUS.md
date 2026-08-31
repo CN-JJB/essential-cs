@@ -44,27 +44,28 @@ Blueprint closure means the project may now build and validate the curriculum th
 
 ## Active workstream
 
-The project is in the first **post-Blueprint vertical slice**. **Issue #25 / PR #26 — Foundations/System Mechanics Vertical-Slice Research Dossier v0.1 is COMPLETE / LEAD-ACCEPTED**, and **Issue #27 — Foundations/System Mechanics Vertical-Slice Design v0.1 is OPEN** and owns the current Design step.
+The project is in the first **post-Blueprint vertical slice**. **Issue #25 / PR #26 Research** and **Issue #27 / PR #28 Design** are COMPLETE / LEAD-ACCEPTED. **Issue #29 — M00–M01 Learner Lesson + Activity Pilot v0.1 is OPEN** and owns the current learner-facing implementation step.
 
 Completed closure sequence:
 
 - Issue #19 / PR #20 — Course Charter, Learner Profile, Learning Outcomes, Bridge / diagnostic;
 - Issue #21 / PR #22 — Assessment Architecture + Modern Technology Case Map;
 - Issue #23 / PR #24 — Final Exit Audit, Lead direct fixes, narrow re-audit, **PASS — BLUEPRINT v0.1 READY TO CLOSE**;
-- Issue #25 / PR #26 — Foundations/System Mechanics Research Dossier v0.1, Lead-reviewed, narrow provenance fixes applied, merged with **READY FOR DESIGN**.
+- Issue #25 / PR #26 — Foundations/System Mechanics Research Dossier v0.1, Lead-reviewed, narrow provenance fixes applied, merged with **READY FOR DESIGN**;
+- Issue #27 / PR #28 — Foundations/System Mechanics Design v0.1, Lead-reviewed, M03 provenance/M04 benchmark-control fixes applied, merged with **READY FOR LESSON / ACTIVITY IMPLEMENTATION**.
 
 Next work follows D-023:
 
 `Research → Design → Lesson → Lab → Project → Verification → Learner Validation`
 
-The Research step for the first slice is complete. The current task is the bounded **Design** pass for M00–M04. Do not begin learner-facing Lesson prose, runnable Lab/project implementation, or mass Lesson writing before the Design contract is Lead-accepted.
+Research and Design for M00–M04 are complete. The current task is a bounded **M00–M01 learner-facing Lesson + Activity pilot implementation**. This intentionally stops before M02–M04 to preserve a short feedback loop; do not translate Design completion into bulk Lesson drafting.
 
 ## Current priority
 
-1. Execute **Issue #27**: the Foundations/System Mechanics vertical-slice Design for M00–M04, using the accepted Research Dossier to define Module activity/evidence contracts, the compact S1 / early-S2 evidence packet, first-slice preflight, the bounded M03 x86-64 observation path, M04 locality measurement design, and bounded P0 checkpoints.
-2. Treat exact environment/toolchain/version pins as implementation-time work under OQ-BP-006 when the first runnable slice/preflight requires them; Issue #27 may define capability checks and a baseline family but must not silently close OQ-BP-006.
-3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated, non-blocking Open Questions unless an affected slice produces evidence that a Core-scope decision is required.
-4. Keep production vertical and evidence-driven; no bulk Stage-wide Lesson drafting before Issue #27 is Lead-accepted.
+1. Execute **Issue #29**: implement the first bounded learner-facing M00–M01 packet — six canonical Lessons, one shared original runnable activity surface, and the first evidence-template sections — using the Lead-accepted Design.
+2. Keep P0 persistence supplied/opaque and prefer the Design-approved simple-file boundary; no early durability/database teaching.
+3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as open implementation-time work; Issue #29 does not implement the full canonical Dev Container baseline.
+4. Review #29 technically and pedagogically before producing M02–M04 learner-facing content; maintain short feedback loops rather than bulk Stage-wide drafting.
 
 ## Current architecture attention points
 
