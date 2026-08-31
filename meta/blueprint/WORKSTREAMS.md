@@ -42,7 +42,7 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 | Final Exit Audit | Issue #23 / PR #24 | **COMPLETE — PASS after Lead direct fixes; Blueprint v0.1 closed** |
 | OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | **OPEN — non-blocking until an affected slice requires a Core-scope decision** |
 | OQ-BP-006 environment/version + hardware-dependent baseline pinning | First Module dossier + environment/Lab implementation | **OPEN — intentionally implementation-time** |
-| Stage-by-stage vertical slices | Issue #25 / PR #26 Research complete; Issue #27 / PR #28 Design complete; Issue #29 / PR #30 M00–M01 implementation merged; Issue #31 owns independent verification + learner-pilot readiness | **ACTIVE — M00–M01 Verification / Pilot Readiness Gate** |
+| Stage-by-stage vertical slices | Issue #25 / PR #26 Research complete; Issue #27 / PR #28 Design complete; Issue #29 / PR #30 M00–M01 implementation merged; Issue #31 / PR #33 verification/pilot readiness merged; Issue #34 owns first real learner pilot | **ACTIVE — M00–M01 Learner Validation / First Real Pilot** |
 
 ## Final Blueprint gate — PASSED
 
@@ -61,5 +61,5 @@ Blueprint v0.1 is therefore **COMPLETE / CLOSED**.
 
 - The Module DAG remains authoritative; Stage narrative is not dependency; S4/S5 partial independence preserved.
 - `meta/blueprint/final-reconciliation-v0.1.md` remains the Issue #9 integration/provenance record; `meta/blueprint/final-exit-audit-v0.1.md` owns the Blueprint exit result.
-- Blueprint exit criteria are satisfied. The first-slice Research and Design steps are complete and Lead-accepted; the bounded M00–M01 learner-facing packet from **Issue #29 / PR #30 is merged after independent Lead review**. Continue through **Issue #31 independent technical verification + learner-pilot readiness** before deciding the next learner-facing task. Do **not** translate Design completion into mass Lesson writing or treat merge as VERIFIED / learner validation.
+- Blueprint exit criteria are satisfied. The M00–M01 learner packet and its **Issue #31 / PR #33 independent technical verification + pilot-readiness gate are merged after Lead review**. Continue through **Issue #34 first real learner pilot** before deciding whether to repair the slice or begin M02 learner-facing implementation. Real learner evidence is required; AI simulation is not learner validation. Do **not** treat technical verification as VERIFIED / learner validation.
 - Any change to Core scope (incl. decisions inside the two RFC candidates) proceeds through `Open Question → Research → RFC/Decision`.
