@@ -88,10 +88,11 @@ The implementation task must smoke-test, in the actual pinned environment eventu
 5. GDB breakpoint, stepping, register inspection, and memory inspection without privileged-container changes;
 6. bounded M03 failure observation plus deterministic cleanup/reset;
 7. M04 timing source monotonicity/resolution recording;
-8. full M04 workload, warmups, repetitions, raw-evidence retention, and checksum/correctness guard;
-9. robust locality direction across multiple fresh hosted sessions;
-10. perf capability detection in both permitted and restricted cases, with identical Core completion behavior;
-11. evidence-packet assembly/checking without unlisted privileged tools.
+8. full M04 workload, warmups, repetitions, raw-evidence retention, and checksum/correctness guard using defined language semantics;
+9. inspect the generated code/build behavior for both M04 traversal patterns so vectorization, dead-code elimination, or another compiler transformation does not make the intended locality lesson misleading; if a transformation materially dominates the observed difference, adjust the fixture/build or explicitly bound the claim before learner release;
+10. robust locality direction across multiple fresh hosted sessions;
+11. perf capability detection in both permitted and restricted cases, with identical Core completion behavior;
+12. evidence-packet assembly/checking without unlisted privileged tools.
 
 If M03 or M04 requires security weakening, privileged containers, or substantial setup not supported by the accepted baseline, implementation must simplify the fixture/observation before proposing curriculum changes.
 
@@ -663,7 +664,7 @@ Primary: **Predict, Explain, Break**. Cumulative: **Connect** representation/int
 
 ### 6.17 Provenance/source anchors
 
-Research Dossier §§6, 9–10, 12; Source Register anchors: GNU objdump documentation (IMPLEMENTATION), GDB machine-code/register/memory documentation (IMPLEMENTATION), System V AMD64 ABI where the accepted dossier anchors the calling convention (SPECIFICATION), WG14/C language material for source semantics (SPECIFICATION), ratified RISC-V specs (SPECIFICATION). Current hosted behavior remains implementation evidence and is smoke-tested before release.
+Research Dossier §§6, 9–10, 12; Source Register anchors: GNU objdump documentation (IMPLEMENTATION), GDB machine-code/register/memory documentation (IMPLEMENTATION), WG14/C language material for source semantics (SPECIFICATION), and ratified RISC-V specs (SPECIFICATION). For the x86-64 case, use the current official **AMD64 Architecture Programmer’s Manual** (AMD, publication 40332 and relevant application/instruction volumes) as ISA authority and the **x86-64 System V psABI** project maintained at `https://gitlab.com/x86-psABIs/x86-64-ABI` as ABI authority; both source routes were checked 2026-08-30. Tool output is observation evidence, not the ISA/ABI specification. Current hosted behavior remains implementation evidence and is smoke-tested before release.
 
 ### 6.18 Module exit criteria
 
@@ -752,13 +753,13 @@ Row-major traversal of the fixed dataset. The harness verifies the same element 
 
 #### Controlled access-pattern change
 
-Column-major traversal of the same underlying row-major allocation. Dataset, element type, total element count, arithmetic, compilation mode, process invocation, and result validation remain the same; traversal order is the controlled variable.
+Column-major traversal of the same underlying row-major allocation. Dataset, element type, total element count, source-level arithmetic, compilation mode, process invocation, and result validation remain the same; traversal order is the intended controlled source-level variable. Implementation must also inspect the resulting builds closely enough to detect a compiler transformation that would make a locality-focused causal story misleading.
 
 #### Dataset/workload
 
 Use one contiguous fixed-width integer matrix large enough that the two traversal orders expose a stable locality effect yet small enough for hosted learner sessions. An implementation starting candidate is approximately 64 MiB of data, for example 4096×4096 32-bit elements, but the exact dimension is **implementation-tunable**, not a curriculum pin.
 
-The implementation must prevent dead-code elimination and must check semantic equivalence via a stable checksum/result.
+The implementation must prevent dead-code elimination and must check semantic equivalence via a stable checksum/result. The measured arithmetic/checksum path must have **defined language semantics** (for example, a provably non-overflowing accumulator or unsigned/modular arithmetic where appropriate); no signed-overflow or other undefined behavior may be used to keep the loop alive.
 
 #### Warmup policy
 
