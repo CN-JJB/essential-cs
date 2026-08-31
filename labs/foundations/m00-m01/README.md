@@ -111,6 +111,7 @@ python3 activity.py ranges
 python3 activity.py endian
 python3 activity.py break-endian
 python3 activity.py break-utf8
+python3 activity.py break-record
 python3 activity.py inspect
 python3 activity.py load
 ```
@@ -121,6 +122,7 @@ python3 activity.py load
 - 同一 `513` 在 little-endian / big-endian 下的不同 bytes；
 - 用错误 byte order 解码得到 `258` 的安全失败；
 - 截断 UTF-8 后得到 `UnicodeDecodeError` 的安全失败；
+- 截断 compact record 后，因为声明长度与实际 payload 不一致而被拒绝；
 - compact record 的 exact-byte inspection；
 - 通过不透明 save/load 边界取回上一份记录的观察。
 
@@ -141,7 +143,8 @@ python3 -m unittest -v test_activity.py
 - bounded round trip；
 - controlled change → changed bytes → deterministic reset；
 - save/load 窄边界；
-- truncated UTF-8 failure。
+- truncated UTF-8 failure；
+- truncated record / declared-length mismatch failure。
 
 ## 文件角色
 
