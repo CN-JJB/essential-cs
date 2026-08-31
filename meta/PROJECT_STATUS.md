@@ -6,7 +6,7 @@ Last updated: 2026-08-30
 
 **Curriculum Blueprint v0.1 — COMPLETE / CLOSED**
 
-**Post-Blueprint Vertical Slice Production — ACTIVE**
+**Post-Blueprint Build-First Core Production — ACTIVE**
 
 Requirements / Grill Me is complete. GitHub remains the persistent source of truth. Issue #23 / PR #24 completed the independent Blueprint Final Exit Audit. The audit initially found two narrow production-facing consistency blockers; Web Lead direct fixes reconciled prerequisite metadata and competency labels without changing the accepted architecture. The narrow re-audit passed **30/30 Blueprint exit criteria**, and Blueprint v0.1 closed on 2026-08-30.
 
@@ -48,7 +48,7 @@ Blueprint closure means the project may now build and validate the curriculum th
 
 ## Active workstream
 
-The project is in the first **post-Blueprint vertical slice**. Research, Design, M00–M01 learner-facing implementation, and the independent technical verification/pilot-readiness gate are complete. **Issue #34 — M00–M01 First Real Learner Pilot v0.1 is OPEN** and owns the current Learner Validation step. This task requires at least one real learner session; AI-only simulation cannot complete it.
+The project is in **post-Blueprint build-first Core production**. Research, Design, M00–M01 learner-facing implementation, and the independent technical verification/pilot-readiness gate are complete. Issue #34 remains OPEN as a truthful real-learner validation task, but under D-027 it is **DEFERRED / NON-BLOCKING** while the full course is authored.
 
 Completed closure sequence:
 
@@ -60,18 +60,19 @@ Completed closure sequence:
 - Issue #29 / PR #30 — M00–M01 learner Lesson + shared activity/evidence packet, independently Lead-reviewed, SIMPLE FIXes applied, merged with **PASS FOR MERGE** while explicitly remaining pre-VERIFIED / pre-learner-validation;
 - Issue #31 / PR #33 — independent technical verification + learner-pilot readiness, Lead-reviewed and merged with **PASS FOR MERGE — READY TO ENTER REAL LEARNER VALIDATION / FIRST PILOT**.
 
-Next work follows D-023:
+Production now follows D-027's bounded build-first sequence:
 
-`Research → Design → Lesson → Lab → Project → Verification → Learner Validation`
+`Research → Design → Lesson/Lab/Project Implementation → Independent Verification/Lead Review → Next Ready Batch`
 
-Research and Design for M00–M04 are complete. The bounded **M00–M01 learner-facing Lesson + Activity packet and its independent technical verification gate are merged**. The current task is **real learner validation through Issue #34**. Do not start M02 learner-facing implementation merely because technical verification passed; the first packet now needs actual learner evidence.
+Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. Research and Design for M00–M04 are already complete, so the next learner-facing production task may proceed to **M02** without waiting for Issue #34.
 
 ## Current priority
 
-1. Execute **Issue #34** using one or more **real learner sessions** and the merged pilot observation template. Do not fabricate learner evidence.
-2. Keep validation observational: record Design / Environment / Support candidates, but do not silently repair Lessons/activity inside the validation task.
-3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
-4. Decide the next smallest task — M00–M01 direct fix, environment repair, design revisit, more pilot evidence, or M02 implementation — only after #34 Lead learner-validation review.
+1. Continue learner-facing implementation from the accepted M00–M04 Design, beginning with the next bounded **M02** task; do not mass-author unrelated Modules in one PR.
+2. Keep independent Verification/Lead Review on every bounded implementation batch even though learner validation is deferred.
+3. Keep **Issue #34 OPEN / DEFERRED / NON-BLOCKING** until real learning begins; never fabricate learner evidence.
+4. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
+5. Complete real learner validation and disposition material findings before v1.0 / `RELEASED`.
 
 ## Current architecture attention points
 
