@@ -44,10 +44,11 @@ Blueprint closure means the project may now build and validate the curriculum th
 - **Issue #25 / PR #26 — Foundations/System Mechanics Research Dossier v0.1:** Lead-reviewed and merged with `READY FOR DESIGN`.
 - **Issue #27 / PR #28 — Foundations/System Mechanics Vertical-Slice Design v0.1:** Lead-reviewed and merged with `READY FOR LESSON / ACTIVITY IMPLEMENTATION`.
 - **Issue #29 / PR #30 — M00–M01 Learner Lesson + Activity Pilot v0.1:** independently Lead-reviewed, narrow SIMPLE FIXes applied (L00-02 debugger-light outcome, progressive disclosure, Mermaid polish), and merged 2026-08-30. Merge does **not** mark the packet VERIFIED or learner-validated.
+- **Issue #31 / PR #33 — M00–M01 Technical Verification + Learner-Pilot Readiness v0.1:** independently verified, Lead-reviewed, and merged. Debian 13 / Python 3.13.5 reproduced the activity contract; Ubuntu 24.04 Noble / Python 3.12 remains NOT RUN and OQ-BP-006 remains OPEN. A first-pilot observation template is now available; this is not learner validation.
 
 ## Active workstream
 
-The project is in the first **post-Blueprint vertical slice**. **Issue #25 / PR #26 Research**, **Issue #27 / PR #28 Design**, and **Issue #29 / PR #30 M00–M01 learner-facing implementation** are COMPLETE / Lead-accepted or Lead-reviewed as appropriate. **Issue #31 — M00–M01 Technical Verification + Learner-Pilot Readiness v0.1 is OPEN** and owns the current independent verification gate.
+The project is in the first **post-Blueprint vertical slice**. Research, Design, M00–M01 learner-facing implementation, and the independent technical verification/pilot-readiness gate are complete. **Issue #34 — M00–M01 First Real Learner Pilot v0.1 is OPEN** and owns the current Learner Validation step. This task requires at least one real learner session; AI-only simulation cannot complete it.
 
 Completed closure sequence:
 
@@ -56,20 +57,21 @@ Completed closure sequence:
 - Issue #23 / PR #24 — Final Exit Audit, Lead direct fixes, narrow re-audit, **PASS — BLUEPRINT v0.1 READY TO CLOSE**;
 - Issue #25 / PR #26 — Foundations/System Mechanics Research Dossier v0.1, Lead-reviewed, narrow provenance fixes applied, merged with **READY FOR DESIGN**;
 - Issue #27 / PR #28 — Foundations/System Mechanics Design v0.1, Lead-reviewed, M03 provenance/M04 benchmark-control fixes applied, merged with **READY FOR LESSON / ACTIVITY IMPLEMENTATION**;
-- Issue #29 / PR #30 — M00–M01 learner Lesson + shared activity/evidence packet, independently Lead-reviewed, SIMPLE FIXes applied, merged with **PASS FOR MERGE** while explicitly remaining pre-VERIFIED / pre-learner-validation.
+- Issue #29 / PR #30 — M00–M01 learner Lesson + shared activity/evidence packet, independently Lead-reviewed, SIMPLE FIXes applied, merged with **PASS FOR MERGE** while explicitly remaining pre-VERIFIED / pre-learner-validation;
+- Issue #31 / PR #33 — independent technical verification + learner-pilot readiness, Lead-reviewed and merged with **PASS FOR MERGE — READY TO ENTER REAL LEARNER VALIDATION / FIRST PILOT**.
 
 Next work follows D-023:
 
 `Research → Design → Lesson → Lab → Project → Verification → Learner Validation`
 
-Research and Design for M00–M04 are complete. The bounded **M00–M01 learner-facing Lesson + Activity packet is merged**. The current task is the independent **M00–M01 technical verification + learner-pilot readiness gate (Issue #31)**. This intentionally pauses before M02 learner-facing implementation so the first packet gets a real short feedback loop rather than turning Design completion into bulk Lesson drafting.
+Research and Design for M00–M04 are complete. The bounded **M00–M01 learner-facing Lesson + Activity packet and its independent technical verification gate are merged**. The current task is **real learner validation through Issue #34**. Do not start M02 learner-facing implementation merely because technical verification passed; the first packet now needs actual learner evidence.
 
 ## Current priority
 
-1. Execute **Issue #31**: independently verify the merged M00–M01 packet and implement the accepted first-pilot observation template; do not modify the content under verification.
-2. Attempt the current Research/Design target Python 3.12 / Ubuntu 24.04 Noble verification when actually available, but keep OQ-BP-006 open and do not opportunistically pin the full environment.
-3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking; preserve the P0 opaque-persistence boundary and do not convert later retrieval into a durability claim.
-4. Do not claim learner validation from verification/pilot preparation. Decide the next smallest learner-facing task — likely M02 — only after #31 Lead review, using verification findings and pilot-readiness risk.
+1. Execute **Issue #34** using one or more **real learner sessions** and the merged pilot observation template. Do not fabricate learner evidence.
+2. Keep validation observational: record Design / Environment / Support candidates, but do not silently repair Lessons/activity inside the validation task.
+3. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
+4. Decide the next smallest task — M00–M01 direct fix, environment repair, design revisit, more pilot evidence, or M02 implementation — only after #34 Lead learner-validation review.
 
 ## Current architecture attention points
 
