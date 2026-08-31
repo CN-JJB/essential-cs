@@ -200,3 +200,109 @@ Primary: **Predict, Explain, Judge**. Controlled **Break** is used when the fixt
 
 - “The diagram is the system.” → It is a purpose-bounded model with omissions.
 - “I ran a command, therefore I investigated.” → Investigation begins with a question/prediction and ends with interpreted evidence.
+- “The output says X, so X caused it.” → Observation and causal explanation are different claims.
+- “State means whatever is stored on disk.” → State is any information that can affect future behavior/observations.
+- “Official docs answer every question.” → Authority depends on the claim layer.
+- “Git/Linux knowledge is the learning objective.” → They are evidence instruments here.
+
+### 3.12 Hint/support ladder
+
+- **Question:** Which boundary could produce an observation that distinguishes your two explanations?
+- **Hint 1:** Mark input, one interface, one piece of state, and output before choosing a command.
+- **Hint 2:** Compare exactly one baseline/changed variable and inspect the smallest boundary that can reveal its effect.
+- **Expected Observation:** supplied expected baseline/change anchors plus reset state, without the causal explanation.
+- **Full Explanation:** model trace, why the selected tool/source answers the claim, and why the evidence does not prove more than it observed.
+
+### 3.13 Visual/diagram requirements
+
+1. **Path-and-boundary map:** must demonstrate data/control direction, interface boundaries, state locations, indirection point(s), and which mechanisms are intentionally opaque.
+2. **Evidence ladder visual:** must demonstrate `prediction → observation → explanation → competing explanation → bounded conclusion`, with observation visually separated from causal claim.
+3. **Model-expiration callout:** the same system map must mark at least one omitted mechanism to reinforce that abstraction is purpose-bounded.
+
+### 3.14 Provenance/source anchors
+
+Accepted Research Dossier §§3.1–3.8, 8, 10, 12–13; Source Register anchors: Git `git diff` documentation, GitHub Codespaces/dev-container documentation, canonical Blueprint/policy artifacts. Evidence layer emphasis: **PRINCIPLE** for investigation discipline; **IMPLEMENTATION/CURRENT PRACTICE** for Git/Linux/container surfaces.
+
+### 3.15 Module exit criteria
+
+M00 exits when the learner can, with at most early hints and then a short independent transfer check if needed:
+
+- trace one bounded local path and name State/Interface/Abstraction/Indirection correctly;
+- make a falsifiable prediction before inspection;
+- preserve environment + baseline/change evidence;
+- separate observation from explanation and name one unresolved uncertainty;
+- choose an evidence/source layer appropriate to a claim.
+
+### 3.16 Handoff to M01
+
+M01 reuses the same fixture/evidence packet but zooms into the question M00 has deliberately left open: **what concrete representation crosses this boundary, how many bytes does it use, and under what interpretation is it valid?**
+
+## 4. M01 — Bits, Bytes & Representation
+
+### 4.1 Learner capability transition
+
+**Before:** can point to data crossing a boundary but may assume values/text have one intrinsic machine form.
+
+**After:** can encode/decode bounded values and UTF-8 text, inspect exact bytes, reason about endianness and finite ranges, estimate representation size, and detect/diagnose a broken round trip without conflating information with representation.
+
+Primary module capability remains **Explain**, with **Trace, Estimate, Correctness, Diagnose** exercised in the canonical S1 pattern.
+
+### 4.2 Explicit non-goals
+
+No digital logic/gates, Boolean algebra, Shannon information theory, compression theory, floating-point deep dive, arbitrary-precision internals, bus/protocol history, Unicode normalization/grapheme algorithm deep dive, or bit-trick puzzle course. Do not define Specification/Invariant/Correctness canonically before M02.
+
+### 4.3 Mapping to existing preliminary Lessons
+
+| Lesson | Existing topic | Design role |
+|---|---|---|
+| `L01-01` | bit/byte/binary/counting | First home of Representation; inspect bounded values as bits/bytes/hex. |
+| `L01-02` | signed/unsigned, two's complement, overflow | Separate signed representation from language arithmetic semantics; use boundary cases. |
+| `L01-03` | UTF-8/encoding; endianness | Observe code point/text-to-bytes and explicit byte-order changes; break decoding. |
+| `L01-04` | size estimation; serialization; round-trip | Integrate one record representation, estimate size, and test round-trip property. |
+
+### 4.4 Canonical concepts introduced vs previewed/revisited
+
+**Canonical first introduction:** `EC-CON-003` Representation at `L01-01`.
+
+**Revisited/applied:** State and Interface from M00. The round-trip property may use intuitive “must remain true” language, but `EC-CON-007` Specification, `EC-CON-008` Invariant, and `EC-CON-009` Correctness remain canonical first homes at M02 `L02-03`.
+
+### 4.5 Prerequisites and hidden-prerequisite support
+
+Hard Module prerequisite: M00. Lesson hard prerequisite for `L01-01`: `L00-01`.
+
+Support assumptions:
+
+- no hand-conversion speed requirement; provide powers-of-two/hex reference;
+- no command-specific hexdump dependency; Python byte inspection is sufficient;
+- Unicode terminology is introduced only to the boundary needed for UTF-8 correctness;
+- any filesystem size observation is evidence of byte count only, not storage/durability teaching.
+
+### 4.6 Teaching sequence / mechanism exposure
+
+1. **Question:** How can the same information have different byte sequences, sizes, and validity rules?
+2. **Mental Model:** information → representation contract → bytes → interpretation.
+3. **Mechanism:** positional binary/hex; bounded integer patterns; signed representation; UTF-8 encoding; explicit byte order; serialization fields/lengths.
+4. **Predict:** exact byte sequence/range/length for a bounded fixture before running.
+5. **Observe:** inspect bytes using Python standard-library mechanisms and exact fixtures.
+6. **Break:** wrong byte order, malformed/truncated UTF-8, out-of-range integer, or ambiguous/truncated record.
+7. **Explain:** distinguish “these are the bytes observed” from “this is the representation contract.”
+8. **Judge:** choose a representation under stated constraints such as readability, fixed width, size, or interoperability.
+
+### 4.7 Observation/activity design — specification level
+
+Use one compact record fixture, preferably the P0 record shape when it reduces duplicate work. The activity must include:
+
+- one unsigned and one signed fixed-width integer boundary example;
+- one UTF-8 string containing both ASCII and a multi-byte code point;
+- explicit little-endian and big-endian packing of the same multi-byte integer;
+- one simple serialized record with unambiguous field boundaries;
+- an encode→bytes→decode round trip;
+- at least one controlled failure: mismatched byte order, malformed/truncated UTF-8, range violation, or ambiguous/truncated serialization;
+- a byte-size estimate made before observation and reconciled afterward.
+
+Python stdlib is the canonical low-burden observation surface. CLI hex tools may be convenience-only, never required.
+
+### 4.8 Required learner evidence
+
+Append to the shared packet:
+
