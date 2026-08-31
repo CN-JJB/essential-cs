@@ -92,3 +92,111 @@ The implementation task must smoke-test, in the actual pinned container/Codespac
 1. fresh-start preflight from a clean learner account;
 2. the exact architecture identity used by the canonical M03 path;
 3. compile/link/run of the M03 fixture;
+4. source-aware disassembly with stable-enough symbol/source anchors for the activity;
+5. GDB breakpoint/step/register/memory inspection under the hosted container security policy;
+6. the bounded M03 failure observation and its cleanup/reset;
+7. the M04 timing source and recorded resolution/monotonicity;
+8. the complete M04 workload with the required repetitions, acceptable runtime, raw-evidence retention, and a robust locality effect across fresh hosted sessions;
+9. `perf` capability detection behaving as optional/non-blocking in both allowed and restricted cases;
+10. evidence-packet generation/checking without requiring unlisted tools or privileges.
+
+If M03 or M04 cannot meet these checks without privileged containers or substantial new setup, implementation must simplify the observation/fixture first. A change to curriculum scope, Lab selection, Module edges, or architecture is an escalation, not an implementation workaround.
+
+## 3. M00 — The Map & Investigation Discipline
+
+### 3.1 Learner capability transition
+
+**Before:** can run small programs but may treat a computer/system as a black box and tool output as explanation.
+
+**After:** can trace one bounded local path through interfaces/state/representations, write a falsifiable prediction before inspection, preserve a minimal evidence record, and distinguish observation from causal explanation and unresolved uncertainty.
+
+Primary module capability remains **Trace**; M00 also introduces practical **Observe** and **Learn-New-Tech** habits without claiming Stage-exit mastery for them.
+
+### 3.2 Explicit non-goals
+
+No shell command encyclopedia; no Git branching/rebase workflow; no debugger mastery; no HTTP/network mechanism teaching; no database/storage mechanism; no formal statistics; no AI prompting/model curriculum; no system-design pattern catalog.
+
+### 3.3 Mapping to existing preliminary Lessons
+
+| Lesson | Existing topic | Design role |
+|---|---|---|
+| `L00-01` | Whole-system map; abstraction/interface/indirection; system question set | Establish path-and-boundary mental model using one local fixture and preview that systems can fail without defining canonical Failure. |
+| `L00-02` | Investigation: shell/task execution, unfamiliar file/code reading, debugger-light inspection, Git evidence, environment/version record, baseline preservation, AI output as untrusted hypothesis | First Core evidence/investigation home. Produce the reusable evidence header and one controlled investigation. |
+
+No new Lesson IDs are created.
+
+### 3.4 Canonical concepts introduced vs previewed/revisited
+
+**Canonical first introductions at `L00-01`:**
+
+- `EC-CON-001` State
+- `EC-CON-002` Abstraction
+- `EC-CON-004` Indirection
+- `EC-CON-005` Interface
+
+**Preview only:** Failure (“systems can fail”) without the canonical definition; Representation as a question asked at boundaries without pre-empting `EC-CON-003` at M01. Technical Literacy and debugging are horizontal practices, not new canonical concepts.
+
+### 3.5 Prerequisites and hidden-prerequisite support
+
+Hard Module prerequisites: none. Entry baseline: basic programming only.
+
+Hidden-prerequisite support is part of the module, not an entry gate:
+
+- supply exact task-entry commands or one-click actions rather than assume shell fluency;
+- explain only the Git operations needed to inspect and preserve a change;
+- use a small unfamiliar file with a clearly bounded reading task;
+- debugger-light observation must have a supplied command path and expected stop/output;
+- distinguish “tool failed to run” from “prediction was wrong.”
+
+### 3.6 Teaching sequence / mechanism exposure
+
+Use the sequence:
+
+1. **Question:** Where does input/data/state travel in this small local system, and what could we actually observe?
+2. **Mental Model:** path-and-boundary diagram: `input → interface → representation → executing state → supplied lower boundary → output/state change`.
+3. **Mechanism:** interfaces expose contracts; abstractions omit detail; indirection inserts lookup/mapping; state influences later observations.
+4. **Predict:** learner marks one expected output/state change and one possible failure location before running anything.
+5. **Observe:** run the baseline fixture and inspect one boundary using a real tool.
+6. **Build/Break:** make one controlled, reversible change to an input/configuration/source constant supplied by the activity.
+7. **Explain:** separate observed fact from mechanism explanation; record one competing explanation or uncertainty.
+8. **Judge:** select the best evidence source/tool for one claim and explain why another source layer would be insufficient.
+
+### 3.7 Observation/activity design — specification level
+
+Use one course-owned local fixture with no network dependency and no learner-visible persistence mechanism requirement. The fixture must expose:
+
+- one input;
+- at least two named interfaces/boundaries;
+- one process-local state change;
+- one supplied persistence boundary that is explicitly opaque if P0 is used;
+- deterministic baseline output plus one safe controlled change/failure;
+- an unfamiliar-but-small source/config/data file that can be read without prior tool expertise.
+
+The learner must first predict, then run baseline, inspect one boundary, make exactly one controlled change, rerun, compare evidence, and reset. Git is used only to show/preserve the change. An AI-generated claim/code snippet may be offered only as an **untrusted hypothesis** to verify from docs/test/observation; AI use is not required.
+
+### 3.8 Required learner evidence
+
+Reuse the shared packet:
+
+- environment/preflight header;
+- one path trace with interface/state labels;
+- pre-run prediction;
+- baseline and changed-condition observation excerpts;
+- exact changed variable and Git diff/reference;
+- one sentence each for observation, explanation, competing explanation/uncertainty;
+- source-layer judgment: specification/docs/source/experiment and why.
+
+### 3.9 Assessment modes
+
+Primary: **Predict, Explain, Judge**. Controlled **Break** is used when the fixture supports a reversible failure. Cumulative: **Connect** to the learner's prior programming experience.
+
+### 3.10 Machine-checkable vs reviewer-required evidence
+
+**Machine-checkable:** preflight keys present; baseline command/task completed; changed variable differs from baseline; diff/evidence record exists; reset returns fixture to baseline; required output anchors exist.
+
+**Reviewer-required:** correctness of path/boundary labels; State vs storage distinction; source-layer choice; observation vs explanation separation; causal restraint; whether the uncertainty is meaningful rather than boilerplate.
+
+### 3.11 Misconceptions
+
+- “The diagram is the system.” → It is a purpose-bounded model with omissions.
+- “I ran a command, therefore I investigated.” → Investigation begins with a question/prediction and ends with interpreted evidence.
