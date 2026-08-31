@@ -2,10 +2,10 @@
 
 Status: **READY FOR LEAD REVIEW**
 
-Issue: #27 — Foundations/System Mechanics Vertical-Slice Design v0.1  
-Branch: **vertical-slice/issue-27-foundations-system-mechanics-design**  
-Base reconciled: **main @ 955a6974214542e6d9d053da01b62cbe41b739c1**  
-Role: Vertical Slice Design Architect / Instructional Systems Designer  
+Issue: #27 — Foundations/System Mechanics Vertical-Slice Design v0.1
+Branch: **vertical-slice/issue-27-foundations-system-mechanics-design**
+Base reconciled: **main @ 955a6974214542e6d9d053da01b62cbe41b739c1**
+Role: Vertical Slice Design Architect / Instructional Systems Designer
 Scope: Design step only for M00–M04. This document is not learner-facing Lesson prose, runnable Lab/project code, a Dev Container implementation, or a curriculum-architecture change.
 
 ## 1. Authority, boundaries, and slice intent
@@ -205,9 +205,9 @@ Primary: **Predict, Explain, Judge**, plus **Break** where the supplied fixture 
 
 ### 3.12 Hint/support ladder
 
-**Question → Hint 1:** mark input, one interface, one state item, and output before choosing a command.  
-**Hint 2:** compare exactly one baseline/change variable and inspect the smallest boundary that can reveal its effect.  
-**Expected Observation:** provide the expected baseline/change anchors and reset state, not the causal explanation.  
+**Question → Hint 1:** mark input, one interface, one state item, and output before choosing a command.
+**Hint 2:** compare exactly one baseline/change variable and inspect the smallest boundary that can reveal its effect.
+**Expected Observation:** provide the expected baseline/change anchors and reset state, not the causal explanation.
 **Full Explanation:** connect the path, tool/source choice, mechanism, and evidence limits. A later short transfer check is required for independent exit evidence after Full Explanation.
 
 ### 3.13 Visual/diagram requirements
@@ -335,10 +335,10 @@ Primary: **Predict, Break, Explain**. **Judge** for one constrained representati
 
 ### 4.12 Hint/support ladder
 
-**Question:** what interpretation must encoder and decoder agree on?  
-**Hint 1:** write the value/text separately from the proposed bytes.  
-**Hint 2:** mark width, byte order, field boundaries, and valid input domain.  
-**Expected Observation:** provide canonical bytes/errors for the supplied fixture only.  
+**Question:** what interpretation must encoder and decoder agree on?
+**Hint 1:** write the value/text separately from the proposed bytes.
+**Hint 2:** mark width, byte order, field boundaries, and valid input domain.
+**Expected Observation:** provide canonical bytes/errors for the supplied fixture only.
 **Full Explanation:** connect information, representation contract, bytes, validity, and round-trip limits; then use a new documented field for independent transfer.
 
 ### 4.13 Visual/diagram requirements
@@ -474,10 +474,10 @@ Primary: **Predict, Break, Judge, Explain**. Cumulative: minimal **Recall** for 
 
 ### 5.12 Hint/support ladder
 
-**Question:** what operation are you counting, and what must remain true after every permitted transition?  
-**Hint 1:** write n, the dominant operation, and one concrete input size before writing Big-O.  
-**Hint 2:** separate precondition/specification from the property that must survive transitions; try the smallest boundary/duplicate/missing case.  
-**Expected Observation:** canonical counts and failing boundary case, without trade-off/correctness explanation.  
+**Question:** what operation are you counting, and what must remain true after every permitted transition?
+**Hint 1:** write n, the dominant operation, and one concrete input size before writing Big-O.
+**Hint 2:** separate precondition/specification from the property that must survive transitions; try the smallest boundary/duplicate/missing case.
+**Expected Observation:** canonical counts and failing boundary case, without trade-off/correctness explanation.
 **Full Explanation:** connect operation model→growth and specification→invariant→correctness, then transfer to a new workload.
 
 ### 5.13 Visual/diagram requirements
@@ -647,10 +647,10 @@ Primary: **Predict, Explain, Break**. Cumulative: **Connect** representation/int
 
 ### 6.15 Hint/support ladder
 
-**Question:** which observed fact belongs to source semantics, ISA, ABI, or this build?  
-**Hint 1:** mark call boundary, argument/result values, instruction pointer, and one memory value.  
-**Hint 2:** compare the compiler output with the ABI obligation: which details could change while the call still works?  
-**Expected Observation:** supplied breakpoint locations and expected value relationships, not the full claim-layer explanation.  
+**Question:** which observed fact belongs to source semantics, ISA, ABI, or this build?
+**Hint 1:** mark call boundary, argument/result values, instruction pointer, and one memory value.
+**Hint 2:** compare the compiler output with the ABI obligation: which details could change while the call still works?
+**Expected Observation:** supplied breakpoint locations and expected value relationships, not the full claim-layer explanation.
 **Full Explanation:** walk source→instruction→state transition and classify each guarantee/observation; then repeat classification on the bounded RISC-V transfer item.
 
 ### 6.16 Visual/diagram requirements
@@ -738,7 +738,7 @@ Support:
 11. Conclude: bounded claim consistent with locality/cache hierarchy; no exact cache-level causal claim without stronger evidence.
 12. Optional corroboration: perf counters only when already available; never required.
 
-### 7.7 Canonical locality experiment specification
+### 7.7 Observation/activity design — canonical locality experiment specification
 
 #### Hypothesis
 
@@ -879,10 +879,10 @@ Primary: **Predict, Explain, Judge**; **Break** may use a deliberately unfair ex
 
 ### 7.13 Hint/support ladder
 
-**Question:** what changed, what stayed fixed, and how large is the effect compared with normal variation?  
-**Hint 1:** write baseline/change/workload/metric and semantic-equivalence check before interpreting timing.  
-**Hint 2:** inspect raw trials, median, IQR, execution order, and at least two competing explanations.  
-**Expected Observation:** provide the expected qualitative direction for a smoke-tested canonical fixture, never a fixed runtime or required speedup ratio.  
+**Question:** what changed, what stayed fixed, and how large is the effect compared with normal variation?
+**Hint 1:** write baseline/change/workload/metric and semantic-equivalence check before interpreting timing.
+**Hint 2:** inspect raw trials, median, IQR, execution order, and at least two competing explanations.
+**Expected Observation:** provide the expected qualitative direction for a smoke-tested canonical fixture, never a fixed runtime or required speedup ratio.
 **Full Explanation:** connect access order→spatial locality→cache opportunity, then state exactly what timing evidence can and cannot establish. Independent transfer uses a new small layout/access pattern.
 
 ### 7.14 Visual/diagram requirements
