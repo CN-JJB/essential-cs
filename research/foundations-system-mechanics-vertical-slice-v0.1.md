@@ -3,7 +3,7 @@
 Status: **READY FOR LEAD REVIEW**
 Issue: #25 — [Post-Blueprint] Foundations/System Mechanics Vertical-Slice Research Dossier v0.1
 Repository state researched: `main @ dab37131627fbc09e187300d3235ff6c0a10c57c`
-Checked date for current implementation/practice claims: **2026-08-31**
+Checked date for current implementation/practice claims: **2026-08-30**
 Role: Foundations / System Mechanics Research Architect and Evidence Researcher
 Scope: Research step only; no Lesson prose, runnable Lab implementation, Mini Cloud App implementation, Blueprint redesign, or Open Question closure.
 
@@ -428,7 +428,7 @@ Useful candidates:
 - **Open Data Structures** — bounded asymptotic-notation introduction plus selected sequence/hash/tree interfaces. Explicit CC BY license makes adaptation comparatively safe, but the full book is far beyond Core scope.
 - **Cornell CS2110** — classic sequence of searching/asymptotic complexity and loop invariants. Good pedagogical reference; course materials should be treated as link/reference unless item-level reuse rights are explicit.
 - **MIT Mathematics for Computer Science** — strong source for invariants/asymptotic/discrete foundations, but too broad/math-heavy to adopt wholesale for this target learner; use as designer evidence/reference, not learner prerequisite.
-- **Software Foundations / university computability notes** — bounded halting/decidability intuition only; avoid turning proof-assistant/formal-logic machinery into the activity.
+- **Software Foundations (Logical Foundations)** — designer background for bounded correctness/logic/decidability intuition only; avoid turning proof-assistant/formal-logic machinery into the activity.
 
 ### 5.8 Likely misconceptions
 
@@ -1019,7 +1019,7 @@ Implementation-time decisions still to make:
 
 ## 17. Source Register
 
-All current/version-sensitive claims below were checked **2026-08-31**. Classic sources are included for mechanism/pedagogy even when not version-sensitive.
+All sources below were checked for availability/relevance on **2026-08-30**. Current/version-sensitive claims were also rechecked on that date; classic sources are included for mechanism/pedagogy even when not version-sensitive.
 
 | Source | Institution / project / author | Exact URL / reference | Supports | Evidence layer | Limitations / notes |
 |---|---|---|---|---|---|
@@ -1038,6 +1038,8 @@ All current/version-sensitive claims below were checked **2026-08-31**. Classic 
 | Dev Containers image support/EOL tracking | Dev Containers project | https://github.com/devcontainers/images/discussions/1464 | Ubuntu 24.04 Noble and Python 3.12 supported image families; current image lifecycle | CURRENT PRACTICE | Community/project support table can change; recheck during implementation |
 | Ubuntu package `gcc-13` in Noble | Ubuntu | https://packages.ubuntu.com/noble/gcc-13 | Noble GCC 13 package family/current update information | IMPLEMENTATION | Exact package revision moves with security/updates; record in image, don't teach as semantic truth |
 | Open Data Structures | Pat Morin / open textbook project | https://opendatastructures.org/ | Asymptotic notation; selected data structures; explicit CC BY license | PRINCIPLE / classic teaching | Much broader than Core; adapt only bounded slices |
+| MIT Mathematics for Computer Science (Spring 2024) | MIT OpenCourseWare | https://ocw.mit.edu/courses/6-1200j-mathematics-for-computer-science-spring-2024/ | Invariants, asymptotic reasoning, and discrete-math background for designers | PRINCIPLE / classic teaching | Too broad/math-heavy for target learners; use bounded designer reference and follow item-level OCW license terms |
+| Software Foundations — Logical Foundations | University of Pennsylvania / Benjamin C. Pierce et al. | https://softwarefoundations.cis.upenn.edu/lf-current/Preface.html | Formal correctness/logic background and a designer reference for bounded limits-of-computation intuition | PRINCIPLE / classic teaching | Proof-assistant/formal-logic machinery is out of Core scope; link/reference only unless reuse terms are checked for the exact material |
 | Cornell CS2110 lecture notes index | Cornell University | https://www.cs.cornell.edu/courses/cs2110/2014sp/lecturenotes.html | Classic pairing of searching/asymptotic complexity and loop invariants | Classic teaching | Older course; public availability does not establish adaptation rights |
 | Harvard CS50 current/near-current Memory notes | Harvard CS50 | https://cs50.harvard.edu/extension/2026/spring/notes/4/ | Low-cognitive-load hex/memory visualization pattern | Classic/current teaching | C-course sequence differs from Essential CS; rights must be checked before reuse |
 | CMU CS:APP course/book ecosystem | Carnegie Mellon / Bryant & O'Hallaron | https://csapp.cs.cmu.edu/ | Classic systems sequence; Data Lab/machine/memory-hierarchy activity families | Classic teaching | Assignment/book rights are restricted/unclear for redistribution; existing Blueprint keeps Data Lab rights-gated |
@@ -1123,7 +1125,7 @@ Repository-level state/actions performed through GitHub connector:
 - compare reports exactly one changed file, `research/foundations-system-mechanics-vertical-slice-v0.1.md`, status `added`;
 - no canonical meta file, Lesson, Lab implementation, project implementation, Stage/Module/Lesson ID, H/S edge, competency, Concept Registry, Lab-selection artifact, P0–P9 mapping, or Open Question file was modified;
 - explicit scope review confirms no ninth competency is introduced, Open Questions remain open, and P0 is not a curriculum prerequisite;
-- current implementation/version claims are dated 2026-08-31 and tied to authoritative/primary sources in the Source Register;
+- current implementation/version claims are dated 2026-08-30 and tied to authoritative/primary sources in the Source Register;
 - licensing/provenance uncertainty is marked rather than inferred as permission.
 
 A literal local `git diff --check` is not available through the connected GitHub execution surface because no authenticated/networked local repository clone is exposed. The one-file GitHub compare and final patch/whitespace inspection are therefore used as the available diff-equivalent check; this limitation is reported rather than falsely claiming a command was run.
