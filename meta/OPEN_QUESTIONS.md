@@ -28,6 +28,18 @@ The goal is not a full HCI course. Evidence hooks (denial/error/privacy interact
 
 Exact Python, SQLite/PostgreSQL case version, Linux/dev-container base, compiler/toolchain (incl. QEMU/RISC-V cross-toolchain for LAB-REQ-02), browser, and optional container/observability versions remain to be pinned when the first module dossier and lab implementation require them. Closely related but separately tracked: the canonical latency-constant list (R11) and its refresh cadence (CURRENT per Living Curriculum Policy).
 
+## Resolved after Blueprint closure
+
+### OQ-BP-007 — Must learner validation block each subsequent authoring slice? (CLOSED)
+
+**Question:** After a bounded slice passes Research, Design, implementation, and independent Verification, must real learner validation complete before authoring the next learner-facing slice?
+
+**Decision:** No. Production uses a build-first bounded-batch sequence. Real learner validation remains mandatory before v1.0 / `RELEASED`, but it is non-blocking for continued course authoring.
+
+**Why:** Real learner evidence cannot be truthfully synthesized by an AI-only production pipeline, and the project owner explicitly chose to finish the full course before studying it gradually. The quality risk from delayed learner feedback is mitigated through bounded batches and independent technical/pedagogical/lab/integration review.
+
+**Provenance:** Issue #36; `research/build-first-production-sequencing-v0.1.md`; `meta/rfcs/RFC-003-build-first-production-sequencing.md`; D-027.
+
 ## Resolved during Issue #9 reconciliation (closed, for provenance)
 
 ### OQ-BP-002 — Applied foundations and toolchain prerequisites (CLOSED)

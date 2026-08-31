@@ -79,3 +79,6 @@ Humans, AI-assisted contributors, instructors, and institutions may contribute u
 
 ## D-026 — Stable release repair
 Serious released-content errors use an Errata/Hotfix process; stable tags are not rewritten. Revert and patch releases are allowed.
+
+## D-027 — Build-first production; learner validation deferred
+After the initial verified M00–M01 slice, course production proceeds in bounded batches through Research → Design → Lesson/Lab/Project implementation → independent Verification/Lead Review, then continues to the next ready batch. Real learner validation is non-blocking for continued authoring and may be completed later as the learner studies the course. D-024 remains unchanged: real learner validation is still required before v1.0 / `RELEASED`. AI simulation is never learner-validation evidence. This decision supersedes only the interpretation of D-023 that Learner Test must block the next authoring slice; it does not weaken technical, pedagogical, lab, integration, provenance, or visual review gates.
