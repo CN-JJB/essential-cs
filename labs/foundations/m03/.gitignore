@@ -1,0 +1,8 @@
+fixture
+failure
+disassembly.txt
+gdb-trace.txt
+failure-gdb.txt
+.gdb-*.cmd
+core
+core.*
