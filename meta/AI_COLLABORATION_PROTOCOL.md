@@ -30,6 +30,8 @@ Default:
 
 **One Issue → One Agent → One Branch/Worktree → One PR**
 
+The **Issue is the task contract**, not merely a tracker. Before an agent is dispatched, it should already contain enough information to execute independently from GitHub: dependencies, scope, Work Claim/branch, required evidence, verification, Completion Report, and escalation/stop rules. The dispatch message itself should normally be only a short instruction to claim/read that Issue and submit a PR.
+
 Local agents do not directly modify `main` unless explicitly authorized.
 
 ## Bounded autonomy
