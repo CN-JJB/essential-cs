@@ -1,0 +1,25 @@
+{
+  "metadata_line": "rows=4096 cols=4096 bytes=67108864 checksum=2097144125 warmups=2 trials_per_pattern=15 timer=CLOCK_MONOTONIC timer_resolution_ns=1",
+  "trial_count": 30,
+  "order_method": "counterbalanced AB/BA pairs",
+  "quartile_method": "statistics.quantiles inclusive",
+  "patterns": {
+    "row": {
+      "median_ns": 5859074,
+      "q1_ns": 5706893.0,
+      "q3_ns": 6080594.0,
+      "iqr_ns": 373701.0,
+      "min_ns": 5646863,
+      "max_ns": 6906849
+    },
+    "column": {
+      "median_ns": 112954504,
+      "q1_ns": 112297830.5,
+      "q3_ns": 115309426.0,
+      "iqr_ns": 3011595.5,
+      "min_ns": 111638382,
+      "max_ns": 135827436
+    }
+  },
+  "median_ratio_column_over_row": 19.278559035096674
+}
