@@ -6,8 +6,8 @@ This activity compares two traversals of the same 4096 × 4096 contiguous `uint3
 
 ```bash
 cd labs/foundations/m04
-./reset.sh
-./run.py
+sh reset.sh
+python3 run.py
 ```
 
 `run.py` requires Python 3 plus an ordinary C compiler. It compiles with `-O2 -fno-tree-vectorize -fno-unroll-loops` to reduce an obvious compiler-transformation confound, performs two untimed warmups per pattern, then records 15 trials per pattern in counterbalanced AB/BA pairs. Timing is taken inside one process with `clock_gettime(CLOCK_MONOTONIC)`; allocation and initialization are outside each timed interval.
@@ -41,7 +41,7 @@ An unfair experiment would run each pattern once, warm only one pattern, change 
 ## Reset
 
 ```bash
-./reset.sh
+sh reset.sh
 ```
 
 Reset only removes generated `out/` artifacts.
