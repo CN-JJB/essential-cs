@@ -10,7 +10,7 @@ Essential CS is a rigorous, self-study-first computer science curriculum for non
 2. `meta/PROJECT_STATUS.md`
 3. `meta/DECISIONS.md`
 4. `meta/OPEN_QUESTIONS.md`
-5. Relevant blueprint, research dossier, concept registry entry, Issue, and Task Prompt.
+5. Relevant blueprint, research dossier, concept registry entry, and the assigned GitHub Issue.
 
 GitHub is the source of truth. Do not treat chat history or AI memory as project state.
 
@@ -20,7 +20,7 @@ GitHub is the source of truth. Do not treat chat history or AI memory as project
 2. Root `AGENTS.md`
 3. `meta/` policies
 4. Directory-level instructions
-5. Task Prompt
+5. Assigned GitHub Issue / explicit Work Claim
 6. Agent-local judgment
 
 Lower levels may refine but may not silently override higher levels.
@@ -49,6 +49,8 @@ Large-scale lesson writing must not begin until the relevant blueprint/research 
 ## Multi-agent work
 
 Default: **One Issue → One Agent → One Branch/Worktree → One PR**.
+
+The assigned GitHub Issue is the canonical task contract. It must contain the full scope, dependencies, allowed/forbidden changes, verification requirements, Completion Report, and stop/escalation conditions needed by the agent. Chat dispatch should be short and point the agent to the Issue; do not depend on a long chat prompt as project state.
 
 Agents must not directly edit `main` unless explicitly authorized. Shared canonical concepts and curriculum architecture require coordination.
 
