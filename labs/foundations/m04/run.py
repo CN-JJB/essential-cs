@@ -84,6 +84,19 @@ def main():
     rows = list(csv.DictReader(RAW.open()))
     if len(rows) != 30:
         raise SystemExit(f"Expected 30 recorded trials, got {len(rows)}")
+
+    expected_patterns = []
+    for pair in range(15):
+        expected_patterns.extend(("row", "column") if pair % 2 == 0 else ("column", "row"))
+    if [r["pattern"] for r in rows] != expected_patterns:
+        raise SystemExit("Counterbalanced AB/BA execution pattern failed")
+    if [int(r["execution_order"]) for r in rows] != list(range(1, 31)):
+        raise SystemExit("Execution-order sequence is incomplete or out of order")
+    for pattern in ("row", "column"):
+        trials = [int(r["trial_number"]) for r in rows if r["pattern"] == pattern]
+        if trials != list(range(1, 16)):
+            raise SystemExit(f"{pattern} trial numbering is incomplete or out of order")
+
     by = {"row": [], "column": []}
     checksums = set()
     for r in rows:
