@@ -17,7 +17,12 @@
 typedef enum { ROW_MAJOR = 0, COLUMN_MAJOR = 1 } pattern_t;
 
 static uint64_t elapsed_ns(struct timespec a, struct timespec b) {
-    return (uint64_t)(b.tv_sec - a.tv_sec) * UINT64_C(1000000000) + (uint64_t)(b.tv_nsec - a.tv_nsec);
+    if (b.tv_nsec >= a.tv_nsec) {
+        return (uint64_t)(b.tv_sec - a.tv_sec) * UINT64_C(1000000000)
+             + (uint64_t)(b.tv_nsec - a.tv_nsec);
+    }
+    return (uint64_t)(b.tv_sec - a.tv_sec - 1) * UINT64_C(1000000000)
+         + (uint64_t)(UINT64_C(1000000000) + (uint64_t)b.tv_nsec - (uint64_t)a.tv_nsec);
 }
 
 __attribute__((noinline)) static uint64_t traverse(const uint32_t *data, size_t rows, size_t cols, pattern_t p) {
