@@ -46,6 +46,7 @@ Blueprint closure means the project may now build and validate the curriculum th
 - **Issue #29 / PR #30 — M00–M01 Learner Lesson + Activity Pilot v0.1:** independently Lead-reviewed, narrow SIMPLE FIXes applied (L00-02 debugger-light outcome, progressive disclosure, Mermaid polish), and merged 2026-08-30. Merge does **not** mark the packet VERIFIED or learner-validated.
 - **Issue #31 / PR #33 — M00–M01 Technical Verification + Learner-Pilot Readiness v0.1:** independently verified, Lead-reviewed, and merged. Debian 13 / Python 3.13.5 reproduced the activity contract; Ubuntu 24.04 Noble / Python 3.12 remains NOT RUN and OQ-BP-006 remains OPEN. A first-pilot observation template is now available; this is not learner validation.
 - **Issue #38 / PR #39 — M02 Computation & Complexity learner packet v0.1:** Lead-reviewed, two SIMPLE FIXes applied for concept first-home discipline and canonical Invariant/Correctness wording, then merged. Three Lessons, coherent activity, tests, evidence template, progressive support, and required visuals are present.
+- **Issue #41 / PR #42 — M03 Machine: ISA & Execution learner packet v0.1:** Lead-reviewed and merged after one evidence-wording SIMPLE FIX. Independent Lead reproduction passed native x86-64 build/baseline/disassembly/direct hosted failure; GDB three-point/debugger-failure runtime remains BLOCKED/NOT RUN because GDB is unavailable in both author and Lead environments. The packet preserves C / ISA / ABI / compiler-build / hosted-observation boundaries and keeps OQ-BP-006 OPEN.
 
 ## Active workstream
 
@@ -65,15 +66,16 @@ Production now follows D-027's bounded build-first sequence:
 
 `Research → Design → Lesson/Lab/Project Implementation → Independent Verification/Lead Review → Next Ready Batch`
 
-Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. Research and Design for M00–M04 are already complete. M02 implementation is now merged after Lead review, so the next learner-facing production task proceeds to **M03 — Machine: ISA & Execution** without waiting for Issue #34.
+Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. Research and Design for M00–M04 are already complete. M02 and M03 implementations are now merged after Lead review, so the next learner-facing production task proceeds to **M04 — Memory Hierarchy, Locality & Measurement** without waiting for Issue #34.
 
 ## Current priority
 
-1. Continue learner-facing implementation from the accepted M00–M04 Design with the next bounded **M03 — Machine: ISA & Execution** task; do not mass-author unrelated Modules in one PR.
+1. Continue learner-facing implementation from the accepted M00–M04 Design with the next bounded **M04 — Memory Hierarchy, Locality & Measurement** task; do not mass-author unrelated Modules in one PR.
 2. Keep independent Verification/Lead Review on every bounded implementation batch even though learner validation is deferred.
 3. Keep **Issue #34 OPEN / DEFERRED / NON-BLOCKING** until real learning begins; never fabricate learner evidence.
 4. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
-5. Complete real learner validation and disposition material findings before v1.0 / `RELEASED`.
+5. Preserve the M03 GDB verification limitation as explicit technical debt; do not silently convert the blocked debugger path into PASS.
+6. Complete real learner validation and disposition material findings before v1.0 / `RELEASED`.
 
 ## Current architecture attention points
 

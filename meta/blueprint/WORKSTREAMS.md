@@ -42,7 +42,7 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 | Final Exit Audit | Issue #23 / PR #24 | **COMPLETE — PASS after Lead direct fixes; Blueprint v0.1 closed** |
 | OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | **OPEN — non-blocking until an affected slice requires a Core-scope decision** |
 | OQ-BP-006 environment/version + hardware-dependent baseline pinning | First Module dossier + environment/Lab implementation | **OPEN — intentionally implementation-time** |
-| Build-first bounded course production | M00–M01 implementation + verification complete; M02 Issue #38 / PR #39 merged after Lead review; Issue #34 real learner pilot deferred/non-blocking; accepted M03–M04 Design provides the next ready implementation work | **ACTIVE — continue learner-facing Core authoring from M03** |
+| Build-first bounded course production | M00–M01 implementation + verification complete; M02 #38/#39 and M03 #41/#42 merged after Lead review; M03 GDB runtime verification remains explicitly blocked/deferred; Issue #34 real learner pilot deferred/non-blocking; accepted M04 Design provides the next ready implementation work | **ACTIVE — continue learner-facing Core authoring from M04** |
 
 ## Final Blueprint gate — PASSED
 
@@ -61,5 +61,5 @@ Blueprint v0.1 is therefore **COMPLETE / CLOSED**.
 
 - The Module DAG remains authoritative; Stage narrative is not dependency; S4/S5 partial independence preserved.
 - `meta/blueprint/final-reconciliation-v0.1.md` remains the Issue #9 integration/provenance record; `meta/blueprint/final-exit-audit-v0.1.md` owns the Blueprint exit result.
-- Blueprint exit criteria are satisfied. Under D-027, production is build-first in bounded batches: after Research/Design and independent implementation review/verification, authoring may continue to the next ready batch without waiting for a real learner. **Issue #34 remains OPEN / DEFERRED / NON-BLOCKING** and must still use real learner evidence when resumed. Learner validation remains required before v1.0 / `RELEASED`. The M02 learner packet is merged after Lead review. The next ready learner-facing batch begins at **M03**.
+- Blueprint exit criteria are satisfied. Under D-027, production is build-first in bounded batches: after Research/Design and independent implementation review/verification, authoring may continue to the next ready batch without waiting for a real learner. **Issue #34 remains OPEN / DEFERRED / NON-BLOCKING** and must still use real learner evidence when resumed. Learner validation remains required before v1.0 / `RELEASED`. The M02 and M03 learner packets are merged after Lead review. The next ready learner-facing batch begins at **M04**; M03's unavailable-GDB runtime path remains explicit verification debt rather than a hidden PASS.
 - Any change to Core scope (incl. decisions inside the two RFC candidates) proceeds through `Open Question → Research → RFC/Decision`.

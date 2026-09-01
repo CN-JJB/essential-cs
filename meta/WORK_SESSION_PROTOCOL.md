@@ -36,11 +36,15 @@ The Bootstrap Prompt is navigation, not authority. The new session must re-read 
 
 ## Local Agent dispatch
 
-The Web Lead generates one or more Task Prompts from current repository state.
+The Web Lead first creates or updates a GitHub Issue so the **Issue body is the complete current task contract**. It must contain the dependencies, scope, assigned branch/worktree, allowed/forbidden changes, evidence and verification requirements, Completion Report, and stop/escalation conditions.
 
-Prompts must state dependencies and whether tasks may run in parallel.
+After the Issue is ready, chat dispatch is deliberately short. Normal form:
 
-Local-agent internal context compression is outside project governance. If a fresh local conversation is needed, generate a new Prompt from current GitHub state.
+`认领 CN-JJB/essential-cs Issue #N，完整阅读并按 Issue 执行；使用 Issue 指定分支，完成后提交 PR，禁止自行 merge。`
+
+Do not send a second long prompt that can drift from the Issue. If rework is needed, update the Issue or create an explicit Rework Issue first, then send another short dispatch.
+
+Local-agent internal context compression is outside project governance. A fresh local conversation recovers its task from GitHub Issue state.
 
 ## State principle
 
