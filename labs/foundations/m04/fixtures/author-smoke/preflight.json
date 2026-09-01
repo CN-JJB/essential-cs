@@ -1,0 +1,22 @@
+{
+  "os": "Linux-6.18.35-x86_64-with-glibc2.41",
+  "architecture": "x86_64",
+  "python": "3.13.5",
+  "compiler": "cc",
+  "compiler_version": "cc (Debian 14.2.0-19) 14.2.0",
+  "cflags": [
+    "-std=c11",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-fno-tree-vectorize",
+    "-fno-unroll-loops"
+  ],
+  "timer": "clock_gettime(CLOCK_MONOTONIC)",
+  "perf": {
+    "available": false,
+    "status": "not-installed"
+  },
+  "preflight_status": "PASS"
+}
