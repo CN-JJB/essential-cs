@@ -48,6 +48,7 @@ Blueprint closure means the project may now build and validate the curriculum th
 - **Issue #38 / PR #39 — M02 Computation & Complexity learner packet v0.1:** Lead-reviewed, two SIMPLE FIXes applied for concept first-home discipline and canonical Invariant/Correctness wording, then merged. Three Lessons, coherent activity, tests, evidence template, progressive support, and required visuals are present.
 - **Issue #41 / PR #42 — M03 Machine: ISA & Execution learner packet v0.1:** Lead-reviewed and merged after one evidence-wording SIMPLE FIX. Independent Lead reproduction passed native x86-64 build/baseline/disassembly/direct hosted failure; GDB three-point/debugger-failure runtime remains BLOCKED/NOT RUN because GDB is unavailable in both author and Lead environments. The packet preserves C / ISA / ABI / compiler-build / hosted-observation boundaries and keeps OQ-BP-006 OPEN.
 - **Issue #44 / PR #45 — M04 Memory Hierarchy, Locality & Measurement learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes aligning canonical Caching/Locality definitions, making elapsed-time subtraction explicit, and machine-checking counterbalanced trial order. Committed author-smoke statistics independently recomputed exactly; final-head Lead rerun on x86-64 Debian/GCC reproduced the predicted direction with 30 trials and a ~19.72× column/row median ratio. This remains environment-specific microbenchmark evidence, not a universal hardware claim.
+- **Issue #47 / PR #48 — Runtime, OS & Persistence Research Dossier v0.1 (M05–M09):** Lead-reviewed and merged with **READY FOR DESIGN** after current-source/boundary fixes covering Fall 2025 xv6 `sleep`→`pause` routing, lab-page licensing uncertainty, ptrace/strace permissions, durability write-path checkpoints, CPython implementation boundaries, and SSD source classification. LAB-REQ-02 selection remains accepted; OQ-BP-006 remains OPEN.
 
 ## Active workstream
 
@@ -67,11 +68,11 @@ Production now follows D-027's bounded build-first sequence:
 
 `Research → Design → Lesson/Lab/Project Implementation → Independent Verification/Lead Review → Next Ready Batch`
 
-Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. Before M05 learner-facing implementation, the next bounded production step returns to **Research** for the next mechanism slice, M05–M09 (Languages/Runtime → Processes/Syscalls → Virtual Memory/Isolation → Files/Filesystems → Durable Storage).
+Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. The **M05–M09 Research Dossier is now merged with READY FOR DESIGN**. Before learner-facing implementation, the next bounded production step is **Design for M05–M09** (Languages/Runtime → Processes/Syscalls → Virtual Memory/Isolation → Files/Filesystems → Durable Storage).
 
 ## Current priority
 
-1. Create and complete the next bounded **Research Dossier for M05–M09** before any M05 learner-facing implementation. Do not skip directly from M04 implementation into undossiered lesson writing.
+1. Create and complete the bounded **M05–M09 Design Dossier** from the accepted Research before any M05 learner-facing implementation. Do not skip Research→Design.
 2. Keep independent Verification/Lead Review on every bounded implementation batch even though learner validation is deferred.
 3. Keep **Issue #34 OPEN / DEFERRED / NON-BLOCKING** until real learning begins; never fabricate learner evidence.
 4. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
