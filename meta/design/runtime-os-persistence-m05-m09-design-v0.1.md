@@ -684,8 +684,8 @@ If QEMU cannot execute due to container policy restrictions:
    $$\text{User Buffer} \xrightarrow{\text{flush()}} \text{Page Cache} \xrightarrow{\text{fsync()}} \text{Disk Controller Volatile RAM} \xrightarrow{\text{Device Cache Flush}} \text{Non-Volatile Flash / Platters}$$
 7. **Prediction-Before-Observation:** If you call `fsync()` after every single write of 100 bytes, what will happen to write throughput compared to ordinary buffered writes?
 8. **Hands-on Progression (Observe / Build / Break / Explain / Judge):**
-   - *Build / Observe:* Measure the elapsed time of 1,000 small writes without `fsync` vs with `os.fsync()` after each write. Observe a $100\times$ to $1{,}000\times$ slowdown.
-   - *Explain:* Explain why: `fsync` halts execution until the physical storage device acknowledges that data and required metadata are persisted.
+   - *Build / Observe:* Measure the elapsed time of 1,000 small writes without `fsync` vs with `os.fsync()` after each write; observe that calling `fsync` may introduce substantial latency overhead depending on workload and storage environment.
+   - *Explain:* Explain why: `fsync` requests synchronization according to OS, filesystem, and storage contracts, halting execution until the synchronization request is completed.
    - *Explain (Concept):* Introduce Write-Ahead Logging (WAL) as a technique to achieve durability without random disk seek/rewrite overhead.
    - *Judge:* Formulate a trade-off judgment: when should an application call `fsync` immediately (financial transactions) vs periodically (document auto-save)?
 9. **Required Commands / Tools:** Python 3.12 (`os.fsync`, `time.perf_counter`).
@@ -702,7 +702,7 @@ If QEMU cannot execute due to container policy restrictions:
 16. **Exit Criteria:** Learner defines Durability under a named failure bound and demonstrates the latency cost of `fsync`.
 17. **Competency Mapping:** Judge (durability vs throughput trade-off), Explain (WAL concept).
 18. **Provenance / Source Anchors:** POSIX.1-2024 `fsync(2)`, `fdatasync(2)` & Pillai et al. (OSDI '14).
-19. **Failure / Inference Limits:** A local `fsync()` guarantees durability against sudden OS crash or power cut on that machine; it does not protect against physical disk destruction or catastrophic hardware failure.
+19. **Failure / Inference Limits:** `fsync()` requests synchronization according to OS, filesystem, and storage contracts; the resulting durability guarantee depends on the named failure model and the behavior of the storage stack. It does not protect against physical disk destruction or catastrophic hardware failure.
 
 ---
 
@@ -814,7 +814,7 @@ Implementation must supply a deterministic preflight script (`scripts/preflight-
 | **M06** (L06-01..03) | Procfs status parse, fork/exec lifecycle log, zombie diagnosis | Trace, Observe, Diagnose | PID matching, exit code parsing ($42$), zombie status verification in procfs | Explanation of user/kernel boundary and scheduling preemption intuition |
 | **LAB-REQ-02** (xv6) | `user/sleep.c`, modified `Makefile`, grade transcript | Trace, Observe, Diagnose | `./grade-lab-util sleep` outputs `OK`, error exit on missing argument | Understanding of `pause/sys_pause` trap route; explanation of tick vs wall-clock time |
 | **M07** (L07-01..03) | `/proc/self/maps` breakdown, VSZ vs RSS test, SIGSEGV signal record | Explain, Diagnose, Trace | Segment permission matching, `ru_minflt` growth assertion, signal 11 termination | Distinction between Isolation and Trust Boundary; explanation of MMU page fault sequence |
-| **M08** (L08-01..03) | Inode link count log, buffered I/O trace, POSIX error reproduction | Trace, Observe, Diagnose | Inode equality check across links, `write()` batching ratio, `EACCES`/`ENOENT` errno capture | Explanation of the 5-layer write path; explanation of why `write()` success $\neq$ durability |
+| **M08** (L08-01..03) | Inode link count log, buffered I/O trace, POSIX error reproduction | Trace, Observe, Diagnose | Inode equality check across links, `write()` batching ratio, `EACCES`/`ENOENT` errno capture | Explanation of write-path checkpoints and durability boundary; explanation of why `write()` success $\neq$ durability |
 | **M09** (L09-01..03) | `fsync` latency timing distribution, WAF calculation, storage cost model | Judge, Estimate, Explain | `fsync` timing delta assertion, WAF formula execution, cost arithmetic verification | Defensibility of durability policy under named failure bound; mechanism contrast of SSD vs HDD |
 
 ---
@@ -961,7 +961,7 @@ The subsequent Implementation Agent may proceed directly to drafting Lessons, ac
 ## 19. Risks & Design Blockers
 
 - **Container Tracing Restrictions:** `strace` may fail in heavily restricted Docker containers without `SYS_PTRACE`. *Mitigation:* The design specifies non-privileged procfs observation as an approved alternative.
-- **QEMU Emulation Overhead:** Nested virtualization may slow QEMU boot on low-end cloud hosts. *Mitigation:* Bounded smoke test with generous timeouts ($< 30$ seconds expected) and deterministic fallback trace provided.
+- **QEMU Emulation Overhead:** Nested virtualization may slow QEMU boot on low-end cloud hosts. *Mitigation:* Bounded smoke-test timing should be recorded during implementation and a deterministic fallback trace provided.
 - **M03 GDB Debt:** GDB interactive verification remains open. *Mitigation:* GDB is completely excluded from the critical path of M05–M09.
 
 ---
