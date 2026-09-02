@@ -43,12 +43,12 @@ $$\text{M05 (Languages/Runtime)} \longrightarrow \text{M06 (Processes/Syscalls)}
    - M07 `L07-01`: **EC-CON-013 Isolation**
    - M07 `L07-01`: **EC-CON-017 Trust Boundary**
    - M09 `L09-01`: **EC-CON-016 Durability**
-2. **LAB-REQ-02 Re-Audit Complete:** MIT 6.1810 `sleep` syscall exercise remains the best bounded Required Lab for user-to-kernel crossing. Licensing is verified (MIT License for xv6 software source; CC BY 3.0 US for lab page text). Setup burden in standard Linux Dev Containers requires only `qemu-system-misc` and `gcc-riscv64-linux-gnu`. A short non-compiling M08 revisit inspects xv6's `sysfile.c`/`file.c` to contrast VFS abstractions without duplicating the lab. A deterministic trace fallback is specified for constrained environments.
-3. **Environment & OQ-BP-006 Baseline Feasible:** The canonical Linux toolchain (Python 3.12, GCC 13/14, GNU binutils, `strace`, `ps`/procfs, QEMU RISC-V) is feasible and unprivileged for nearly all exercises. Potential container restriction on `strace` (`SYS_PTRACE`) is documented with non-privileged fallback paths.
+2. **LAB-REQ-02 Re-Audit Complete:** MIT 6.1810's `sleep` **user-program** exercise remains a strong bounded Required Lab for user-to-kernel crossing. The current Fall 2025 assignment implements the `sleep` command by calling xv6's existing `pause()` system call, so the observed route is a `sleep` user program → `pause` syscall path, not the older `SYS_sleep/sys_sleep` path. The xv6 software license is verified as MIT. A reusable license for the current 2025 lab-page prose was **not independently verified during Lead review**, so Essential CS must treat the assignment prose as link/reference-only unless a current explicit license notice is separately verified. The official 2025 tools page lists `git`, `build-essential`, `qemu-system-misc`, `gcc-riscv64-linux-gnu`, and `binutils-riscv64-linux-gnu` as the relevant Debian/Ubuntu setup set; GDB is not required for this bounded activity. A short non-compiling M08 revisit inspects xv6's `sysfile.c`/`file.c` to contrast VFS abstractions without duplicating the lab. A deterministic trace fallback is specified for constrained environments.
+3. **Environment & OQ-BP-006 Baseline Feasible:** The canonical Linux toolchain (Python 3.12, GCC 13/14, GNU binutils, `strace`, `ps`/procfs, QEMU RISC-V) is feasible and unprivileged for nearly all exercises. `strace`/ptrace availability is environment-sensitive: ordinary tracing may work without `CAP_SYS_PTRACE`, while UID/user-namespace checks, Yama/LSM policy, seccomp/container policy, or capabilities can restrict it. Non-ptrace procfs/process-observation fallbacks are therefore required.
 4. **M03 GDB Debt Decoupled:** The known verification debt from M03 (GDB unavailable in author/Lead environments) does not block M05–M09. M05 and M06 use disassembly, Python standard introspection (`dis`, `ast`), `strace`, and procfs rather than interactive GDB session stepping.
 5. **Durability and Security Boundaries Hardened:**
    - *Security:* Isolation (limits visibility/interference) and Trust Boundary (marks changes in authority/enforcement responsibility) are strictly separated.
-   - *Durability:* Durability is defined under explicit failure models. The dossier enforces a strict 5-layer buffer hierarchy (Language Runtime $\rightarrow$ libc Buffer $\rightarrow$ Kernel Page Cache $\rightarrow$ Filesystem Journal $\rightarrow$ Storage Controller Cache $\rightarrow$ Non-Volatile Media). No learner activity may claim `write()` success or file existence implies persistence across power failure.
+   - *Durability:* Durability is defined under explicit failure models. The dossier uses a bounded set of **possible durability checkpoints** rather than a universal fixed stack: language/runtime buffering (when present) → stdio/libc buffering (when present) → kernel page cache for buffered I/O → filesystem-specific data/metadata/journal handling → device/controller volatile cache when present → non-volatile media. Not every write path contains every checkpoint, and their ordering/guarantees are platform/filesystem/device dependent. No learner activity may claim `write()` success or file existence implies persistence across power failure.
 
 ---
 
@@ -195,14 +195,14 @@ Learners transition from viewing a programming language as "magic instructions e
 - *"CPython bytecode is a standard."* $\rightarrow$ Bytecode opcodes change between Python minor releases and are an implementation detail.
 
 ### 4.10 Environment & Tool Constraints
-- Python 3.12/3.13 standard library (`ast`, `dis`, `sys`) requires zero external dependencies. Fully unprivileged, 100% reproducible across all Linux environments.
+- Python 3.12/3.13 standard-library inspection (`ast`, `dis`, `sys`) requires no third-party package and is normally unprivileged. Exact `dis` output is CPython/version-specific and must be smoke-tested in the actual environment rather than claimed reproducible across all Python VMs or releases.
 
 ---
 
 ## 5. M06 Research — Processes, Syscalls & Execution Context
 
 ### 5.1 Capability Transition
-Learners transition from thinking that their code "runs the computer" to realizing that a running program is an unprivileged guest process managed, isolated, and scheduled by the operating system kernel, interacting with hardware exclusively through system calls.
+Learners transition from thinking that their code "runs the computer" to realizing that a running program is an unprivileged guest process managed and scheduled by the operating system kernel. User code executes ordinary CPU instructions and accesses its mapped user memory directly; operations requiring kernel-managed resources or privileged services cross an OS interface such as a system call.
 
 ### 5.2 Minimum Mechanism Model
 1. **Program vs Process:**
@@ -579,17 +579,17 @@ Per Issue #47 and `meta/blueprint/lab-source-selection-map-v0.1.md`, this dossie
 |---|---|
 | **Exact Official Upstream** | MIT 6.1810 Operating System Engineering (Fall 2025).<br>Course Lab Page: `https://pdos.csail.mit.edu/6.1810/2025/labs/util.html`.<br>Software Repository: `https://github.com/mit-pdos/xv6-riscv` (checked commit `35b088427ef37611c38afdeed5a52a278cae38f9`) and `git://g.csail.mit.edu/xv6-labs-2025`. |
 | **Current Accessible Version / Date** | Fall 2025 course materials verified active and accessible at checked date **2026-09-02**. |
-| **Licensing Boundary** | **xv6 software source:** Covered by its own MIT License. Permissive reuse/adaptation allowed provided the MIT copyright and permission notices are retained in copies.<br>**MIT 6.1810 Lab Page (`util.html`):** Carries a `rel="license"` footer to **CC BY 3.0 US**. Permits adaptation with attribution, license link, and change indication.<br>**Essential CS Rule:** All learner instructions, pedagogical explanations, and evidence prompts must be independently authored. No course prose is copied. Any bundled software retains the MIT notice. |
-| **Required Architecture / Toolchain** | Architecture: RISC-V 64-bit (RV64G).<br>Toolchain: `gcc-riscv64-linux-gnu` (or `riscv64-unknown-elf-gcc`), `binutils-riscv64-linux-gnu`, `qemu-system-misc` (provides `qemu-system-riscv64`). |
-| **Expected Setup Burden** | In standard Ubuntu/Debian Dev Container: `apt-get install -y qemu-system-misc gcc-riscv64-linux-gnu`. Clean build and boot time is under 15 seconds. Minimal setup friction when provided in pre-built image. |
-| **Bounded Scope** | Implement ONLY user program `user/sleep.c` using the existing kernel `sleep(int ticks)` system call. Add `$U/_sleep` to `UPROGS` in `Makefile`. Run `sleep 10` in xv6 shell. Do not implement a kernel subsystem, grade server, or shell extension. |
-| **Deterministic Smoke Path** | 1. Clone pinned xv6 tree.<br>2. Add `user/sleep.c` (validates argc == 2, calls `atoi(argv[1])`, invokes `sleep(n)`, calls `exit(0)`).<br>3. Add `$U/_sleep\` to `Makefile`.<br>4. Run `make qemu` or `./grade-lab-util sleep`.<br>5. Verification passes deterministically in $< 30$ seconds without network. |
+| **Licensing Boundary** | **xv6 software source:** Covered by its own MIT License. Permissive reuse/adaptation allowed provided the MIT copyright and permission notices are retained in copies.<br>**MIT 6.1810 Lab Page (`util.html`):** The current Fall 2025 page is publicly accessible, but Lead review did **not** verify an explicit reusable license notice on that page. Treat its prose as **link/reference-only** unless a current explicit license is later verified; do not adapt/copy assignment text based on an assumed CC license.<br>**Essential CS Rule:** All learner instructions, pedagogical explanations, and evidence prompts must be independently authored. No course prose is copied. Any bundled software retains the MIT notice. |
+| **Required Architecture / Toolchain** | Guest architecture: RISC-V 64-bit. Official Fall 2025 Debian/Ubuntu setup uses `git`, `build-essential`, `qemu-system-misc`, `gcc-riscv64-linux-gnu`, and `binutils-riscv64-linux-gnu`; `qemu-system-riscv64` performs system emulation and does not inherently require nested hardware virtualization. |
+| **Expected Setup Burden** | Official course tooling is available as ordinary Debian/Ubuntu packages, but exact install/build/boot time was **not independently timed in this Research review**. Design may assume package-based setup; implementation must smoke-test the exact pinned image/toolchain before claiming a time bound. |
+| **Bounded Scope** | Implement ONLY user program `user/sleep.c` following the current Fall 2025 assignment: validate/parse the tick argument and call the existing xv6 `pause(int ticks)` system call. Add `$U/_sleep` to `UPROGS` in `Makefile`. Run `sleep 10` in xv6 shell. Do not implement a kernel subsystem, grade server, or shell extension. |
+| **Deterministic Smoke Path** | 1. Clone pinned xv6 tree.<br>2. Add `user/sleep.c` (validates the argument, converts ticks, invokes the current xv6 `pause(n)` syscall wrapper, and exits appropriately).<br>3. Add `$U/_sleep\` to `Makefile`.<br>4. Run `make qemu` or `./grade-lab-util sleep`.<br>5. The official grading command provides deterministic pass/fail evidence after setup; **no fixed sub-30-second runtime is claimed until the chosen course image is smoke-tested**. |
 | **What is Machine-Checkable** | - `make qemu` compiles without errors.<br>- Executing `sleep` with no arguments prints usage and exits with non-zero status.<br>- Executing `sleep 10` pauses process and exits with 0.<br>- Official grading script `./grade-lab-util sleep` outputs `== Test sleep, correct: OK`. |
-| **What Must Be Reviewer-Judged** | - Learner's understanding of the source route: `user/sleep.c` $\rightarrow$ `user/user.h` $\rightarrow$ `user/usys.S` (sets `a7` to `SYS_sleep`, executes `ecall`) $\rightarrow$ `kernel/trampoline.S` $\rightarrow$ `kernel/trap.c:usertrap()` $\rightarrow$ `kernel/syscall.c:syscall()` $\rightarrow$ `kernel/sysproc.c:sys_sleep()`.<br>- Distinction between guest CPU ticks (timer interrupts) and host wall-clock time.<br>- Failure classification: compile error vs missing argument vs guest crash. |
+| **What Must Be Reviewer-Judged** | - Learner's understanding of the source route: `user/sleep.c` $\rightarrow$ `user/user.h` $\rightarrow$ generated `user/usys.S` wrapper for `pause` (RISC-V `ecall`) $\rightarrow$ trap/trampoline entry $\rightarrow$ kernel trap/syscall dispatch $\rightarrow$ `kernel/sysproc.c:sys_pause()` in the current Fall 2025 lab source. Exact generated/source filenames and symbols must be rechecked against the pinned lab tree during implementation.<br>- Distinction between guest CPU ticks (timer interrupts) and host wall-clock time.<br>- Failure classification: compile error vs missing argument vs guest crash. |
 | **Reset / Cleanup** | `Ctrl-A X` cleanly terminates QEMU. `make clean` or `git checkout -- .` removes generated binaries and disk image `fs.img`. Host environment state is untouched. |
-| **Selection Verdict** | **CONFIRMED: The existing `sleep` syscall path remains the best bounded Required Lab.** It exposes the complete user-to-kernel trap traversal with minimal accidental complexity (no complex memory allocation or multi-page management). |
+| **Selection Verdict** | **CONFIRMED with current-source correction: the existing `sleep` user-program exercise remains the best bounded Required Lab, but its Fall 2025 kernel crossing is the `pause` syscall path.** It exposes the complete user-to-kernel trap traversal with minimal accidental complexity (no complex memory allocation or multi-page management). |
 | **M08 Revisit (No Duplicate Lab)** | In M08, xv6 is revisited strictly as a **reading expedition (Source Inspection)** of `kernel/sysfile.c` and `kernel/file.c`. Learners observe how `sys_read()` and `sys_write()` map file descriptors to inodes. **No new lab or second xv6 compilation is introduced.** |
-| **Fallback Evidence for Constrained Environments** | If QEMU cannot be launched (e.g., heavily restricted nested virtualization), the learner records a Linux native `strace -e trace=nanosleep` execution trace alongside a pre-recorded xv6 execution transcript, analyzing the identical user-to-kernel boundary crossing. |
+| **Fallback Evidence for Constrained Environments** | If QEMU system emulation cannot be launched because of hosted/container execution restrictions, the learner records a Linux native `strace -e trace=nanosleep` execution trace alongside a pre-recorded xv6 execution transcript, analyzing the identical user-to-kernel boundary crossing. |
 
 ---
 
@@ -605,11 +605,11 @@ Per Issue #47 and `meta/blueprint/lab-source-selection-map-v0.1.md`, this dossie
 | **Python 3.12 / 3.13** | M05, M06, M08, M09 | **Required for Core** | No | Unprivileged | Python 3.12.3 in Ubuntu 24.04 LTS Noble; standard library `ast`, `dis`, `os`, `struct`, `time` | Yes: verify `ast.parse` and `dis.dis` work across standard scripts |
 | **GCC (Native x86-64 / ARM64)** | M05, M06, M07 | **Required for Core** | Architecture-dependent | Unprivileged | GCC 13.2.0 in Ubuntu Noble; `-O0` and `-O2` code generation | Yes: compile 15-line C test programs |
 | **GNU Binutils (`objdump`, `readelf`)** | M05, M06, M07 | **Required for Core** | Architecture-dependent | Unprivileged | GNU binutils 2.42 in Ubuntu Noble; disassembles native binaries | Yes: verify `objdump -d` output |
-| **`strace`** | M06, M08 | **Required for Core** | Yes (Container security policy) | Restricted (requires `ptrace` or `SYS_PTRACE`) | strace 6.8 in Ubuntu Noble; traces syscalls | **Critical:** Must test in canonical Dev Container. If blocked, provide procfs fallback |
+| **`strace`** | M06, M08 | **Required when available; Core needs a non-ptrace fallback** | Yes (host/container security policy) | ptrace access can be restricted by UID/user-namespace checks, Yama/LSM, seccomp/container policy, or capabilities; `CAP_SYS_PTRACE` is not universally required | Ubuntu Noble carries a current strace package; exact installed build is preflight data | **Critical:** test actual course environment; if blocked, use designed procfs/process-observation fallback rather than weakening security |
 | **procfs (`/proc`) & Core CLI (`ps`, `stat`, `vmstat`, `df`)** | M06, M07, M08 | **Required for Core** | No (standard Linux) | Unprivileged | Linux kernel procfs; procps 4.0.4 | Yes: verify `/proc/self/maps` and `/proc/self/status` access |
 | **QEMU & RISC-V Cross-Toolchain** | M06 (LAB-REQ-02) | **Required for Core** | Toolchain installation needed | Unprivileged (runs in user space) | `qemu-system-misc` (8.2.2), `gcc-riscv64-linux-gnu` (13.2.0) | **Critical:** Test xv6 build and QEMU boot inside container |
 | **GDB** | Optional / Revisit | **Optional / Avoid Dependency** | High | Restricted (`ptrace`) | Explicit technical debt from M03 (BLOCKED/NOT RUN in author/Lead env) | Not required for M05-M09 Core path; do not introduce new GDB gates |
-| **Raw Block Device Tools (`debugfs`, `fdisk`)** | M08, M09 | **Forbidden for Core** (Optional case study only) | Yes | **Requires Root/Sudo** | N/A | Use loopback file images or standard filesystem APIs instead |
+| **Filesystem / block-inspection tools (`debugfs`, `fdisk`, raw-device access)** | M08, M09 | **No raw host-device manipulation in Core**; image-file inspection may be an optional safe case | Yes | raw device access may require privilege, while ordinary image-file inspection can be unprivileged | tool/version dependent | Prefer course-owned image files or standard filesystem APIs; never require learner access to host raw devices |
 
 ### 11.3 Interaction with M03 GDB Technical Debt
 During M03 verification, GDB runtime verification failed due to missing packages and container ptrace restrictions. **This dossier explicitly prevents M03's debt from propagating into M05–M09.** No Core checkpoint in M05–M09 requires interactive GDB stepping. All execution inspection is performed via static disassembly (`objdump`, `dis`), non-interactive system tracing (`strace`), or procfs introspection.
@@ -637,7 +637,7 @@ All sources were re-verified for availability, normative status, and version acc
 
 1. **MIT 6.1810 xv6 Lab Material:**
    - *Software Code:* MIT License (`xv6-riscv` repo). Permitted to adapt and bundle provided copyright notices are preserved.
-   - *Course Web Text:* CC BY 3.0 US (`labs/util.html`). Permitted to adapt with attribution.
+   - *Course Web Text:* current reusable license **NOT VERIFIED** by Lead review. Link/reference only; do not adapt/copy assignment prose unless an explicit current license is verified.
    - *Essential CS Constraint:* Do NOT copy MIT assignment text. Author 100% original Essential CS instructions and evidence prompts.
 2. **xv6 Book (`xv6-riscv-book`):**
    - *Constraint:* Copyright MIT / Kaashoek, Morris, Cox. Not licensed under open Creative Commons for bulk text reproduction. Cite and link only; do not copy book diagrams or text verbatim.
@@ -646,7 +646,7 @@ All sources were re-verified for availability, normative status, and version acc
 4. **POSIX / IEEE Standards:**
    - *Constraint:* Formal standard text is copyrighted by IEEE/The Open Group. System interface names, signatures, and semantics are fair use; do not quote large normative paragraphs. Paraphrase and cite the official Austin Group public specification URLs.
 5. **Original Visuals and Diagrams:**
-   - All architecture diagrams for the 5-layer buffer stack, user-to-kernel trap route, virtual address translation radix tree, and SSD flash blocks must be 100% original Essential CS SVGs/Mermaid diagrams released under CC BY-SA 4.0.
+   - All architecture diagrams for the durability-checkpoint path, user-to-kernel trap route, virtual address translation radix tree, and SSD flash blocks must be 100% original Essential CS SVGs/Mermaid diagrams released under CC BY-SA 4.0.
 
 ---
 
@@ -654,12 +654,12 @@ All sources were re-verified for availability, normative status, and version acc
 
 | Misconception | What the Learner Assumes | Technical Truth & Mechanism Boundary |
 |---|---|---|
-| **"Python executes without compilation"** | Code is interpreted line-by-line directly from textual source. | Python always lexes, parses to an AST, and compiles to bytecode before execution begins. |
-| **"Syscall is just a library call"** | Calling `read()` is just invoking a function written by someone else. | A library call executes in user mode on the user stack; a syscall triggers a hardware trap that elevates CPU privilege to kernel mode. |
+| **"Python executes without compilation"** | Code is interpreted line-by-line directly from textual source. | For the **CPython implementation used by this course**, source is parsed/compiled into CPython execution representations before the interpreter executes it; CPython bytecode is an implementation detail and may change across Python versions/VMs. The Python language specification does not require every implementation to use CPython's exact AST/bytecode pipeline. |
+| **"Syscall is just a library call"** | Calling `read()` is just invoking a function written by someone else. | A normal user-space function call stays in user mode. A system call crosses a defined user/kernel boundary through the architecture/OS-specific syscall or trap mechanism (for example x86-64 `syscall` or RISC-V `ecall`); exact entry/return mechanics are platform-specific. |
 | **"Processes own physical RAM"** | Pointers in C/Python are physical wire addresses on motherboard RAM chips. | All user pointers are virtual addresses translated dynamically by the hardware MMU via kernel page tables. |
 | **"Isolation equals trust"** | If two processes cannot read each other's memory, they are safe from each other. | Memory isolation limits visibility/interference; a trust boundary governs authority. Isolated processes sharing IPC or a user ID still require authorization validation. |
-| **"write() means saved to disk"** | When `write()` or `f.write()` completes, the data is physically safe on SSD/HDD. | `write()` only places data in the volatile kernel page cache in RAM. It will vanish upon power failure unless flushed with `fsync()`. |
-| **"close() flushes to storage"** | Calling `f.close()` forces physical disk persistence. | `close()` flushes user-space buffers to the kernel page cache and releases the FD; it does NOT force physical writeback to storage. |
+| **"write() means saved to disk"** | When `write()` or `f.write()` completes, the data is physically safe on SSD/HDD. | For ordinary **buffered regular-file I/O on Linux**, successful `write()` commonly leaves dirty data in kernel-managed cache/writeback state and is not by itself a power-loss durability guarantee. Other modes (for example synchronous/direct-I/O variants) differ. A durability claim must name the API, filesystem/device behavior, synchronization step such as `fsync()` where applicable, and the failure bound. |
+| **"close() flushes to storage"** | Calling `f.close()` forces physical disk persistence. | High-level/stdio close operations such as Python `f.close()` / C `fclose()` may first flush their own user-space buffers into the OS, then close the descriptor. POSIX `close(fd)` itself is not the user-space-buffer flush primitive, and closing a descriptor is not by itself a named power-loss durability guarantee. |
 | **"SSDs overwrite data like RAM"** | Writing to an SSD block replaces the old data in-place. | NAND flash requires erasing entire multi-megabyte blocks before re-writing pages. Updates are out-of-place, handled dynamically by the FTL. |
 | **"Replication is durability"** | Having three copies in cloud storage guarantees data will never be lost. | Naive replication duplicates corruptions, software bugs, and malicious drops instantly; durability requires crash-consistent non-volatile storage and failure-boundary analysis. |
 
@@ -750,13 +750,13 @@ Expected content-file count: **1**.
 
 ### Authority-Class Summary
 - **PRINCIPLE:** Translation pipeline, process isolation, virtual address translation, dual-mode execution, write-ahead logging, SSD write amplification.
-- **SPECIFICATION:** POSIX.1-2024 system interfaces; Python language specification; C23 language specification; JEDEC solid-state drive standards.
+- **SPECIFICATION:** POSIX.1-2024 system interfaces; Python language/reference contracts where applicable; C language specification where actually cited.
 - **IMPLEMENTATION:** CPython bytecode evaluation loop; Linux page cache dirty writeback; Linux procfs; xv6 trap handler.
 - **CURRENT PRACTICE:** Ubuntu 24.04 package versions; modern cloud storage cost models; NVMe latency ranges.
 
 ### Licensing Findings
 - xv6 software source: MIT License (requires copyright/permission notices).
-- MIT 6.1810 lab HTML: CC BY 3.0 US (requires attribution, link, changes indicated).
+- MIT 6.1810 lab HTML: reusable license not independently verified in Lead review; treat assignment prose as link/reference-only unless explicit current license evidence is added.
 - Essential CS policy: 100% original instructional prose, diagrams, and evidence prompts; software notices preserved.
 
 ### LAB-REQ-02 Feasibility Finding
@@ -766,13 +766,13 @@ Expected content-file count: **1**.
 
 ### Environment / Tool Feasibility Summary
 - Canonical tools (Python 3.12, GCC, binutils, procfs) are standard and unprivileged.
-- `strace` requires container `ptrace` capability; procfs fallback provided.
+- `strace` is environment-sensitive because ptrace access can be constrained by UID/user-namespace, Yama/LSM, seccomp/container policy, or capabilities; procfs/process-observation fallback is required without assuming `CAP_SYS_PTRACE` is always necessary.
 - GDB is decoupled from M05–M09 Core path.
 
 ### Canonical Concept First-Home Check
 - M06 `L06-01`: `EC-CON-018 Process` (First home preserved).
 - M07 `L07-01`: `EC-CON-013 Isolation` & `EC-CON-017 Trust Boundary` (First homes preserved; distinction enforced).
-- M09 `L09-01`: `EC-CON-016 Durability` (First home preserved; strict 5-layer buffer boundary enforced).
+- M09 `L09-01`: `EC-CON-016 Durability` (First home preserved; durability is taught through bounded possible write-path checkpoints and an explicit failure model, not a universal fixed layer stack).
 - No new concept IDs introduced.
 
 ### M03 GDB Debt Interaction
@@ -791,3 +791,20 @@ Expected content-file count: **1**.
   2. Confirm decoupling of M05–M09 from GDB interactive debugging debt.
   3. Validate the 5-layer durability buffer stack and security boundary definitions.
 - Final Dossier Recommendation: **READY FOR DESIGN**
+
+
+---
+
+## 20. Web Lead Source-Recheck Corrections (2026-09-02)
+
+This section records narrow source/currentness corrections applied during Lead review. These corrections are normative over any residual shorthand elsewhere in this dossier.
+
+1. **Current MIT 6.1810 util lab:** the Fall 2025 `sleep` user program calls the existing xv6 `pause()` system call; Design must trace the current `pause/sys_pause` path, not an older `SYS_sleep/sys_sleep` route. The official `./grade-lab-util sleep` command remains valid.
+2. **xv6 source license:** verified from the official `mit-pdos/xv6-riscv` repository as MIT-style permissive software terms. The current 2025 lab-page prose license was not independently established; treat assignment prose as link/reference-only.
+3. **Toolchain:** MIT's Fall 2025 tools page lists Debian/Ubuntu packages including `git`, `build-essential`, `qemu-system-misc`, `gcc-riscv64-linux-gnu`, and `binutils-riscv64-linux-gnu`. Exact setup/build/boot times remain implementation-smoke-test evidence, not a Research guarantee.
+4. **ptrace/strace:** `CAP_SYS_PTRACE` is not a universal prerequisite. Linux access checks can depend on credentials, user namespace, Yama/LSM policy, seccomp/container restrictions, and capabilities. Design must provide a safe fallback without requesting weaker host security.
+5. **Durability path:** language buffering, stdio buffering, page cache, filesystem journal/data handling, device volatile cache, and non-volatile media are **possible checkpoints**, not one universal six-step path. `write()`, high-level close/`fclose()`, POSIX `close()`, filesystem synchronization, device flush/FUA and named failure bounds must remain distinct.
+6. **CPython boundary:** `dis`/bytecode is CPython implementation evidence and is explicitly version-sensitive; do not teach it as the Python language specification.
+7. **SSD source:** SNIA material is retained as vendor-neutral industry educational/reference evidence for write amplification/FTL/wear-leveling concepts, not as a universal formal SSD implementation specification.
+
+**Lead recheck result:** these corrections remove the identified current-source/claim-boundary defects without changing Module scope, concept first homes, DAG, Required Lab selection, or the final `READY FOR DESIGN` recommendation.
