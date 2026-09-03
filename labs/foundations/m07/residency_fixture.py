@@ -157,18 +157,18 @@ def main() -> int:
 
     if r.vm_rss_kb is not None and b.vm_rss_kb is not None:
         rss_res_delta = r.vm_rss_kb - b.vm_rss_kb
-        print(f"[*] Reservation VmRSS Delta: +{rss_res_delta} KiB (Physical RAM remains largely uncommitted before touch)")
+        print(f"[*] Reservation VmRSS Delta: {rss_res_delta:+} KiB (host observation; mapping existence alone does not prove residency)")
 
     if f.vm_rss_kb is not None and r.vm_rss_kb is not None:
         rss_touch_delta = f.vm_rss_kb - r.vm_rss_kb
-        print(f"[*] Touching Pages VmRSS Delta: +{rss_touch_delta} KiB (Physical frames allocated upon first write)")
+        print(f"[*] Touching Pages VmRSS Delta: {rss_touch_delta:+} KiB (host observation of residency change after touches)")
 
     if f.minor_faults is not None and r.minor_faults is not None:
         fault_delta = f.minor_faults - r.minor_faults
-        print(f"[*] Touching Pages Minor Fault Delta: +{fault_delta} faults (Demand paging traps resolved by OS)")
+        print(f"[*] Touching Pages Minor Fault Delta: {fault_delta:+} faults (Unix/Linux accounting observation; not a universal per-page law)")
 
     print("\n--- Inference Limitations ---")
-    print("[*] Demand-paging behavior observed here is specific to Linux/POSIX virtual memory policy.")
+    print("[*] The mapping/RSS/fault relationship observed here is host-specific Linux/Unix-family evidence.")
     print("[*] Exact RSS increase and fault counts vary by OS page size, zero-page optimizations, and runtime state.")
     print("[*] Never assume a universal fixed ratio between malloc bytes and resident physical RAM.")
 
