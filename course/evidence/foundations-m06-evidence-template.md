@@ -8,7 +8,7 @@
 - Python Implementation & Version:
 - Native Compiler & Version:
 - Process Tools (`ps`, `/proc` availability):
-- `strace` Capability Status (PASS / RESTRICTED / MISSING):
+- `strace` Capability Status (PASS / RESTRICTED / UNAVAILABLE / FAILED):
 - Preflight Summary:
 
 ---
@@ -40,9 +40,10 @@
 - If `strace` functional:
   - Command run:
   - Syscall excerpt (`write` / `getpid`):
-- If `strace` restricted or missing:
-  - Exact restriction reported (e.g. ptrace seccomp policy / not installed):
-  - Fallback deterministic trace observed:
+- If live `strace` is not PASS:
+  - Exact limitation reported (not installed / restricted / bounded trace failed):
+  - Confirm **NO LIVE SYSCALL TRACE** was claimed:
+  - Fallback/source material consulted, if any:
   - Limitation note (Why procfs state is not equivalent to tracing syscall entry):
 
 ---
@@ -60,9 +61,12 @@
 ---
 
 ## F — Exec Evidence
-- How does `execve` change the process execution context?
-- Does `exec` create a new PID?
-- What happens to the memory image during `exec`?
+- Fork Child PID:
+- PID Reported by the New Image after `exec`:
+- Did PID remain the same across successful `exec`?
+- Exec'd image exit status (fixture target: 7):
+- How does `execve` change the process image?
+- Which attributes can change/reset (for example `FD_CLOEXEC`) rather than being blindly preserved?
 
 ---
 
@@ -78,7 +82,8 @@
 ## H — Zombie Observation & Cleanup
 - How was the zombie process created?
 - Observed State in `/proc/<child_pid>/stat` prior to `wait()`:
-- Did the state reflect `Z` (Zombie)?
+- Did the bounded poll observe `Z` (Zombie)? PASS / NOT OBSERVED:
+- If NOT OBSERVED, what was the last sampled state?
 - Cleanup Verification: How was the child process reaped in the `finally` block?
 - Why do zombie processes NOT eat CPU cycles?
 
@@ -88,10 +93,10 @@
 - Command Run: `python3 scheduler_fixture.py`
 - CPU-Active Worker PID:
   - Observed States:
-  - Did worker show `R` (Running/Runnable)?
+  - Did bounded polling observe `R` (Running/Runnable)? PASS / NOT OBSERVED:
 - Sleeping Worker PID:
   - Observed States:
-  - Did worker show `S` (Interruptible Sleep)?
+  - Did bounded polling observe `S` (Interruptible Sleep)? PASS / NOT OBSERVED:
 - Explanation of Timer Preemption & Wait Queues:
 
 ---
@@ -101,7 +106,7 @@ Classify each claim into: `POSIX Contract`, `Linux Implementation Detail`, or `A
 
 | Claim | Layer | Justification |
 |---|---|---|
-| `fork()` creates a new process with an identical logical memory image | | |
+| `fork()` creates a child process whose characteristics are copied/inherited except where POSIX specifies differences | | |
 | Linux uses Copy-on-Write (COW) page sharing after `fork()` | | |
 | Process state letters `R`, `S`, `Z` in `/proc/<pid>/stat` | | |
 | `waitpid()` suspends calling process until child status changes | | |
