@@ -57,8 +57,9 @@
 - `fsync(fd)` vs `fdatasync(fd)` Specification Boundary:
 - File Data vs Inode Metadata Scope:
 - Directory Entry Persistence Boundary:
-  - Why `fsync(file_fd)` alone does not guarantee directory entry persistence for newly created or renamed files:
-  - Parent Directory Synchronization Command (`os.fsync(dir_fd)`):
+  - Linux boundary: why `fsync(file_fd)` alone does not necessarily synchronize the containing directory entry:
+  - Directory entries changed by the operation (new/create, same-directory rename, cross-directory rename):
+  - Directory sync disposition(s): `PASS` or `ENVIRONMENT_LIMITED` with actual error evidence:
 - Disaster Recovery Boundary (Why `fsync` is not a backup and does not protect against media destruction):
 
 ---
@@ -68,10 +69,13 @@
 - Log Sequence Number (LSN) Monotonicity:
 - Write-Ahead Invariant: `page_lsn <= flushed_lsn` verified prior to dirty data page disk flush:
 - Crash Simulation Point:
-- Recovery Algorithm Stages:
+- Recovery Model Boundary:
+  - This activity is a bounded teaching model, **not full ARIES repeat-history**.
+- Teaching Recovery Stages:
   - 1. Analysis Phase (Active vs Committed transactions identified):
-  - 2. Redo Phase (Committed updates replayed to restore state):
-  - 3. Undo Phase (Uncommitted updates rolled back):
+  - 2. Simplified Redo Phase (committed updates reconstructed by this model):
+  - 3. Undo Phase (surviving uncommitted updates rolled back):
+- Full-ARIES distinction: repeat-history redo may include loser-transaction updates before Undo/CLR:
 - Verified Recovered State Consistency:
 - Why WAL is an ordering/recovery strategy rather than a magical durability primitive:
 
@@ -122,23 +126,24 @@
 
 ---
 
-## K — Media / TBW Inference Limits
-- Terabytes Written Formula: $\text{TBW} = \frac{\text{Capacity}_{\text{GB}} \times \text{P/E Cycles}}{\text{WAF} \times 1000}$
-- Illustrative Calculation:
+## K — Media / Endurance Inference Limits
+- Teaching Host-Write-Budget Formula (not a JESD218 rating): $\text{Budget}_{\text{TB}} = \frac{\text{Capacity}_{\text{GB}} \times \text{Assumed P/E Cycles}}{\text{WAF} \times 1000}$
+- Illustrative Calculation (`ILLUSTRATIVE MODEL EVIDENCE`):
   - Drive Capacity: 1000 GB
   - Assumed P/E Cycles: 3000
   - Assumed WAF: 2.5
-  - Calculated Host TBW:
-- JEDEC Standards Reference (JESD218 / JESD219):
-- Inference Boundary Warning (TBW as manufacturer qualification warranty vs probabilistic real-world lifespan):
+  - Calculated Illustrative Host-Write Budget:
+- JEDEC Standards Reference (JESD218 endurance rating/test method; JESD219 workload):
+- Manufacturer Product TBW / Warranty Reference if discussed:
+- Inference Boundary Warning: teaching budget, JEDEC rating, manufacturer TBW, warranty terms, and physical failure date are not interchangeable:
 
 ---
 
 ## L — Block / File / Object Architecture Comparison
 - Architecture Matrix:
-  - Block Storage: Interface (LBA / NVMe / SCSI), Latency (< 1 ms), Attachment (Single host), Best for (DB engines, OS roots)
-  - File Storage: Interface (POSIX over NFS/SMB), Latency (1-5 ms), Attachment (Multi-client shared), Best for (Shared user files, CMS)
-  - Object Storage: Interface (REST API over HTTP: GET/PUT), Latency (20-100 ms), Attachment (Global Web), Best for (Unstructured blobs, media, backups)
+  - Block Storage: block interface, attachment/coordination model, product/workload-specific latency, when-not-to-use
+  - File Storage: path/file interface, local vs network semantics, multi-client coordination, when-not-to-use
+  - Object Storage: object/key API, whole-object/versioned update semantics, provider/service constraints, when-not-to-use
 - Architectural Trade-off Invariant:
 
 ---
@@ -151,7 +156,7 @@
 - Rates Used:
   - Block (gp3): $0.08 / GB-month
   - File (EFS Standard): $0.30 / GB-month
-  - Object (S3 Standard): $0.023 / GB-month, $0.005 / 1k PUT, $0.0004 / 1k GET, $0.09 / GB egress
+  - Object (S3 Standard teaching snapshot): $0.023 / GB-month, $0.005 / 1k PUT, $0.0004 / 1k GET, first paid egress tier $0.09 / GB after the model's assumed 100 GB/month account-wide free allowance
 - Evaluated Workload:
   - Capacity: 10,000 GB (10 TB)
   - Write Requests: 50,000
@@ -160,8 +165,9 @@
 - Cost Arithmetic Results:
   - Block Monthly Total: $800.00
   - File Monthly Total: $3,000.00
-  - Object Monthly Total: $248.65
-- Model Omissions: Provisioned IOPS, snapshots, replication bandwidth, padding.
+  - Object Monthly Total under committed assumptions: $239.65
+- Account-Level Assumption: 100 GB free egress assumed otherwise unused; record billable egress.
+- Model Omissions: provisioned IOPS/throughput, snapshots, replication/network charges, object/tier constraints, other services consuming free egress, higher transfer tiers, EFS throughput/access charges.
 
 ---
 
