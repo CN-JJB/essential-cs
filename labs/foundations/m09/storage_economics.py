@@ -53,6 +53,7 @@ def estimate_monthly_storage_cost(
 
     assumptions = custom_assumptions or load_reference_assumptions()
     tiers = assumptions["tiers"]
+    metadata = assumptions.get("metadata", {})
 
     # 1. Block Storage (EBS gp3 baseline)
     b_tier = tiers["block_storage"]
@@ -98,6 +99,13 @@ def estimate_monthly_storage_cost(
             "egress_cost": round(o_egress_cost, 2),
             "total_monthly_cost": round(o_total, 2),
         },
+        "assumption_metadata": {
+            "status": metadata.get("status"),
+            "checked_date": metadata.get("checked_date"),
+            "currency": metadata.get("currency"),
+            "region": metadata.get("region"),
+            "note": metadata.get("note"),
+        },
         "explicit_omissions": [
             "provisioned_iops_and_burst_credits",
             "volume_snapshot_storage",
@@ -115,31 +123,31 @@ def evaluate_storage_technology(arch_type: str) -> dict:
         "block": {
             "architecture": "Block Storage",
             "problem": "Provide low-latency raw block addressing for single-host operating systems and database engines.",
-            "constraints": "Strict sub-millisecond random I/O latency requirements; fixed disk volume bounds.",
-            "mechanism": "LBA sectors mapped over NVMe/SCSI or virtual SAN protocols to a single attached compute node.",
-            "gains": "Maximum random I/O throughput, POSIX compatibility, in-place byte overwriting, direct filesystem hosting.",
-            "costs": "Highest cost per GB-month (~$0.08 - $0.12/GB), non-elastic capacity provisioning, single-instance attachment.",
-            "failure_modes": "Filesystem corruption on hard crash, volume unmount on hypervisor fault, noisy-neighbor shared SAN latency.",
+            "constraints": "Workload may require block semantics, predictable synchronization behavior, bounded latency, and explicit volume/service quotas; exact latency is product/workload-specific.",
+            "mechanism": "Block-addressed storage exposed locally or over a storage service/protocol; attachment may be single-host or coordinated multi-attach depending on product.",
+            "gains": "Provides block semantics suitable for hosting filesystems and storage engines; performance can be provisioned/tuned independently on some products.",
+            "costs": "Capacity plus possible IOPS/throughput/snapshot/attachment charges; provisioning and scaling behavior depend on the selected product.",
+            "failure_modes": "Device/service loss, attachment failures, filesystem/storage-engine crash recovery, quota exhaustion, and latency variation according to the deployed stack.",
             "when_not_to_use": "Do NOT use for shared multi-client read/write assets, distributed media archives, or massive petabyte-scale unstructured logs.",
         },
         "file": {
             "architecture": "File Storage",
             "problem": "Provide a concurrent, shared hierarchical directory tree for multiple independent compute nodes.",
-            "constraints": "Standard POSIX file semantics (open, read, write, lock) required across multiple clients simultaneously.",
+            "constraints": "Applications may require hierarchical path/file semantics and multi-client access; exact POSIX/locking/cache semantics depend on protocol and service.",
             "mechanism": "Centralized network filesystem server/cluster exporting POSIX hierarchy over NFS or SMB protocols.",
-            "gains": "Seamless multi-instance sharing, automatic directory tree semantics, transparent client mounting.",
-            "costs": "Medium-to-high cost (~$0.30/GB), network protocol roundtrip overhead (1-5 ms latency), lock contention bottlenecks.",
+            "gains": "Hierarchical naming and file-oriented APIs can simplify shared content/workspace use cases across clients.",
+            "costs": "Capacity plus possible throughput/access/tiering/network charges; remote filesystems add network/cache/coordination paths whose latency must be measured.",
             "failure_modes": "Network partition hangs (stale NFS mounts), metadata lock deadlocks, metadata bottleneck on millions of tiny files.",
             "when_not_to_use": "Do NOT use for high-IOPS random transactional databases (e.g. database data directory) or massive internet-scale static assets.",
         },
         "object": {
             "architecture": "Object Storage",
-            "problem": "Store and serve massive, petabyte-scale unstructured binary assets with elastic capacity at minimal cost.",
-            "constraints": "High HTTP latency acceptable (20-100 ms); data accessed via keys rather than directory hierarchy.",
-            "mechanism": "Flat key-value namespace; immutable binary blobs accessed via REST API (GET, PUT, DELETE) over HTTP/TLS.",
-            "gains": "Lowest cost per GB (~$0.02/GB), infinite elastic scale, built-in multi-datacenter durability, global web URL access.",
-            "costs": "Per-request charges (PUT/GET API fees), high egress bandwidth costs, no in-place mutation (must replace whole object).",
-            "failure_modes": "Eventual consistency propagation delays (on older stores), high API request bills on small-file micro-access, egress bill shock.",
+            "problem": "Store and serve large collections of unstructured objects through a service API with independently scalable capacity/request handling.",
+            "constraints": "Application can use object/key APIs rather than assuming POSIX byte-range mutation, file locks, or local-filesystem latency.",
+            "mechanism": "Object/key + metadata API, commonly over HTTP/TLS; updates are typically whole-object replacement/versioning rather than POSIX in-place byte mutation.",
+            "gains": "Can offer large-scale managed capacity, service-level durability/availability options, and direct API integration; exact guarantees and costs are product-specific.",
+            "costs": "Capacity, request, data-transfer, retrieval/tiering and lifecycle charges may apply; POSIX adapters can add semantic/performance trade-offs.",
+            "failure_modes": "Provider/service outages, quota/throttling, consistency/versioning mistakes, request-cost amplification, egress cost, and application assumptions that mismatch object semantics.",
             "when_not_to_use": "Do NOT use as a boot volume, for low-latency random database read/writes, or for applications requiring POSIX file locks or in-place updates.",
         },
     }
