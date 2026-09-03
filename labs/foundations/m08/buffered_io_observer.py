@@ -6,7 +6,7 @@ Demonstrates:
 2. User-space write batching via buffered I/O vs raw unbuffered os.write().
 3. Live strace capability detection with truthful SKIP / NO LIVE SYSCALL TRACE when unavailable.
 4. Directional, noisy /proc/meminfo Dirty/Writeback observation on Linux without fixed constants.
-5. Machine-checked proof that ordinary buffered write/flush success does NOT prove power-loss durability.
+5. Static claim-boundary audit: ordinary buffered write/flush success must not be labeled as power-loss durability evidence.
 """
 
 import io
@@ -20,8 +20,20 @@ import tempfile
 from pathlib import Path
 
 
+MAX_USER_BUFFER_DEMO_BYTES = 1024 * 1024  # 1 MiB hard cap
+MAX_DIRTY_OBSERVATION_MB = 8
+
+
 def observe_user_space_buffering(work_dir: str | Path | None = None, num_chunks: int = 1024, chunk_size: int = 16) -> dict:
     """Compare user-space runtime buffering with unbuffered system call writes."""
+    if num_chunks <= 0 or chunk_size <= 0:
+        raise ValueError("num_chunks and chunk_size must be positive")
+    total_expected_bytes = num_chunks * chunk_size
+    if total_expected_bytes > MAX_USER_BUFFER_DEMO_BYTES:
+        raise ValueError(
+            f"buffering demo exceeds the {MAX_USER_BUFFER_DEMO_BYTES}-byte safety cap"
+        )
+
     cleanup = False
     if work_dir is None:
         temp_obj = tempfile.TemporaryDirectory(prefix="_run_m08_buf_")
@@ -35,7 +47,6 @@ def observe_user_space_buffering(work_dir: str | Path | None = None, num_chunks:
     buf_file = work_path / "buffered.dat"
     unbuf_file = work_path / "unbuffered.dat"
     chunk = b"X" * chunk_size
-    total_expected_bytes = num_chunks * chunk_size
 
     report = {
         "num_app_writes": num_chunks,
@@ -73,7 +84,8 @@ def observe_user_space_buffering(work_dir: str | Path | None = None, num_chunks:
         report["verifications"] = {
             "buffered_bytes_match": actual_buf_size == total_expected_bytes,
             "unbuffered_bytes_match": actual_unbuf_size == total_expected_bytes,
-            "buffering_batches_user_calls": True,
+            "buffering_layer_present": report["buffered_stream_type"] == "BufferedWriter",
+            "syscall_batching_proven_here": False,
         }
 
     finally:
@@ -84,18 +96,18 @@ def observe_user_space_buffering(work_dir: str | Path | None = None, num_chunks:
 
 
 def check_durability_boundary_claim() -> dict:
-    """Explicitly verify that ordinary buffered write success does NOT imply power-loss durability."""
-    # Machine-checked invariant:
-    # A successful return from write() or flush() confirms that data was accepted by the OS
-    # into memory buffers. It does NOT guarantee that non-volatile physical storage has committed
-    # the bytes. Power-loss durability requires explicit synchronization (fsync / O_SYNC / WAL).
+    """Audit curriculum claim discipline; this is not an empirical durability test."""
+    # Static curriculum invariant:
+    # ordinary buffered write()/runtime flush()/close success is insufficient evidence
+    # for the M09 durability claim. fsync/fdatasync are synchronization interfaces whose
+    # exact failure-model guarantee is intentionally deferred to M09.
     durability_proven_by_ordinary_write = False
     return {
         "durability_proven_by_ordinary_write": durability_proven_by_ordinary_write,
         "canonical_home_module": "M09",
         "canonical_home_lesson": "L09-01",
         "canonical_concept_id": "EC-CON-016",
-        "statement": "Ordinary buffered write() and flush() success establishes OS kernel acceptance, NOT power-loss durability.",
+        "statement": "Ordinary buffered write()/runtime flush()/close success is insufficient to establish the M09 durability claim.",
         "durability_check_passed": (durability_proven_by_ordinary_write is False),
     }
 
@@ -128,6 +140,10 @@ def read_proc_meminfo() -> dict:
 
 def observe_dirty_pages_directional(work_dir: str | Path | None = None, size_mb: int = 8) -> dict:
     """Bounded, safe observation of Linux /proc/meminfo Dirty counter before and after writes."""
+    if not isinstance(size_mb, int) or size_mb < 1 or size_mb > MAX_DIRTY_OBSERVATION_MB:
+        raise ValueError(
+            f"size_mb must be an integer from 1 to {MAX_DIRTY_OBSERVATION_MB}"
+        )
     mem_before = read_proc_meminfo()
     if not mem_before["available"]:
         return {
@@ -174,7 +190,7 @@ def observe_dirty_pages_directional(work_dir: str | Path | None = None, size_mb:
             "dirty_before_kb": d_before,
             "dirty_after_kb": d_after,
             "dirty_delta_kb": delta,
-            "interpretation": "Directional observation. Dirty pages represent unwritten page-cache RAM. Because /proc/meminfo is system-global and concurrent background tasks run continuously, exact deltas vary and timing is non-deterministic.",
+            "interpretation": "Directional Linux system-global observation. Dirty/Writeback counters are noisy and cannot prove that this process's exact bytes are still resident, nor establish a fixed writeback delay.",
         }
     finally:
         if cleanup and temp_obj is not None:
