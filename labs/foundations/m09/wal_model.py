@@ -6,12 +6,13 @@ Demonstrates:
 2. The Write-Ahead Invariant: log records representing an update must be flushed/synced
    to non-volatile log storage BEFORE the corresponding dirty data page may be flushed
    to persistent disk tables (page_lsn <= flushed_lsn).
-3. Durability Contract: a transaction is durable under a crash model only when its COMMIT
-   record has been flushed to persistent log storage.
-4. Crash Recovery (ARIES-style principles):
-   - Analysis: scan log to identify committed vs active (uncommitted) transactions.
-   - Redo: replay committed changes to restore persistent state.
-   - Undo: roll back uncommitted changes that reached disk prior to the crash.
+3. Teaching-model commit rule: under this model's named crash/log-storage contract, a COMMIT
+   is acknowledged only after the relevant log prefix is marked stable by sync_log().
+4. Bounded recovery intuition (NOT a full ARIES implementation):
+   - Analysis: identify committed vs active transactions in the surviving model log.
+   - Redo: this simplified model reconstructs committed changes.
+   - Undo: it rolls back surviving uncommitted changes.
+   Real ARIES redo uses repeat-history semantics and may redo loser-transaction updates before undo.
 """
 
 import copy
@@ -159,7 +160,7 @@ class WALEngine:
         return recovered
 
     def recover(self) -> dict:
-        """Execute crash recovery algorithm (Analysis, Redo, Undo)."""
+        """Execute the bounded teaching recovery model (not full ARIES repeat-history)."""
         committed_txns = set()
         aborted_txns = set()
         all_txns = set()
@@ -175,7 +176,8 @@ class WALEngine:
 
         active_txns = all_txns - committed_txns - aborted_txns
 
-        # 2. Redo Phase: replay all committed updates to ensure persistence
+        # 2. Simplified teaching Redo: replay committed updates.
+        # Full ARIES instead repeats history (including some loser updates) before Undo.
         redo_count = 0
         for rec in self.log_records:
             if rec.op_type == "UPDATE" and rec.txn_id in committed_txns:
