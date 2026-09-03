@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-08-30
+Last updated: 2026-09-03
 
 ## Current phase
 
@@ -55,6 +55,7 @@ Blueprint closure means the project may now build and validate the curriculum th
 - **Issue #59 / PR #60 — M07 Virtual Memory & Isolation learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes bounding Isolation/TLB wording, converting exact RSS/minor-fault/page-frame relations into hosted directional evidence, tightening Linux overcommit/OOM claims, removing stale kernel-internal implementation details, and preserving the C UB → hardware event → OS handling → hosted signal separation. Canonical first homes EC-CON-013 Isolation and EC-CON-017 Trust Boundary remain in L07-01; Process remains revisit-only.
 - **Issue #62 / PR #63 — M08 Files, Filesystems & System I/O learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes separating Directory Entry from Linux `dentry`, distinguishing independent `open()` from `dup()`/`fork()` shared Open File Descriptions, removing Linux `f_count` as a POSIX lifetime formula, preserving EC-CON-016 Durability for M09, capability-gating `EACCES` by actual `0444` behavior rather than UID alone, and hard-bounding all real/model writes. Current-head Lead smoke reproduced 12/12 tests, all three activity programs, deterministic cleanup, and truthful `NO LIVE SYSCALL TRACE` where `strace` was unavailable.
 - **Issue #65 / PR #66 — M09 Storage Engine & Durable Storage learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes preserving the exact EC-CON-016 Durability first-home definition, treating process/OS-crash/clean-restart/power-loss/media-destruction as distinct named failure bounds rather than a false total ordering, separating file `fsync` from affected-directory synchronization (including cross-directory rename), enforcing `page_lsn <= flushed_lsn` while distinguishing the bounded teaching recovery model from full ARIES repeat-history, labeling WAF/endurance arithmetic as `ILLUSTRATIVE MODEL EVIDENCE`, separating JESD218/JESD219 from manufacturer TBW/warranty, and parameterizing the seven-dimension storage-economics model. Current-head isolated Lead smoke passed Python compile, 16/16 tests, all four activity mains, cleanup idempotence, static lesson gates, and `git diff --check`.
+- **Issue #68 / PR #69 — M10–M12 Networking & Web/Browser Research Dossier v0.1:** Lead-reviewed and merged with **READY FOR DESIGN** after SIMPLE RESEARCH FIXes updating the current TLS 1.3 authority to RFC 9846, service identity to RFC 9525, ECH to RFC 9849, correcting CSP3/Navigation Timing draft status, making M10 timeout/refusal/DNS evidence deterministic and capability-gated, separating Web Platform specifications from Chromium implementation/current-practice evidence, preserving LAB-REQ-01 as localhost-only/unprivileged, keeping LAB-OPT-02 Optional/link-only with unestablished reuse rights, and preserving EC-CON-014/015 future first homes in M14/M15.
 
 ## Active workstream
 
@@ -74,11 +75,11 @@ Production now follows D-027's bounded build-first sequence:
 
 `Research → Design → Lesson/Lab/Project Implementation → Independent Verification/Lead Review → Next Ready Batch`
 
-Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is fully consumed; M05–M09 implementations are Lead-reviewed and merged, including LAB-REQ-02**. The next bounded production step is **Research for the complete S4 slice M10–M12 — Networking I, Networking II, and Web/Browser integrated case**. No M10 implementation may start before that Research is Lead-accepted and followed by a Design pass.
+Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is fully consumed; M05–M09 implementations are Lead-reviewed and merged, including LAB-REQ-02**. The complete **M10–M12 S4 Research slice is now Lead-accepted with READY FOR DESIGN**. The next bounded production step is a separate **M10–M12 Design Dossier**; no M10 learner-facing implementation may start until that Design is Lead-accepted.
 
 ## Current priority
 
-1. Produce the next bounded **M10–M12 S4 Research Dossier** covering Networking I, Networking II, Web/Browser integration, LAB-REQ-01 feasibility/provenance, LAB-OPT-02 rights boundary, EXP-03 Chromium source route, local-network/browser observation capabilities, and current protocol/browser claims. Do not jump directly to M10 lesson implementation.
+1. Produce the next bounded **M10–M12 S4 Design Dossier** from the accepted Research, preserving the 10 canonical Lesson IDs, LAB-REQ-01, LAB-OPT-02 Optional/link-only rights gate, EXP-03 source route, protocol/browser authority layers, capability-gated browser/network evidence, and EC-CON-014/015 future-home guardrails. Do not jump directly to M10 lesson implementation.
 2. Keep independent Verification/Lead Review on every bounded implementation batch even though learner validation is deferred.
 3. Keep **Issue #34 OPEN / DEFERRED / NON-BLOCKING** until real learning begins; never fabricate learner evidence.
 4. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
