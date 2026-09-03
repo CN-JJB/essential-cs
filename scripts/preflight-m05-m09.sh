@@ -24,6 +24,7 @@ PYTHON_STATUS="MISSING"
 PYTHON_VERSION="None"
 PYTHON_IMPL="None"
 FORK_STATUS="UNAVAILABLE"
+RESOURCE_STATUS="UNAVAILABLE"
 if [ -n "${PYTHON_BIN}" ]; then
     PYTHON_STATUS="PASS"
     PYTHON_VERSION=$("${PYTHON_BIN}" -c "import sys; print(sys.version.split()[0])" 2>/dev/null || echo "Error")
@@ -31,9 +32,13 @@ if [ -n "${PYTHON_BIN}" ]; then
     if "${PYTHON_BIN}" -c "import os,sys; sys.exit(0 if hasattr(os,'fork') else 1)" >/dev/null 2>&1; then
         FORK_STATUS="PASS"
     fi
+    if "${PYTHON_BIN}" -c "import resource,sys; sys.exit(0)" >/dev/null 2>&1; then
+        RESOURCE_STATUS="PASS"
+    fi
 fi
 echo "Python: ${PYTHON_STATUS} (${PYTHON_IMPL} ${PYTHON_VERSION})"
 echo "os.fork capability: ${FORK_STATUS}"
+echo "resource module: ${RESOURCE_STATUS}"
 
 cmd_status() {
     if command -v "$1" >/dev/null 2>&1; then
@@ -64,6 +69,12 @@ if [ -d "/proc/self" ] && [ -r "/proc/self/status" ]; then
     PROCFS_STATUS="PASS"
 fi
 echo "procfs (/proc/self): ${PROCFS_STATUS}"
+
+MAPS_STATUS="MISSING"
+if [ -d "/proc/self" ] && [ -r "/proc/self/maps" ]; then
+    MAPS_STATUS="PASS"
+fi
+echo "procfs maps (/proc/self/maps): ${MAPS_STATUS}"
 
 STRACE_STATUS="MISSING"
 STRACE_DETAIL="not installed"
@@ -106,6 +117,11 @@ if [ "${PYTHON_STATUS}" = "PASS" ] && [ "${FORK_STATUS}" = "PASS" ] && [ "${PROC
     M06_HOST_STATUS="PASS"
 fi
 
+M07_HOST_STATUS="PARTIAL"
+if [ "${PYTHON_STATUS}" = "PASS" ] && [ "${GCC_STATUS}" = "PASS" ] && [ "${MAPS_STATUS}" = "PASS" ] && [ "${RESOURCE_STATUS}" = "PASS" ]; then
+    M07_HOST_STATUS="PASS"
+fi
+
 LAB_REQ_02_STATUS="BLOCKED"
 if [ "${GIT_STATUS}" = "PASS" ] &&
    [ "${MAKE_STATUS}" = "PASS" ] &&
@@ -121,6 +137,7 @@ fi
 echo "Summary:"
 echo "  M06 Host Activity Capability: ${M06_HOST_STATUS}"
 echo "  M06 Live strace Capability: ${STRACE_STATUS}"
+echo "  M07 Host Activity Capability: ${M07_HOST_STATUS}"
 echo "  LAB-REQ-02 Runnable Capability: ${LAB_REQ_02_STATUS}"
 echo "  NOTE: RUNNABLE means capability-present; build/QEMU smoke still must run and pass separately."
 echo "=== Preflight Complete ==="
