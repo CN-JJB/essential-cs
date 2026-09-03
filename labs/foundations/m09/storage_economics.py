@@ -119,7 +119,7 @@ def estimate_monthly_storage_cost(
             "cross_availability_zone_interconnect_network_fees",
             "account_wide_free_egress_consumed_by_other_services",
             "tiered_egress_rates_above_the_first_pricing_band",
-            "efs_throughput_or_access_charges", 
+            "efs_throughput_or_access_charges",
         ],
     }
 
