@@ -1,0 +1,7 @@
+worktree/
+__pycache__/
+*.pyc
+*.o
+*.out
+*.img
+*.pid
