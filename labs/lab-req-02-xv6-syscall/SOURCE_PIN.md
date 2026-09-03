@@ -88,5 +88,5 @@ In the Fall 2025 xv6-riscv repository, the user-level utility is `sleep`, but th
 
 ## Important Architectural Distinctions
 - **xv6 `pause(ticks)` vs POSIX `pause(2)`:** In POSIX, `pause()` takes no arguments and sleeps until a signal is received. In xv6, `pause(ticks)` takes an integer parameter and pauses for that number of timer clock ticks.
-- **RISC-V `ecall` vs x86 `syscall`:** `ecall` is the RISC-V environment call instruction that raises privilege from User mode (U-mode) to Supervisor mode (S-mode).
-- **Ticks vs Wall-Clock Time:** xv6 ticks are driven by simulated timer interrupts from QEMU, not real physical seconds.
+- **RISC-V `ecall` vs x86 `syscall`:** `ecall` raises a RISC-V environment-call exception. In the pinned xv6 path, the configured supervisor trap vector/handler receives that U-mode exception and the kernel handles it in S-mode. Do not teach `ecall` as a universal OS syscall instruction.
+- **Ticks vs Wall-Clock Time:** xv6 `ticks` count timer interrupts in the teaching OS. Under QEMU, observed wall-clock duration depends on the emulator and host scheduling; do not equate a tick count with a universal number of real seconds.
