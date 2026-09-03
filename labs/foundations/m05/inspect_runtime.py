@@ -77,7 +77,19 @@ def inspect_bytecode():
     """Inspects CPython bytecode for the `add` function.
 
     Identifies operations by semantic class rather than brittle exact offsets.
+    The activity's bytecode contract is CPython-specific.
     """
+    if platform.python_implementation() != "CPython":
+        return {
+            "supported": False,
+            "reason": "CPython is required for this bytecode inspection activity",
+            "instructions": [],
+            "opnames": [],
+            "has_load_args": False,
+            "has_binary_op": False,
+            "has_return": False,
+        }
+
     instructions = list(dis.get_instructions(add))
     opnames = [instr.opname for instr in instructions]
 
@@ -91,6 +103,8 @@ def inspect_bytecode():
     has_return = any("RETURN" in name for name in opnames)
 
     return {
+        "supported": True,
+        "reason": "",
         "instructions": instructions,
         "opnames": opnames,
         "has_load_args": has_load_args,
@@ -197,9 +211,12 @@ def run_all_inspections():
 
     print("=== 2. CPython Bytecode Inspection (L05-01) ===")
     bc_res = inspect_bytecode()
-    print(f"Observed opcodes ({env['python_implementation']} {env['python_version']}):")
-    for instr in bc_res["instructions"]:
-        print(f"  {instr.opname:<22} arg={instr.argval}")
+    if bc_res["supported"]:
+        print(f"Observed opcodes ({env['python_implementation']} {env['python_version']}):")
+        for instr in bc_res["instructions"]:
+            print(f"  {instr.opname:<22} arg={instr.argval}")
+    else:
+        print(f"Bytecode inspection skipped: {bc_res['reason']}")
     print()
 
     print("=== 3. Syntax Error Verification (L05-02) ===")
