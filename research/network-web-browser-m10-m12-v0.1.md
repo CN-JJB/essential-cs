@@ -352,48 +352,49 @@ Learners transition from raw transport streams to secure, structured application
 ## 6. M12 Research — Web & Browser: The Integrated Case
 
 ### 6.1 Capability Transition
-Learners transition from treating the web browser as an opaque document viewer to understanding it as an integrated operating system for untrusted code. They understand the multi-process architecture that isolates untrusted web content, the sequential pipeline that converts HTML/CSS/JS into pixels on the screen, the browser security model that enforces isolation between untrusted origins, and the single-threaded event loop that governs JavaScript execution.
+Learners transition from treating the web browser as an opaque document viewer to understanding it as an integrated systems case for untrusted web content. They separate Web Platform contracts from a named browser implementation, trace a **conceptual** rendering pipeline, explain browser-enforced origin/security boundaries, and observe how a window/document event loop can make main-thread work interfere with responsiveness without canonically defining Concurrency.
 
 ### 6.2 Minimum Mechanism Model
 1. **Multi-Process Architecture (Chromium Case Model):**
-   - **Browser Process:** The central, privileged process. Manages user interface (tabs, address bar, buttons), network I/O, disk storage, child process creation, sandboxing, and security policies.
-   - **Renderer Processes:** Sandboxed, unprivileged OS processes. Each process parses HTML/CSS, executes JavaScript (V8 engine), builds the DOM, calculates styles, performs layout, and records paint commands.
-   - **GPU Process:** Handles 3D graphics, compositor frame rendering, and draws layers to the screen.
-   - **Utility & Network Processes:** Isolated processes for network socket handling, media decoding, and platform services.
+   - **Browser Process (Chromium case):** A privileged coordinator for browser UI, navigation/process assignment, permissions/security policy, and other browser-level services. Networking, storage, GPU, media, and utility work can live in dedicated processes/services depending on Chromium platform/version; do not teach one fixed process allocation as the browser architecture contract.
+   - **Renderer Processes (Chromium case):** Sandboxed processes host web-content execution and rendering work for assigned frames/sites. Blink/V8 participate in parsing, DOM/style/layout/paint and JavaScript execution, but exact thread/process placement and scheduling are implementation details.
+   - **GPU / compositor services (Chromium case):** GPU/compositor work is separated from renderer main-thread work in current Chromium, but exact service/process topology is implementation/current-practice evidence rather than a Web Platform requirement.
+   - **Utility / Network services:** Current Chromium may isolate networking, media decoding, storage-related, and other services in dedicated processes. The lesson should use the current EXP-03 source/document as a case study rather than asserting every browser uses this topology.
 2. **Site Isolation & Process Sandboxing:**
    - **Site vs. Origin:**
-     - *Origin (RFC 6454):* Tuple of `(Scheme, Host, Port)`. Exact match required for Same-Origin Policy.
-     - *Site:* Scheme + Registered Domain / eTLD+1 (e.g. `https://example.com` encompasses `https://sub.example.com`).
-   - **Site Isolation:** Chromium places documents from different *sites* into separate OS renderer processes with strict operating system sandboxes (restricted syscalls, no direct filesystem access, no raw network socket access).
-   - **Mitigation of Speculative Execution & UXSS:** Even if an attacker executes arbitrary code in a compromised renderer (via a V8 bug or Spectre side-channel attack), the process sandbox and the browser process's `ChildProcessSecurityPolicy` prevent access to cross-site cookies, passwords, or cached resources.
-   - **Out-Of-Process Iframes (OOPIF):** An `<iframe>` pointing to a cross-site URL is rendered by a separate renderer process, composited seamlessly into the page.
-3. **The Rendering Pipeline:**
+     - *Origin:* WHATWG HTML can produce a **tuple origin** (scheme, host, port, domain) or an opaque origin. For ordinary HTTP(S) tuple origins, same-origin comparison is based on scheme/host/port; do not teach every origin as a permanent 3-tuple.
+     - *Site:* WHATWG site computation is based on the origin's scheme plus a registrable-domain-derived host when available, with opaque/special-host cases. Chromium's Site Isolation uses its own documented site/process concepts. “scheme + eTLD+1” is a useful common Web case, not a universal formula.
+   - **Site Isolation (Chromium current-practice case):** Full Site Isolation on supported desktop configurations attempts to keep cross-site documents in separate renderer processes and combines this with renderer sandboxing/browser-side policy checks. Chromium's own documentation describes platform/resource-dependent modes, including more limited isolation on some mobile/embedder configurations. Do not make “every different site always has its own process” a browser invariant.
+   - **Defense-in-depth boundary:** Site Isolation, renderer sandboxing, and browser-side `ChildProcessSecurityPolicy` checks reduce what a compromised renderer can directly access and are important mitigations for UXSS/Spectre-class risk. They do **not** prove that arbitrary renderer compromise can never disclose cross-site data; Chromium documents remaining gaps and platform-dependent protections.
+   - **Out-Of-Process Iframes (OOPIF, Chromium case):** Under configurations with cross-site process isolation, a cross-site child frame can be hosted in another renderer process and composited into the page. This is implementation/current-practice evidence, not a universal rule for every browser/platform/frame.
+3. **Conceptual Rendering Pipeline:**
    $$\text{HTML} \xrightarrow{\text{Parser}} \text{DOM Tree}$$
    $$\text{CSS} \xrightarrow{\text{Parser}} \text{CSSOM Tree}$$
    $$\text{DOM} + \text{CSSOM} \xrightarrow{\text{Style Resolution}} \text{Render Tree}$$
    $$\text{Render Tree} \xrightarrow{\text{Layout (Reflow)}} \text{Geometry (Box Model, Coordinates)}$$
    $$\text{Geometry} \xrightarrow{\text{Paint}} \text{Display Lists (Draw Operations)}$$
-   $$\text{Display Lists} \xrightarrow{\text{Compositing}} \text{Tiles / Layers} \xrightarrow{\text{GPU}} \text{Screen Pixels}$$
+   $\text{Display Lists} \xrightarrow{\text{Compositing}} \text{Tiles / Layers} \xrightarrow{\text{GPU}} \text{Screen Pixels}$
+   - This diagram is a learner-facing **mechanism model**, not a normative total ordering for every frame. Browsers can cache prior work, skip stages, perform style/layout/paint incrementally, and schedule/composite work across threads/processes.
    - **Script Execution & Render Blocking:**
      - Synchronous `<script>` blocks HTML parsing while fetching and executing.
      - `<script async>` fetches in background, executes immediately upon arrival (interrupts parsing).
-     - `<script defer>` / `<script type="module">` fetches in background, defers execution until DOM parsing is complete.
+     - Classic `<script defer>` and module scripts have different specification rules but both avoid the simple “parser blocks until this external script fetches and runs” model. Design should follow current HTML script-processing semantics rather than teach one identical timing rule for `defer` and `type="module"`.
 4. **Web Platform Security Model:**
-   - **Same-Origin Policy (SOP):** Scripts executing in one origin cannot read or modify the DOM, cookies, `localStorage`, or `IndexedDB` of another origin. Cross-origin embedding (images, scripts, CSS) is generally allowed, but reading raw content via JS is forbidden.
+   - **Same-Origin Policy family:** Same-origin restrictions limit many cross-origin DOM/API interactions and origin-keyed storage access. Cookies have their **own** domain/path/SameSite/HttpOnly rules and must not be taught as simply governed by the origin tuple. Cross-origin embedding, navigation, messaging, and reading have API-specific rules; “cross-origin means no interaction” is too broad.
    - **Cross-Origin Resource Sharing (CORS — WHATWG Fetch):**
      - Browser-enforced relaxation of SOP for network requests (`fetch()`, `XMLHttpRequest`).
      - Server responds with `Access-Control-Allow-Origin: <origin>` to grant read access to client JavaScript.
-     - *Preflight Request:* For non-simple requests (methods other than GET/POST/HEAD, or custom headers), browser sends an HTTP `OPTIONS` request before the actual request.
-     - *Crucial Boundary:* CORS is a browser read-protection mechanism for client JS. CORS is **not** server-side authentication or authorization. An attacker using `curl` or a backend server can bypass CORS entirely.
+     - *Preflight Request:* The Fetch standard defines **CORS-safelisted** methods/headers/content types. Requests outside the safelisted conditions generally require a CORS preflight (`OPTIONS`) before the CORS request, subject to the specification's cache/redirect/credentials rules. Avoid the incomplete shortcut “anything except GET/POST/HEAD or any custom header.”
+     - *Crucial Boundary:* CORS is enforced by participating user agents around cross-origin fetch access. It is **not** server-side authentication/authorization and does not constrain a non-browser HTTP client in the same way. Phrase this as an interface/enforcement boundary, not as instructions to “bypass” browser security.
    - **Content Security Policy (CSP — W3C):**
      - HTTP response header (`Content-Security-Policy`) allowing a site to declare approved sources for scripts, styles, images, and network connections (`default-src`, `script-src`, `connect-src`).
-     - Disables inline scripts and `eval()` unless explicitly permitted via cryptographic nonces (`nonce-...`) or SHA hashes.
+     - Whether inline script or string-to-code execution is allowed depends on the actual policy. A sufficiently restrictive `script-src` can block those paths; directives such as `'unsafe-inline'`/`'unsafe-eval'`, nonce/hash sources, and other policy details change the result. CSP is defense in depth, not an automatic XSS proof.
 5. **Event Loop Mechanics (Concurrency Preview):**
-   - JavaScript in a renderer executes on a single main thread.
-   - **Task Queues (Macrotasks):** User events, I/O callbacks, timer callbacks (`setTimeout`).
-   - **Microtask Queue:** Promise resolutions (`.then()`, `await`), `queueMicrotask()`.
-   - **Loop Invariant:** Exactly one macrotask runs $\rightarrow$ all microtasks are drained completely until queue is empty $\rightarrow$ browser decides whether to run rendering steps (style, layout, paint) $\rightarrow$ repeat.
-   - Heavy computation on the main thread starves the rendering steps, causing UI freeze ("jank").
+   - A Window/Document runs script through an event loop associated with its agent; browsers also have workers and many internal threads/processes. “JavaScript/browser is single-threaded” is not a valid global statement.
+   - **Task queues:** HTML defines one or more task queues for an event loop and task sources; selecting which runnable task queue supplies the next task is partly implementation-defined.
+   - **Microtask queue:** Promise reactions and `queueMicrotask()` use the microtask machinery; microtask checkpoints occur at specified points rather than forming a universal learner formula of “one macrotask then render.”
+   - **Rendering opportunities:** Window event loops may perform rendering-update steps at rendering opportunities, but a render is not guaranteed after every task/microtask cycle.
+   - A deliberately bounded long-running main-thread task can delay input/rendering opportunities and create observable jank. This is a preview of scheduling/interleaving concerns; EC-CON-015 Concurrency remains M15.
 
 ### 6.3 Explicit Non-Goals
 - Web frontend framework programming (React, Vue, Svelte, Angular).
@@ -411,57 +412,57 @@ Learners transition from treating the web browser as an opaque document viewer t
 ### 6.5 Candidate Real Observation / Activity
 - **Activity M12-A (DevTools Rendering & Network Waterfall Trace):**
   - Serve a minimal course-owned HTML page with a stylesheet, an image, and a synchronous vs. deferred script.
-  - Open Chrome/Edge/Firefox DevTools: Network panel and Performance panel.
-  - Trace request waterfalls: DNS, Initial connection, SSL negotiation, TTFB (Time to First Byte), Content Download.
+  - Open an available supported desktop browser's DevTools Network/Performance tooling.
+  - Record **the phases actually shown** for the selected request. On localhost or reused connections, DNS/connect/TLS rows may be absent, zero-like, cached, or folded differently; do not require every waterfall to display all phases.
   - Observe parser-blocking: compare timeline with synchronous `<script>` vs. `<script defer>`.
 - **Activity M12-B (Localhost CORS & Origin Failure Exploration):**
-  - Start two local Python HTTP servers on different ports: Origin A (`http://127.0.0.1:8001`) and Origin B (`http://127.0.0.1:8002`).
+  - Start two loopback Python HTTP servers on OS-assigned distinct ports and record both resulting origins.
   - Origin A serves an HTML page with JavaScript issuing a `fetch()` to Origin B.
   - Case 1: Origin B sends no CORS headers $\rightarrow$ browser console shows CORS error; request reached server, but client JS is denied access to the response.
-  - Case 2: Verify with `curl -v http://127.0.0.1:8002/data` $\rightarrow$ succeeds completely! Proves CORS is a browser client-side check, not server authorization.
-  - Case 3: Origin B adds `Access-Control-Allow-Origin: http://127.0.0.1:8001` $\rightarrow$ browser JS reads response successfully.
+  - Case 2: issue the same HTTP request with a non-browser client such as `curl`; it is not subject to browser CORS response filtering. This demonstrates the enforcement boundary without framing the exercise as a security bypass.
+  - Case 3: Origin B returns an `Access-Control-Allow-Origin` value matching the **actual dynamically assigned Origin A**; a real browser context can then expose the response to the page when the rest of the CORS rules are satisfied.
 - **Activity M12-C (Source Expedition EXP-03 — Chromium Process & Site Isolation):**
   - Inspect Chromium design document: `docs/process_model_and_site_isolation.md`.
   - Inspect `content/browser/site_instance_impl.cc` to locate how `SiteInstance` determines process reuse.
   - Inspect `content/browser/security/cpsp/child_process_security_policy_impl.cc` to locate browser-side process permission enforcement.
 
 ### 6.6 Required Learner Evidence
-- Network panel screenshot or export showing request phase breakdown (DNS, Connect, TLS, TTFB, Download).
+- Network panel screenshot/export showing the phases the selected browser actually reports for the request, with absent/reused/cached phases interpreted truthfully rather than treated as test failures.
 - Browser console error log demonstrating a CORS failure, paired with a matching successful `curl` transcript to prove the difference between browser SOP enforcement and server authorization.
 - Performance panel trace identifying main-thread blocking during a long-running JavaScript loop.
 - Completed EXP-03 inspection card identifying the exact lines and mechanisms in Chromium source.
 
 ### 6.7 Evidence-Layer Classification
-- **PRINCIPLE:** Process isolation as security boundary; defense in depth; separation of presentation, layout, and rendering; single-threaded cooperative event loops; least privilege.
+- **PRINCIPLE:** Process isolation as one defense-in-depth boundary; separation of parsing/style/layout/paint/compositing concerns; event-loop scheduling and main-thread responsiveness; least privilege.
 - **SPECIFICATION:** WHATWG HTML Living Standard (Event loop, DOM, script processing); WHATWG Fetch Living Standard (CORS, origin computation); W3C Content Security Policy Level 3; W3C Navigation Timing Level 2.
 - **IMPLEMENTATION:** Chromium multi-process implementation (`content/browser/`, Blink rendering engine, V8 JavaScript engine); Firefox Gecko/SpiderMonkey process architecture.
-- **CURRENT PRACTICE:** Site Isolation enabled by default on desktop; Chrome Process Internals (`chrome://process-internals`); typical frame budgets ($16.6\text{ms}$ for $60\text{fps}$).
+- **CURRENT PRACTICE:** Named browser/platform Site Isolation modes and diagnostic surfaces such as Chromium process internals/DevTools. A 60 Hz display has an illustrative period of about 16.7 ms, but this is not a universal browser “frame budget” or acceptance threshold.
 
 ### 6.8 Authoritative Sources
 - WHATWG HTML Living Standard: *Event loops, processing model, and navigation*, continuously updated.
 - WHATWG Fetch Living Standard: *CORS protocol, origin, and response filtering*, continuously updated.
-- W3C Recommendation / Candidate: *Content Security Policy Level 3*, W3C Working Group.
+- W3C *Content Security Policy Level 3*, **Working Draft** (latest published 13 Aug 2026 at review time); treat its status/current text as review-sensitive.
 - Chromium Project: *Process Model and Site Isolation*, `https://chromium.googlesource.com/chromium/src/+/main/docs/process_model_and_site_isolation.md`.
 - Reis and Gribble: *Isolating Web Programs in Modern Browser Architectures*, ACM EuroSys 2009.
 
 ### 6.9 Likely Misconceptions
-1. *"One browser tab equals one operating system process."* (Multiple tabs to the same site may share a renderer process, and a single tab with cross-site iframes uses multiple renderer processes via Out-Of-Process Iframes).
-2. *"Origin, Site, and Host mean the same thing."* (`https://shop.example.com:8080` and `https://api.example.com:8080` have different origins and hosts, but share the same site: `example.com`).
-3. *"CORS is an authentication/authorization mechanism that protects the server from unauthorized requests."* (CORS protects the user/browser by preventing untrusted web pages from reading private cross-origin responses; it does not protect the server from non-browser clients like `curl`).
+1. *"One browser tab equals one operating system process."* (Chromium process assignment depends on SiteInstance/browsing-context relationships, platform, isolation mode, resource pressure, and process reuse. Under full Site Isolation, cross-site frames can use OOPIFs, but this is not a universal tab/process equation.)
+2. *"Origin, Site, and Host mean the same thing."* (For ordinary HTTPS tuple origins, `https://shop.example.com:8080` and `https://api.example.com:8080` differ by host and therefore origin; a common registrable-domain site computation can group them under the same schemeful site. Opaque origins and special hosts mean the rule is not simply “site = eTLD+1.”)
+3. *"CORS is an authentication/authorization mechanism that protects the server from unauthorized requests."* (CORS controls how a browser exposes cross-origin responses to requesting script. Server authentication/authorization must stand independently because non-browser HTTP clients are not governed by browser CORS enforcement.)
 4. *"Adding a Content Security Policy (CSP) completely eliminates all XSS vulnerabilities."* (CSP is defense-in-depth; misconfigurations, unsafe nonces, or DOM-based script gadgets can still permit code execution).
-5. *"The browser is single-threaded because JavaScript has an event loop."* (The browser is heavily multi-process and multi-threaded; only the main thread of a specific renderer executes JavaScript and DOM manipulation).
+5. *"The browser is single-threaded because JavaScript has an event loop."* (Browsers are multi-process/multi-threaded; Window/Document script commonly executes on a renderer main thread, while workers and browser internals have other agents/threads. The event-loop model is scoped to its agent, not the entire browser.)
 
 ### 6.10 Environment / Tool Constraints
-- DevTools inspection requires a graphical desktop environment with Chrome, Chromium, Edge, or Firefox.
+- Interactive DevTools inspection requires a compatible browser/GUI environment; exact browser/tool availability must be preflighted rather than inferred from OS.
 - In headless container / Codespace / WSL-without-GUI environments, learners cannot interactively inspect DevTools panels.
-  - **Required Fallback:** Automated headless script output (via Python Playwright or simple HTTP/HTML evidence), static recorded DevTools traces, or running the local server and opening the browser from the host operating system.
+  - **Fallback:** if a real browser context is unavailable, retain course-owned reference traces/screenshots as **REFERENCE EVIDENCE ONLY** and mark live browser-specific observations `NO LIVE BROWSER OBSERVATION`. Do not introduce Playwright/Node as an undeclared Core dependency merely to manufacture live evidence.
 - OQ-BP-006 baseline for browser versions remains open; no specific browser version is canonically locked.
 
 ### 6.11 Provenance / License Risk
 - Chromium source code is licensed under a BSD-style license with copyright notices. Inspection via EXP-03 requires no code redistribution; linking and reading online source repositories is safe and royalty-free.
 
 ### 6.12 Implementation-Time Smoke Requirements
-- Start two local Python servers on separate ports, execute cross-origin fetch, verify CORS denial, enable CORS header, verify fetch success. Total smoke runtime $< 3\text{s}$.
+- With a real supported browser/headless-browser capability present, start two loopback origins on OS-assigned ports and verify the course CORS denial/allow cases. Without that capability, report `NO LIVE BROWSER CORS OBSERVATION`. Use harness deadlines only to prevent hangs; no fixed runtime is a curriculum invariant.
 
 ---
 
