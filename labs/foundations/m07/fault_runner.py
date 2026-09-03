@@ -8,8 +8,8 @@ details without relying on shell-specific exit 139 conventions.
 Educational Invariant:
 - Invalid memory access in C is Undefined Behavior (UB) at the language layer.
 - The C standard does NOT guarantee SIGSEGV or any particular signal.
-- The observed SIGSEGV is a hosted observation produced by the CPU MMU
-  hardware trap and Linux kernel page fault handler.
+- The observed SIGSEGV is a hosted Linux observation following a hardware
+  translation/protection event and OS fault-handling path.
 """
 
 from __future__ import annotations
@@ -201,9 +201,9 @@ def main() -> int:
     print("   Dereferencing a null/bad pointer is UNDEFINED BEHAVIOR (UB).")
     print("   The C language standard guarantees NOTHING (no signal, no exit status).")
     print("2. CPU / MMU Hardware Layer:")
-    print("   Attempted access to unmapped address 0x0 triggers a Page Fault exception.")
+    print("   On the tested Linux/x86-64 host, the access produced a hardware page-fault event.")
     print("3. Operating System Kernel Layer (Linux):")
-    print("   Page fault handler detects invalid access and sends SIGSEGV to the process.")
+    print("   The Linux fault-handling path could not resolve the access; the child received SIGSEGV.")
     print("4. Shell / Environment Representation:")
     print("   Shells (like bash) often report 128 + Signal = 139, but this is a shell convention,")
     print("   not a universal operating system exit status.")
