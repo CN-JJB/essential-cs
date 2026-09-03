@@ -205,8 +205,8 @@ class TestL0902MediaMechanics(unittest.TestCase):
         s3 = simulate_ssd_waf_scenario(pages_per_block=64, page_size_kb=4, valid_pages_in_victim=0, host_write_pages=64)
         self.assertEqual(s3["waf"], 1.0)
 
-    def test_ssd_endurance_tbw(self):
-        # 1000 GB, 3000 PE, WAF=3.0 -> TBW = (1000 * 3000) / (3.0 * 1000) = 1000 TBW
+    def test_ssd_endurance_teaching_budget(self):
+        # Illustrative arithmetic only: 1000 GB, assumed 3000 P/E, WAF=3.0 -> 1000 TB host-write budget.
         res = estimate_ssd_endurance_tbw(drive_capacity_gb=1000.0, pe_cycles=3000, waf=3.0)
         self.assertEqual(res["model_label"], "ILLUSTRATIVE MODEL EVIDENCE")
         self.assertEqual(res["estimated_host_tbw"], 1000.0)
@@ -244,9 +244,22 @@ class TestL0903StorageEconomics(unittest.TestCase):
         # Storage: 1000 * 0.023 = 23.00
         # Writes: (10000 / 1000) * 0.005 = 0.05
         # Reads: (50000 / 1000) * 0.0004 = 0.02
-        # Egress: 10 * 0.09 = 0.90
-        # Total: 23.00 + 0.05 + 0.02 + 0.90 = 23.97
-        self.assertAlmostEqual(res["object_storage"]["total_monthly_cost"], 23.97, places=2)
+        # Egress: 10 GB is within the model's assumed 100 GB account-wide free allowance -> 0 billable.
+        # Total: 23.00 + 0.05 + 0.02 = 23.07
+        self.assertAlmostEqual(res["object_storage"]["total_monthly_cost"], 23.07, places=2)
+        self.assertEqual(res["object_storage"]["egress_billable_gb"], 0.0)
+        self.assertEqual(res["assumption_metadata"]["region"], "us-east-1")
+        self.assertIn("checked_date", res["assumption_metadata"])
+
+        # A second parameterized check crosses the free-egress assumption:
+        res_200 = estimate_monthly_storage_cost(
+            capacity_gb=0.0,
+            write_requests=0,
+            read_requests=0,
+            egress_gb=200.0,
+        )
+        self.assertEqual(res_200["object_storage"]["egress_billable_gb"], 100.0)
+        self.assertEqual(res_200["object_storage"]["egress_cost"], 9.0)
 
         # Verify explicit omissions listed
         self.assertIn("provisioned_iops_and_burst_credits", res["explicit_omissions"])
@@ -257,16 +270,15 @@ class TestL0903StorageEconomics(unittest.TestCase):
             estimate_monthly_storage_cost(capacity_gb=50_000_000)
 
     def test_technology_evaluation_framework(self):
+        required_dimensions = {
+            "problem", "constraints", "mechanism", "gains", "costs",
+            "failure_modes", "when_not_to_use",
+        }
         for arch in ["block", "file", "object"]:
             eval_dict = evaluate_storage_technology(arch)
-            self.assertIn("problem", eval_dict)
-            self.assertIn("constraints", eval_dict)
-            self.assertIn("mechanism", eval_dict)
-            self.assertIn("gains", eval_dict)
-            self.assertIn("costs", eval_dict)
-            self.assertIn("failure_modes", eval_dict)
-            self.assertIn("when_not_to_use", eval_dict)
-            self.assertTrue(len(eval_dict["when_not_to_use"]) > 10)
+            self.assertTrue(required_dimensions.issubset(eval_dict.keys()))
+            for dimension in required_dimensions:
+                self.assertTrue(str(eval_dict[dimension]).strip())
 
     def test_network_probe_capability_gating(self):
         probe = probe_public_http_object()
