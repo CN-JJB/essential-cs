@@ -485,8 +485,8 @@ Learners transition from treating the web browser as an opaque document viewer t
 | **HTTP/3** | IETF | **RFC 9114** | Proposed Standard (Current) | None |
 | **Web Platform / DOM** | WHATWG | **HTML Living Standard** | Living Standard | W3C HTML5 |
 | **Fetch / CORS** | WHATWG | **Fetch Living Standard** | Living Standard | W3C CORS |
-| **Content Security Policy**| W3C | **CSP Level 3** | W3C Candidate Rec / Draft | CSP Level 1, CSP Level 2 |
-| **Navigation Timing** | W3C | **Navigation Timing Level 2** | W3C Candidate Rec | Navigation Timing Level 1 |
+| **Content Security Policy** | W3C | **CSP Level 3** | **Working Draft** (13 Aug 2026 latest published at review) | CSP Level 1, CSP Level 2 |
+| **Navigation Timing** | W3C | **Navigation Timing Level 2** | **Working Draft** (25 Feb 2026 latest published at review) | Navigation Timing Level 1 |
 
 ---
 
@@ -583,18 +583,18 @@ All three primary inspection targets have been rechecked and verified active on 
 
 | Tool / Capability | Module Placement | Role in Curriculum | Classification | Environment Sensitivity & Constraints | Truthful Fallback / Skip Disposition | Checked Version / Source |
 |---|---|---|---|---|---|---|
-| **Python 3 `socket`** | M10 | Required for Core | Standard / Unprivileged | Universal across Linux, Windows, macOS. Unprivileged. | None needed; core language runtime. | Python 3.12 / 3.13 standard library |
-| **Linux `ss`** | M10 | Required for Core (Linux) | Environment-Sensitive | Pre-installed in modern Linux (`iproute2`). `ss -tan` unprivileged. | On Windows: `netstat -ano` or Python `psutil`. In containers without `ss`: fallback script. | iproute2-ss v6.x |
-| **`ip route`** | M10 | Required for Core (Linux) | Environment-Sensitive | `ip route show` works unprivileged. | On Windows: `route print`. | iproute2 |
+| **Python 3 `socket`** | M10 | Required for Core | Standard-library / Unprivileged | Available in supported CPython environments; exact exception types/errno/timing remain platform-specific. | Required preflight; if the runtime lacks sockets, Core network activity is blocked truthfully. | Author tested CPython 3.12/3.13; OQ-BP-006 remains open |
+| **Linux `ss`** | M10 | Optional observation on Linux | Environment-Sensitive | Part of iproute2 when installed; many minimal images omit it. Read-only socket-table use is ordinarily unprivileged, subject to environment restrictions. | `TOOL UNAVAILABLE` is acceptable; preserve Python endpoint evidence instead. | Exact binary/version must be recorded by implementation preflight |
+| **`ip route`** | M10 | Optional observation on Linux | Environment-Sensitive | Available when iproute2 is installed; route visibility can differ in containers/namespaces. | `TOOL UNAVAILABLE` / environment-limited is acceptable; do not synthesize host routing evidence. | Exact binary/version must be recorded by implementation preflight |
 | **`nc` (netcat)** | M10 | Optional / Illustrative | Environment-Sensitive | Dialect fragmentation (OpenBSD vs. GNU flags). | Use Python socket one-liners instead of shell netcat. | OpenBSD netcat / nmap-ncat |
-| **`traceroute`** | M10 | Optional / Capability-gated | Restricted / Privileged | Often missing in minimal Docker/WSL. Raw ICMP/UDP sockets may require `sudo`. | Provide pre-recorded traceroute transcripts and hop diagrams. | inetutils-traceroute |
-| **`tcpdump`** | M10 | Optional / Capability-gated | Privileged (`CAP_NET_RAW`) | Requires root/`CAP_NET_RAW`. Fails in unprivileged containers. | Never required for Core. Provide pre-captured pcap/text traces. | tcpdump 4.99.x |
-| **`curl`** | M11 | Required for Core | Standard / Unprivileged | Pre-installed in Linux, macOS, and modern Windows 10/11. | If missing, install via package manager or use Python `urllib.request`. | curl 8.x |
-| **Python `http.server`** | M11, M12 | Required for Core | Standard / Unprivileged | Standard library. Ephemeral port binding ($> 1024$) ensures safety. | None needed; universal. | Python 3.12 / 3.13 |
-| **`openssl` CLI** | M11 | Optional / Auxiliary | Environment-Sensitive | Pre-installed on Linux; missing by default in Windows PATH. | Use Python `ssl` module or pre-generated test cert fixtures. | OpenSSL 3.0.x / 3.2.x |
-| **Chromium / Chrome** | M12 | Preferred for UI (DevTools) | Browser/GUI-Dependent | Requires desktop GUI. Missing in headless CI/Docker/cloud environments. | Headless inspection script or pre-recorded DevTools performance traces. | Chrome / Chromium 120+ |
-| **Firefox** | M12 | Optional Alternative | Browser/GUI-Dependent | Requires desktop GUI. | Equivalent DevTools inspection. | Firefox 120+ |
-| **Local HTML/JS Fixtures** | M12 | Required for Core | Standard / Unprivileged | Served by local Python server to `127.0.0.1`. | Universal. | Standard Web Platform (HTML5/ES6) |
+| **`traceroute`** | M10 | Optional / Capability-gated | Environment-Sensitive | Tool presence and privilege needs vary with implementation and ICMP/UDP/TCP probe mode. | `SKIP` if unavailable/restricted; course-owned reference traces must be labeled reference-only. | No canonical implementation/version pinned |
+| **`tcpdump`** | M10 | Optional / Capability-gated | Privilege/Capability-Sensitive | Live capture commonly needs capture privileges/capabilities and may be blocked in hosted/container environments. | Never required for Core; `SKIP` is valid. Course-owned pre-captured traces are reference evidence, not live learner observation. | No canonical version pinned |
+| **`curl`** | M11 / LAB-REQ-01 | Required tool for the selected Lab | Environment-Sensitive / Unprivileged | Common but not guaranteed installed; features/TLS backend/output vary by build. | Preflight exact `curl --version`; if absent, LAB-REQ-01 is environment-blocked unless Design explicitly provides an approved equivalent without changing the lab contract. | No canonical `curl 8.x` pin while OQ-BP-006 is open |
+| **Python `http.server`** | M11, M12 | Candidate Core fixture | Standard-library / Unprivileged | Bind loopback to port `0` and record the assigned port; behavior/version belongs to the named Python implementation. | Preflight/runtime smoke required. | Author tested CPython 3.12/3.13; no canonical pin |
+| **`openssl` CLI** | M11 | Optional / Auxiliary | Environment-Sensitive | Presence/version/provider configuration varies across distributions and Windows setups. | Use the course-owned Python `ssl`/trusted-local-certificate route when CLI is absent; do not require verification bypass. | No canonical version pinned |
+| **Chromium / Chrome** | M12 | Preferred browser observation | Browser/GUI-Dependent / CURRENT PRACTICE | Availability, DevTools UI, process model and Site Isolation mode vary by version/platform. | If unavailable, record `NO LIVE BROWSER OBSERVATION`; course reference traces remain reference-only. | Record actual browser version at implementation; no `120+` baseline |
+| **Firefox** | M12 | Optional alternative observation | Browser/GUI-Dependent / CURRENT PRACTICE | DevTools/process behavior differs from Chromium and by version/platform. | Optional; do not use Firefox observation as evidence for Chromium implementation claims. | Record actual version if used; no `120+` baseline |
+| **Local HTML/JS Fixtures** | M12 | Required Core fixture content | Course-owned / Unprivileged | Use the minimal current HTML + ECMAScript features needed by the activity (`fetch`, Promise/microtask examples), served on loopback. | Browser capability remains separately gated. | Web Platform contracts from current WHATWG HTML/Fetch; no “HTML5/ES6” version pin |
 
 ---
 
@@ -607,14 +607,14 @@ All three primary inspection targets have been rechecked and verified active on 
 | **End-to-End Systems Principle** | Saltzer, Reed, Clark (1984) | PRINCIPLE | Foundational Systems Paper | Foundational rationale for transport vs. application reliability boundaries. |
 | **IP Routing & Addressing** | RFC 791 / RFC 8200 | SPECIFICATION | Normative Current Standards | Packet switching, best-effort delivery, hop-by-hop forwarding. |
 | **DNS Architecture & Records** | RFC 1034 / 1035 / 2181 | SPECIFICATION | Normative Current Standards | Hierarchical naming, authoritative delegation, caching, TTL. |
-| **TLS 1.3 Security & Handshake** | RFC 8446 | SPECIFICATION | Proposed Standard (Aug 2018) | Normative contract for 1-RTT handshake, forward secrecy, and AEAD encryption. |
+| **TLS 1.3 Security & Handshake** | RFC 8446 + RFC 9525 identity rules; RFC 9849 ECH where metadata privacy is discussed | SPECIFICATION | Standards Track / Proposed Standard as applicable | Fresh-handshake, PSK/0-RTT, service-identity and ECH boundaries; do not compress these into universal “1-RTT + forward secrecy + plaintext SNI” claims. |
 | **HTTP Semantics** | RFC 9110 (STD 97) | SPECIFICATION | Normative Current Standard (Jun 2022) | Uniform interface, URI authority, method safety/idempotency, headers, status codes. |
 | **HTTP Caching & Validation** | RFC 9111 (STD 98) | SPECIFICATION | Normative Current Standard (Jun 2022) | Cache keys, freshness lifetimes, conditional validation (ETag, 304). |
-| **HTTP/2 & HTTP/3 Protocols** | RFC 9113 / RFC 9114 | SPECIFICATION | Current Standards (Jun 2022) | Multiplexed stream framing, HPACK/QPACK, QUIC transport integration. |
+| **HTTP/2 & HTTP/3 Protocols** | RFC 9113 / RFC 9114 + RFC 9000/9001 | SPECIFICATION | **Proposed Standards** | Multiplexed stream/framing and QUIC integration; performance remains workload/implementation-specific. |
 | **Browser Process Model & Site Isolation** | Chromium Design Docs & Reis et al. | IMPLEMENTATION / CURRENT PRACTICE | Current Chromium Source (Sep 2026) | Real-world multi-process browser architecture, sandboxing, and site isolation. |
 | **HTML Event Loop & Document Lifecycle** | WHATWG HTML Living Standard | SPECIFICATION | Living Standard (Checked Sep 2026) | Normative web platform contract for DOM parsing, script execution, and event loop. |
 | **Fetch & CORS Protocol** | WHATWG Fetch Living Standard | SPECIFICATION | Living Standard (Checked Sep 2026) | Normative platform contract for Same-Origin Policy and CORS headers. |
-| **Content Security Policy** | W3C CSP Level 3 | SPECIFICATION | W3C Candidate Recommendation | Normative standard for client-side content restriction headers. |
+| **Content Security Policy** | W3C CSP Level 3 | SPECIFICATION (draft status) | **Working Draft, 13 Aug 2026** | Current draft contract for content restrictions; review-sensitive until later W3C maturity. |
 
 ---
 
@@ -626,11 +626,11 @@ All three primary inspection targets have been rechecked and verified active on 
    - Copyright owned by IETF Trust under the Trust Legal Provisions (TLP 4.0).
    - Essential CS adapts only the *ideas and specifications* by citation and link. No large blocks of RFC text, diagrams, or ABNF grammar are copied verbatim.
 3. **Stanford CS144 (LAB-OPT-02):**
-   - Public course materials do not carry a permissive open-source redistribution license.
-   - Essential CS **will not** redistribute Minnow starter code or assignment PDFs. The lab is link-only; learners must obtain starter code independently.
+   - The Fall 2025 Checkpoint 2 page/PDF is publicly accessible, but this review did not establish a permissive license granting Essential CS redistribution/adaptation rights for the assignment text, starter repository, or tests.
+   - Therefore Essential CS keeps the activity **Optional + link-only** and does not bundle the assignment PDF, starter code, or tests unless rights are separately established.
 4. **Chromium Source Code (EXP-03):**
-   - Licensed under Chromium's 3-clause BSD license.
-   - EXP-03 requires no code redistribution; learners inspect the code in official public Git repositories. Any brief illustrative code snippets in the design dossier must include the standard Chromium copyright header notice.
+   - Chromium source is distributed under BSD-style licensing plus third-party notices in the repository.
+   - EXP-03 should remain link/source-inspection-first. Do not bundle snippets merely because they are short; if later Design wants to redistribute source excerpts, review the applicable file/header/license notices for that exact excerpt.
 
 ---
 
@@ -640,9 +640,9 @@ All three primary inspection targets have been rechecked and verified active on 
 - **DO NOT TEACH:** "TCP preserves application message boundaries."
   - *Reality:* TCP is a byte stream. The receiver cannot determine whether the sender made one `send()` of 100 bytes or 100 `send()`s of 1 byte. Applications must provide their own framing.
 - **DO NOT TEACH:** "ACK means the remote application has processed the data."
-  - *Reality:* An ACK indicates only that the remote operating system's TCP stack received the bytes into its socket buffer. The application may crash, hang, or reject the input without processing it.
+  - *Reality:* A TCP ACK acknowledges sequence-space receipt at the peer TCP endpoint; it does not establish application consumption, validation, persistence, or business commit.
 - **DO NOT TEACH:** "TCP guarantees delivery under every possible failure."
-  - *Reality:* TCP guarantees delivery *only if the connection remains intact*. If the network partition outlasts the retransmission timeout, TCP fails with `ETIMEDOUT` or `ECONNRESET`.
+  - *Reality:* TCP provides an ordered reliable byte-stream abstraction while the connection can make progress; failures are surfaced according to the implementation/API and may leave application outcome ambiguous. Do not teach a fixed errno or one universal retransmission/failure path.
 - **DO NOT TEACH:** "A request timeout proves the request did not take effect on the server."
   - *Reality:* The request may have been received and fully committed by the server, but the network failed before the response reached the client (the fundamental partial-failure ambiguity).
 
@@ -660,7 +660,7 @@ All three primary inspection targets have been rechecked and verified active on 
 - **DO NOT TEACH:** "A valid green padlock / TLS certificate proves the website is not a scam."
   - *Reality:* A valid certificate proves only that the owner of the private key controls the specified domain name. Phishing sites routinely obtain valid TLS certificates.
 - **DO NOT TEACH:** "TLS hides all metadata from eavesdroppers."
-  - *Reality:* Eavesdroppers observe source IP, destination IP, packet timing, packet sizes, traffic bursts, and the unencrypted SNI (Server Name Indication) in the `ClientHello`.
+  - *Reality:* IP-layer endpoints, packet timing and sizes remain observable. Server-name exposure depends on deployment: ordinary ClientHello SNI can be visible, while RFC 9849 ECH can protect the inner ClientHello/SNI when configured and negotiated.
 
 ### 15.4 HTTP Hotspots
 - **DO NOT TEACH:** "GET is always side-effect-free in every server implementation."
@@ -668,21 +668,21 @@ All three primary inspection targets have been rechecked and verified active on 
 - **DO NOT TEACH:** "An idempotent request is safe to retry blindly under any application semantics."
   - *Reality:* If a server API incorrectly models a state mutation as non-idempotent, or if partial execution occurred before failure, automatic retries can duplicate business operations.
 - **DO NOT TEACH:** "Status 200 proves business correctness."
-  - *Reality:* Status 200 indicates that the HTTP server successfully generated a representation. The body payload may represent a logical business error (e.g. `{"error": "denied"}`).
+  - *Reality:* `200 OK` reports HTTP-level success for the method semantics; it does not establish a domain/business invariant, transaction commit, or correctness of the representation's meaning.
 - **DO NOT TEACH:** "HTTP/2 or HTTP/3 is unconditionally faster than HTTP/1.1."
-  - *Reality:* On local, low-latency, zero-loss links, the processing overhead of QUIC or HTTP/2 framing can yield equal or slightly lower throughput than simple HTTP/1.1 streams.
+  - *Reality:* Relative performance depends on connection reuse, RTT, loss/reordering, CPU, implementation, congestion control and workload. No fixed version winner is a curriculum claim.
 
 ### 15.5 Browser Hotspots
 - **DO NOT TEACH:** "One browser tab equals one operating system process."
-  - *Reality:* Process allocation is determined by Site Isolation, browsing context groups, and available memory. Tabs for the same site may share a process; cross-site iframes in a single tab run in separate processes.
+  - *Reality:* In Chromium, process assignment depends on SiteInstance/browsing-context relationships, Site Isolation mode, platform, process reuse and resource constraints. Cross-site OOPIF separation is a current Chromium case under applicable isolation modes, not a browser invariant.
 - **DO NOT TEACH:** "Origin, site, and host mean the same thing."
-  - *Reality:* Origin is `(scheme, host, port)`. Site is `scheme + eTLD+1`. Host is the domain or IP string.
+  - *Reality:* Ordinary HTTP(S) tuple-origin comparisons use scheme/host/port, but origins can be opaque. Site computation is schemeful and registrable-domain-derived when available, with special/opaque-host cases; it is not universally `scheme + eTLD+1`.
 - **DO NOT TEACH:** "CORS is server-side security authentication."
-  - *Reality:* CORS is enforced by web browsers to protect users from malicious scripts reading cross-origin data. Non-browser clients (`curl`, Python scripts) bypass CORS entirely.
+  - *Reality:* CORS is user-agent enforcement controlling script access to cross-origin responses. Non-browser clients are not governed by that browser enforcement, so server authn/authz must be independent.
 - **DO NOT TEACH:** "CSP fully prevents Cross-Site Scripting (XSS)."
   - *Reality:* CSP is a mitigation layer. Weak policies, unsafe inline directives, script gadgets, and non-script injection can bypass CSP.
 - **DO NOT TEACH:** "The browser is single-threaded."
-  - *Reality:* Browsers are complex multi-process, multi-threaded systems. Only the main thread of a given renderer process runs the JavaScript event loop and DOM operations.
+  - *Reality:* Browsers are multi-process/multi-threaded. Window/Document script commonly runs through an event loop on a renderer main thread, while workers and browser internals have separate agents/threads; scope the claim to the observed context.
 
 ---
 
