@@ -71,7 +71,9 @@ def estimate_monthly_storage_cost(
     o_storage_cost = capacity_gb * o_tier["storage_rate_per_gb_month"]
     o_write_cost = (write_requests / 1000.0) * o_tier.get("request_rate_per_1k_write", 0.0)
     o_read_cost = (read_requests / 1000.0) * o_tier.get("request_rate_per_1k_read", 0.0)
-    o_egress_cost = egress_gb * o_tier.get("egress_rate_per_gb", 0.0)
+    free_egress_gb = o_tier.get("egress_free_gb_assumed", 0.0)
+    billable_egress_gb = max(0.0, egress_gb - free_egress_gb)
+    o_egress_cost = billable_egress_gb * o_tier.get("egress_rate_per_gb", 0.0)
     o_total = o_storage_cost + o_write_cost + o_read_cost + o_egress_cost
 
     return {
@@ -96,6 +98,9 @@ def estimate_monthly_storage_cost(
             "storage_cost": round(o_storage_cost, 2),
             "write_request_cost": round(o_write_cost, 4),
             "read_request_cost": round(o_read_cost, 4),
+            "egress_input_gb": egress_gb,
+            "egress_free_gb_assumed": free_egress_gb,
+            "egress_billable_gb": billable_egress_gb,
             "egress_cost": round(o_egress_cost, 2),
             "total_monthly_cost": round(o_total, 2),
         },
@@ -112,6 +117,9 @@ def estimate_monthly_storage_cost(
             "multi_region_replication_charges",
             "minimum_object_storage_duration_or_size_padding",
             "cross_availability_zone_interconnect_network_fees",
+            "account_wide_free_egress_consumed_by_other_services",
+            "tiered_egress_rates_above_the_first_pricing_band",
+            "efs_throughput_or_access_charges", 
         ],
     }
 
@@ -128,7 +136,7 @@ def evaluate_storage_technology(arch_type: str) -> dict:
             "gains": "Provides block semantics suitable for hosting filesystems and storage engines; performance can be provisioned/tuned independently on some products.",
             "costs": "Capacity plus possible IOPS/throughput/snapshot/attachment charges; provisioning and scaling behavior depend on the selected product.",
             "failure_modes": "Device/service loss, attachment failures, filesystem/storage-engine crash recovery, quota exhaustion, and latency variation according to the deployed stack.",
-            "when_not_to_use": "Do NOT use for shared multi-client read/write assets, distributed media archives, or massive petabyte-scale unstructured logs.",
+            "when_not_to_use": "Avoid when the primary requirement is shared file semantics across many clients or service-managed object/key access rather than direct block semantics.",
         },
         "file": {
             "architecture": "File Storage",
@@ -138,7 +146,7 @@ def evaluate_storage_technology(arch_type: str) -> dict:
             "gains": "Hierarchical naming and file-oriented APIs can simplify shared content/workspace use cases across clients.",
             "costs": "Capacity plus possible throughput/access/tiering/network charges; remote filesystems add network/cache/coordination paths whose latency must be measured.",
             "failure_modes": "Network partition hangs (stale NFS mounts), metadata lock deadlocks, metadata bottleneck on millions of tiny files.",
-            "when_not_to_use": "Do NOT use for high-IOPS random transactional databases (e.g. database data directory) or massive internet-scale static assets.",
+            "when_not_to_use": "Avoid when the workload's correctness/performance assumptions require different block/database semantics, or when API/object delivery fits the data and cost model better than shared file semantics.",
         },
         "object": {
             "architecture": "Object Storage",
@@ -148,7 +156,7 @@ def evaluate_storage_technology(arch_type: str) -> dict:
             "gains": "Can offer large-scale managed capacity, service-level durability/availability options, and direct API integration; exact guarantees and costs are product-specific.",
             "costs": "Capacity, request, data-transfer, retrieval/tiering and lifecycle charges may apply; POSIX adapters can add semantic/performance trade-offs.",
             "failure_modes": "Provider/service outages, quota/throttling, consistency/versioning mistakes, request-cost amplification, egress cost, and application assumptions that mismatch object semantics.",
-            "when_not_to_use": "Do NOT use as a boot volume, for low-latency random database read/writes, or for applications requiring POSIX file locks or in-place updates.",
+            "when_not_to_use": "Avoid when the application requires boot/block-device semantics, POSIX file locking, in-place byte mutation, or very low predictable random-I/O latency not provided by the chosen object service.",
         },
     }
 
