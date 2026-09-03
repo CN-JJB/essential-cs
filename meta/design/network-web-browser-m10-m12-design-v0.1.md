@@ -691,7 +691,7 @@ For learners electing to pursue LAB-OPT-02 independently:
 7. **Prediction-Before-Observation:** If an external `<script src="...">` tag without `async` or `defer` is placed in the middle of the `<head>` tag, what does the HTML parser do while the script is fetching over the network?
 8. **Hands-on Progression (Observe / Build / Break / Explain / Judge):**
    - *Observe (Live or Reference):* Serve a minimal course HTML fixture containing an external stylesheet, an image, and a synchronous script. Open DevTools **Network** and **Performance** panels. Record the phases actually displayed (note that on localhost, DNS/connect/TLS phases may be zero or folded).
-   - *Break:* Insert a heavy synchronous script in `<head>` that blocks execution for 500 ms. Observe in the Performance timeline that the First Contentful Paint (FCP) is delayed until the script completes, because synchronous scripts block HTML parsing.
+   - *Break:* Insert a bounded course-owned parser-blocking classic script whose work/delivery is deliberately delayed enough to make parser progress observable. Use DOM/log markers and, when available, DevTools to show that later HTML parsing waits for that script's fetch/execution point. The delay value is fixture configuration, not a performance threshold.
    - *Fix:* Modify the script tag to include `defer`. Re-run the Performance trace and observe that HTML parsing completes and initial DOM construction finishes before the deferred script executes.
    - *Explain:* Explain why classic `<script defer>` and `<script type="module">` avoid parser blocking, and contrast their execution timing with `<script async>`.
    - *Judge:* Evaluate the architectural separation between the Renderer Main Thread (which handles DOM, style, layout, and JavaScript) and the Compositor Thread: explain why smooth scrolling and CSS transforms can continue even when the main thread is busy.
@@ -707,8 +707,8 @@ For learners electing to pursue LAB-OPT-02 independently:
     - *Question:* Why does placing a slow script tag in `<head>` make the entire page stay blank?
     - *Hint 1:* What might a JavaScript script do to the HTML document while it is loading?
     - *Hint 2:* JavaScript can call `document.write()` or inspect elements, so the parser must pause until the script runs.
-    - *Expected Observation:* The browser pauses HTML parsing, delaying DOM construction and layout until the external script finishes downloading and executing.
-    - *Full Explanation:* By default, scripts are parser-blocking. The parser cannot know in advance whether the script will modify the DOM tree, so it must halt parsing until execution concludes. Using `defer` or `async` signals that parsing can continue safely.
+    - *Expected Observation:* In the controlled fixture, later parser-progress markers do not appear until the parser-blocking classic script reaches its execution point. Exact paint/FCP timing is recorded if visible but is not required.
+    - *Full Explanation:* A parser-inserted classic external script without `async`/`defer` can block further parsing while it is fetched/executed according to HTML's script-processing rules. `defer`, `async`, and module scripts have distinct scheduling semantics; Design must not collapse them into one identical "parsing can continue safely" rule.
 15. **Visual Requirements:** Diagram of the conceptual rendering pipeline: HTML $\rightarrow$ DOM, CSS $\rightarrow$ CSSOM, Style Resolution $\rightarrow$ Layout/Reflow $\rightarrow$ Paint $\rightarrow$ Compositing $\rightarrow$ Screen Pixels, with callouts indicating where synchronous scripts block parsing.
 16. **Exit Criteria:** Learner traces the stages of the rendering pipeline and demonstrates parser-blocking mitigation using `defer`.
 17. **Competency Mapping:** Observe (Primary: DevTools Performance panel timeline), Trace (Growth: script execution and render pipeline stages).
@@ -722,12 +722,12 @@ For learners electing to pursue LAB-OPT-02 independently:
 1. **Learner Question:** How can my browser safely load and run untrusted code from completely unknown websites without letting them steal my emails or bank session tokens?
 2. **Before / After Capability:**
    - *Before:* Thinks websites are completely isolated like VMs, or conversely believes cross-origin requests are completely impossible; confuses CORS with server-side authentication; assumes CSP prevents all XSS attacks.
-   - *After:* Can explain the Web Platform security model; define tuple vs. opaque origins; articulate Same-Origin Policy (SOP) boundaries across DOM, cookies, and network access; explain Fetch CORS preflight and safelisting mechanics as user-agent enforcement; and evaluate Content Security Policy (CSP) as defense in depth.
+   - *After:* Can explain the Web Platform security model; distinguish tuple from opaque origins; describe same-origin restrictions across DOM/origin-keyed APIs while keeping cookie Domain/Path/SameSite/HttpOnly rules separate; explain Fetch CORS preflight/safelisting as user-agent enforcement; and evaluate CSP as defense in depth.
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Prerequisites: `L11-02` (HTTP headers & methods) and `L12-01` (Browser process boundaries).
    - Support: Start two distinct local HTTP servers on OS-assigned ports on `127.0.0.1` (e.g., Origin A: `http://127.0.0.1:<portA>` and Origin B: `http://127.0.0.1:<portB>`).
 4. **Concepts:** Revisits **Trust Boundary** (EC-CON-017) and **Isolation** (EC-CON-013). No new first homes.
-5. **Mental Model:** Origin-based compartmentalization with controlled, user-agent enforced relaxation. An origin is the fundamental trust boundary of the Web Platform. Browsers prevent scripts from one origin from reading data from another origin (SOP). CORS allows a target origin to explicitly grant response read access to client scripts via HTTP headers. Non-browser clients are not subject to CORS filtering, proving that CORS is user-agent enforcement, not server-side authorization.
+5. **Mental Model:** Origin-scoped browser enforcement with API-specific rules and controlled cross-origin relaxation. Many DOM/storage/network APIs use origin checks, while cookies follow separate cookie-scoping rules. Fetch CORS governs when a participating browser exposes a cross-origin response to requesting script. Non-browser HTTP clients are not governed by that browser response-filtering layer, so server authentication/authorization must stand independently.
 6. **Mechanism Sequence:**
    $$\text{Page at Origin A runs: fetch('http://127.0.0.1:<portB>/api')}$$
    $$\text{Browser sends HTTP Request (with Origin: http://127.0.0.1:<portA>)}$$
@@ -738,7 +738,7 @@ For learners electing to pursue LAB-OPT-02 independently:
 7. **Prediction-Before-Observation:** If Origin B does not return any CORS headers, did the HTTP request actually arrive at Origin B's server, or was it blocked by the browser before leaving your computer?
 8. **Hands-on Progression (Observe / Build / Break / Explain / Judge):**
    - *Observe (Case 1: CORS Error in Browser):* Open a page hosted on Origin A (`127.0.0.1:<portA>`). Script issues `fetch('http://127.0.0.1:<portB>/data')`. Origin B returns standard `200 OK` without CORS headers. Observe in the browser console that the request completed at the network level, but the browser blocked JavaScript from reading the response.
-   - *Observe (Case 2: The Non-Browser Contrast):* Execute the exact same request using `curl -v http://127.0.0.1:<portB>/data`. Observe that `curl` receives and prints the response body with zero restrictions.
+   - *Observe (Case 2: The Non-Browser Contrast):* Execute the same course-owned HTTP request using `curl -v`. In this fixture, `curl` can receive the HTTP response because it is not subject to browser CORS response filtering. Do not generalize this to "curl always succeeds"; ordinary network/auth/server failures still apply.
    - *Observe (Case 3: Authorized CORS):* Configure Origin B to include `Access-Control-Allow-Origin: http://127.0.0.1:<portA>`. Re-run the browser fetch; observe that JavaScript successfully resolves the Promise and accesses the data.
    - *Explain:* Explain why CORS does **not** protect backend databases from unauthorized writes sent by non-browser clients (`curl`, scripts), and why server APIs must authenticate requests independently.
    - *Judge:* Evaluate Content Security Policy (CSP Level 3): explain why adding `Content-Security-Policy: default-src 'self'` provides defense in depth by restricting where scripts can execute from and where data can be exfiltrated.
@@ -746,15 +746,15 @@ For learners electing to pursue LAB-OPT-02 independently:
 10. **Machine-Checkable Evidence:** Test script asserts that Origin B returns expected data over raw HTTP, while browser-context test (when browser capability is present) records the CORS block exception.
 11. **Reviewer-Required Evidence:** Reviewer checks that the learner explains the difference between browser SOP enforcement and server-side authorization, clearly identifies what an origin tuple consists of, and articulates why CSP is defense-in-depth rather than an absolute XSS proof.
 12. **Misconceptions Addressed:**
-    - "CORS is a security feature that protects backend servers from attackers." (CORS protects web users and origins from unauthorized script access within the browser; attackers can easily bypass CORS using `curl` or non-browser HTTP clients).
-    - "A CORS error means the request never reached the server." (For simple requests without preflight, the request reaches the server, executes, and returns; the browser merely hides the response from client JavaScript).
+    - "CORS is a security feature that protects backend servers from attackers." (CORS constrains how participating browser user agents expose cross-origin responses to script. Non-browser HTTP clients are not governed by that browser enforcement, so backend authn/authz must be independent.)
+    - "A CORS error means the request never reached the server." (In the course's successful simple-request fixture, the HTTP request reaches Origin B and a response returns, but the browser withholds it from script because the CORS response contract is not satisfied. Preflighted requests and ordinary network failures follow different paths.)
     - "Origin and domain mean the exact same thing." (An origin includes scheme, host, and port; `http://example.com:80` and `https://example.com:443` are completely distinct origins).
 13. **What You Can Ignore—for Now:** WebCrypto subtle cryptographic algorithms, Cross-Origin Opener Policy (COOP) and Cross-Origin Embedder Policy (COEP) memory-sharing details, Trusted Types API implementations.
 14. **Progressive Support:**
-    - *Question:* If your browser blocks a cross-origin fetch request with a CORS error, why does running the same URL in `curl` succeed completely?
+    - *Question:* In the course-owned fixture, why can the browser withhold a cross-origin response from page script while a non-browser `curl` client can still receive the HTTP response?
     - *Hint 1:* Who enforces the Cross-Origin Resource Sharing policy?
     - *Hint 2:* Is `curl` a web browser running untrusted JavaScript from other websites?
-    - *Expected Observation:* The browser console shows a CORS denial, but curl prints the full response payload immediately.
+    - *Expected Observation:* The browser records a CORS denial/filtered response for page script, while `curl` receives the course endpoint's HTTP response. Record actual messages/output without fixed wording or timing.
     - *Full Explanation:* CORS is an agreement enforced by user agents (browsers) to protect users from malicious scripts running in their browsing context. Command-line clients like curl do not execute untrusted third-party web scripts, so they do not enforce CORS response restrictions.
 15. **Visual Requirements:** Diagram contrasting: (1) Same-Origin Policy boundary between Origin A and Origin B, (2) The CORS validation checkpoint inside the browser user agent, and (3) Non-browser client (`curl`) communicating directly with Origin B without browser mediation.
 16. **Exit Criteria:** Learner produces a browser CORS denial trace alongside a matching successful curl trace and writes an architectural explanation of the user-agent enforcement boundary.
@@ -774,7 +774,7 @@ For learners electing to pursue LAB-OPT-02 independently:
    - Prerequisites: `L12-01` (Renderer main thread) and `L12-02` (Rendering pipeline).
    - Support: JavaScript Promise and `queueMicrotask()` intuition.
 4. **Concepts:** Previews concurrency concepts strictly in the browser agent domain. Does **not** define `EC-CON-015` Concurrency (reserved for M15 `L15-01`).
-5. **Mental Model:** An agent-scoped event loop managing cooperative execution and rendering opportunities. JavaScript execution, DOM updates, and layout calculations on a page share the renderer main thread. Tasks are dispatched from task queues; microtasks are drained to completion after tasks; and rendering opportunities are scheduled periodically by the browser engine. Heavy synchronous computation starves the event loop, delaying input events and rendering opportunities, causing visible jank.
+5. **Mental Model:** An agent-scoped event loop coordinating tasks, microtask checkpoints, and rendering opportunities. In the observed Window/Document context, script and many DOM/style/layout/paint activities depend on the renderer main thread. HTML defines task queues/task sources and microtask checkpoints; a rendering opportunity may occur under the relevant document/browser conditions, not on one fixed periodic cycle.
 6. **Mechanism Sequence:**
    $$\text{1. Select & Execute One Task from a Task Queue (e.g., Timer, User Input)}$$
    $$\text{2. Perform Microtask Checkpoint: Drain Microtask Queue completely (Promises, queueMicrotask)}$$
@@ -783,13 +783,13 @@ For learners electing to pursue LAB-OPT-02 independently:
    $$\text{4. Repeat Loop}$$
 7. **Prediction-Before-Observation:** If a button click triggers an infinite `while(true) {}` loop in JavaScript, will the browser still update the text on the page or allow you to select text with your mouse?
 8. **Hands-on Progression (Observe / Build / Break / Explain / Judge):**
-   - *Observe:* Load a local test page with an animated CSS spinner or an incrementing numerical counter. Observe smooth 60 Hz animation.
-   - *Break:* Click a button that executes a synchronous 1.5-second blocking computation (`const start = performance.now(); while (performance.now() - start < 1500) {}`). Observe that the CSS animation/counter freezes solid and input clicks are unresponsive during those 1.5 seconds.
+   - *Observe:* Load a course page with a main-thread-updated counter/input handler and, optionally, a compositor-friendly animation. Record the actual observed update cadence; do not require 60 Hz.
+   - *Break:* Trigger a bounded configurable long-running main-thread computation under a harness safety cap. Observe that main-thread handlers/timers and main-thread-driven updates are delayed. A compositor-thread animation may continue, so the activity must not assert that every CSS animation freezes.
    - *Fix:* Refactor the heavy computation into smaller chunked tasks using `setTimeout()` or `requestAnimationFrame()`, or explain how background Web Workers can move CPU work off the main thread. Observe that the UI remains interactive.
    - *Explain:* Trace the difference in execution order between tasks (`setTimeout`), microtasks (`Promise.resolve().then()`), and animation callbacks (`requestAnimationFrame`). Explain why microtasks run before the next rendering opportunity.
    - *Judge:* Evaluate frame budgets: explain why 60 Hz displays suggest an illustrative period of ~16.7 ms, but why modern displays (120 Hz, variable refresh) and power-saving modes mean the browser engine does not operate on a single hardcoded frame threshold.
 9. **Required Commands / Tools:** Real browser with interactive UI and DevTools Performance panel.
-10. **Machine-Checkable Evidence:** Test script asserts task queue order using a standardized JavaScript test snippet logging sequence numbers across Task, Microtask, and Animation frames.
+10. **Machine-Checkable Evidence:** In a real browser context, a bounded fixture may machine-check stable relative ordering such as synchronous script → queued Promise microtask → later timer task. `requestAnimationFrame`/paint timing is observation/reviewer evidence unless the chosen browser harness can establish a specification-backed relation without fixed wall-clock assumptions.
 11. **Reviewer-Required Evidence:** Reviewer checks that the learner explains the main-thread event loop without claiming JavaScript is globally single-threaded (noting Web Workers and multi-process architecture), explains why microtasks drain before rendering, and treats concurrency strictly as a preview.
 12. **Misconceptions Addressed:**
     - "JavaScript and browsers are single-threaded." (Browsers are multi-process and multi-threaded; an individual Window/Document script runs within its agent's main-thread event loop, but workers and browser subsystems run on separate threads/processes).
@@ -800,8 +800,8 @@ For learners electing to pursue LAB-OPT-02 independently:
     - *Question:* Why does a `Promise.resolve().then(...)` callback execute before a `setTimeout(..., 0)` callback even if the timer timeout is 0 ms?
     - *Hint 1:* Check which queue promises belong to vs. timers.
     - *Hint 2:* Microtasks are drained immediately after the current task finishes, before the next task is picked from a task queue.
-    - *Expected Observation:* The Promise callback executes immediately after the current script block, while the timer callback waits for the next event loop turn.
-    - *Full Explanation:* Timers schedule tasks in a general task queue. Promises schedule callbacks in the microtask queue. The HTML specification requires the event loop to perform a microtask checkpoint and completely drain the microtask queue before picking the next task or rendering.
+    - *Expected Observation:* In the controlled fixture, the Promise reaction is logged after the current task's synchronous code and before the later timer task. Do not attach a fixed millisecond meaning to "immediately".
+    - *Full Explanation:* Timer callbacks are queued as tasks and Promise reactions use the microtask queue. HTML specifies microtask checkpoints at defined points, including after relevant task execution. Rendering opportunities are separate conditional steps; the lesson must not convert these rules into one rigid universal loop.
 15. **Visual Requirements:** Diagram of the Window/Document Event Loop: Task Queues (Timers, I/O, UI Events) $\rightarrow$ Execution $\rightarrow$ Microtask Checkpoint (Draining Promise reactions) $\rightarrow$ Conditional Rendering Opportunity (rAF $\rightarrow$ Style $\rightarrow$ Layout $\rightarrow$ Paint) $\rightarrow$ Next Iteration.
 16. **Exit Criteria:** Learner traces the execution sequence of tasks and microtasks, demonstrates main-thread UI jank, and explains why synchronous work blocks rendering.
 17. **Competency Mapping:** Observe (Primary: UI freeze and event loop trace), Diagnose (Growth: main-thread bottleneck analysis), Estimate (Growth: frame budget trade-offs).
@@ -1238,18 +1238,18 @@ Every Lesson across M10–M12 must implement the mandatory 5-step progressive-su
 - **Full Explanation:** A conditional request asks the server to validate cached state. If the server's current representation matches the validator (`ETag`), the server sends 304 with no body, instructing the client to reuse its locally cached representation.
 
 ### Checkpoint Support Ladder: L12-01 (Browser Architecture & Process Model)
-- **Question:** In Chrome, why does closing a single tab with an unresponsive, crashing script not crash the other open tabs?
+- **Question:** Why can a current Chromium build place web content and browser services in multiple OS processes, and why does that make "one tab = one process" an unreliable model?
 - **Hint 1:** How does the operating system isolate distinct running programs?
-- **Hint 2:** Does each site or browsing context execute in the same OS address space as the browser UI?
-- **Expected Observation:** The crashed tab displays a crash error screen ("Aw, Snap!"), but the browser window, URL bar, and other open tabs remain fully functional.
-- **Full Explanation:** Modern browsers isolate untrusted web content in separate OS renderer processes with restricted privileges (sandboxing). A crash in one renderer process is contained by the operating system kernel and does not corrupt the memory space of the browser coordinator process or other renderers.
+- **Hint 2:** Compare the current Chromium process/source model with the Web Platform's browsing-context/origin concepts.
+- **Expected Observation:** A live Chromium process view (when available) or current reference/source evidence shows multiple browser/service/renderer processes whose count and assignment do not map one-to-one to tabs. Exact labels/counts are version/platform evidence, not invariants.
+- **Full Explanation:** Chromium uses multiple processes and sandbox/browser-side policy as defense in depth for web content. Process assignment/reuse varies by SiteInstance, platform, isolation mode, and resources; process isolation reduces failure/security blast radius but does not guarantee that every tab or frame has a dedicated process.
 
 ### Checkpoint Support Ladder: L12-02 (Document Rendering Pipeline)
 - **Question:** Why does adding the `defer` attribute to an external `<script>` tag in `<head>` make the page appear faster than using a synchronous script?
 - **Hint 1:** What does the HTML parser do when it encounters `<script src="...">` without `defer` or `async`?
 - **Hint 2:** Can the parser construct the DOM and trigger the initial paint while downloading a synchronous script?
-- **Expected Observation:** In the DevTools Performance trace, the First Contentful Paint (FCP) occurs before the deferred script executes, whereas the synchronous script delays FCP until after download and execution.
-- **Full Explanation:** Synchronous scripts block the HTML parser because the script might call `document.write()` or modify the DOM. The `defer` attribute tells the browser to download the script in parallel in the background and execute it only after HTML parsing completes, allowing the page to render without delay.
+- **Expected Observation:** Parser-progress/script markers demonstrate the parser-blocking relation for the classic synchronous script and the specified post-parsing behavior of the classic `defer` script. FCP ordering is recorded if observed but is not machine-required.
+- **Full Explanation:** Parser-inserted classic scripts without `async`/`defer` can block parsing. Classic `defer` scripts are fetched without that blocking execution point and execute after parsing according to HTML rules. This can change the critical path but does not guarantee a particular paint/FCP ordering.
 
 ### Checkpoint Support Ladder: L12-03 (Browser Security & CORS)
 - **Question:** If your browser blocks a cross-origin `fetch()` call with a CORS error, why can you successfully fetch the exact same URL using `curl` from your terminal?
@@ -1259,11 +1259,11 @@ Every Lesson across M10–M12 must implement the mandatory 5-step progressive-su
 - **Full Explanation:** CORS is a security mechanism enforced by browser user agents to prevent malicious scripts on one website from reading private data from another site using your authenticated session. Command-line tools like `curl` do not execute untrusted third-party web scripts, so they do not enforce browser CORS restrictions. Servers must implement independent authorization.
 
 ### Checkpoint Support Ladder: L12-04 (Event Loop & UI Responsiveness)
-- **Question:** Why does a long-running JavaScript `while` loop on a web page freeze button clicks and CSS animations completely?
+- **Question:** Why can a long-running JavaScript task delay main-thread input handlers and rendering work even while some compositor/browser activity may continue?
 - **Hint 1:** What thread does JavaScript execution run on in a browser renderer process?
 - **Hint 2:** What else shares that same thread?
-- **Expected Observation:** While the JavaScript loop executes, button clicks do not register, text cannot be selected, and CSS animations stop moving until the loop terminates.
-- **Full Explanation:** In a browser renderer, JavaScript execution, DOM event dispatching, and rendering opportunity updates (style, layout, paint) share the single renderer main thread via an event loop. A synchronous long task starves the event loop, preventing user input processing and rendering opportunities.
+- **Expected Observation:** During the bounded long task, main-thread handlers/timers and main-thread-driven visual updates are delayed. Compositor/browser-thread activity may continue; all-animation freeze is not an invariant.
+- **Full Explanation:** In the observed Window/Document context, script and many DOM/input/style/layout/paint activities depend on the renderer main thread. A long synchronous task delays those main-thread opportunities, while the browser as a whole remains multi-process/multi-threaded.
 
 ---
 
