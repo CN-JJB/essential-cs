@@ -257,46 +257,45 @@ def trace_buffered_syscalls(work_dir: str | Path | None = None) -> dict:
 
     script_path = work_path / "_worker.py"
     target_path = work_path / "_out.dat"
+    trace_path = work_path / "_write.trace"
 
-    # Worker executes 1000 small 16-byte writes
-    worker_code = f"""
+    # Worker executes a fixed, bounded 1000 x 16-byte application-write loop.
+    worker_code = """
 import sys
-with open(r"{target_path}", "wb") as f:
+target = sys.argv[1]
+with open(target, "wb") as f:
     for _ in range(1000):
         f.write(b"0123456789abcdef")
 """
     script_path.write_text(worker_code, encoding="utf-8")
 
     try:
+        strace_bin = cap["path"]
         cmd = [
-            "strace",
+            strace_bin,
             "-e", "trace=write",
-            "-c",
+            "-o", str(trace_path),
             sys.executable,
             str(script_path),
+            str(target_path),
         ]
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-        # Parse summary table from strace -c
-        write_calls = None
-        for line in res.stderr.splitlines():
-            if "write" in line:
-                parts = line.split()
-                try:
-                    # strace -c columns: % time, seconds, usecs/call, calls, errors, syscall
-                    # find the integer corresponding to call count
-                    for part in parts:
-                        if part.isdigit():
-                            write_calls = int(part)
-                            break
-                except ValueError:
-                    pass
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
+        if res.returncode != 0:
+            return {
+                "status": "ERROR",
+                "disposition": "NO LIVE SYSCALL TRACE",
+                "reason": f"strace worker failed with return code {res.returncode}: {res.stderr.strip()}",
+            }
+
+        trace_lines = trace_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        write_calls = sum(1 for line in trace_lines if line.lstrip().startswith("write("))
 
         return {
             "status": "PASS",
             "app_writes": 1000,
-            "strace_summary": res.stderr.strip(),
+            "trace_file_lines": len(trace_lines),
             "detected_write_syscalls": write_calls,
-            "batched_relation_confirmed": (write_calls is not None and write_calls < 1000),
+            "batched_relation_confirmed": (0 < write_calls < 1000),
         }
     except Exception as e:
         return {
