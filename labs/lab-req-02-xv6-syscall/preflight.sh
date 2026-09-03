@@ -1,52 +1,59 @@
 #!/usr/bin/env bash
-# labs/lab-req-02-xv6-syscall/preflight.sh
-# Verifies toolchain availability for LAB-REQ-02.
-
+# LAB-REQ-02 capability preflight. Does not install packages or weaken host security.
 set -u
 
 echo "=== LAB-REQ-02 xv6 Syscall Preflight ==="
+STATUS="PASS"
 
-TOOLCHAIN_STATUS="PASS"
+check_cmd() {
+    local label="$1"
+    local cmd="$2"
+    if command -v "${cmd}" >/dev/null 2>&1; then
+        echo "[+] ${label}: $(${cmd} --version 2>/dev/null | head -n 1 || echo available)"
+    else
+        echo "[-] ${label}: NOT FOUND"
+        STATUS="BLOCKED"
+    fi
+}
 
-# Check Git
-if ! command -v git >/dev/null 2>&1; then
-    echo "[-] git: NOT FOUND"
-    TOOLCHAIN_STATUS="BLOCKED"
-else
-    echo "[+] git: $(git --version)"
-fi
+check_cmd "git" git
+check_cmd "make" make
+check_cmd "python3" python3
+check_cmd "perl" perl
+check_cmd "bc" bc
 
-# Check RISC-V GCC
 RISCV_GCC=""
-for candidate in riscv64-linux-gnu-gcc riscv64-unknown-elf-gcc; do
-    if command -v "${candidate}" >/dev/null 2>&1; then
-        RISCV_GCC="${candidate}"
+RISCV_OBJDUMP=""
+for prefix in riscv64-linux-gnu riscv64-unknown-elf; do
+    if command -v "${prefix}-gcc" >/dev/null 2>&1 && command -v "${prefix}-objdump" >/dev/null 2>&1; then
+        RISCV_GCC="${prefix}-gcc"
+        RISCV_OBJDUMP="${prefix}-objdump"
         break
     fi
 done
 
 if [ -z "${RISCV_GCC}" ]; then
-    echo "[-] riscv64-gcc: NOT FOUND"
-    TOOLCHAIN_STATUS="BLOCKED"
+    echo "[-] RISC-V GCC + objdump pair: NOT FOUND"
+    STATUS="BLOCKED"
 else
-    echo "[+] riscv64-gcc: $("${RISCV_GCC}" --version | head -n 1)"
+    echo "[+] RISC-V GCC: $("${RISCV_GCC}" --version | head -n 1)"
+    echo "[+] RISC-V objdump: $("${RISCV_OBJDUMP}" --version | head -n 1)"
 fi
 
-# Check QEMU
-if ! command -v qemu-system-riscv64 >/dev/null 2>&1; then
-    echo "[-] qemu-system-riscv64: NOT FOUND"
-    TOOLCHAIN_STATUS="BLOCKED"
+if command -v qemu-system-riscv64 >/dev/null 2>&1; then
+    echo "[+] QEMU RISC-V: $(qemu-system-riscv64 --version | head -n 1)"
 else
-    echo "[+] qemu-system-riscv64: $(qemu-system-riscv64 --version | head -n 1)"
+    echo "[-] QEMU RISC-V: NOT FOUND"
+    STATUS="BLOCKED"
 fi
 
 echo "----------------------------------------"
-if [ "${TOOLCHAIN_STATUS}" = "PASS" ]; then
-    echo "STATUS: PASS — Environment is capable of compiling and running xv6 in QEMU."
+if [ "${STATUS}" = "PASS" ]; then
+    echo "STATUS: PASS — Required LAB-REQ-02 build/smoke capabilities are present."
+    echo "NOTE: PASS means capability-present, not that xv6 build/QEMU execution has already succeeded."
     exit 0
-else
-    echo "STATUS: BLOCKED — Missing required cross-toolchain or emulator."
-    echo "        You may still perform static source-route inspection via verify_source_route.py,"
-    echo "        and study fallback_trace.md for deterministic execution evidence."
-    exit 1
 fi
+
+echo "STATUS: BLOCKED — One or more required build/smoke capabilities are missing."
+echo "Source-route inspection may still be possible after setup, but it is not equivalent to runnable LAB completion."
+exit 1
