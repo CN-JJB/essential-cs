@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# labs/lab-req-02-xv6-syscall/setup.sh
-# Sets up the pinned xv6-riscv worktree for LAB-REQ-02.
-
+# Sets up the dedicated pinned xv6-riscv worktree for LAB-REQ-02.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,27 +10,40 @@ UPSTREAM_REPO="https://github.com/mit-pdos/xv6-riscv.git"
 echo "=== LAB-REQ-02 Setup ==="
 
 if [ -d "${WORKTREE_DIR}/.git" ]; then
-    echo "[*] Found existing worktree at ${WORKTREE_DIR}"
-    CURRENT_COMMIT=$(cd "${WORKTREE_DIR}" && git rev-parse HEAD)
-    if [ "${CURRENT_COMMIT}" = "${PINNED_COMMIT}" ]; then
-        echo "[+] Worktree already at pinned commit: ${PINNED_COMMIT}"
-        exit 0
-    else
-        echo "[*] Re-checking out pinned commit ${PINNED_COMMIT}..."
-        (cd "${WORKTREE_DIR}" && git checkout "${PINNED_COMMIT}")
+    echo "[*] Found existing dedicated worktree."
+    ORIGIN=$(git -C "${WORKTREE_DIR}" remote get-url origin 2>/dev/null || true)
+    if [ "${ORIGIN}" != "${UPSTREAM_REPO}" ] && [ "${ORIGIN}" != "https://github.com/mit-pdos/xv6-riscv" ]; then
+        echo "[-] ERROR: Existing worktree origin is not the canonical upstream: ${ORIGIN}"
+        exit 1
     fi
 else
-    echo "[*] Cloning official xv6-riscv repository into worktree..."
+    echo "[*] Cloning official xv6-riscv repository..."
     git clone "${UPSTREAM_REPO}" "${WORKTREE_DIR}"
-    (cd "${WORKTREE_DIR}" && git checkout "${PINNED_COMMIT}")
 fi
 
-VERIFIED_COMMIT=$(cd "${WORKTREE_DIR}" && git rev-parse HEAD)
-if [ "${VERIFIED_COMMIT}" != "${PINNED_COMMIT}" ]; then
-    echo "[-] ERROR: Worktree commit ${VERIFIED_COMMIT} does not match pinned ${PINNED_COMMIT}"
+if ! git -C "${WORKTREE_DIR}" cat-file -e "${PINNED_COMMIT}^{commit}" 2>/dev/null; then
+    echo "[-] ERROR: Pinned commit is not available in the worktree."
     exit 1
 fi
 
-echo "[+] Pinned xv6 worktree successfully initialized at commit: ${VERIFIED_COMMIT}"
-echo "[+] License notice: MIT License preserved in ${WORKTREE_DIR}/LICENSE"
+CURRENT_COMMIT=$(git -C "${WORKTREE_DIR}" rev-parse HEAD)
+if [ "${CURRENT_COMMIT}" != "${PINNED_COMMIT}" ]; then
+    echo "[*] Checking out pinned commit ${PINNED_COMMIT}..."
+    git -C "${WORKTREE_DIR}" checkout --detach "${PINNED_COMMIT}"
+fi
+
+VERIFIED_COMMIT=$(git -C "${WORKTREE_DIR}" rev-parse HEAD)
+if [ "${VERIFIED_COMMIT}" != "${PINNED_COMMIT}" ]; then
+    echo "[-] ERROR: HEAD ${VERIFIED_COMMIT} does not match pinned ${PINNED_COMMIT}"
+    exit 1
+fi
+
+if [ ! -f "${WORKTREE_DIR}/LICENSE" ]; then
+    echo "[-] ERROR: xv6 LICENSE missing from pinned worktree."
+    exit 1
+fi
+
+echo "[+] Pinned xv6 worktree: ${VERIFIED_COMMIT}"
+echo "[+] Canonical origin: ${UPSTREAM_REPO}"
+echo "[+] xv6 software license file present: ${WORKTREE_DIR}/LICENSE"
 echo "=== Setup Complete ==="
