@@ -39,7 +39,7 @@ Examine how Python represents code structurally:
 ### 3. Bytecode Disassembly (L05-01)
 Inspect the generated CPython bytecode:
 - Notice instructions for loading arguments, performing a binary operation, and returning.
-- **Important:** Exact opcodes are implementation details of your specific Python version (e.g., Python 3.13 introduces superinstructions like `LOAD_FAST_LOAD_FAST`, whereas Python 3.11/3.12 uses `LOAD_FAST`, and Python 3.10 uses `BINARY_ADD` instead of `BINARY_OP`).
+- **Important:** Exact opcodes are CPython implementation details and may change between releases or Python VMs. In the author-tested CPython 3.13.1 build (and Lead CPython 3.13.5 recheck), this fixture emits `LOAD_FAST_LOAD_FAST` and `BINARY_OP`; record what your actual implementation/version emits instead of assuming a fixed transcript.
 - Bytecode is **not** CPU machine code; it is interpreted by CPython's software evaluation loop.
 
 ### 4. Syntax Error Check (L05-02)
