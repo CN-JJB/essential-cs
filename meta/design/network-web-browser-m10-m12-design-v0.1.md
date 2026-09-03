@@ -176,7 +176,7 @@ This sequence equips the learner to understand exactly what happens under the ho
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Hard prerequisite: `M06` / `L06-01` (processes and execution context). Soft support: M08 file-descriptor vocabulary and M09 failure/durability context may be revisited but are not required to enter L10-01.
    - Support: Port-number discipline: IANA divides the 16-bit port space into System Ports (0–1023), User Ports (1024–49151), and Dynamic/Private Ports (49152–65535). Binding to port `0` instructs the OS kernel to dynamically allocate an available port; the activity inspects the assigned port via `getsockname()` rather than hardcoding a port.
-4. **Concepts:** Revisits **Interface** (EC-CON-005). Ordinary representation vocabulary may be used descriptively, but EC-CON-003 is not reintroduced or redefined in this S4 slice.
+4. **Concepts:** Revisits **Interface** (EC-CON-005) only. Ordinary representation vocabulary may be used descriptively without adding another canonical concept revisit.
 5. **Mental Model:** Layered indirection. A name is resolved into one or more network-layer addresses; the host routing table chooses how to forward toward a destination; and the transport layer demultiplexes traffic to sockets/endpoints. Names, addresses, routes, ports, sockets, and processes are related but not interchangeable identifiers.
 6. **Mechanism Sequence:**
    $$\text{Application Name} \xrightarrow{\text{getaddrinfo (DNS)}} \text{IP Address} \xrightarrow{\text{Route Table Lookup}} \text{Next-Hop Interface} \xrightarrow{\text{Packet Switching}} \text{Host Port Demux} \xrightarrow{} \text{Target Socket}$$
@@ -218,7 +218,7 @@ This sequence equips the learner to understand exactly what happens under the ho
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Prerequisite: `L10-01` (Sockets, Ports, IP encapsulation).
    - Support: Introduce sequence number intuition as byte offsets in a continuous file-like stream rather than packet counters.
-4. **Concepts:** Revisits **Interface** (EC-CON-005). The byte-stream abstraction is taught as transport-interface behavior without adding an EC-CON-002 canonical revisit to the accepted S4 concept map.
+4. **Concepts:** Revisits **Interface** (EC-CON-005) only. The byte-stream abstraction is taught as transport-interface behavior without adding another canonical concept revisit.
 5. **Mental Model:** Sequence space over an unreliable substrate. TCP assigns a sequence number to every individual payload byte, uses positive acknowledgments with retransmission timers to repair packet drops, and reconstructs an in-order byte stream independent of network packet boundaries.
 6. **Mechanism Sequence:**
    $$\text{Client SYN (seq=x)} \xrightarrow{} \text{Server SYN-ACK (seq=y, ack=x+1)} \xrightarrow{} \text{Client ACK (ack=y+1)} \xrightarrow{} \text{ESTABLISHED}$$
@@ -679,7 +679,7 @@ For learners electing to pursue LAB-OPT-02 independently:
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Prerequisite: `L11-02` (HTTP representations) and `L12-01` (Renderer processes).
    - Support: Minimal HTML/CSS/JS fixture served on loopback port 0.
-4. **Concepts:** Revisits **Interface** (EC-CON-005) only where the browser/platform boundary is discussed. Rendering representations are ordinary lesson vocabulary; EC-CON-003 is not added to the accepted S4 canonical revisit set.
+4. **Concepts:** Revisits **Interface** (EC-CON-005) only where the browser/platform boundary is discussed. Rendering representations remain ordinary lesson vocabulary rather than a new canonical revisit.
 5. **Mental Model:** A multi-stage transformation pipeline from structured document text to GPU pixel tiles. Each stage produces intermediate structural data. Real browser rendering engines (Blink, Gecko, WebKit) optimize this conceptual pipeline by caching results, skipping un-invalidated stages, performing incremental updates, and offloading layer compositing to GPU threads.
 6. **Mechanism Sequence:**
    $$\text{HTML Bytes} \xrightarrow{\text{Tokenizer/Parser}} \text{DOM Tree}$$
@@ -806,7 +806,7 @@ For learners electing to pursue LAB-OPT-02 independently:
 16. **Exit Criteria:** Learner traces the execution sequence of tasks and microtasks, demonstrates main-thread UI jank, and explains why synchronous work blocks rendering.
 17. **Competency Mapping:** Observe (Primary: UI freeze and event loop trace), Diagnose (Growth: main-thread bottleneck analysis), Estimate (Growth: frame budget trade-offs).
 18. **Provenance / Source Anchors:** WHATWG HTML Living Standard (*Event loops*, *Processing model*), W3C Navigation Timing Level 2.
-19. **Failure / Inference Limits:** Microtask execution timing is deterministic per spec; however, exact rendering opportunity frequency and task prioritization between different task sources (e.g., user input vs. timer) are browser-implementation dependent.
+19. **Failure / Inference Limits:** HTML specifies relative queue/checkpoint semantics at defined points, not deterministic wall-clock microtask timing. Rendering opportunities, timer delays, and task-source prioritization remain browser/platform/workload dependent.
 
 ---
 
@@ -953,7 +953,7 @@ Before running any network or web module tests, the environment must execute the
 | **L11-01** (Secure Server / TLS) | Explain | Automated test verifies 3 handshake cases: (1) valid local cert succeeds, (2) hostname mismatch rejected, (3) untrusted root CA rejected. Asserts zero verification bypasses. | Reviewer checks explanation of why TLS validates domain identity rather than business safety; explains forward secrecy boundary. |
 | **L11-02** (HTTP Semantics) | Trace | Raw HTTP requests parse status codes ($200, 400, 404$), headers, and CRLF line breaks; validates uniform interface. | Reviewer checks learner's explanation of Resource vs. Representation, Safe vs. Idempotent methods, and why $200\text{ OK}$ != business correctness. |
 | **L11-03** (Caching & Speed) | Observe | Conditional request with matching `If-None-Match` returns $304\text{ Not Modified}$ with 0 body bytes; mismatched ETag returns $200\text{ OK}$ with full body. | Reviewer checks explanation of Freshness vs. Validation, opaque strong ETags, and balanced evaluation of H1, H2, and H3 trade-offs. |
-| **LAB-REQ-01** (HTTP Interface Lab) | Trace | 4-step trace: Direct trace ($200$), Forwarded trace (`Via: 1.1 essential-cs-proxy`), Conditional trace ($304$, 0 body), Upstream refusal ($502$). Post-reset listener check confirms zero open sockets. | Reviewer evaluates complete `curl -v` transcripts, header comparison table, and explanation of gateway failure mapping. |
+| **LAB-REQ-01** (HTTP Interface Lab) | Trace | 4-step trace: Direct trace ($200$), Forwarded trace (course `Via` entry), Conditional trace ($304$, 0 body), Upstream refusal ($502$). Cleanup check confirms owned child processes are reaped and old endpoints no longer serve the course fixture. | Reviewer evaluates complete `curl -v` transcripts, field-handling table, cleanup evidence, and explanation of course gateway failure mapping. |
 | **LAB-OPT-02** (CS144 Checkpoint 2) | Trace (Optional) | (Learner-owned independent C++ test suite if pursued). | Reviewer verifies lab is treated strictly as Optional and link-only; zero bundled Stanford code. |
 | **L12-01** (Browser Architecture) | Explain | Verification of EXP-03 source inspection answers matching current Chromium repository files. | Reviewer checks learner's refutation of "one tab = one process", separation of Web spec vs. Chromium implementation, and sandboxing explanation. |
 | **L12-02** (Rendering Pipeline) | Observe | Test fixture serves HTML/CSS/JS in structured order; DevTools trace records phases actually present. | Reviewer checks learner's trace of the 6 pipeline stages and explanation of why synchronous scripts block HTML parsing while `defer` does not. |
@@ -1213,8 +1213,8 @@ Every Lesson across M10–M12 must implement the mandatory 5-step progressive-su
 - **Question:** Why does a client connecting to an unbound localhost port fail immediately with a refusal error, while connecting to a silent server hangs until a timeout expires?
 - **Hint 1:** Contrast active rejection generated by the operating system kernel with the absence of application data.
 - **Hint 2:** What packet does a host send when a TCP SYN hits a port with no listening process?
-- **Expected Observation:** The unbound port raises `ConnectionRefusedError` immediately; the silent server raises `TimeoutError` only after the configured client deadline expires.
-- **Full Explanation:** An unbound port triggers an active TCP `RST` from the host kernel, terminating the handshake immediately. A silent server completes the 3-way handshake (`ESTABLISHED`), so the client waits for application response bytes until its local read deadline elapses.
+- **Expected Observation:** The verified-unbound loopback fixture produces a refusal disposition, while the accepted-but-silent fixture remains connected until the configured read deadline expires. Record actual exception classes/messages and elapsed samples without fixed thresholds.
+- **Full Explanation:** In the controlled loopback fixture, the client receives a refusal disposition for the unbound endpoint, whereas the silent server establishes the connection but sends no application bytes before the client's local read deadline. Do not promote one exact packet/error/timing path into a cross-platform invariant.
 
 ### Checkpoint Support Ladder: L11-01 (Secure Server / TLS)
 - **Question:** Why does connecting to a TLS server with an untrusted certificate cause a handshake failure, and why should you never bypass it with `verify=False`?
@@ -1308,8 +1308,8 @@ All architectural claims, protocol models, and evidence invariants in M10–M12 
 1. **Original Educational Content:** All lesson prose, explanatory text, original diagrams, and conceptual walkthroughs are licensed under **CC BY-SA 4.0**.
 2. **Original Code & Fixtures:** All Python server fixtures, proxy adapters, preflight scripts, and test harnesses created for M10–M12 and LAB-REQ-01 are licensed under **Apache-2.0**.
 3. **Third-Party Provenance:**
-   - RFC citations are referenced under fair use / IETF Trust Legal Provisions (TLP 4.0). No RFC text or diagrams are bundled verbatim.
-   - Chromium source inspection references and brief quote excerpts in EXP-03 comply with BSD-3-Clause attribution requirements, acknowledging The Chromium Authors.
+   - RFC material is cited/linked/paraphrased under the applicable IETF Trust Legal Provisions. The course does not rely on a blanket fair-use conclusion and does not bundle substantial RFC text, figures, or code without exact reuse review.
+   - EXP-03 remains link/source-inspection-first. Chromium files carry BSD-style and third-party notices; any future redistributed excerpt must be checked against the exact file/header/license notice rather than assuming one blanket license rule.
    - Stanford CS144 Checkpoint 2 is strictly link-only; zero Stanford code or PDF text is bundled.
 
 ---
@@ -1402,7 +1402,7 @@ Subsequent Lesson and Lab implementation agents must adhere to the following con
 | **OQ-BP-006 (Version Pinning)** | Low | OPEN / Managed | Classified tools into capability tiers; preflight script records actual host versions empirically without brittle hardcoding. |
 | **GUI / Browser Dependency** | Medium | Managed | M12 activities provide a dual track: live DevTools inspection when a graphical browser is present, and course-owned reference traces when running in headless containers. |
 | **W3C Draft Currentness** | Low | Managed | CSP Level 3 and Navigation Timing Level 2 are explicitly marked as Working Drafts with checked dates (Aug/Feb 2026) and implementation recheck gates. |
-| **Stanford CS144 Rights** | Low | Resolved | LAB-OPT-02 rights remain UNESTABLISHED; strictly maintained as Optional and link-only with zero bundled code. |
+| **Stanford CS144 Rights** | Low | Managed / Non-blocking | Reuse/redistribution rights remain UNESTABLISHED; LAB-OPT-02 stays Optional + link-only with zero bundled assignment text/starter/tests. |
 | **Chromium Source Drift** | Low | Managed | EXP-03 verified against current Gitiles paths on 2026-09-03, with historical path migration noted for `child_process_security_policy_impl.cc`. |
 
 ---
@@ -1458,7 +1458,7 @@ All 10 canonical Lessons across M10, M11, and M12 are preserved without addition
 - `Via: 1.1 essential-cs-proxy` tracking header.
 - Conditional ETag request yielding `304 Not Modified` with zero body transfer.
 - Controlled upstream refusal mapped to `502 Bad Gateway`.
-- Strict PID lifecycle and post-reset listener verification asserting active refusal.
+- Owned-process lifecycle, cooperative/platform-appropriate termination, child reaping, and post-reset verification that old endpoints no longer serve the course fixture; no fixed refusal exception is required.
 
 ### LAB-OPT-02 Rights Disposition
 - Stanford CS144 Checkpoint 2 rights remain UNESTABLISHED.
@@ -1488,7 +1488,7 @@ All 10 canonical Lessons across M10, M11, and M12 are preserved without addition
 
 ### Provenance & Licensing
 - Essential CS content licensed under CC BY-SA 4.0 (text) and Apache-2.0 (code).
-- Third-party sources cited with formal attribution; BSD-3-Clause notices respected for Chromium; IETF fair use.
+- Third-party sources are cited with source-specific attribution/reuse review; Chromium remains exact-file notice sensitive and RFC reuse follows the applicable IETF Trust terms.
 
 ### Risks / Blockers Classification
 - No critical design blockers; all identified risks managed through capability matrices and truthful fallbacks.
