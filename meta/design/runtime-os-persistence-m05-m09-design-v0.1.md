@@ -217,7 +217,7 @@ L09-01 (Durability & WAL) -> L09-02 (SSD vs HDD Mechanics) -> L09-03 (Storage Co
 1. **Learner Question:** What actually happens when an operating system runs a program?
 2. **Before / After Capability:**
    - *Before:* Confuses the compiled program binary on disk with the active process running in memory.
-   - *After:* Can define a process as an isolated execution context (PID, memory regions, open file table, registers), and trace user code crossing into the kernel via a system call.
+   - *After:* Can define a process as a distinct OS-managed execution context (PID, memory regions, open file table, registers), and trace user code crossing into the kernel via a system call. Formal Isolation remains deferred to M07.
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Prerequisite: M03 (`L03-01` machine execution).
    - Support: Use `/proc` and `ps` on the host to make process state transparent.
@@ -291,13 +291,13 @@ L09-01 (Durability & WAL) -> L09-02 (SSD vs HDD Mechanics) -> L09-03 (Storage Co
    - Prerequisite: `L06-01`, M03 (`L03-01`).
    - Support: Use simple CLI observation (`top` or `/proc/<pid>/stat`) to observe process state transitions.
 4. **Concepts:** Revisits **Process** (EC-CON-018), **Trade-off** (EC-CON-006). Previews **Isolation** (EC-CON-013).
-5. **Mental Model:** The CPU is a multiplexed resource. The OS scheduler switches execution between runnable processes hundreds of times per second, giving each the illusion of continuous progress.
+5. **Mental Model:** The CPU is a multiplexed resource. A preemptive OS scheduler can switch execution among runnable processes on short timescales, so multiple processes make progress without each owning a CPU continuously.
 6. **Mechanism Sequence:**
    $$\text{Running Process} \xrightarrow{\text{Timer Interrupt}} \text{Kernel Scheduler} \xrightarrow{\text{Save State to PCB}} \xrightarrow{\text{Context Switch}} \text{Restore State of Next Process} \rightarrow \text{User Mode}$$
 7. **Prediction-Before-Observation:** When a process calls `sleep(5)` or waits for keyboard input, does it consume 100% of a CPU core?
 8. **Hands-on Progression (Observe / Build / Break / Explain):**
    - *Observe:* Run a tight infinite loop (`while True: pass`) vs a sleeping loop (`while True: time.sleep(1)`). Compare CPU usage in `top` or `/proc/<pid>/stat` (State `R` vs `S`).
-   - *Explain:* Explain why the scheduler moves the sleeping process from the *run queue* to the *wait queue* until the timer expires.
+   - *Explain:* Explain why a sleeping/waiting process is not runnable until its wake condition is satisfied; exact scheduler queue structures are implementation details.
    - *Judge:* Discuss fairness vs latency trade-offs in scheduling policies.
 9. **Required Commands / Tools:** Python 3.12, `ps`, `top`.
 10. **Machine-Checkable Evidence:** Automated test checking that a process executing `time.sleep` transitions its state in `/proc/<pid>/stat` from `R` (Running) to `S` (Sleeping/Waiting).
@@ -437,7 +437,7 @@ If QEMU cannot execute due to container policy restrictions:
    - *Observe:* Inspect permission bits (`r-xp`, `rw-p`, `r--p`) in `/proc/self/maps`.
    - *Explain:* **The Isolation vs Trust Boundary Distinction:**
      - *Isolation:* Process A cannot read/write Process B's memory because their page tables point to different physical frames.
-     - *Trust Boundary:* The kernel mode / user mode split is a trust boundary: the kernel must validate every pointer passed in a syscall because user space is untrusted. Two processes under the same user UID are memory-isolated, but share a trust boundary (can ptrace/kill each other).
+     - *Trust Boundary:* The kernel mode / user mode split is a trust boundary: the kernel must validate user-controlled inputs, including pointers passed across syscall interfaces. Two processes may be memory-isolated while still differing in application-level trust or authority. Sharing a UID does not by itself prove that two processes share one trust boundary; signal/ptrace permissions also depend on credentials and security policy.
 9. **Required Commands / Tools:** `/proc/self/maps`, Python 3.12.
 10. **Machine-Checkable Evidence:** Automated test checking that a script parses `/proc/self/maps` and identifies at least one read-only executable segment (`r-xp`) and one readable-writable segment (`rw-p`).
 11. **Reviewer-Required Evidence:** Learner provides an explanation distinguishing Isolation from Trust Boundary using a concrete example.
@@ -473,10 +473,10 @@ If QEMU cannot execute due to container policy restrictions:
 8. **Hands-on Progression (Observe / Build / Break / Explain):**
    - *Observe:* Run a script allocating a large block. Track `VmSize` vs `VmRSS` in `/proc/self/status`.
    - *Observe:* Observe `ru_minflt` in `resource.getrusage()` jump when the memory is written in a loop.
-   - *Explain:* Explain why the Linux kernel allows memory overcommit and how the Out-of-Memory (OOM) killer selects a process to terminate when physical RAM + swap are exhausted.
+   - *Explain:* Explain that Linux may permit memory overcommit and, under severe allocation pressure, may fail allocations or invoke OOM handling that can terminate a process according to current kernel policy. Do not present one OOM outcome as universal OS semantics.
    - *Safety Guard:* Do not trigger a real host-wide OOM; use a simulated quota or inspect simulated `/proc/<pid>/oom_score` output.
 9. **Required Commands / Tools:** Python 3.12 (`resource`), `/proc/self/status`.
-10. **Machine-Checkable Evidence:** Automated test verifying that allocating memory without writing results in $\text{VSZ} \gg \text{RSS}$, and writing to it causes $\text{RSS}$ and `ru_minflt` to increase proportionally.
+10. **Machine-Checkable Evidence:** Use a controlled fixture and record VSZ/RSS/minor-fault changes before reservation and after touching pages. Assert only relationships reproduced by the implementation smoke test; do not require a universal fixed ratio or proportional increase across kernels/runtimes.
 11. **Reviewer-Required Evidence:** Learner explains the difference between an allocation request and physical RAM commitment.
 12. **Misconceptions Addressed:**
     - "Allocating memory immediately fills physical RAM."
@@ -487,7 +487,7 @@ If QEMU cannot execute due to container policy restrictions:
 16. **Exit Criteria:** Learner explains demand paging and distinguishes virtual reservation from physical RAM exhaustion.
 17. **Competency Mapping:** Diagnose (memory growth), Estimate (memory footprint).
 18. **Provenance / Source Anchors:** Linux Kernel Documentation — *Overcommit Accounting* & `proc(5)`.
-19. **Failure / Inference Limits:** Memory overcommit policies vary across operating systems (Linux default vs Windows/macOS strict allocation).
+19. **Failure / Inference Limits:** Reservation, commitment, overcommit, reclaim, and OOM behavior vary by OS, kernel configuration, runtime, and resource limits. Linux observations in this lesson are implementation evidence, not universal allocation semantics.
 
 ---
 
@@ -550,7 +550,7 @@ If QEMU cannot execute due to container policy restrictions:
    - Prerequisite: M06 (`L06-01` syscalls and process resources).
    - Support: Use `ls -i`, `stat`, and `/proc/<pid>/fd` to expose kernel and filesystem handles.
 4. **Concepts:** Revisits **Interface** (EC-CON-005), **Indirection** (EC-CON-004), **State** (EC-CON-001).
-5. **Mental Model:** A path is a directory entry pointing to an inode. A file descriptor is an integer handle pointing to an open file description. Inodes store metadata and block pointers, completely independent of the filenames that reference them.
+5. **Mental Model:** In the Unix/Linux model used here, path lookup resolves directory entries to filesystem objects/inodes; a file descriptor is a process-local integer handle referring through an open file description. An inode-like object carries metadata plus filesystem-specific structures/references used to locate file data; exact on-disk layout is filesystem-specific.
 6. **Mechanism Sequence:**
    $$\text{Path String} \xrightarrow{\text{Directory Lookup}} \text{Inode Number} \xrightarrow{\text{open()}} \text{File Descriptor (Process Table)} \rightarrow \text{Open File Description (Offset)} \rightarrow \text{Inode}$$
 7. **Prediction-Before-Observation:** If you create two hard links to the same file and delete one, does the file disappear? Does its inode number change?
@@ -607,7 +607,7 @@ If QEMU cannot execute due to container policy restrictions:
 16. **Exit Criteria:** Learner traces write buffering across user and kernel space and states the durability limitation of buffered I/O.
 17. **Competency Mapping:** Trace (write path), Explain (page cache role).
 18. **Provenance / Source Anchors:** Linux Kernel Documentation — *Page Cache and Writeback* & POSIX.1-2024 `write(2)`.
-19. **Failure / Inference Limits:** The page cache writeback delay is an operating system implementation policy (typically 5 to 30 seconds on Linux); it is not a fixed hardware constant.
+19. **Failure / Inference Limits:** Page-cache writeback timing is an OS/kernel policy affected by configuration and workload. Implementation may observe it, but the course must not teach one delay range as a fixed Linux or hardware constant.
 
 ---
 
@@ -679,14 +679,15 @@ If QEMU cannot execute due to container policy restrictions:
    - Prerequisite: M08 (`L08-02` page cache).
    - Support: Use small Python scripts comparing `write()` with and without `os.fsync()`.
 4. **Concepts:** **EC-CON-016 Durability (First Home)**: A committed state survives a named restart or failure bound. Revisits **Trade-off** (EC-CON-006), **Failure** (EC-CON-010).
-5. **Mental Model:** Durability is not a property of a file; it is a contract about surviving specific failure events. True power-loss durability requires explicitly synchronizing dirty page-cache data and metadata to non-volatile physical storage media.
-6. **Mechanism Sequence (The Durability Sync Journey):**
-   $$\text{User Buffer} \xrightarrow{\text{flush()}} \text{Page Cache} \xrightarrow{\text{fsync()}} \text{Disk Controller Volatile RAM} \xrightarrow{\text{Device Cache Flush}} \text{Non-Volatile Flash / Platters}$$
+5. **Mental Model:** Durability is not a property of a file; it is a claim about surviving a named failure bound. A defensible claim must identify which buffers/checkpoints may exist, which synchronization contract is invoked, and what the filesystem/device stack guarantees for that failure model.
+6. **Mechanism Model (Possible Durability Checkpoints):**
+   $\text{Application / Runtime Buffer?} \rightarrow \text{OS Buffered State?} \rightarrow \text{Filesystem Data / Metadata Handling} \rightarrow \text{Device Volatile Cache?} \rightarrow \text{Non-Volatile Media}$
+   The exact checkpoints and synchronization semantics are platform/filesystem/device dependent; `flush()` and `fsync()` apply to particular interfaces and must not be drawn as universal arrows across every layer.
 7. **Prediction-Before-Observation:** If you call `fsync()` after every single write of 100 bytes, what will happen to write throughput compared to ordinary buffered writes?
 8. **Hands-on Progression (Observe / Build / Break / Explain / Judge):**
    - *Build / Observe:* Measure the elapsed time of 1,000 small writes without `fsync` vs with `os.fsync()` after each write; observe that calling `fsync` may introduce substantial latency overhead depending on workload and storage environment.
    - *Explain:* Explain why: `fsync` requests synchronization according to OS, filesystem, and storage contracts, halting execution until the synchronization request is completed.
-   - *Explain (Concept):* Introduce Write-Ahead Logging (WAL) as a technique to achieve durability without random disk seek/rewrite overhead.
+   - *Explain (Concept):* Introduce Write-Ahead Logging (WAL) as an ordering/recovery technique: record intent/state changes in a log before later checkpointing. WAL still needs an appropriate synchronization/failure-model contract; it does not make writes durable by itself.
    - *Judge:* Formulate a trade-off judgment: when should an application call `fsync` immediately (financial transactions) vs periodically (document auto-save)?
 9. **Required Commands / Tools:** Python 3.12 (`os.fsync`, `time.perf_counter`).
 10. **Machine-Checkable Evidence:** Automated test script measuring and asserting that 100 writes with `os.fsync()` take measurably longer than 100 purely buffered writes.
@@ -698,7 +699,7 @@ If QEMU cannot execute due to container policy restrictions:
     - "Replication solves all durability problems."
 13. **What You Can Ignore—for Now:** Database ACID transaction manager code, full B-Tree recovery algorithms, battery-backed RAID controller write cache configurations.
 14. **Progressive Support:** Question $\rightarrow$ Hint 1 $\rightarrow$ Hint 2 $\rightarrow$ Expected Observation $\rightarrow$ Full Explanation.
-15. **Visual Requirements:** Diagram contrasting un-synchronized writes (lost on power failure) with `fsync` forcing data into non-volatile media, plus a conceptual WAL timeline.
+15. **Visual Requirements:** Diagram contrasting unsynchronized/buffered state with a named synchronization request and the durability checkpoints it is intended to cover, plus a conceptual WAL timeline. Label the resulting guarantee as filesystem/device/failure-model dependent.
 16. **Exit Criteria:** Learner defines Durability under a named failure bound and demonstrates the latency cost of `fsync`.
 17. **Competency Mapping:** Judge (durability vs throughput trade-off), Explain (WAL concept).
 18. **Provenance / Source Anchors:** POSIX.1-2024 `fsync(2)`, `fdatasync(2)` & Pillai et al. (OSDI '14).
@@ -721,10 +722,10 @@ If QEMU cannot execute due to container policy restrictions:
    $$\text{Host Writes Page} \xrightarrow{\text{FTL remaps LBA to new physical page}} \text{Old physical page marked invalid} \xrightarrow{\text{Garbage Collection}} \text{Read valid pages + Erase Block + Rewrite}$$
 7. **Prediction-Before-Observation:** If you overwrite a 4 KiB file on an SSD 1,000 times, does the flash memory write exactly 4 MB of data?
 8. **Hands-on Progression (Observe / Explain / Judge):**
-   - *Observe / Calculate:* Work through an FTL garbage collection scenario: updating a single 4 KiB page in a block where 63 other pages are valid forces reading and rewriting the entire 256 KiB block.
-   - *Explain:* Define Write Amplification Factor ($\text{WAF} = \frac{\text{Bytes Written to Flash}}{\text{Bytes Written by Host}}$). Explain why random small writes degrade SSD performance and lifespan.
+   - *Observe / Calculate:* Work through a **bounded illustrative** FTL garbage-collection scenario in which reclaiming an erase block with one invalid 4 KiB page and 63 valid pages requires copying the valid pages before erase. This demonstrates how physical writes can exceed host writes; it is not a universal immediate behavior for every 4 KiB update.
+   - *Explain:* Define Write Amplification Factor ($\text{WAF} = \frac{\text{Bytes Written to Flash}}{\text{Bytes Written by Host}}$). Explain how some small/random-write workloads can increase garbage-collection pressure and write amplification, affecting performance/endurance depending on controller, spare area, workload, and device state.
    - *Explain:* Explain Wear Leveling: why the FTL dynamically distributes writes across all physical flash blocks to prevent uneven cell wear.
-   - *Judge:* Judge why append-only logs (WAL) are structurally friendly to both HDDs (sequential heads) and SSDs (sequential page writes minimizing GC).
+   - *Judge:* Judge when append-oriented logging can improve write locality: it often reduces HDD seek pressure and can produce friendlier SSD write patterns, but SSD garbage collection/write amplification remain controller/workload dependent.
 9. **Required Commands / Tools:** Calculation worksheet / Python simulation script.
 10. **Machine-Checkable Evidence:** Automated test verifying that a learner's calculation function correctly computes WAF and estimated drive write endurance under varying workload patterns.
 11. **Reviewer-Required Evidence:** Learner provides a mechanism-level comparison contrasting why random writes hurt HDDs (mechanical seek time) vs why they hurt SSDs (garbage collection and write amplification).
@@ -858,7 +859,7 @@ Implementation must supply clean, mobile-readable, vendor-neutral Mermaid or SVG
    - *Diagram 8.1:* POSIX File Indirection Architecture: Process FD Table $\rightarrow$ Open File Table $\rightarrow$ Inode Table $\rightarrow$ Directory Entries.
    - *Diagram 8.2:* Write-Path Checkpoints: User Buffer $\rightarrow$ Kernel Page Cache $\rightarrow$ Block Device Queue.
 5. **M09 Visuals:**
-   - *Diagram 9.1:* Durability Synchronization Stack: Volatile Caches vs Non-Volatile Media under Power-Loss Bounds.
+   - *Diagram 9.1:* Durability Checkpoints: possible volatile states vs non-volatile media under an explicitly named failure bound; no universal fixed synchronization stack.
    - *Diagram 9.2:* Write-Ahead Logging (WAL) Timeline: Sequential Log Commit before Lazy In-Place Checkpointing.
    - *Diagram 9.3:* HDD Seek/Rotation vs SSD Flash Block Erase & Garbage Collection.
 
