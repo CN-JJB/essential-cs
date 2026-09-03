@@ -9,16 +9,17 @@ This lab packet provides safe, bounded, machine-checkable experiments and illust
    - Identifies named failure bounds: process crash, kernel panic/OS crash, clean restart, sudden power loss, storage media destruction.
    - Measures raw timing samples comparing ordinary buffered writes against synchronized writes (`os.fsync`).
    - Sync call count and path are machine-observable within the program.
-   - Demonstrates the two-tier synchronization boundary: `fsync(file_fd)` synchronizes file data and inode attributes, while `fsync(dir_fd)` is required on the parent directory to guarantee directory entry persistence for newly created or renamed files.
+   - Demonstrates the Linux file-vs-directory synchronization boundary: file `fsync()` does not necessarily synchronize the containing directory entry; when the named failure model requires pathname persistence, the directories whose entries changed must be included in the sync protocol. Cross-directory rename requires reasoning about both parents, and directory-fsync capability/errors are recorded truthfully.
    - **Key Invariant**: Latency and ratios are empirical host observations, NOT universal constants. `fsync()` is a synchronization interface, not a substitute for backups or physical disaster recovery.
 
 2. **`wal_model.py`** (Supports `L09-01`)
    - Demonstrates Write-Ahead Logging as an ordering and recovery strategy.
    - Enforces the Write-Ahead Invariant: log intent must reach durable storage before dirty main-state data pages may be flushed (`page_lsn <= flushed_lsn`).
-   - Simulates sudden power-loss crashes and executes ARIES-style crash recovery:
-     - **Analysis**: Scans log to distinguish committed transactions from active uncommitted ones.
-     - **Redo**: Replays committed updates to restore data state.
-     - **Undo**: Rolls back uncommitted updates that reached disk before the crash.
+   - Simulates a bounded crash model and a **simplified teaching recovery**, explicitly not full ARIES:
+     - **Analysis**: distinguishes committed from active transactions in the surviving model log.
+     - **Redo**: the teaching model reconstructs committed updates.
+     - **Undo**: rolls back surviving uncommitted updates.
+     - Full ARIES uses repeat-history redo before undoing losers.
    - **Key Invariant**: WAL is not durable merely because it is called a log; durability requires log synchronization before transaction commit acknowledgement.
 
 3. **`media_model.py`** (Supports `L09-02`)
@@ -26,13 +27,13 @@ This lab packet provides safe, bounded, machine-checkable experiments and illust
    - Mechanical HDD model: Calculates seek, rotational, and transfer latency components, demonstrating why random I/O incurs heavy mechanical arm movement.
    - SSD Flash Translation model: Demonstrates NAND Flash constraints (page read/program vs block erase, out-of-place updates, invalidation, garbage collection, and wear leveling).
    - Write Amplification Factor ($\text{WAF} = \frac{\text{Bytes Written to Flash}}{\text{Bytes Written by Host}}$): Simulates GC block reclamation scenarios with varying valid-page densities.
-   - Terabytes Written (TBW): Calculates drive endurance under parameterized WAF workloads, explicitly documenting JEDEC JESD218/JESD219 inference limits (warranty ratings, not exact death date predictions).
+   - Endurance arithmetic: computes an **illustrative host-write budget** from capacity, assumed P/E cycles and WAF. It is not a JESD218 rating; JESD218/JESD219, manufacturer TBW labels, and product warranty terms are kept distinct.
 
 4. **`storage_economics.py` & `reference_assumptions.json`** (Supports `L09-03`)
    - Compares Block, File, and Object storage architectures at the mechanism and interface level.
    - Evaluates architectures using the **Technology Evaluation Framework** (Problem, Constraints, Mechanism, Gains, Costs, Failure Modes, When-not-to-use).
    - Parameterized monthly cost estimation across storage capacity, write/read requests, and data egress.
-   - Uses committed current-practice reference assumptions (`reference_assumptions.json`, checked 2026-09-02) while explicitly listing what the model omits (provisioned IOPS, snapshots, replication, padding).
+   - Uses committed current-practice reference assumptions (`reference_assumptions.json`, checked 2026-09-02), source URLs, region/currency metadata, a stated 100 GB account-wide free-egress assumption, and explicit omissions. Calculations remain parameterized and must be re-verified for production use.
    - Capability-gated network observation: Probes public HTTP headers if network is available; otherwise truthfully reports `SKIP / NO LIVE NETWORK OBSERVATION` with zero synthetic transcripts.
 
 5. **`test_activity.py`**
