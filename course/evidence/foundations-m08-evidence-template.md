@@ -110,8 +110,8 @@
 ---
 
 ## J — Write-Success vs Durability-Preview Boundary
-- Machine-Checked Claim: Does ordinary `write()` success prove power-loss durability?
-- Machine-Checked Claim: Does `f.close()` issue `fsync()` to force disk synchronization?
+- Static Claim-Boundary Audit: Does ordinary buffered `write()` / runtime `flush()` / `close()` success establish the M09 durability claim?
+- Interface Boundary: Why must `close()` not be treated as `fsync()`-equivalent evidence?
 - Physical Risk: What happens to page cache dirty pages if power is lost before writeback?
 - Durability Concept First Home Audit:
   - Canonical Concept ID: `EC-CON-016`
@@ -130,14 +130,12 @@
 ---
 
 ## L — Permission Evidence or Environment-Limited Disposition
-- Process Privileges (`is_privileged_user()` / `os.geteuid()`):
-- If Unprivileged:
-  - Read-Only Mode Tested (`0444`):
-  - Exception Caught (`PermissionError`):
-  - Observed Errno Number & Name (e.g. `13`, `EACCES`):
-- If Privileged (`root` / `uid 0`):
-  - Disposition: `ENVIRONMENT-LIMITED`
-  - Reason: Superuser processes possess `CAP_DAC_OVERRIDE` and bypass DAC mode bit checks. Live `EACCES` reproduction requires an unprivileged execution context.
+- Actual Read-Only Mode Tested: `0444`
+- Actual course-owned write probe result:
+  - If `PermissionError/EACCES` reproduced: disposition `REPRODUCED`.
+  - If overwrite succeeds: disposition `SKIP / ENVIRONMENT-LIMITED`; explain that this environment bypassed mode-bit denial for this fixture.
+- Diagnostic Metadata: effective UID / container context if known.
+- Capability Boundary: `euid==0` is not by itself proof that `CAP_DAC_OVERRIDE` is effective over the target file in container/user-namespace environments.
 
 ---
 
@@ -149,14 +147,14 @@
 - Second Write Bytes Requested vs Accepted (Partial Write Demonstration):
 - Subsequent Write Result:
 - Observed Errno Number & Name (e.g. `28`, `ENOSPC`):
-- Safety Confirmation: No host root filesystem filled; no raw block devices manipulated; host partition exhaustion strictly prevented.
+- Safety Confirmation: ENOSPC is model evidence only; model capacity is hard-capped in memory; no raw block device or host filesystem fill is attempted.
 
 ---
 
 ## N — Cleanup / Safety / Fact-vs-Inference
 - Reset Command: `python3 reset.py`
-- Cleanup Verification: All temporary run directories, `.dat`, `.tmp`, and `__pycache__` artifacts removed.
-- Host Safety: No root required, memory bounded, zero disk exhaustion risk.
+- Cleanup Verification: temporary scoped run directories and `__pycache__` removed; reset must not wildcard-delete arbitrary learner `.dat`/`.tmp` files.
+- Host Safety: no root/sudo required; in-memory ENOSPC model is hard-capped; real file writes are bounded and never attempt filesystem exhaustion.
 - Fact vs Inference:
   - Direct Host Observations (Facts):
   - Inferences & Linux-Specific Implementation Details:
