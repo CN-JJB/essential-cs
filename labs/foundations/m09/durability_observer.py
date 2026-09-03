@@ -158,12 +158,12 @@ def measure_sync_vs_buffered(
 
 
 def demonstrate_file_and_directory_sync(work_dir: str | Path | None = None) -> dict:
-    """Demonstrate the two-tier synchronization required for newly created files.
+    """Demonstrate Linux file-data vs parent-directory synchronization objects.
 
-    fsync(file_fd) synchronizes file data and inode attributes.
-    However, the directory entry mapping (dentry) linking filename -> inode resides in the
-    parent directory, which requires an independent sync on the directory FD for strict
-    power-loss durability of newly created or renamed files.
+    A successful fsync(file_fd) does not necessarily synchronize the containing directory
+    entry.  When a named failure model requires a newly created pathname to survive, Linux
+    applications commonly fsync the containing directory as a separate step.  Rename across
+    directories requires reasoning about both source and destination directories.
     """
     cleanup_temp = False
     if work_dir is None:
@@ -181,6 +181,7 @@ def demonstrate_file_and_directory_sync(work_dir: str | Path | None = None) -> d
         "file_path": str(file_path),
         "file_data_synced": False,
         "parent_dir_synced": False,
+        "parent_dir_sync_disposition": "NOT_ATTEMPTED",
     }
 
     try:
@@ -193,16 +194,19 @@ def demonstrate_file_and_directory_sync(work_dir: str | Path | None = None) -> d
         finally:
             os.close(fd)
 
-        # Step 2: Open and sync parent directory (Linux/POSIX semantics)
-        # On POSIX systems, opening directory with O_RDONLY allows fsync(dir_fd)
+        # Step 2: Linux example: open and sync the containing directory.
+        # Directory-fsync support is an OS/filesystem capability, not a universal POSIX promise.
         try:
-            dir_fd = os.open(work_path, os.O_RDONLY)
+            flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+            dir_fd = os.open(work_path, flags)
             try:
                 os.fsync(dir_fd)
                 report["parent_dir_synced"] = True
+                report["parent_dir_sync_disposition"] = "PASS"
             finally:
                 os.close(dir_fd)
         except OSError as e:
+            report["parent_dir_sync_disposition"] = "ENVIRONMENT_LIMITED"
             report["parent_dir_sync_error"] = str(e)
 
     finally:
