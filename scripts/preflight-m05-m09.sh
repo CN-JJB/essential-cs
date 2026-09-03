@@ -25,6 +25,8 @@ PYTHON_VERSION="None"
 PYTHON_IMPL="None"
 FORK_STATUS="UNAVAILABLE"
 RESOURCE_STATUS="UNAVAILABLE"
+FSYNC_STATUS="UNAVAILABLE"
+FDATASYNC_STATUS="UNAVAILABLE"
 if [ -n "${PYTHON_BIN}" ]; then
     PYTHON_STATUS="PASS"
     PYTHON_VERSION=$("${PYTHON_BIN}" -c "import sys; print(sys.version.split()[0])" 2>/dev/null || echo "Error")
@@ -35,10 +37,18 @@ if [ -n "${PYTHON_BIN}" ]; then
     if "${PYTHON_BIN}" -c "import resource,sys; sys.exit(0)" >/dev/null 2>&1; then
         RESOURCE_STATUS="PASS"
     fi
+    if "${PYTHON_BIN}" -c "import os,sys; sys.exit(0 if hasattr(os,'fsync') else 1)" >/dev/null 2>&1; then
+        FSYNC_STATUS="PASS"
+    fi
+    if "${PYTHON_BIN}" -c "import os,sys; sys.exit(0 if hasattr(os,'fdatasync') else 1)" >/dev/null 2>&1; then
+        FDATASYNC_STATUS="PASS"
+    fi
 fi
 echo "Python: ${PYTHON_STATUS} (${PYTHON_IMPL} ${PYTHON_VERSION})"
 echo "os.fork capability: ${FORK_STATUS}"
 echo "resource module: ${RESOURCE_STATUS}"
+echo "os.fsync capability: ${FSYNC_STATUS}"
+echo "os.fdatasync capability: ${FDATASYNC_STATUS}"
 
 cmd_status() {
     if command -v "$1" >/dev/null 2>&1; then
@@ -55,6 +65,7 @@ GIT_STATUS=$(cmd_status git)
 MAKE_STATUS=$(cmd_status make)
 PERL_STATUS=$(cmd_status perl)
 BC_STATUS=$(cmd_status bc)
+CURL_STATUS=$(cmd_status curl)
 
 echo "Native GCC: ${GCC_STATUS} $([ "${GCC_STATUS}" = PASS ] && gcc --version 2>/dev/null | head -n1)"
 echo "Native objdump: ${OBJDUMP_STATUS}"
@@ -63,6 +74,7 @@ echo "git: ${GIT_STATUS} $([ "${GIT_STATUS}" = PASS ] && git --version 2>/dev/nu
 echo "make: ${MAKE_STATUS}"
 echo "perl: ${PERL_STATUS}"
 echo "bc: ${BC_STATUS}"
+echo "curl: ${CURL_STATUS} $([ "${CURL_STATUS}" = PASS ] && curl --version 2>/dev/null | head -n1)"
 
 PROCFS_STATUS="MISSING"
 if [ -d "/proc/self" ] && [ -r "/proc/self/status" ]; then
@@ -139,6 +151,11 @@ if [ "${PYTHON_STATUS}" = "PASS" ] && [ "${FD_STATUS}" = "PASS" ] && [ "${MEMINF
     M08_HOST_STATUS="PASS"
 fi
 
+M09_HOST_STATUS="PARTIAL"
+if [ "${PYTHON_STATUS}" = "PASS" ] && [ "${FSYNC_STATUS}" = "PASS" ]; then
+    M09_HOST_STATUS="PASS"
+fi
+
 LAB_REQ_02_STATUS="BLOCKED"
 if [ "${GIT_STATUS}" = "PASS" ] &&
    [ "${MAKE_STATUS}" = "PASS" ] &&
@@ -157,6 +174,8 @@ echo "  M06 Live strace Capability: ${STRACE_STATUS}"
 echo "  M07 Host Activity Capability: ${M07_HOST_STATUS}"
 echo "  M08 Host Activity Capability: ${M08_HOST_STATUS}"
 echo "  M08 Live strace Capability: ${STRACE_STATUS}"
+echo "  M09 Host Activity Capability: ${M09_HOST_STATUS}"
+echo "  M09 Network/Curl Capability: ${CURL_STATUS}"
 echo "  LAB-REQ-02 Runnable Capability: ${LAB_REQ_02_STATUS}"
 echo "  NOTE: RUNNABLE means capability-present; build/QEMU smoke still must run and pass separately."
 echo "=== Preflight Complete ==="
