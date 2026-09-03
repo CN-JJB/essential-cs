@@ -451,7 +451,7 @@ This sequence equips the learner to understand exactly what happens under the ho
 - **Normative Foundation:**
   - IETF STD 97 / RFC 9110 (*HTTP Semantics*, June 2022)
   - IETF STD 98 / RFC 9111 (*HTTP Caching*, June 2022)
-- **Pedagogical Purpose:** Demystify how web traffic traverses the internet by implementing and tracing an end-to-end HTTP communication path involving a client, a forwarding intermediary (proxy/gateway), and an origin server on `127.0.0.1`. The learner directly observes header transformations, hop-by-hop vs. end-to-end headers, the `Via` protocol tracking contract, conditional cache validation yielding `304 Not Modified` with zero body transfer, and controlled upstream failure mapping.
+- **Pedagogical Purpose:** Demystify a bounded HTTP path involving a client, course forwarding intermediary, and origin server on loopback. The learner observes fields preserved across the hop versus connection-specific fields handled by the intermediary, the course `Via` tracking contract, conditional cache validation yielding `304 Not Modified` with no response content, and controlled upstream failure mapping.
 
 ---
 
@@ -498,14 +498,14 @@ The lab consists of three bounded components executing on loopback:
   - `GET /resource` with `If-None-Match: "v1-canonical"`: Validates conditional request per RFC 9111. Returns `304 Not Modified` with **zero message body/content**.
   - `GET /resource` with mismatched ETag: Returns `200 OK` with the full representation body.
   - `GET /health`: Returns `200 OK`, body `OK`.
-- **Termination:** Handles `SIGTERM` and `SIGINT` cleanly, closing listeners and active connections within 1.0 second.
+- **Termination:** Implements a course-owned cooperative shutdown path and closes owned listeners/connections. The harness owns child-process handles and requests graceful termination through the platform/runtime process API. POSIX signals may be an implementation detail on Unix-like hosts, not the cross-platform Core contract; no fixed shutdown time is a learner invariant.
 
 #### Component 2: `IntermediaryAdapter` (`labs/lab_req_01/intermediary_adapter.py`)
 - **Network Interface:** Binds to `127.0.0.1` on port `0`. Takes the origin port as a command-line argument (`--origin-port=<port>`). Prints readiness line: `PROXY_READY_PORT=<port>`.
 - **Forwarding Protocol Mechanics:**
   - Receives incoming HTTP client request.
   - Forwards the request line and end-to-end headers to `OriginServer`.
-  - Removes hop-by-hop headers (`Connection`, `Keep-Alive`, `Transfer-Encoding`).
+  - Supports only the bounded course request subset. It handles the `Connection` field and any fields nominated by it according to the intermediary contract, and reconstructs framing rather than teaching a brittle fixed list of "hop-by-hop headers". CONNECT, protocol Upgrade, arbitrary proxying, and request-body transfer codings are out of scope.
   - Appends intermediary tracking header: `Via: 1.1 essential-cs-proxy` per RFC 9110 §7.6.3.
   - Receives response from `OriginServer` and streams response line, headers, and body back to client.
 - **Controlled Upstream Failure Mapping:**
@@ -522,10 +522,10 @@ The lab consists of three bounded components executing on loopback:
    - Checks Python standard library (`socket`, `http.server`, `subprocess`).
    - Checks `curl` binary availability: executes `curl --version`.
    - Records the exact curl version and TLS backend string (e.g., `curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13`).
-2. **Truthful Fallback Strategy:**
-   - If `curl` is missing, the lab harness issues an explicit warning: `TOOL MISSING: curl is required for the interactive trace of LAB-REQ-01`.
-   - The learner may install `curl` using standard package managers (`apt install curl`, `winget install curl`, `brew install curl`).
-   - If in a restricted environment where `curl` cannot be installed, the learner runs an approved, standalone Python trace client (`python -m labs.lab_req_01.raw_http_client`) that transmits raw HTTP text over raw sockets and prints formatted `>` and `<` traces identical to curl. The transcript must be explicitly labeled `EVIDENCE GENERATED VIA STANDALONE RAW SOCKET CLIENT (CURL FALLBACK)`.
+2. **Truthful Tool-Missing Disposition:**
+   - If `curl` is missing, the harness reports `TOOL MISSING: curl is required for LAB-REQ-01` and the Required Lab is **ENVIRONMENT-BLOCKED / NOT RUN**, not PASS.
+   - Installation guidance may be offered, but Design does not assume package-manager/network/admin access.
+   - A course-owned manual HTTP-over-TCP trace client may be provided as **NON-EQUIVALENT SUPPORT / REFERENCE EVIDENCE ONLY**. Its output must never be labeled `curl` evidence and cannot satisfy LAB-REQ-01 completion by itself.
 
 ---
 
@@ -534,17 +534,14 @@ The lab consists of three bounded components executing on loopback:
 To prevent orphan processes, hung background listeners, or port collisions:
 
 1. **Startup Readiness Protocol:**
-   - Harness launches `OriginServer` via `subprocess.Popen`.
-   - Harness reads stdout pipe line-by-line with a 5.0-second timeout until it matches `ORIGIN_READY_PORT=(\d+)`. It extracts `<origin_port>`.
-   - Harness launches `IntermediaryAdapter` passing `--origin-port=<origin_port>`.
-   - Harness reads stdout pipe until matching `PROXY_READY_PORT=(\d+)` to extract `<proxy_port>`.
-   - A quick TCP connect check verifies both endpoints accept connections before any tests run.
-2. **Deterministic Teardown & Listener Check:**
-   - At lab conclusion (or upon any failure/exception), the teardown fixture executes:
-     1. Sends `SIGTERM` to `IntermediaryAdapter` PID; waits up to 2.0s with `proc.wait()`.
-     2. Sends `SIGTERM` to `OriginServer` PID; waits up to 2.0s with `proc.wait()`.
-     3. If either process fails to exit within 2.0s, sends `SIGKILL`.
-     4. Executes a post-reset listener check: attempts a non-blocking TCP connect to both assigned ports on `127.0.0.1`. Asserts that both ports immediately yield `ConnectionRefusedError`, proving no background processes or sockets were leaked.
+   - Harness launches `OriginServer` through an owned child-process handle and waits for an unbuffered machine-readable readiness record containing the actual assigned port.
+   - Harness launches `IntermediaryAdapter` with that origin endpoint and waits for its readiness record.
+   - A bounded harness watchdog prevents hangs, but its numeric duration is test-runner configuration rather than curriculum evidence.
+   - A course health/readiness probe verifies the endpoints are serving the intended fixture contract before tests begin.
+2. **Deterministic Teardown & Cleanup Check:**
+   - At lab conclusion or on any exception, the harness requests cooperative shutdown for each process it owns, waits under a bounded harness watchdog, and escalates through the host/runtime process-termination API if necessary.
+   - Acceptance requires owned child processes to be reaped and course listeners to be closed. A post-reset probe records that the old endpoint is no longer serving the course fixture; it must not require a particular exception class, errno, signal, or millisecond latency.
+   - Reset is course-scoped and idempotent. Optional OS socket-table evidence may corroborate cleanup when the relevant tool exists, but is not Core.
 
 ---
 
@@ -565,7 +562,7 @@ The lab proceeds through four sequential investigative steps:
   - Learner verifies that the response carries **zero payload bytes** (response body is empty).
   - Learner notes that headers may still report metadata (e.g., representation `Content-Length`), confirming that RFC 9111 does not require `Content-Length: 0`.
 - **Step 4: Controlled Origin Failure Injection**
-  - Learner (or harness) terminates `OriginServer` (`kill -TERM <origin_pid>`).
+  - Learner (or harness) requests `OriginServer` shutdown through the course harness. POSIX `kill -TERM` may be shown only as an optional Unix-specific observation, not required Core syntax.
   - Execute: `curl -v http://127.0.0.1:<proxy_port>/resource`
   - Intermediary fails to connect to origin and returns `HTTP/1.1 502 Bad Gateway`.
   - Learner verifies status `502` and presence of intermediary `Via` header, confirming the error was generated by the gateway rather than the origin.
@@ -889,13 +886,13 @@ Instead, the design classifies runtime capabilities and establishes an empirical
 | **Python 3 `socket`** | M10, M11, LAB-REQ-01 | Required for Core | Standard Library / Unprivileged | Available in standard CPython; exact errno strings and timing vary by OS. | Hard prerequisite; if sockets are unavailable, Core networking is blocked. | CPython 3.12 / 3.13; OQ-BP-006 OPEN |
 | **Python 3 `http.server`** | M11, M12, LAB-REQ-01 | Required for Core | Standard Library / Unprivileged | Binds to `127.0.0.1` on port 0; handles standard HTTP/1.1 requests. | Hard prerequisite for local HTTP server fixtures. | CPython 3.12 / 3.13; OQ-BP-006 OPEN |
 | **Python 3 `ssl`** | M11 | Required for Core | Standard Library / Unprivileged | Uses host OpenSSL / LibreSSL library; supports TLS 1.3 on modern OSes. | Dedicated local verification context; no external CA dependency. | OpenSSL 3.x backend |
-| **`curl` CLI** | M11, LAB-REQ-01 | Required for LAB-REQ-01 | External Binary / Unprivileged | Common on Linux, macOS, and modern Windows; TLS backend varies. | If missing, record `TOOL MISSING`; allow installation or run approved standalone raw socket client. | curl 8.x (tested on 8.5.0); OQ-BP-006 OPEN |
+| **`curl` CLI** | M11, LAB-REQ-01 | Required for LAB-REQ-01 | External Binary / Unprivileged | Availability/build/TLS backend vary by host. | If missing, record `TOOL MISSING`; LAB-REQ-01 is ENVIRONMENT-BLOCKED / NOT RUN. Any manual HTTP-over-TCP client is non-equivalent support only. | Record actual `curl --version`; no canonical pin while OQ-BP-006 is OPEN |
 | **Linux `ss`** | M10 | Optional Observation | Environment-Sensitive (Linux) | Part of `iproute2`; omitted from minimal Docker images and non-Linux. | If missing, record `TOOL UNAVAILABLE`; preserve Python endpoint evidence. | iproute2 `ss -tan` |
 | **Linux `ip route`** | M10 | Optional Observation | Environment-Sensitive (Linux) | Part of `iproute2`; container routing tables may be restricted. | If missing, record `TOOL UNAVAILABLE`; do not synthesize host routes. | iproute2 |
 | **Netcat (`nc`)** | M10 | Optional / Illustrative | Environment-Sensitive | Syntax fragmentation (OpenBSD vs. GNU flags). | Do not rely on netcat flags; use Python socket one-liners instead. | Netcat OpenBSD / GNU |
 | **`openssl` CLI** | M11 | Optional / Auxiliary | Environment-Sensitive | Missing by default on many Windows installations. | Core TLS verification uses Python `ssl`; OpenSSL CLI is optional. | OpenSSL 3.x CLI |
 | **`traceroute`** | M10 | Optional / Capability-gated | Privilege-Sensitive | Raw socket / ICMP permissions vary; often blocked in containers. | If unavailable or blocked, report `SKIP`; reference traces are labeled reference-only. | traceroute / mtr |
-| **`tcpdump` / Wireshark** | M10 | Optional / Capability-gated | Privilege-Sensitive | Requires `CAP_NET_RAW` / `sudo` or packet-capture helper permissions. | Strictly Optional; never required for Core. Pre-captured PCAP files are reference evidence. | tcpdump 4.99+ |
+| **`tcpdump` / Wireshark** | M10 | Optional / Capability-gated | Privilege-Sensitive | Live capture permission varies by OS/tool setup (capabilities, capture helper/group configuration, container policy, etc.). | Strictly Optional; never required for Core. Pre-captured PCAP files are reference evidence. | Record actual tool/version/capability if used; no canonical pin |
 | **Desktop Browser (Chromium / Chrome)** | M12 | Preferred Browser Observation | Browser/GUI-Dependent / Current Practice | Requires graphical desktop environment (X11/Wayland/Windows/macOS). | If running in headless container/WSL, record `NO LIVE BROWSER OBSERVATION`; use reference traces. | Chromium 120+ / Chrome |
 | **Alternative Browser (Firefox)** | M12 | Optional Browser Observation | Browser/GUI-Dependent / Current Practice | Process model differs from Chromium; Gecko rendering engine. | Optional comparison; do not use Firefox to validate Chromium internal claims. | Firefox ESR / Release |
 | **Local HTML/JS Fixtures** | M12 | Required for Core | Course-owned / Unprivileged | Static files served on loopback port 0; standard modern JavaScript. | Browser capability is gated separately from static file serving. | Modern ECMAScript (fetch, Promises) |
@@ -931,7 +928,7 @@ Before running any network or web module tests, the environment must execute the
     "ip_route": { "available": true },
     "openssl_cli": { "available": true },
     "traceroute": { "available": false },
-    "tcpdump": { "available": false, "reason": "non-root environment" }
+    "tcpdump": { "available": false, "reason": "capture capability unavailable or restricted" }
   },
   "browser": {
     "gui_available": true,
@@ -1392,7 +1389,7 @@ Subsequent Lesson and Lab implementation agents must adhere to the following con
    - Preflight scripts reside in `tests/preflight_network_web.py`.
 2. **Port Allocation Contract:** Every socket listener created in tests or activities must bind to `127.0.0.1` on port `0`. Hardcoded ports (e.g., 80, 443, 8080, 3000) are strictly prohibited.
 3. **No Fabricated Evidence:** If an optional tool (`ss`, `ip route`, `traceroute`, desktop browser) is absent, tests and logs must truthfully output `TOOL UNAVAILABLE` or `NO LIVE BROWSER OBSERVATION` and record fallback evidence. Never fabricate terminal outputs.
-4. **Process Cleanup Discipline:** All test fixtures launching background processes (`OriginServer`, `IntermediaryAdapter`) must track PIDs, implement graceful `SIGTERM` teardown, enforce join deadlines, and execute a post-reset listener verification asserting that target ports actively refuse connections.
+4. **Process Cleanup Discipline:** All test fixtures launching background processes must retain owned process handles, provide cooperative/platform-appropriate termination, reap children under bounded harness watchdogs, and verify that course endpoints are no longer serving after reset. Do not require POSIX signals or one exact post-close connection error.
 5. **No Verification Bypass:** Never instruct learners or write scripts using `curl -k`, `verify=False`, or disabled certificate hostname validation.
 
 ---
