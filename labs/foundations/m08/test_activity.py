@@ -186,20 +186,24 @@ class TestL0803IOFailureFixture(unittest.TestCase):
 
     def test_capability_gated_eacces(self):
         rep = reproduce_eacces()
-        if is_privileged_user():
-            self.assertEqual(rep["status"], "SKIP")
-            self.assertEqual(rep["disposition"], "ENVIRONMENT-LIMITED")
-            self.assertTrue(rep["is_privileged"])
-            self.assertIn("root", rep["reason"])
-        else:
-            self.assertEqual(rep["status"], "PASS")
+        self.assertIn(rep["status"], ["PASS", "SKIP"])
+        if rep["status"] == "PASS":
             self.assertEqual(rep["disposition"], "REPRODUCED")
+            self.assertFalse(rep["mode_bit_denial_bypassed"])
             self.assertEqual(rep["errno"], errno.EACCES)
             self.assertEqual(rep["errno_name"], "EACCES")
+        else:
+            self.assertEqual(rep["disposition"], "ENVIRONMENT-LIMITED")
+            self.assertTrue(rep["mode_bit_denial_bypassed"])
+            self.assertIn("0444", rep["reason"])
+            # euid==0 is metadata only; the actual write probe decides disposition.
+            self.assertIn("euid_is_zero", rep)
 
     def test_bounded_enospc_model_and_partial_writes(self):
         # 1. Direct device testing
         dev = BoundedSpaceWriter(capacity_bytes=256)
+        with self.assertRaises(ValueError):
+            BoundedSpaceWriter(capacity_bytes=1024 * 1024 + 1)
         n1 = dev.write_raw(b"A" * 200)
         self.assertEqual(n1, 200)
         self.assertEqual(dev.remaining_bytes, 56)
