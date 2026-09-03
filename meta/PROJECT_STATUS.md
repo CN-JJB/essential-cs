@@ -52,6 +52,7 @@ Blueprint closure means the project may now build and validate the curriculum th
 - **Issue #50 / PR #51 — Runtime, OS & Persistence Design Dossier v0.1 (M05–M09):** Lead-reviewed and merged with **READY FOR LESSON / ACTIVITY IMPLEMENTATION** after SIMPLE DESIGN FIXes tightening write-path/durability claims, hosted ptrace/QEMU/root-permission assumptions, M07 bad-address/OOM evidence, Isolation vs Trust Boundary wording, and SSD/WAL inference boundaries. All 15 canonical Lesson IDs and first homes remain intact.
 - **Issue #53 / PR #54 — M05 Languages, VM & Compiler Pipeline learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes separating Python specification from CPython AST/bytecode implementation evidence, removing unsafe/fixed bytecode/performance claims, tightening type-system/GCC diagnostic boundaries, and gating bytecode inspection to CPython. Author Windows CPython 3.13.1/GCC 14.2 tests passed 9/9; Lead Debian CPython 3.13.5/GCC 14.2 independently reproduced the core 9/9 contract and compiler/bytecode relations.
 - **Issue #56 / PR #57 — M06 Processes, Syscalls & LAB-REQ-02 learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes adding real fork→exec→exit→wait evidence, removing synthetic strace evidence, bounding zombie/scheduler observations, hardening xv6 pin/setup/reset/QEMU smoke, and correcting Process/POSIX/Linux/xv6 claim boundaries. Author WSL reproduced xv6 build/QEMU execution at the accepted Fall 2025 pin; Lead Debian independently reproduced the final host M06 suite at 7/7 and rechecked the official pinned pause/sys_pause route. Official course-fork grader remains NOT RUN.
+- **Issue #59 / PR #60 — M07 Virtual Memory & Isolation learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes bounding Isolation/TLB wording, converting exact RSS/minor-fault/page-frame relations into hosted directional evidence, tightening Linux overcommit/OOM claims, removing stale kernel-internal implementation details, and preserving the C UB → hardware event → OS handling → hosted signal separation. Canonical first homes EC-CON-013 Isolation and EC-CON-017 Trust Boundary remain in L07-01; Process remains revisit-only.
 
 ## Active workstream
 
@@ -71,11 +72,11 @@ Production now follows D-027's bounded build-first sequence:
 
 `Research → Design → Lesson/Lab/Project Implementation → Independent Verification/Lead Review → Next Ready Batch`
 
-Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is Lead-accepted; M05 and M06 implementations are Lead-reviewed and merged, including LAB-REQ-02**. The next bounded production step is learner-facing **M07 — Virtual Memory & Isolation**.
+Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is Lead-accepted; M05–M07 implementations are Lead-reviewed and merged, including LAB-REQ-02**. The next bounded production step is learner-facing **M08 — Files, Filesystems & System I/O**.
 
 ## Current priority
 
-1. Implement the next bounded learner-facing **M07 — Virtual Memory & Isolation** packet from the accepted M05–M09 Design; do not jump ahead to M08 in the same PR.
+1. Implement the next bounded learner-facing **M08 — Files, Filesystems & System I/O** packet from the accepted M05–M09 Design; do not jump ahead to M09 in the same PR.
 2. Keep independent Verification/Lead Review on every bounded implementation batch even though learner validation is deferred.
 3. Keep **Issue #34 OPEN / DEFERRED / NON-BLOCKING** until real learning begins; never fabricate learner evidence.
 4. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
