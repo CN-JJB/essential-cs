@@ -1,90 +1,80 @@
-# LAB-REQ-02 — xv6 Syscall Traversal (`sleep` -> `pause/sys_pause`)
+# LAB-REQ-02 — xv6 Syscall Traversal (`sleep` → `pause/sys_pause`)
 
-This lab satisfies **LAB-REQ-02**, tracing a user-to-kernel crossing through xv6 on RISC-V.
+This Required Lab traces a user-to-kernel crossing through the pinned Fall 2025 xv6 RISC-V tree.
 
-- **Upstream:** MIT 6.1810 Operating System Engineering (Fall 2025).
-- **Canonical Upstream Repository:** `https://github.com/mit-pdos/xv6-riscv.git`
-- **Pinned Commit:** `35b088427ef37611c38afdeed5a52a278cae38f9`
-- **Current Route:** The learner implements the `sleep` user utility which calls xv6 system call **`pause(int ticks)`** (`SYS_pause` / `sys_pause`).
+- Upstream: MIT 6.1810 Operating System Engineering (Fall 2025)
+- Repository: `https://github.com/mit-pdos/xv6-riscv.git`
+- Pin: `35b088427ef37611c38afdeed5a52a278cae38f9`
+- Current route: learner `sleep` utility calls xv6 `pause(int ticks)` → generated syscall stub → RISC-V `ecall` → trap/dispatcher → `sys_pause()`
+- xv6 software: MIT-style license in upstream `LICENSE`
+- MIT lab-page prose: link/reference only; do not copy/adapt it as course prose without separately verified reuse rights
 
----
+## Learner change surface
 
-## Bounded Learner Change Surface
+Only:
 
-The learner's implementation scope is strictly bounded:
-1. Create `worktree/user/sleep.c`.
-2. Register `$U/_sleep\` in `UPROGS` inside `worktree/Makefile`.
-3. Do NOT modify kernel files, shell implementations, or scheduler algorithms.
+1. `worktree/user/sleep.c`
+2. `$U/_sleep` registration in `worktree/Makefile`
 
----
+No new kernel syscall, scheduler change, shell rewrite, or grader implementation.
 
-## Workflow Steps
+## Workflow
 
-### Step 1: Toolchain Preflight
-Check whether QEMU and the RISC-V cross-compiler are available:
+### 1. Capability preflight
+
 ```bash
 ./preflight.sh
 ```
-If toolchain is present, preflight will report `PASS`. If missing, it will report `BLOCKED`.
 
-### Step 2: Setup Pinned Worktree
-Clone and initialize the pinned xv6-riscv source repository:
+`PASS` means required local commands are present. It does **not** mean build/QEMU execution has passed.
+
+### 2. Setup exact source pin
+
 ```bash
 ./setup.sh
 ```
-This checks out commit `35b088427ef37611c38afdeed5a52a278cae38f9` into `worktree/`.
 
-### Step 3: Verify the Syscall Source Route
-Audit the source route anchors to understand how `pause` connects user space to kernel space:
+The script verifies canonical origin, exact HEAD, and upstream license file.
+
+### 3. Inspect the current route
+
 ```bash
 python3 verify_source_route.py worktree
 ```
-This verifies:
-- `user/user.h`: declares `int pause(int);`
-- `user/usys.pl`: emits stub loading `li a7, SYS_pause` and calling `ecall`
-- `kernel/syscall.h`: defines `#define SYS_pause 13`
-- `kernel/syscall.c`: dispatches `[SYS_pause] = sys_pause`
-- `kernel/sysproc.c`: implements `sys_pause()`
 
-### Step 4: Implement `user/sleep.c`
-Create `worktree/user/sleep.c` with the following structure:
-```c
-#include "kernel/types.h"
-#include "kernel/stat.h"
-#include "user/user.h"
+The verifier checks the exact git pin plus the current `pause/sys_pause` source anchors. If learner/generated files already exist, their route is checked too.
 
-int
-main(int argc, char *argv[])
-{
-  if(argc != 2){
-    fprintf(2, "Usage: sleep ticks\n");
-    exit(1);
-  }
-  int ticks = atoi(argv[1]);
-  pause(ticks);
-  exit(0);
-}
-```
-Add `$U/_sleep\` to `UPROGS` in `worktree/Makefile`.
+### 4. Implement `user/sleep.c`
 
-### Step 5: Smoke Test & Execution
-Run the smoke test to build the kernel, inspect the disassembly of `user/_sleep`, and run QEMU:
+Use original Essential CS guidance; a minimal structure should validate one tick argument, convert it, call xv6 `pause(ticks)`, and exit. Register `$U/_sleep` in `UPROGS`.
+
+### 5. Run machine-checkable smoke
+
 ```bash
 ./smoke.sh
 ```
 
-### Step 6: Clean Reset
-To restore the worktree to its clean state and terminate any background emulator instances:
+PASS requires:
+
+- exact source pin;
+- xv6 build success;
+- disassembly relation `main -> pause -> ecall`;
+- QEMU reaches the xv6 shell;
+- missing-argument usage output is observed;
+- `sleep 10` returns and `LAB_REQ_02_OK` is observed within the bounded window.
+
+The pinned base repo does not contain MIT's course-fork `grade-lab-util`, so that grader is **NOT RUN** unless a separately provenance-verified grader source is intentionally introduced later.
+
+### 6. Reset
+
 ```bash
 ./reset.sh
 ```
 
----
+Reset is scoped to this dedicated worktree/process group and returns the tree to the exact clean pin.
 
-## Fallback Execution Mode
+## Fallback
 
-If your environment cannot run QEMU (e.g. cloud container restrictions), read:
-- `fallback_trace.md` for verbatim recorded QEMU output and disassembly evidence;
-- `verify_source_route.py` for static source auditing.
+If QEMU or the cross-toolchain is unavailable, use `verify_source_route.py` plus `fallback_trace.md`.
 
-*Note: Fallback mode is classified as `source inspection / fallback`, not `RUNNABLE PASS`.*
+**Fallback != runnable Required Lab completion.** Report build/QEMU/grader separately as PASS / FAIL / NOT RUN / BLOCKED.
