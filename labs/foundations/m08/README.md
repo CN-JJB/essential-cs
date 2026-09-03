@@ -16,11 +16,11 @@ This lab packet provides safe, bounded, machine-checkable experiments illustrati
    - Compares user-space buffered I/O batching with raw unbuffered `os.write()`.
    - Probes live `strace` capability truthfully; if strace is missing or restricted, reports `NO LIVE SYSCALL TRACE` without synthesizing fake output.
    - Observes `/proc/meminfo` Dirty and Writeback metrics directionally for bounded files, explicitly noting system-global concurrency and noise.
-   - **Key Invariant**: Calling `write()` or `flush()` returns success when the OS accepts data into memory; it does **not** prove power-loss durability. Durability is canonically established in M09 (`L09-01`).
+   - **Key Invariant**: Ordinary buffered `write()` / runtime `flush()` / `close()` success is insufficient evidence for the M09 durability claim. The canonical Durability definition and failure-model judgment remain in M09 (`L09-01`).
 
 3. **`io_failure_fixture.py`** (Supports `L08-03`)
    - Deterministically reproduces `ENOENT` on non-existent path resolution.
-   - Implements capability gating for `EACCES`: under unprivileged users, reproduces `PermissionError` on read-only mode bits; under root (`uid=0`), records truthful `ENVIRONMENT-LIMITED` disposition because `CAP_DAC_OVERRIDE` bypasses mode bits.
+   - Implements behavior-based capability gating for `EACCES`: it writes only to a temporary course-owned `0444` fixture. If live `EACCES` is observed, it records `REPRODUCED`; if the write succeeds, it records `ENVIRONMENT-LIMITED`. `euid==0` is diagnostic metadata, not proof of `CAP_DAC_OVERRIDE` in container/user-namespace environments.
    - Models storage capacity exhaustion (`ENOSPC`) and POSIX partial writes via a safe, course-owned bounded in-memory abstraction (`BoundedSpaceWriter`), strictly preventing host root filesystem exhaustion.
    - Provides diagnostic triage mapping symptoms, error codes, and subsystems.
 
@@ -69,7 +69,7 @@ python3 reset.py
 ## Safety Guarantees
 
 - **No Root / Sudo Required**: All tools run safely as an unprivileged user.
-- **No Host Exhaustion**: Capacity limits are demonstrated via a bounded course-owned in-memory model (`BoundedSpaceWriter`). No host filesystem or partition is filled.
+- **No Host Exhaustion Experiment**: ENOSPC is modeled in memory with a 1 MiB hard cap. The only real disk-write observation is small and hard-capped; it never attempts to fill a filesystem or partition.
 - **No Raw Block Devices**: Zero manipulation of raw disks, partitions, mount tables, or system quotas.
 - **Deterministic Cleanup**: All temporary files reside in scoped directories and are cleaned up immediately.
 - **Zero Synthetic Traces**: Never fabricates `strace` output when tracing is unavailable.
