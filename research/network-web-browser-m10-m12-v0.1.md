@@ -63,7 +63,7 @@ $$\text{M10 (Networking I: IP, DNS, Transport)} \longrightarrow \text{M11 (Netwo
    - C++ source locations verified:
      - `content/browser/site_instance_impl.cc` (active, verified live).
      - `content/browser/security/cpsp/child_process_security_policy_impl.cc` (active, verified live at its updated location under `content/browser/security/cpsp/`).
-   - Educational boundary: Source reading is strictly bounded to three specific inspection points. No Chromium compilation is required or permitted.
+   - Educational boundary: Source reading is strictly bounded to three specific inspection points. **Chromium compilation is not required for Core**; the Research does not impose a blanket prohibition on compilation outside this bounded activity.
 5. **Environment and OQ-BP-006 Baseline Feasible:**
    - Python 3 sockets provide the portable required observation spine; `curl` is a required LAB-REQ-01 tool subject to preflight, while Linux `ss`/`ip route` are useful environment-sensitive observations rather than universal prerequisites.
    - Raw packet capture (`tcpdump`) and network namespace operations are classified as **optional / capability-gated** because they require root/`CAP_NET_RAW` privileges that fail in restricted container and hosted environments.
@@ -252,7 +252,7 @@ Learners transition from viewing network communication as an abstract, magically
 Learners transition from raw transport streams to secure, structured application protocol interactions. They master the HTTP request-response model, uniform interface semantics, cache freshness and validation mechanisms, intermediary role in distributed systems, and the transport evolution from HTTP/1.1 to HTTP/2 and HTTP/3/QUIC. They learn to separate the protocol's semantics from its wire encoding and understand the cryptographic boundaries of TLS.
 
 ### 5.2 Minimum Mechanism Model
-1. **Transport Layer Security (TLS 1.3 — RFC 8446):**
+1. **Transport Layer Security (TLS 1.3 — RFC 9846):**
    - **Security Properties:** TLS 1.3 uses authenticated encryption (AEAD) for record confidentiality/integrity and can authenticate peers through certificate- or PSK-based handshakes. In the common Web PKI server-authentication case, the server proves possession of a key bound to a validated certificate identity; TLS does not establish application authorization or business trustworthiness.
    - **Handshake Mechanics:** A fresh certificate-based TLS 1.3 handshake can establish application-data keys after one network round trip, typically using an (EC)DHE key share selected from negotiated groups (X25519 is one common group, not a universal constant). PSK resumption and optional 0-RTT early data follow different paths and carry replay/security trade-offs that must not be collapsed into the fresh-handshake model.
    - **Forward Secrecy Boundary:** When TLS 1.3 uses (EC)DHE key establishment (including `psk_dhe_ke`), compromise of a long-term authentication key does not by itself reveal past session traffic keys. TLS 1.3 also defines PSK-only `psk_ke`; therefore, “TLS 1.3 always provides forward secrecy” is too broad.
@@ -315,7 +315,7 @@ Learners transition from raw transport streams to secure, structured application
 
 ### 5.7 Evidence-Layer Classification
 - **PRINCIPLE:** Uniform interface; resource vs. representation; safe vs. idempotent methods; cache freshness vs. validation; end-to-end vs. hop-by-hop boundaries; trust delegation via PKI.
-- **SPECIFICATION:** RFC 9110 (HTTP Semantics, STD 97); RFC 9111 (HTTP Caching, STD 98); RFC 9112 (HTTP/1.1, STD 99); RFC 9113 (HTTP/2); RFC 9114 (HTTP/3); RFC 9000 (QUIC); RFC 8446 (TLS 1.3); RFC 5280 (X.509 PKI).
+- **SPECIFICATION:** RFC 9110 (HTTP Semantics, STD 97); RFC 9111 (HTTP Caching, STD 98); RFC 9112 (HTTP/1.1, STD 99); RFC 9113 (HTTP/2); RFC 9114 (HTTP/3); RFC 9000/9001 (QUIC); **RFC 9846** (current TLS 1.3, obsoletes RFC 8446); RFC 9525 (service identity); RFC 9849 (ECH); RFC 5280 (PKIX).
 - **IMPLEMENTATION:** `curl` (libcurl CLI behavior); Python standard library `http.server`, `urllib.request`, `ssl`; OpenSSL / Schannel / SecureTransport backend differences in `curl`.
 - **CURRENT PRACTICE:** Named browser/client ALPN preferences, deployed TLS/HTTP version support, certificate lifetimes, and connection-pool limits only when tied to an exact implementation/version/date. None of these values belongs in the curriculum as a permanent constant.
 
@@ -326,7 +326,9 @@ Learners transition from raw transport streams to secure, structured application
 - IETF RFC 9113: *HTTP/2*, June 2022.
 - IETF RFC 9000: *QUIC: A UDP-Based Multiplexed and Secure Transport*, May 2021.
 - IETF RFC 9114: *HTTP/3*, June 2022.
-- IETF RFC 8446: *The Transport Layer Security (TLS) Protocol Version 1.3*, August 2018.
+- IETF RFC 9846: *The Transport Layer Security (TLS) Protocol Version 1.3*, July 2026 — current TLS 1.3 specification; obsoletes RFC 8446.
+- IETF RFC 9525: *Service Identity in TLS*, November 2023 — current application service-identity verification guidance; obsoletes RFC 6125.
+- IETF RFC 9849: *TLS Encrypted Client Hello*, March 2026 — server-name/ClientHello privacy extension, deployment-dependent.
 
 ### 5.9 Likely Misconceptions
 1. *"HTTPS encrypts data, so the website is trustworthy and safe to send money to."* (Successful Web PKI verification establishes a cryptographic channel to a service identity validated under the client's trust policy; it does not establish the service's business legitimacy, authorization policy, or application correctness).
@@ -459,7 +461,7 @@ Learners transition from treating the web browser as an opaque document viewer t
 - OQ-BP-006 baseline for browser versions remains open; no specific browser version is canonically locked.
 
 ### 6.11 Provenance / License Risk
-- Chromium source code is licensed under a BSD-style license with copyright notices. Inspection via EXP-03 requires no code redistribution; linking and reading online source repositories is safe and royalty-free.
+- Chromium source is published with BSD-style licensing and repository-level third-party notices. EXP-03 itself can remain link/source-inspection-only and therefore needs no source redistribution; avoid broader legal conclusions such as “royalty-free” beyond the actual license terms.
 
 ### 6.12 Implementation-Time Smoke Requirements
 - With a real supported browser/headless-browser capability present, start two loopback origins on OS-assigned ports and verify the course CORS denial/allow cases. Without that capability, report `NO LIVE BROWSER CORS OBSERVATION`. Use harness deadlines only to prevent hangs; no fixed runtime is a curriculum invariant.
@@ -475,7 +477,7 @@ Learners transition from treating the web browser as an opaque document viewer t
 | **IPv4** | IETF | **RFC 791** (STD 5) | Normative Current Standard | None |
 | **IPv6** | IETF | **RFC 8200** (STD 86) | Normative Current Standard | RFC 2460 |
 | **DNS** | IETF | **RFC 1034 / RFC 1035** (STD 13) | Normative Current Standard | None (updated by RFC 2181, 8484, etc.) |
-| **TLS 1.3** | IETF | **RFC 8446** | Proposed Standard (Current) | RFC 5246 (TLS 1.2 obsoleted in practice) |
+| **TLS 1.3** | IETF | **RFC 9846** | Proposed Standard (Current, July 2026) | RFC 8446 and RFC 5246 are formally obsoleted by RFC 9846 |
 | **HTTP Semantics** | IETF | **RFC 9110** (STD 97) | Normative Current Standard | RFC 7230, 7231, 7232, 7233, 7234, 7235 |
 | **HTTP Caching** | IETF | **RFC 9111** (STD 98) | Normative Current Standard | RFC 7234 |
 | **HTTP/1.1 Framing** | IETF | **RFC 9112** (STD 99) | Normative Current Standard | RFC 7230 |
@@ -547,8 +549,8 @@ The table below verifies that no concept is re-defined, and every mention in M10
 - **Educational Value:** Outstanding demonstration of transport sequence space, sliding windows, out-of-order reassembly invariants, and flow control.
 
 ### 10.2 Rights and Redistribution Disposition
-- **Repository Access:** The official course starter repository (`cs144/minnow`) is frequently kept private by Stanford instructors during active academic quarters.
-- **License Status:** The course PDF and assignments do not grant a public license for downstream redistribution, adaptation, or inclusion in external educational curricula.
+- **Repository / Rights Finding:** The Fall 2025 course page and Checkpoint 2 PDF were publicly reachable at review time, but this Research did **not** establish a current public starter-repository route or a permissive license authorizing Essential CS to redistribute/adapt the assignment text, starter code, or tests.
+- **License Status:** Treat reuse rights as **UNESTABLISHED**, not as a proved negative. Public readability is not redistribution permission.
 - **Recommendation:** LAB-OPT-02 **MUST REMAIN OPTIONAL AND LINK-ONLY**. Essential CS will **not** vendor, bundle, or distribute Minnow starter code, tests, or assignment PDFs. The curriculum provides an optional checkpoint guide with original conceptual prompts, directing learners to obtain the official materials independently.
 
 ---
@@ -575,7 +577,7 @@ All three primary inspection targets have been rechecked and verified active on 
 ### 11.2 Bounded Learner Stopping Point
 - Learners inspect only the documented sections and the designated entry functions (`SiteInstanceImpl::GetProcess` and `ChildProcessSecurityPolicyImpl::CanAccessDataForOrigin`).
 - Learners do not follow deeper internal helper methods, IPC bindings, or Blink rendering code.
-- No local compilation of Chromium is required or permitted. Inspection is performed via web source viewers (Gitiles / GitHub mirrors).
+- No local Chromium compilation is required for EXP-03. Inspection should use the official Gitiles source viewer; mirrors may be secondary navigation aids but not the provenance authority.
 
 ---
 
@@ -607,7 +609,7 @@ All three primary inspection targets have been rechecked and verified active on 
 | **End-to-End Systems Principle** | Saltzer, Reed, Clark (1984) | PRINCIPLE | Foundational Systems Paper | Foundational rationale for transport vs. application reliability boundaries. |
 | **IP Routing & Addressing** | RFC 791 / RFC 8200 | SPECIFICATION | Normative Current Standards | Packet switching, best-effort delivery, hop-by-hop forwarding. |
 | **DNS Architecture & Records** | RFC 1034 / 1035 / 2181 | SPECIFICATION | Normative Current Standards | Hierarchical naming, authoritative delegation, caching, TTL. |
-| **TLS 1.3 Security & Handshake** | RFC 8446 + RFC 9525 identity rules; RFC 9849 ECH where metadata privacy is discussed | SPECIFICATION | Standards Track / Proposed Standard as applicable | Fresh-handshake, PSK/0-RTT, service-identity and ECH boundaries; do not compress these into universal “1-RTT + forward secrecy + plaintext SNI” claims. |
+| **TLS 1.3 Security & Handshake** | **RFC 9846** + RFC 9525 identity rules; RFC 9849 ECH where metadata privacy is discussed | SPECIFICATION | Proposed Standards / Standards Track | Fresh-handshake, PSK/0-RTT, service-identity and ECH boundaries; RFC 8446 is historical/obsolete, not the current normative TLS 1.3 source. |
 | **HTTP Semantics** | RFC 9110 (STD 97) | SPECIFICATION | Normative Current Standard (Jun 2022) | Uniform interface, URI authority, method safety/idempotency, headers, status codes. |
 | **HTTP Caching & Validation** | RFC 9111 (STD 98) | SPECIFICATION | Normative Current Standard (Jun 2022) | Cache keys, freshness lifetimes, conditional validation (ETag, 304). |
 | **HTTP/2 & HTTP/3 Protocols** | RFC 9113 / RFC 9114 + RFC 9000/9001 | SPECIFICATION | **Proposed Standards** | Multiplexed stream/framing and QUIC integration; performance remains workload/implementation-specific. |
@@ -690,18 +692,19 @@ All three primary inspection targets have been rechecked and verified active on 
 
 ### 16.1 Machine-Checkable Evidence Candidates
 - **M10:**
-  - Python test verifying `ConnectionRefusedError` (errno 111 / WSAECONNREFUSED) occurs within $< 50\text{ms}$ when connecting to an unused localhost port.
-  - Python test verifying `TimeoutError` fires after approximately the configured socket timeout ($\pm 10\%$).
-  - Python test verifying `socket.gaierror` when resolving `nonexistent.invalid`.
-  - Byte-stream test verifying multiple small `send()` calls can be read by a single `recv()` call.
+  - Course-owned loopback refusal fixture: assert the runtime reports a refusal disposition for the selected unbound endpoint; record actual exception/errno and elapsed sample without fixed numeric thresholds.
+  - Course-owned accepted-but-silent server: assert a configured **read deadline** is honored semantically; use a generous harness watchdog only to prevent hangs, not a `±N%` timing invariant.
+  - Resolver observation for a `.invalid` name is capability-gated; assert a resolution failure only when live resolver capability exists, otherwise record `NO LIVE DNS FAILURE OBSERVATION`.
+  - TCP byte-stream test: send multiple application chunks and receive until the expected byte sequence/length is reconstructed; never assert one particular `recv()` partition.
 - **M11:**
-  - Direct `curl` execution returning status 200 and expected `ETag`.
-  - Forwarded `curl` execution returning status 200 and asserting the presence of the `Via` header.
-  - Conditional `curl` execution with `If-None-Match` returning exactly status `304 Not Modified` and zero content length.
-  - Proxy failure test verifying that stopping the origin server causes the intermediary to return status `502 Bad Gateway`.
+  - Direct course-fixture `curl` execution returns the expected status/representation and opaque ETag value.
+  - Forwarded execution verifies the **course intermediary's** `Via` behavior and two-hop trace.
+  - Conditional request verifies `304 Not Modified` and **no response body/content**; do not require `Content-Length: 0`.
+  - Controlled upstream refusal verifies the course intermediary's documented refusal→502 mapping; a distinct deadline fixture may separately exercise its 504 policy.
 - **M12:**
-  - Automated Node.js / Python script verifying that a cross-origin fetch without CORS headers fails with a client-side type error, while a fetch with `Access-Control-Allow-Origin` succeeds.
-  - Performance timing test measuring execution time of a synchronous blocking script loop.
+  - CORS pass/fail is machine-checkable **only inside a real browser/headless-browser user-agent context** that implements Fetch/CORS. Plain Python/Node HTTP clients are useful contrast evidence precisely because they do not provide the same browser enforcement.
+  - If no supported browser context exists, record `NO LIVE BROWSER CORS OBSERVATION`; do not synthesize success/failure.
+  - Main-thread blocking activity may record elapsed samples and a browser trace when available, but no fixed jank/frame-time threshold is machine asserted.
 
 ### 16.2 Reviewer-Required Pedagogical & Architectural Evidence
 - Verification that learner prose does not confuse TCP acknowledgment with application-level commitment.
@@ -775,4 +778,4 @@ The subsequent Design task (covering M10, M11, and M12) must implement the follo
 
 ### **READY FOR DESIGN**
 
-The research confirms that Stage 4 (M10–M12) is completely sound, technically feasible, safe, and aligned with all curriculum invariants. All primary sources, standards, and code routes have been independently verified against current 2026 specifications. The subsequent Design task can proceed immediately to develop the detailed Module Design Dossier for M10–M12.
+The Research is **sufficiently ready for Design** after the source/currentness and claim-boundary audit. Design can proceed with explicit residual uncertainties: OQ-BP-006 remains open; browser/GUI/tool capability varies by environment; CSP3 and Navigation Timing Level 2 are Working Drafts; Stanford CS144 redistribution/adaptation rights remain unestablished; and Chromium source paths/process behavior are current implementation evidence requiring later recheck. These uncertainties do not currently block a safe bounded Design because each has a truthful capability, link-only, or currentness disposition.
