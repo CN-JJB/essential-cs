@@ -65,27 +65,23 @@ def reproduce_enoent(work_dir: str | Path | None = None) -> dict:
 
 
 def is_privileged_user() -> bool:
-    """Check if the current process runs with superuser (root / uid 0) authority."""
+    """Return whether effective UID is 0.
+
+    This is diagnostic metadata only. In Linux containers/user namespaces, euid==0
+    is not by itself proof that CAP_DAC_OVERRIDE is effective for a particular file.
+    """
     if hasattr(os, "geteuid"):
         return os.geteuid() == 0
     return False
 
 
 def reproduce_eacces(work_dir: str | Path | None = None) -> dict:
-    """Reproduce EACCES under unprivileged execution, or record truthful ENVIRONMENT-LIMITED disposition."""
-    if is_privileged_user():
-        return {
-            "status": "SKIP",
-            "disposition": "ENVIRONMENT-LIMITED",
-            "is_privileged": True,
-            "euid": os.geteuid() if hasattr(os, "geteuid") else None,
-            "reason": (
-                "Process is running as root (euid=0). On POSIX systems, root processes possess "
-                "CAP_DAC_OVERRIDE and bypass standard read-only (0444) file mode bit enforcement. "
-                "Live EACCES reproduction requires an unprivileged execution context."
-            ),
-        }
+    """Probe the actual 0444 write result and classify it truthfully.
 
+    The fixture is course-owned and temporary. A successful overwrite means this
+    environment bypassed the mode-bit denial for this file, so live EACCES evidence
+    is ENVIRONMENT-LIMITED. PermissionError/EACCES is recorded only when reproduced.
+    """
     cleanup = False
     if work_dir is None:
         temp_obj = tempfile.TemporaryDirectory(prefix="_run_m08_eacces_")
@@ -99,7 +95,8 @@ def reproduce_eacces(work_dir: str | Path | None = None) -> dict:
     ro_file = work_path / "readonly_test.txt"
     report = {
         "target_path": str(ro_file),
-        "is_privileged": False,
+        "euid": os.geteuid() if hasattr(os, "geteuid") else None,
+        "euid_is_zero": is_privileged_user(),
     }
 
     try:
@@ -109,11 +106,21 @@ def reproduce_eacces(work_dir: str | Path | None = None) -> dict:
 
         try:
             with open(ro_file, "w", encoding="utf-8") as f:
-                f.write("unauthorized overwrite\n")
-            report["status"] = "UNEXPECTED_WRITE_SUCCESS"
+                f.write("capability-or-environment-bypassed-mode-bits\n")
+            report["status"] = "SKIP"
+            report["disposition"] = "ENVIRONMENT-LIMITED"
+            report["mode_bit_denial_bypassed"] = True
+            report["reason"] = (
+                "This process successfully overwrote the course-owned 0444 fixture. "
+                "Therefore this environment cannot provide live EACCES evidence from "
+                "mode bits alone. On Linux this can occur when the process has effective "
+                "CAP_DAC_OVERRIDE for the file (often, but not universally, in root contexts). "
+                "Container/user-namespace root must not be inferred from euid==0 alone."
+            )
         except PermissionError as e:
             report["status"] = "PASS"
             report["disposition"] = "REPRODUCED"
+            report["mode_bit_denial_bypassed"] = False
             report["exception_type"] = type(e).__name__
             report["errno"] = e.errno
             report["errno_name"] = errno.errorcode.get(e.errno, "UNKNOWN")
@@ -132,6 +139,9 @@ def reproduce_eacces(work_dir: str | Path | None = None) -> dict:
     return report
 
 
+MAX_MODEL_CAPACITY_BYTES = 1024 * 1024  # 1 MiB hard safety cap
+
+
 class BoundedSpaceWriter:
     """Course-owned bounded capacity abstraction modeling storage exhaustion safely.
 
@@ -142,6 +152,10 @@ class BoundedSpaceWriter:
     def __init__(self, capacity_bytes: int = 512):
         if capacity_bytes <= 0:
             raise ValueError("capacity_bytes must be strictly positive")
+        if capacity_bytes > MAX_MODEL_CAPACITY_BYTES:
+            raise ValueError(
+                f"capacity_bytes exceeds the {MAX_MODEL_CAPACITY_BYTES}-byte course safety cap"
+            )
         self.capacity_bytes = capacity_bytes
         self.bytes_written = 0
         self.storage_buffer = bytearray()
@@ -188,7 +202,11 @@ class BoundedSpaceWriter:
 
 
 def reproduce_bounded_enospc(capacity_bytes: int = 512) -> dict:
-    """Demonstrate safe, host-bounded ENOSPC and partial write mechanics."""
+    """Demonstrate one deterministic, POSIX-compatible partial-write/ENOSPC model.
+
+    This is model evidence, not a claim that every real filesystem must return the
+    same partial-write sequence.
+    """
     device = BoundedSpaceWriter(capacity_bytes=capacity_bytes)
 
     # Phase 1: Write first chunk (consumes 75% of capacity)
@@ -216,7 +234,7 @@ def reproduce_bounded_enospc(capacity_bytes: int = 512) -> dict:
     return {
         "status": "PASS",
         "evidence_type": "DETERMINISTIC_MODEL_EVIDENCE",
-        "host_safety_guarantee": "No host filesystem filled; strictly bounded course-owned in-memory model",
+        "host_safety_guarantee": "No host filesystem capacity is consumed by this ENOSPC model; in-memory capacity is hard-capped at 1 MiB",
         "capacity_bytes": capacity_bytes,
         "chunk1_requested": chunk1_size,
         "chunk1_accepted": n1,
