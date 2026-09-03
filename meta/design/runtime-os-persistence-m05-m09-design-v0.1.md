@@ -428,7 +428,7 @@ If QEMU cannot execute due to container policy restrictions:
 4. **Concepts:**
    - **EC-CON-013 Isolation (First Home)**: Limiting interference or visibility between executions or resources.
    - **EC-CON-017 Trust Boundary (First Home)**: A boundary where authority, trust assumptions, or enforcement responsibility changes.
-5. **Mental Model:** The CPU MMU sits between the program and physical RAM. Every address emitted by software is virtual. Page tables map each process's virtual pages to separate physical frames, isolating their memory completely.
+5. **Mental Model:** For ordinary user processes in the hosted virtual-memory model used here, memory references use virtual addresses translated by the MMU under OS-managed mappings and permissions. Different processes normally receive distinct mappings that limit unintended interference, while explicit shared mappings can deliberately reference common physical memory.
 6. **Mechanism Sequence:**
    $$\text{Virtual Address (VPN + Offset)} \xrightarrow{\text{MMU + TLB Lookup}} \text{Page Table Entry (PFN + Flags)} \xrightarrow{\text{Protection Check}} \text{Physical RAM Address}$$
 7. **Prediction-Before-Observation:** If two independent Python processes print the address of a variable, can the hexadecimal numbers be identical? Do they point to the same physical memory?
@@ -506,14 +506,14 @@ If QEMU cannot execute due to container policy restrictions:
    $$\text{Instruction executes bad address} \xrightarrow{\text{MMU detects invalid PTE}} \text{CPU Page Fault Trap} \xrightarrow{\text{Kernel Fault Handler}} \text{Deliver SIGSEGV} \rightarrow \text{Process Terminates}$$
 7. **Prediction-Before-Observation:** If a program attempts to write to memory address `0x0`, who stops it: the compiler, the CPU hardware, or the kernel?
 8. **Hands-on Progression (Observe / Build / Break / Explain):**
-   - *Build / Break:* Run a minimal 5-line C program that attempts to write to address `NULL` (`*(int*)0 = 1;`) or write to a string literal in `.rodata`.
-   - *Observe:* The shell reports `Segmentation fault (core dumped)` with exit code 139 ($128 + 11$).
+   - *Build / Break:* Run a minimal child process containing an intentionally invalid C memory access, clearly labeled **undefined behavior** at the C-language layer.
+   - *Observe:* Record the actual hosted result (for example, a `SIGSEGV` stop/termination if that is what the tested Linux build produces). Do not teach signal 11 / exit 139 as a C guarantee.
    - *Explain:* Categorize page fault types:
      1. *Minor:* Valid mapping, physical page allocated on demand (normal operation).
      2. *Major:* Valid mapping, page swapped or file-backed, requires disk read.
      3. *Invalid:* Unmapped address or permission violation $\rightarrow$ `SIGSEGV`.
 9. **Required Commands / Tools:** GCC 13, Python 3.12 (subprocess runner).
-10. **Machine-Checkable Evidence:** Test runs the bad-pointer child executable and asserts child exit status is terminated by signal 11 (`SIGSEGV`).
+10. **Machine-Checkable Evidence:** After implementation smoke testing pins the exact hosted fixture, the test records and checks the observed failure class for that environment. It must not encode `SIGSEGV` as a language-level guarantee.
 11. **Reviewer-Required Evidence:** Learner articulates the 4-step fault sequence: CPU instruction $\rightarrow$ MMU exception $\rightarrow$ kernel fault handler $\rightarrow$ process signal.
 12. **Misconceptions Addressed:**
     - "A segfault means physical memory is damaged."
@@ -524,7 +524,7 @@ If QEMU cannot execute due to container policy restrictions:
 16. **Exit Criteria:** Learner explains the hardware/OS sequence behind a segmentation fault and categorizes the three fault types.
 17. **Competency Mapping:** Diagnose (bad address failures), Trace (fault handler path).
 18. **Provenance / Source Anchors:** POSIX.1-2024 Signal Concepts (`SIGSEGV`) & OSTEP Chapter 19 (Paging: Faster Translations).
-19. **Failure / Inference Limits:** A segmentation fault occurs when an address violates the current page table mapping; reading an out-of-bounds array element that still falls inside a mapped page will NOT trigger a segfault.
+19. **Failure / Inference Limits:** Invalid C memory access is undefined behavior. A hosted OS may deliver `SIGSEGV` for a translation/protection fault in the tested execution, but that signal is not guaranteed by C; an out-of-bounds access that happens to touch mapped memory may instead appear to continue or corrupt state.
 
 ---
 
@@ -637,12 +637,12 @@ If QEMU cannot execute due to container policy restrictions:
 7. **Prediction-Before-Observation:** If a non-root user tries to write to a file with permissions `r--r--r--` ($0444$), which error code is returned?
 8. **Hands-on Progression (Observe / Build / Break / Explain):**
    - *Break:* Reproduce `ENOENT` (open non-existent path without `O_CREAT`).
-   - *Break:* Reproduce `EACCES` (modify permissions with `chmod 400` and attempt to write).
-   - *Break (Safe ENOSPC):* In a bounded small temporary directory or tmpfs with a tight size limit, write until `ENOSPC` (No space left on device) is triggered.
+   - *Break:* Reproduce `EACCES` only in an execution context where the learner is demonstrably unprivileged with respect to the target file; otherwise use a prepared fixture/transcript and record the environment limitation.
+   - *Break (Safe ENOSPC):* Use a course-owned bounded filesystem image/quota-style fixture that cannot fill the host root filesystem. Do not require learners to mount a new tmpfs or manipulate host raw devices.
    - *Explain:* Explain how an application must handle partial writes when space is exhausted.
    - *Safety Guard:* Strictly forbid manipulating host raw block devices or filling the main root filesystem.
 9. **Required Commands / Tools:** Python 3.12, `chmod`, standard Linux CLI.
-10. **Machine-Checkable Evidence:** Automated test script verifying that attempting to open a read-only file in write mode raises `PermissionError` (errno 13 / `EACCES`) and captures the exact error code.
+10. **Machine-Checkable Evidence:** Where the preflight confirms an unprivileged permission fixture, assert the observed `EACCES`/`PermissionError`; otherwise mark that check environment-limited and use deterministic fixture evidence. Never assume a root/container process will reproduce `EACCES` from mode bits alone.
 11. **Reviewer-Required Evidence:** Learner demonstrates correct diagnostic triage matching observed symptoms to the underlying operating system error code.
 12. **Misconceptions Addressed:**
     - "A file error is just a programming syntax mistake."
@@ -794,7 +794,7 @@ If QEMU cannot execute due to container policy restrictions:
 | **`strace`** | Yes (M06, M08) | **Yes** (ptrace policy) | Restricted in some containers | `/proc/<pid>/status` & non-tracing observation fixtures |
 | **QEMU & RISC-V GCC** | Yes (LAB-REQ-02) | Yes (Package presence) | Unprivileged user process | Source-reading expedition + recorded deterministic trace |
 | **GDB** | **No (Optional only)** | High (ptrace policy) | Restricted | Decoupled; zero GDB dependencies in Core M05–M09 |
-| **Raw Block Tools (`debugfs`)** | **Forbidden for Core** | Yes | **Requires Root/Sudo** | Loopback file images and standard filesystem APIs |
+| **Filesystem / Block-Inspection Tools (`debugfs`, raw-device tools)** | **No host raw-device manipulation in Core** | Yes | Raw host-device access may require privilege; ordinary course-owned image-file inspection can be unprivileged | Prefer course-owned image files and standard filesystem APIs |
 
 ### 10.3 Preflight Verification Script Contract
 Implementation must supply a deterministic preflight script (`scripts/preflight-m05-m09.sh`) that checks and records:
@@ -960,8 +960,8 @@ The subsequent Implementation Agent may proceed directly to drafting Lessons, ac
 
 ## 19. Risks & Design Blockers
 
-- **Container Tracing Restrictions:** `strace` may fail in heavily restricted Docker containers without `SYS_PTRACE`. *Mitigation:* The design specifies non-privileged procfs observation as an approved alternative.
-- **QEMU Emulation Overhead:** Nested virtualization may slow QEMU boot on low-end cloud hosts. *Mitigation:* Bounded smoke-test timing should be recorded during implementation and a deterministic fallback trace provided.
+- **Container Tracing Restrictions:** `strace` may be blocked by hosted/container ptrace policy, credentials/user namespaces, Yama/LSM, seccomp, or capability settings. `CAP_SYS_PTRACE` is not a universal prerequisite. *Mitigation:* The design specifies non-ptrace procfs observation as an approved alternative without weakening host security.
+- **QEMU Emulation / Hosted-Execution Constraints:** `qemu-system-riscv64` uses system emulation and does not inherently require nested hardware virtualization, but hosted/container policy and limited CPU resources can still block or slow execution. *Mitigation:* Bounded smoke-test timing should be recorded during implementation and a deterministic fallback trace provided.
 - **M03 GDB Debt:** GDB interactive verification remains open. *Mitigation:* GDB is completely excluded from the critical path of M05–M09.
 
 ---
