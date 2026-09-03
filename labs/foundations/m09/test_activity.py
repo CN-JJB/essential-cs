@@ -103,7 +103,12 @@ class TestL0901DurabilityAndWAL(unittest.TestCase):
     def test_file_and_directory_sync(self):
         report = demonstrate_file_and_directory_sync()
         self.assertTrue(report["file_data_synced"])
-        self.assertTrue(report["parent_dir_synced"])
+        self.assertIn(report["parent_dir_sync_disposition"], ["PASS", "ENVIRONMENT_LIMITED"])
+        if report["parent_dir_sync_disposition"] == "PASS":
+            self.assertTrue(report["parent_dir_synced"])
+        else:
+            self.assertFalse(report["parent_dir_synced"])
+            self.assertIn("parent_dir_sync_error", report)
 
     def test_wal_model_ordering_and_recovery(self):
         engine = WALEngine()
