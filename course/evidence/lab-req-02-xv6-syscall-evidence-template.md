@@ -19,7 +19,9 @@
 ## C — Toolchain Versions
 - Host OS & Architecture:
 - Git Version:
+- Make / Perl / `bc` versions or availability:
 - RISC-V Cross GCC Version:
+- RISC-V `objdump` Version:
 - QEMU Version:
 
 ---
@@ -47,8 +49,11 @@
   2. `kernel/syscall.c`: defines `[SYS_pause] = sys_pause`
   3. `kernel/sysproc.c`: implements `sys_pause(void)`
   4. `user/user.h`: declares `int pause(int);`
-  5. `user/usys.pl`: emits stub `pause: li a7, SYS_pause; ecall; ret`
-  6. `kernel/trap.c`: routes `ecall` to `syscall()`
+  5. `user/usys.pl`: contains `entry("pause")` and the generic `a7` / `ecall` / `ret` stub generator
+  6. `kernel/trampoline.S`: contains the `uservec` trap entry
+  7. `kernel/trap.c`: handles U-mode environment call (`r_scause() == 8`) and calls `syscall()`
+  8. If generated `user/usys.S` exists: `pause -> SYS_pause -> ecall -> ret`
+  9. If learner `user/sleep.c` exists: it calls `pause(...)`
 
 ---
 
@@ -60,16 +65,19 @@
 ---
 
 ## H — QEMU Execution Result
-- Command: `make qemu`
-- Boot Outcome:
-- Command Executed in xv6 Shell: `sleep 10`
-- Observed Behavior:
+- Command: `./smoke.sh`
+- QEMU shell reached `init: starting sh`? Yes / No
+- Missing-argument usage observed? Yes / No
+- Command executed in xv6 shell: `sleep 10`
+- Post-sleep marker `LAB_REQ_02_OK` observed within timeout? Yes / No
+- Smoke Status: PASS / FAIL / NOT RUN / BLOCKED
+- Output excerpt:
 
 ---
 
 ## I — Grader Result
 - Official Course Grader: (if applicable on course fork)
-- Status: PASS / NOT RUN / NOT APPLICABLE
+- Status: PASS / FAIL / NOT RUN
 - Grader Output Excerpt:
 
 ---
@@ -77,7 +85,9 @@
 ## J — Missing-Argument Result
 - Command Executed: `sleep` (no arguments)
 - Output to Stderr (fd 2): `Usage: sleep ticks`
-- Exit Code: 1
+- Source contract includes `exit(1)`? Yes / No
+- Runtime exit status directly observed by a grader/harness? Yes / No / NOT AVAILABLE
+- Do not infer a runtime exit status from shell output alone.
 
 ---
 
@@ -92,18 +102,18 @@
 Trace the exact steps from `sleep.c` to `sys_pause`:
 1. `user/sleep.c`: calls `pause(ticks)`
 2. `user/usys.S`: loads `SYS_pause` (`13`) into `a7`, executes `ecall`
-3. Hardware Trap: CPU switches from U-mode to S-mode, vectors to `kernel/trampoline.S`
-4. `kernel/trap.c:usertrap()`: handles environment call (`r_scause() == 8`), advances `epc += 4`, calls `syscall()`
+3. RISC-V `ecall` raises a U-mode environment-call exception; xv6 has configured `stvec` so user traps enter trampoline `uservec`
+4. `kernel/trap.c:usertrap()`: handles `r_scause() == 8`, advances `epc += 4`, calls `syscall()`
 5. `kernel/syscall.c:syscall()`: dispatches to `sys_pause()` via syscall table
-6. `kernel/sysproc.c:sys_pause()`: puts process to sleep waiting on ticks, returns in `a0`
-7. `usertrapret()`: returns to user mode via `sret` in `trampoline.S`
+6. `kernel/sysproc.c:sys_pause()`: waits on xv6 timer ticks and returns a result in `a0`
+7. `prepare_return()` sets return state; trampoline `userret` restores user registers/page table and executes `sret`
 
 ---
 
 ## M — xv6 vs POSIX / Linux Boundary
 - How does xv6 `pause(int ticks)` differ from POSIX `pause(2)`?
 - How does RISC-V `ecall` differ from x86-64 `syscall`?
-- How do xv6 timer ticks differ from real physical seconds?
+- How do xv6 timer ticks differ from wall-clock time observed under QEMU?
 
 ---
 
