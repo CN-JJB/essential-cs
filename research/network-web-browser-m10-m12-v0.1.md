@@ -172,7 +172,7 @@ Learners transition from viewing network communication as an abstract, magically
      - Byte stream vs. packets: TCP assigns a sequence number to every byte, not to application messages. TCP does not preserve application message boundaries.
      - Reliability mechanics: Positive acknowledgment (`ACK`), retransmission timers, cumulative acknowledgments, sliding window flow control.
 4. **Network Failure Taxonomy:**
-   - **Resolution Failure:** DNS name cannot be resolved (`NXDOMAIN`, resolver timeout, `getaddrinfo` returns `EAI_NONAME`). No packets reach any server.
+   - **Resolution Failure:** Name resolution does not produce a usable destination for the application (for example an authoritative negative answer, resolver failure, or API-level name error). Resolver/DNS traffic may still have occurred; the key boundary is that this lookup has not produced a successfully resolved target endpoint for the application.
    - **Route Unreachable:** Gateway/router returns ICMP Destination Unreachable (`EHOSTUNREACH`, `ENETUNREACH`), or packets silently drop en route.
    - **Connection Refused:** In the deterministic localhost case, connecting to an unbound TCP port normally produces an active refusal surfaced as `ECONNREFUSED`/the runtime's connection-refused exception. On arbitrary networks, policy devices and host firewalls can drop or reject traffic differently, so `RST = no process listening` is not a universal diagnosis.
    - **Timeout:** A configured operation deadline expires before the required progress occurs. Depending on the API this can be a connect timeout, read timeout, or higher-level request timeout; it does not by itself identify where packets were lost or whether remote application work occurred.
@@ -213,7 +213,7 @@ Learners transition from viewing network communication as an abstract, magically
 - **PRINCIPLE:** End-to-end argument; layered communication model; byte-stream abstraction vs. datagram; sequence space wrapping; two-generals problem / failure ambiguity.
 - **SPECIFICATION:** RFC 9293 (TCP); RFC 768 (UDP); RFC 791 (IPv4); RFC 8200 (IPv6); RFC 1034/1035 (DNS); POSIX.1-2017 socket interface.
 - **IMPLEMENTATION:** Linux TCP/IP stack (tcp(7), ip(7), socket(2)); `ss` (iproute2); glibc `getaddrinfo()`; CPython `socket` module.
-- **CURRENT PRACTICE:** Named resolver implementation behavior (for example systemd-resolved) and platform socket/tool defaults, but only when the exact implementation/version is recorded. No TCP initial-window constant is a curriculum invariant.
+- **CURRENT PRACTICE:** Named resolver/routing/socket-tool defaults only when tied to an exact implementation/version/date. No host-specific resolver/cache/timeout/window behavior is a curriculum invariant.
 
 ### 4.8 Authoritative Sources
 - IETF STD 7 / RFC 9293: *Transmission Control Protocol (TCP)*, August 2022 (Normative current TCP spec).
@@ -476,7 +476,7 @@ Learners transition from treating the web browser as an opaque document viewer t
 | **UDP** | IETF | **RFC 768** (STD 6) | Normative Current Standard | None |
 | **IPv4** | IETF | **RFC 791** (STD 5) | Normative Current Standard | None |
 | **IPv6** | IETF | **RFC 8200** (STD 86) | Normative Current Standard | RFC 2460 |
-| **DNS** | IETF | **RFC 1034 / RFC 1035** (STD 13) | Normative Current Standard | None (updated by RFC 2181, 8484, etc.) |
+| **DNS** | IETF | **RFC 1034 / RFC 1035** (STD 13) | Normative base specifications with later updates/extensions | RFC 2181 clarifies DNS semantics; later transports such as DoH are separate specifications and do not imply every resolver uses one transport |
 | **TLS 1.3** | IETF | **RFC 9846** | Proposed Standard (Current, July 2026) | RFC 8446 and RFC 5246 are formally obsoleted by RFC 9846 |
 | **HTTP Semantics** | IETF | **RFC 9110** (STD 97) | Normative Current Standard | RFC 7230, 7231, 7232, 7233, 7234, 7235 |
 | **HTTP Caching** | IETF | **RFC 9111** (STD 98) | Normative Current Standard | RFC 7234 |
@@ -776,6 +776,6 @@ The subsequent Design task (covering M10, M11, and M12) must implement the follo
 
 ## 20. Final Recommendation
 
-### **READY FOR DESIGN**
+The Research is sufficiently ready for Design after the source/currentness and claim-boundary audit. Design can proceed with explicit residual uncertainties: OQ-BP-006 remains open; browser/GUI/tool capability varies by environment; CSP3 and Navigation Timing Level 2 are Working Drafts; Stanford CS144 redistribution/adaptation rights remain unestablished; and Chromium source paths/process behavior are current implementation evidence requiring later recheck. These uncertainties do not currently block a safe bounded Design because each has a truthful capability, link-only, or currentness disposition.
 
-The Research is **sufficiently ready for Design** after the source/currentness and claim-boundary audit. Design can proceed with explicit residual uncertainties: OQ-BP-006 remains open; browser/GUI/tool capability varies by environment; CSP3 and Navigation Timing Level 2 are Working Drafts; Stanford CS144 redistribution/adaptation rights remain unestablished; and Chromium source paths/process behavior are current implementation evidence requiring later recheck. These uncertainties do not currently block a safe bounded Design because each has a truthful capability, link-only, or currentness disposition.
+**READY FOR DESIGN**
