@@ -253,11 +253,11 @@ Learners transition from raw transport streams to secure, structured application
 
 ### 5.2 Minimum Mechanism Model
 1. **Transport Layer Security (TLS 1.3 — RFC 8446):**
-   - **Security Properties:** Confidentiality (symmetric encryption via AEAD: AES-GCM / ChaCha20-Poly1305), Integrity (tamper detection via MAC), and Server Authentication (asymmetric public-key signatures).
-   - **Handshake Mechanics:** 1-RTT handshake by default. Client sends `ClientHello` with key shares (ephemeral Diffie-Hellman: X25519) and cipher suites. Server responds with `ServerHello`, selects cipher, derives handshake keys, and sends encrypted certificate and `Finished` verification.
-   - **Forward Secrecy (PFS):** Session keys are derived from ephemeral Diffie-Hellman exchanges. Compromise of the server's long-term private key does not decrypt past recorded sessions.
-   - **PKI & Certificate Hierarchy:** X.509 v3 certificates (RFC 5280). A Root Certificate Authority (CA) signs intermediate CAs, which sign leaf certificates. The client verifies the certificate chain against a local trusted root store.
-   - **Hostname Verification (RFC 6125):** Client verifies that the requested domain name matches the Subject Alternative Name (`dNSName` SAN) in the leaf certificate.
+   - **Security Properties:** TLS 1.3 uses authenticated encryption (AEAD) for record confidentiality/integrity and can authenticate peers through certificate- or PSK-based handshakes. In the common Web PKI server-authentication case, the server proves possession of a key bound to a validated certificate identity; TLS does not establish application authorization or business trustworthiness.
+   - **Handshake Mechanics:** A fresh certificate-based TLS 1.3 handshake can establish application-data keys after one network round trip, typically using an (EC)DHE key share selected from negotiated groups (X25519 is one common group, not a universal constant). PSK resumption and optional 0-RTT early data follow different paths and carry replay/security trade-offs that must not be collapsed into the fresh-handshake model.
+   - **Forward Secrecy Boundary:** When TLS 1.3 uses (EC)DHE key establishment (including `psk_dhe_ke`), compromise of a long-term authentication key does not by itself reveal past session traffic keys. TLS 1.3 also defines PSK-only `psk_ke`; therefore, “TLS 1.3 always provides forward secrecy” is too broad.
+   - **PKI & Certificate Path:** X.509/PKIX certificate validation follows RFC 5280 plus application-specific identity rules and a local trust-anchor policy. Web PKI deployments commonly use root trust anchors, intermediates, and end-entity certificates, but chain shape and trust-store contents are platform/current-practice details.
+   - **Service Identity Verification (RFC 9525):** RFC 9525 (2023) obsoletes RFC 6125. Clients compare the reference service identity with presented `subjectAltName` identifiers according to the application protocol's rules; a successful certificate/path check is not a statement about the service's ethics or business correctness.
 2. **HTTP Semantics (RFC 9110 — STD 97):**
    - **Uniform Interface:** Resources identified by URIs; representations carried in messages.
    - **Message Format:** Request (Method, Target, Version, Headers, Payload) and Response (Version, Status Code, Reason, Headers, Payload).
@@ -271,15 +271,15 @@ Learners transition from raw transport streams to secure, structured application
    - **Freshness vs. Validation:**
      - *Freshness:* Controlled by `Cache-Control: max-age=N` or `Expires`. Fresh responses are served directly from cache without contacting the origin.
      - *Validation:* When a cached representation becomes stale, the cache or client performs a conditional request using validators:
-       - Strong validator: `ETag: "hash"` (byte-for-byte identical).
-       - Weak validator: `ETag: W/"v1"` (semantically equivalent).
-       - Timestamp: `Last-Modified`.
+       - Strong entity-tag: an opaque `ETag` value eligible for strong comparison when the origin assigns it according to strong-validator requirements; it is **not required to be a hash**.
+       - Weak entity-tag: `ETag: W/"v1"`, suitable only for weak comparison.
+       - Date validator: `Last-Modified`, whose validator strength depends on the RFC 9110 conditions.
        - Conditional headers: `If-None-Match`, `If-Modified-Since`.
-     - *304 Not Modified:* Server confirms representation has not changed; sends empty body, refreshing the client/cache metadata.
+     - *304 Not Modified:* A 304 response to a conditional GET carries **no message content/body**. It may still carry a `Content-Length` field whose value corresponds to the selected 200 representation, so tests must not require `Content-Length: 0`.
 4. **HTTP Wire Framing & Evolution:**
-   - **HTTP/1.1 (RFC 9112):** Plaintext ASCII headers, chunked transfer encoding, persistent connections (`Keep-Alive`). Suffers from Head-of-Line (HOL) blocking on a single TCP connection.
-   - **HTTP/2 (RFC 9113):** Binary framing layer over TCP. Multiplexes multiple concurrent bidirectional streams over one TCP connection. HPACK header compression (RFC 7541). Solves HTTP HOL blocking, but still suffers from TCP HOL blocking (one lost packet stalls all streams).
-   - **HTTP/3 (RFC 9114) over QUIC (RFC 9000):** Replaces TCP with QUIC over UDP. QUIC integrates TLS 1.3 encryption (RFC 9001) and provides independent stream multiplexing. Packet loss on one stream does not block unrelated streams. Connection IDs enable connection migration across client IP changes.
+   - **HTTP/1.1 (RFC 9112):** Uses a textual message syntax with field lines and supports transfer codings such as chunked encoding. Connections are persistent by default unless closure is indicated; the historical/optional `Keep-Alive` field is not what makes HTTP/1.1 persistence work. Serial request/response use on one connection can create application-layer head-of-line waiting.
+   - **HTTP/2 (RFC 9113):** Adds binary framing, HPACK field compression, and concurrent streams over one TCP connection, removing HTTP/1.1's need to serialize exchanges on that connection. Because all streams still share TCP's ordered byte stream, loss/reordering of TCP data can delay progress for otherwise unrelated HTTP/2 streams.
+   - **HTTP/3 (RFC 9114) over QUIC (RFC 9000):** Maps HTTP semantics onto QUIC streams. QUIC uses TLS 1.3 key establishment (RFC 9001) and avoids TCP's connection-wide byte-stream ordering between application streams: missing stream data need not block delivery of data on another stream. Congestion control, packet loss, and shared connection resources can still affect the whole connection. Connection IDs support path migration subject to QUIC's validation rules.
 
 ### 5.3 Explicit Non-Goals
 - Cryptographic algorithm implementation (writing AES, RSA, or ECC math).
@@ -291,8 +291,8 @@ Learners transition from raw transport streams to secure, structured application
 
 ### 5.4 Hidden Prerequisites / Just-In-Time Support
 - HTTP message parsing intuition: Header lines terminated by `\r\n` (`CRLF`), empty line separating headers from body.
-- TLS certificate generation on localhost: Using Python `ssl` or self-signed test certificates to demonstrate handshake mechanisms without depending on external CAs.
-- Safe port allocation: Avoid well-known ports ($80, 443$); use dynamic ephemeral ports ($> 1024$) for all local fixtures.
+- TLS fixture on localhost: use a course-owned test CA/certificate (or another explicitly trusted local fixture) and a dedicated verification context so the learner can observe **successful verification**, hostname mismatch, and trust failure without contacting a public CA or teaching verification bypass.
+- Safe port allocation: bind localhost listeners to port `0` and record the OS-assigned port. Do not hard-code 80/443 or assume the assigned port belongs to one universal “ephemeral >1024” range.
 
 ### 5.5 Candidate Real Observation / Activity
 - **Activity M11-A (HTTP Request/Response & Header Inspection via `curl`):**
