@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """M06 Scheduler & Process State Fixture.
 
-Demonstrates:
-1. Process state classification (Running/Runnable 'R' vs Sleeping/Waiting 'S').
-2. CPU sharing intuition: CPU-bound loop vs I/O/timer wait.
-3. Safe polling and guaranteed process cleanup without leaked workers.
+Demonstrates bounded Linux procfs observations for:
+1. CPU-active work (often observed as R: running/runnable).
+2. A sleeping process (often observed as S: interruptible sleep).
+3. Safe polling and guaranteed child cleanup.
+
+The exact sampled state letters are Linux implementation evidence, not a universal scheduler contract.
 """
 
 import os
 import platform
 import signal
-import sys
 import time
 from pathlib import Path
 
@@ -20,7 +21,7 @@ def is_procfs_supported():
 
 
 def run_scheduler_observation(sample_duration=1.5):
-    """Spawns one CPU-active worker and one sleeping worker, sampling states."""
+    """Spawns one CPU-active worker and one sleeping worker, then samples Linux states."""
     if not hasattr(os, "fork") or not is_procfs_supported():
         return {
             "supported": False,
@@ -29,61 +30,41 @@ def run_scheduler_observation(sample_duration=1.5):
 
     pids_to_clean = []
 
-    # 1. Spawn CPU-active child
     cpu_pid = os.fork()
     if cpu_pid == 0:
         try:
-            end_time = time.time() + 5.0  # Safe upper timeout
-            while time.time() < end_time:
-                pass  # Burn CPU cycles
+            end_time = time.monotonic() + 5.0
+            while time.monotonic() < end_time:
+                pass
         finally:
             os._exit(0)
-
     pids_to_clean.append(cpu_pid)
 
-    # 2. Spawn sleeping child
     sleep_pid = os.fork()
     if sleep_pid == 0:
         try:
-            time.sleep(5.0)  # Waiting on kernel timer
+            time.sleep(5.0)
         finally:
             os._exit(0)
-
     pids_to_clean.append(sleep_pid)
 
     cpu_states = set()
     sleep_states = set()
 
     try:
-        # Sample states periodically for sample_duration seconds
-        start = time.time()
-        while time.time() - start < sample_duration:
-            # Sample cpu child
-            stat_file_cpu = Path(f"/proc/{cpu_pid}/stat")
-            if stat_file_cpu.exists():
-                try:
-                    with open(stat_file_cpu, "r", encoding="utf-8") as f:
-                        parts = f.read().strip().split()
+        deadline = time.monotonic() + sample_duration
+        while time.monotonic() < deadline:
+            for pid, bucket in ((cpu_pid, cpu_states), (sleep_pid, sleep_states)):
+                stat_file = Path(f"/proc/{pid}/stat")
+                if stat_file.exists():
+                    try:
+                        parts = stat_file.read_text(encoding="utf-8").strip().split()
                         if len(parts) >= 3:
-                            cpu_states.add(parts[2])
-                except Exception:
-                    pass
-
-            # Sample sleep child
-            stat_file_sleep = Path(f"/proc/{sleep_pid}/stat")
-            if stat_file_sleep.exists():
-                try:
-                    with open(stat_file_sleep, "r", encoding="utf-8") as f:
-                        parts = f.read().strip().split()
-                        if len(parts) >= 3:
-                            sleep_states.add(parts[2])
-                except Exception:
-                    pass
-
-            time.sleep(0.05)
-
+                            bucket.add(parts[2])
+                    except OSError:
+                        pass
+            time.sleep(0.03)
     finally:
-        # GUARANTEED CLEANUP: Terminate and reap all spawned children
         for pid in pids_to_clean:
             try:
                 os.kill(pid, signal.SIGKILL)
@@ -98,10 +79,10 @@ def run_scheduler_observation(sample_duration=1.5):
         "supported": True,
         "cpu_pid": cpu_pid,
         "sleep_pid": sleep_pid,
-        "observed_cpu_states": sorted(list(cpu_states)),
-        "observed_sleep_states": sorted(list(sleep_states)),
-        "cpu_showed_running": ("R" in cpu_states),
-        "sleep_showed_sleeping": ("S" in sleep_states),
+        "observed_cpu_states": sorted(cpu_states),
+        "observed_sleep_states": sorted(sleep_states),
+        "cpu_showed_running_or_runnable": ("R" in cpu_states),
+        "sleep_showed_interruptible_sleep": ("S" in sleep_states),
     }
 
 
@@ -114,8 +95,10 @@ def main():
 
     print(f"CPU-active worker (PID {res['cpu_pid']}) observed states: {res['observed_cpu_states']}")
     print(f"Sleeping worker (PID {res['sleep_pid']}) observed states: {res['observed_sleep_states']}")
-    print(f"CPU worker showed 'R' (Running/Runnable): {res['cpu_showed_running']}")
-    print(f"Sleeping worker showed 'S' (Interruptible Sleep): {res['sleep_showed_sleeping']}")
+    print(f"Observed Linux 'R' for CPU worker: {res['cpu_showed_running_or_runnable']}")
+    print(f"Observed Linux 'S' for sleeping worker: {res['sleep_showed_interruptible_sleep']}")
+    if not res["cpu_showed_running_or_runnable"] or not res["sleep_showed_interruptible_sleep"]:
+        print("Observation note: expected sample relation was NOT OBSERVED in this bounded window; do not invent it.")
     print()
 
 
