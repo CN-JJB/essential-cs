@@ -162,7 +162,7 @@ This sequence equips the learner to understand exactly what happens under the ho
 - **Title:** M10 — Networking I: IP, DNS & Transport (Area 08)
 - **Primary Competency:** Trace
 - **Growth Competencies:** Explain, Diagnose, Judge, Estimate
-- **Module Prerequisites:** Hard: M06 (Processes, Syscalls), M08 (Files, File Descriptors & System I/O)
+- **Module Prerequisites:** Hard: M06 (Processes, Syscalls). Soft/preferred: M09 (Durability/partial-failure context) and M08 (file-descriptor/I/O continuity). No new hard edge is introduced.
 - **Capability Transition:** Transition from treating network communication as an abstract, magically reliable pipe (`requests.get("https://...")`) to understanding the layered, best-effort packet delivery mechanism of IP, the hierarchical indirection of DNS, and how transport protocols (TCP/UDP) construct distinct abstractions (ordered reliable stream vs. independent datagrams) over unreliable physical networks. Learners gain the ability to trace packet traversal and diagnose failure origins.
 
 ---
@@ -174,9 +174,9 @@ This sequence equips the learner to understand exactly what happens under the ho
    - *Before:* Assumes data moves through a direct, magic pipe connecting a program to a domain name; confuses IP address, port, route, and domain name.
    - *After:* Can trace a bounded packet path from a local application socket through host routing/forwarding decisions, distinguishing a DNS name from the network-layer address returned by resolution and distinguishing transport ports/sockets from process identity. IP addresses participate in forwarding and interface identification; they are not a universal permanent "topological identity" for a host.
 3. **Prerequisites & Hidden-Prerequisite Support:**
-   - Hard prerequisites: `M06` (processes and execution context) and `M08` (file descriptors and I/O abstractions).
+   - Hard prerequisite: `M06` / `L06-01` (processes and execution context). Soft support: M08 file-descriptor vocabulary and M09 failure/durability context may be revisited but are not required to enter L10-01.
    - Support: Port-number discipline: IANA divides the 16-bit port space into System Ports (0–1023), User Ports (1024–49151), and Dynamic/Private Ports (49152–65535). Binding to port `0` instructs the OS kernel to dynamically allocate an available port; the activity inspects the assigned port via `getsockname()` rather than hardcoding a port.
-4. **Concepts:** Revisits **Interface** (EC-CON-005) and **Representation** (EC-CON-003). No new first homes.
+4. **Concepts:** Revisits **Interface** (EC-CON-005). Ordinary representation vocabulary may be used descriptively, but EC-CON-003 is not reintroduced or redefined in this S4 slice.
 5. **Mental Model:** Layered indirection. A name is resolved into one or more network-layer addresses; the host routing table chooses how to forward toward a destination; and the transport layer demultiplexes traffic to sockets/endpoints. Names, addresses, routes, ports, sockets, and processes are related but not interchangeable identifiers.
 6. **Mechanism Sequence:**
    $$\text{Application Name} \xrightarrow{\text{getaddrinfo (DNS)}} \text{IP Address} \xrightarrow{\text{Route Table Lookup}} \text{Next-Hop Interface} \xrightarrow{\text{Packet Switching}} \text{Host Port Demux} \xrightarrow{} \text{Target Socket}$$
@@ -218,7 +218,7 @@ This sequence equips the learner to understand exactly what happens under the ho
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Prerequisite: `L10-01` (Sockets, Ports, IP encapsulation).
    - Support: Introduce sequence number intuition as byte offsets in a continuous file-like stream rather than packet counters.
-4. **Concepts:** Revisits **Interface** (EC-CON-005) and **Abstraction** (EC-CON-002).
+4. **Concepts:** Revisits **Interface** (EC-CON-005). The byte-stream abstraction is taught as transport-interface behavior without adding an EC-CON-002 canonical revisit to the accepted S4 concept map.
 5. **Mental Model:** Sequence space over an unreliable substrate. TCP assigns a sequence number to every individual payload byte, uses positive acknowledgments with retransmission timers to repair packet drops, and reconstructs an in-order byte stream independent of network packet boundaries.
 6. **Mechanism Sequence:**
    $$\text{Client SYN (seq=x)} \xrightarrow{} \text{Server SYN-ACK (seq=y, ack=x+1)} \xrightarrow{} \text{Client ACK (ack=y+1)} \xrightarrow{} \text{ESTABLISHED}$$
@@ -494,10 +494,11 @@ The lab consists of three bounded components executing on loopback:
 #### Component 1: `OriginServer` (`labs/lab_req_01/origin_server.py`)
 - **Network Interface:** Binds to `127.0.0.1` on port `0` (dynamic OS allocation). Upon successful bind, immediately prints an unbuffered readiness line to stdout: `ORIGIN_READY_PORT=<port>`.
 - **Endpoints:**
-  - `GET /resource`: Returns `200 OK`, `Content-Type: application/json`, `ETag: "v1-canonical"`, `Cache-Control: max-age=60`, and body `{"service": "origin", "data": "payload-v1"}`.
+  - `GET /resource`: Returns `200 OK`, `Content-Type: application/json`, strong `ETag: "v1-canonical"`, `Cache-Control: max-age=60`, a correct `Content-Length` for the encoded body, and body `{"service": "origin", "data": "payload-v1"}`. The fixture changes the ETag whenever this representation changes.
   - `GET /resource` with `If-None-Match: "v1-canonical"`: Validates conditional request per RFC 9111. Returns `304 Not Modified` with **zero message body/content**.
   - `GET /resource` with mismatched ETag: Returns `200 OK` with the full representation body.
-  - `GET /health`: Returns `200 OK`, body `OK`.
+  - `GET /health`: Returns `200 OK`, body `OK`, with complete deterministic message framing.
+- **HTTP protocol/framing:** If implemented with CPython `BaseHTTPRequestHandler`, the fixture must explicitly configure and test the intended HTTP/1.1 response protocol rather than relying on the library default. Every response with content has unambiguous framing (`Content-Length` or an explicitly designed close-delimited path). This keeps the course `Via: 1.1` token truthful to the actual received protocol version.
 - **Termination:** Implements a course-owned cooperative shutdown path and closes owned listeners/connections. The harness owns child-process handles and requests graceful termination through the platform/runtime process API. POSIX signals may be an implementation detail on Unix-like hosts, not the cross-platform Core contract; no fixed shutdown time is a learner invariant.
 
 #### Component 2: `IntermediaryAdapter` (`labs/lab_req_01/intermediary_adapter.py`)
@@ -506,11 +507,11 @@ The lab consists of three bounded components executing on loopback:
   - Receives incoming HTTP client request.
   - Forwards the request line and end-to-end headers to `OriginServer`.
   - Supports only the bounded course request subset. It handles the `Connection` field and any fields nominated by it according to the intermediary contract, and reconstructs framing rather than teaching a brittle fixed list of "hop-by-hop headers". CONNECT, protocol Upgrade, arbitrary proxying, and request-body transfer codings are out of scope.
-  - Appends intermediary tracking header: `Via: 1.1 essential-cs-proxy` per RFC 9110 §7.6.3.
+  - Adds the course `Via` entry on each message it forwards, and only emits protocol token `1.1` after the fixture has explicitly established/tested that hop as HTTP/1.1. The intermediary must not hardcode a Via protocol version that disagrees with the actual received protocol.
   - Receives response from `OriginServer` and streams response line, headers, and body back to client.
 - **Controlled Upstream Failure Mapping:**
   - If the connection to `OriginServer` fails due to an active refusal (`ECONNREFUSED` / `ConnectionRefusedError`), the intermediary catches the error and returns:
-    `HTTP/1.1 502 Bad Gateway\r\nContent-Type: text/plain\r\nVia: 1.1 essential-cs-proxy\r\n\r\nUpstream origin connection refused.\n`
+    a deterministic HTTP/1.1 `502 Bad Gateway` course response with `Via`, `Content-Type`, and explicit body framing (for example `Content-Length`), then closes/reuses the connection according to the fixture's documented policy.
   - *Optional Distinct Deadline Fixture:* If an upstream read deadline expires, the intermediary returns `504 Gateway Timeout`.
   - *Pedagogical Boundary:* The lesson explicitly instructs learners that this mapping is a **course fixture policy** chosen to illustrate gateway error semantics, not an immutable law of physics.
 
@@ -622,7 +623,7 @@ For learners electing to pursue LAB-OPT-02 independently:
 - **Title:** M12 — Web & Browser: The Integrated Case (Area 08)
 - **Primary Competency:** Observe
 - **Growth Competencies:** Trace, Explain, Diagnose, Judge
-- **Module Prerequisites:** Hard: M11 (Networking II: TLS, HTTP, CDN & Proxies)
+- **Module Prerequisites:** Hard: M11 (Networking II: TLS, HTTP, CDN & Proxies) + M07 (Virtual Memory & Isolation). Soft/preferred: M05 and M02.
 - **Capability Transition:** Learners transition from viewing the browser as a simple document reader to understanding it as an integrated computing system for safely executing untrusted code. They separate Web Platform specifications from named browser implementations (Chromium case), trace a conceptual rendering pipeline, explain origin-based security boundaries (SOP, CORS, CSP), and observe how the Window/Document event loop schedules tasks, microtasks, and rendering opportunities without canonically defining Concurrency.
 
 ---
@@ -634,7 +635,7 @@ For learners electing to pursue LAB-OPT-02 independently:
    - *Before:* Assumes a browser is a monolithic single process, or believes the simplified myth that "every browser tab equals exactly one OS process".
    - *After:* Can explain modern browser multi-process architecture using Chromium as a concrete case study; distinguish the browser coordinator process, sandboxed renderers, GPU services, and network/utility services; articulate how Site Isolation groups browsing contexts by site; and separate Web Platform requirements from implementation-specific process topology.
 3. **Prerequisites & Hidden-Prerequisite Support:**
-   - Hard prerequisites: `M06` (Process isolation, OS boundaries) and `M07` (Virtual memory, address space isolation).
+   - Hard prerequisites: `M11` (therefore transitively M10) and `M07` (virtual memory / isolation / trust boundary). Process vocabulary from M06 is an inherited prerequisite through M07, not a new direct hard edge.
    - Support: Review concept **Process** (EC-CON-018) and **Isolation** (EC-CON-013).
 4. **Concepts:** Revisits **Process** (EC-CON-018) and **Isolation** (EC-CON-013). No new first homes.
 5. **Mental Model:** A multi-process sandboxed operating environment for untrusted web content. The browser coordinator process holds operating-system privileges and coordinates UI, navigation, and persistent storage. Untrusted web scripts run inside restricted, sandboxed renderer processes. Site Isolation enforces OS-level memory boundaries between cross-site documents as defense in depth against UXSS and Spectre-class attacks.
@@ -678,7 +679,7 @@ For learners electing to pursue LAB-OPT-02 independently:
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Prerequisite: `L11-02` (HTTP representations) and `L12-01` (Renderer processes).
    - Support: Minimal HTML/CSS/JS fixture served on loopback port 0.
-4. **Concepts:** Revisits **Representation** (EC-CON-003) and **Interface** (EC-CON-005). No new first homes.
+4. **Concepts:** Revisits **Interface** (EC-CON-005) only where the browser/platform boundary is discussed. Rendering representations are ordinary lesson vocabulary; EC-CON-003 is not added to the accepted S4 canonical revisit set.
 5. **Mental Model:** A multi-stage transformation pipeline from structured document text to GPU pixel tiles. Each stage produces intermediate structural data. Real browser rendering engines (Blink, Gecko, WebKit) optimize this conceptual pipeline by caching results, skipping un-invalidated stages, performing incremental updates, and offloading layer compositing to GPU threads.
 6. **Mechanism Sequence:**
    $$\text{HTML Bytes} \xrightarrow{\text{Tokenizer/Parser}} \text{DOM Tree}$$
@@ -883,9 +884,9 @@ Instead, the design classifies runtime capabilities and establishes an empirical
 
 | Tool / Capability | Module Placement | Role in Curriculum | Classification | Environment Constraints & Sensitivity | Truthful Fallback / Skip Strategy | Checked Baseline at Design |
 |---|---|---|---|---|---|---|
-| **Python 3 `socket`** | M10, M11, LAB-REQ-01 | Required for Core | Standard Library / Unprivileged | Available in standard CPython; exact errno strings and timing vary by OS. | Hard prerequisite; if sockets are unavailable, Core networking is blocked. | CPython 3.12 / 3.13; OQ-BP-006 OPEN |
-| **Python 3 `http.server`** | M11, M12, LAB-REQ-01 | Required for Core | Standard Library / Unprivileged | Binds to `127.0.0.1` on port 0; handles standard HTTP/1.1 requests. | Hard prerequisite for local HTTP server fixtures. | CPython 3.12 / 3.13; OQ-BP-006 OPEN |
-| **Python 3 `ssl`** | M11 | Required for Core | Standard Library / Unprivileged | Uses host OpenSSL / LibreSSL library; supports TLS 1.3 on modern OSes. | Dedicated local verification context; no external CA dependency. | OpenSSL 3.x backend |
+| **Python 3 `socket`** | M10, M11, LAB-REQ-01 | Required for Core | Standard Library / Unprivileged | Availability/address-family/exception details belong to the actual Python runtime/OS. | Hard prerequisite; if sockets are unavailable, Core networking is environment-blocked. | Record actual implementation/version; research observations are not a canonical pin |
+| **Python 3 `http.server`** | M11, M12, LAB-REQ-01 | Candidate Core fixture | Standard Library / Unprivileged | Exact default protocol/framing behavior belongs to the named Python implementation; implementation must explicitly configure/test the course HTTP/1.1 contract. | Required when this implementation route is used; record actual Python implementation/version. | Research observations only; no canonical pin while OQ-BP-006 is OPEN |
+| **Python 3 `ssl`** | M11 | Required candidate for Core TLS activity | Runtime/TLS-backend Sensitive / Unprivileged | TLS backend and TLS 1.3 support depend on the actual Python build/platform. | Preflight TLS 1.3 support; if absent, L11-01 live TLS evidence is ENVIRONMENT-BLOCKED / NOT RUN. Use dedicated course trust context; no public CA dependency. | Record actual Python + TLS backend/version; no canonical backend pin |
 | **`curl` CLI** | M11, LAB-REQ-01 | Required for LAB-REQ-01 | External Binary / Unprivileged | Availability/build/TLS backend vary by host. | If missing, record `TOOL MISSING`; LAB-REQ-01 is ENVIRONMENT-BLOCKED / NOT RUN. Any manual HTTP-over-TCP client is non-equivalent support only. | Record actual `curl --version`; no canonical pin while OQ-BP-006 is OPEN |
 | **Linux `ss`** | M10 | Optional Observation | Environment-Sensitive (Linux) | Part of `iproute2`; omitted from minimal Docker images and non-Linux. | If missing, record `TOOL UNAVAILABLE`; preserve Python endpoint evidence. | iproute2 `ss -tan` |
 | **Linux `ip route`** | M10 | Optional Observation | Environment-Sensitive (Linux) | Part of `iproute2`; container routing tables may be restricted. | If missing, record `TOOL UNAVAILABLE`; do not synthesize host routes. | iproute2 |
@@ -893,7 +894,7 @@ Instead, the design classifies runtime capabilities and establishes an empirical
 | **`openssl` CLI** | M11 | Optional / Auxiliary | Environment-Sensitive | Missing by default on many Windows installations. | Core TLS verification uses Python `ssl`; OpenSSL CLI is optional. | OpenSSL 3.x CLI |
 | **`traceroute`** | M10 | Optional / Capability-gated | Privilege-Sensitive | Raw socket / ICMP permissions vary; often blocked in containers. | If unavailable or blocked, report `SKIP`; reference traces are labeled reference-only. | traceroute / mtr |
 | **`tcpdump` / Wireshark** | M10 | Optional / Capability-gated | Privilege-Sensitive | Live capture permission varies by OS/tool setup (capabilities, capture helper/group configuration, container policy, etc.). | Strictly Optional; never required for Core. Pre-captured PCAP files are reference evidence. | Record actual tool/version/capability if used; no canonical pin |
-| **Desktop Browser (Chromium / Chrome)** | M12 | Preferred Browser Observation | Browser/GUI-Dependent / Current Practice | Requires graphical desktop environment (X11/Wayland/Windows/macOS). | If running in headless container/WSL, record `NO LIVE BROWSER OBSERVATION`; use reference traces. | Chromium 120+ / Chrome |
+| **Desktop Browser (Chromium / Chrome)** | M12 | Preferred Browser Observation | Browser/GUI-Dependent / Current Practice | GUI and browser availability/process behavior vary by version/platform. | If unavailable, record `NO LIVE BROWSER OBSERVATION`; reference traces remain REFERENCE EVIDENCE ONLY. | Record actual browser version/platform; no `120+` baseline |
 | **Alternative Browser (Firefox)** | M12 | Optional Browser Observation | Browser/GUI-Dependent / Current Practice | Process model differs from Chromium; Gecko rendering engine. | Optional comparison; do not use Firefox to validate Chromium internal claims. | Firefox ESR / Release |
 | **Local HTML/JS Fixtures** | M12 | Required for Core | Course-owned / Unprivileged | Static files served on loopback port 0; standard modern JavaScript. | Browser capability is gated separately from static file serving. | Modern ECMAScript (fetch, Promises) |
 
