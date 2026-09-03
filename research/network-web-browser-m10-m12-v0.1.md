@@ -188,7 +188,7 @@ Learners transition from viewing network communication as an abstract, magically
 - Enterprise hardware router/switch administration.
 
 ### 4.4 Hidden Prerequisites / Just-In-Time Support
-- Basic socket abstraction: Python `socket` module provides direct exposure to POSIX socket syscalls (`socket()`, `bind()`, `listen()`, `accept()`, `connect()`, `send()`, `recv()`, `close()`).
+- Basic socket abstraction: Python's `socket` module exposes a cross-platform socket API whose operations correspond closely to familiar Berkeley/POSIX socket concepts on Unix-like systems; the underlying OS/API mapping and exact exceptions differ by platform.
 - Port-number discipline: IANA divides the 16-bit space into System Ports (0–1023), User Ports (1024–49151), and Dynamic/Private Ports (49152–65535). Whether a process needs privilege to bind a low port is an OS policy, not an IANA property. Binding a socket to local port `0` asks the OS to choose an available port; the activity records the actual assigned port instead of assuming a fixed range.
 - Timing-tool choice: if an activity records elapsed time, use a monotonic elapsed-time API such as `time.perf_counter()`/`time.monotonic()`. M10 uses this operationally without canonically teaching clock semantics, whose accepted later home remains M20.
 
@@ -230,11 +230,11 @@ Learners transition from viewing network communication as an abstract, magically
 5. *"DNS lookups happen before every single HTTP request."* (Browsers, operating systems, and HTTP client connection pools maintain internal caches and reuse existing TCP/TLS connections).
 
 ### 4.10 Environment / Tool Constraints
-- Cross-platform Python 3 standard library `socket` works reliably on Linux, macOS, and Windows.
+- Python's standard-library `socket` module is the portable candidate Core API across the target platforms, but exact availability, address-family support, exception mapping, and behavior must be preflighted in the actual environment.
 - `ss` is Linux-specific (from `iproute2`) and must be capability-checked. Other platforms may expose different native socket tables; the required activity remains functional using Python endpoint state/evidence without adding an undeclared third-party `psutil` dependency.
 - `nc` (netcat) has syntax variations between OpenBSD netcat and GNU netcat (`-z`, `-l -p`); avoid relying on netcat CLI options; prefer Python socket scripts.
 - `traceroute` availability and privilege requirements vary by platform and probe mode (ICMP/UDP/TCP). Keep it optional/capability-gated; lack of the tool or raw-socket capability is a truthful `SKIP`, not a Core failure.
-- Raw packet capture (`tcpdump`, Wireshark) requires elevated privileges (`CAP_NET_RAW` / root) and is classified as Optional / Capability-gated.
+- Live packet capture is Optional / Capability-gated. Required permissions vary by OS/tool setup (for example Linux capabilities or capture-helper/group configuration); Core must not require root/sudo or assume capture access.
 
 ### 4.11 Provenance / License Risk
 - All primary M10 lab scripts and diagnostic exercises are original Essential CS implementations (Apache-2.0).
@@ -262,14 +262,14 @@ Learners transition from raw transport streams to secure, structured application
    - **Uniform Interface:** Resources identified by URIs; representations carried in messages.
    - **Message Format:** Request (Method, Target, Version, Headers, Payload) and Response (Version, Status Code, Reason, Headers, Payload).
    - **Method Taxonomy:**
-     - *Safe Methods:* `GET`, `HEAD`, `OPTIONS`, `TRACE` (read-only semantics, no server state mutation intended).
+     - *Safe Methods:* `GET`, `HEAD`, `OPTIONS`, `TRACE` are defined as safe because the client does not request state-changing semantics. Servers may still perform incidental effects such as logging; “safe” is not “physically side-effect-free.”
      - *Idempotent Methods:* `GET`, `HEAD`, `PUT`, `DELETE`, `OPTIONS`, `TRACE` (multiple identical requests have the same intended effect as a single request).
-     - *Non-Idempotent Methods:* `POST`, `PATCH` (each request may produce an independent mutation).
+     - *Non-idempotent-by-default example:* `POST` is not defined as idempotent by RFC 9110. `PATCH` is specified separately (RFC 5789) and is neither safe nor inherently idempotent, though an application can design a particular PATCH operation to be idempotent.
    - **Status Code Classes:** 1xx (Informational), 2xx (Success: 200, 201, 204), 3xx (Redirection: 301, 302, 304), 4xx (Client Error: 400, 401, 403, 404, 405), 5xx (Server Error: 500, 502, 503, 504).
 3. **HTTP Caching & Intermediaries (RFC 9111 — STD 98):**
    - **Intermediaries:** Forward proxies (client-selected), reverse proxies / gateways (origin-facing, transparent to client), and CDNs (geographically distributed reverse proxy caches).
    - **Freshness vs. Validation:**
-     - *Freshness:* Controlled by `Cache-Control: max-age=N` or `Expires`. Fresh responses are served directly from cache without contacting the origin.
+     - *Freshness:* Explicit freshness can come from fields such as `Cache-Control: max-age` or `Expires`; RFC 9111 also permits heuristic freshness in defined circumstances. A cache may reuse a fresh stored response subject to the request/response cache directives and cache-key rules.
      - *Validation:* When a cached representation becomes stale, the cache or client performs a conditional request using validators:
        - Strong entity-tag: an opaque `ETag` value eligible for strong comparison when the origin assigns it according to strong-validator requirements; it is **not required to be a hash**.
        - Weak entity-tag: `ETag: W/"v1"`, suitable only for weak comparison.
@@ -734,18 +734,18 @@ The subsequent Design task (covering M10, M11, and M12) must implement the follo
 
 1. **Lesson Plan Architecture:**
    - **M10 (3 Lessons):**
-     - `L10-01`: IP routing, packet switching, ports, sockets. Hands-on: Local socket creation, ephemeral ports, `ss` inspection.
+     - `L10-01`: IP routing, packet switching, ports, sockets. Hands-on: local socket creation on OS-assigned ports; `ss`/route inspection only when the relevant Linux tools are available.
      - `L10-02`: TCP reliability, 3-way handshake, sequence numbers, ACKs, byte stream vs. message boundary, UDP contrast. Hands-on: Observing byte-stream accumulation.
-     - `L10-03`: Network failure modes. Hands-on: Controlled injection of DNS failure, connection refused (RST), and timeout.
+     - `L10-03`: Network failure modes. Hands-on: deterministic loopback refusal + course-owned application read-timeout; DNS failure is capability-gated. Do not require a fixed RST/errno/timing or TEST-NET connect timeout.
    - **M11 (3 Lessons + LAB-REQ-01):**
-     - `L11-01`: TLS 1.3 handshake, encryption, server authentication, PKI, certificate validation. Hands-on: TLS connection inspection.
+     - `L11-01`: TLS 1.3 using current RFC 9846, service identity via RFC 9525, and ECH metadata boundary via RFC 9849 where relevant. Hands-on: course-owned local TLS verification/failure inspection without certificate bypass.
      - `L11-02`: HTTP semantics (RFC 9110), uniform interface, methods, safe/idempotent properties, status codes, headers. Hands-on: Raw HTTP request/response with `curl -v`.
      - `L11-03`: Caching (RFC 9111), ETag, conditional requests, 304, intermediaries, CDNs, HTTP/1.1 vs. H2 vs. H3/QUIC. Hands-on: Cache validation trace.
      - `LAB-REQ-01`: HTTP interface, origin, and intermediary trace lab.
    - **M12 (4 Lessons + EXP-03):**
-     - `L12-01`: Browser multi-process architecture, browser process, renderers, Site Isolation, sandboxing. Hands-on: DevTools process inspection / EXP-03 inspection.
+     - `L12-01`: Web-platform/OS concepts plus **current Chromium case** for multi-process architecture, Site Isolation and sandbox/policy enforcement. Hands-on: live browser process observation when available + EXP-03 source inspection; platform/version variability must be explicit.
      - `L12-02`: Document rendering pipeline (parse $\rightarrow$ DOM $\rightarrow$ CSSOM $\rightarrow$ layout $\rightarrow$ paint $\rightarrow$ composite), render-blocking scripts. Hands-on: Performance panel timeline.
-     - `L12-03`: Web platform security model: Same-Origin Policy, CORS, CSP. Hands-on: Controlled localhost CORS failure and resolution.
+     - `L12-03`: Web platform security model: origin/Same-Origin restrictions, Fetch CORS, CSP. Hands-on CORS failure/allow evidence requires a real browser user-agent context; otherwise record `NO LIVE BROWSER CORS OBSERVATION`.
      - `L12-04`: Event loop execution mechanics, tasks, microtasks, UI jank (**Concurrency preview only**). Hands-on: Blocking the main thread and observing UI freeze.
      - `EXP-03`: Chromium process model and Site Isolation source expedition.
 2. **Visual Asset Requirements:**
@@ -753,10 +753,10 @@ The subsequent Design task (covering M10, M11, and M12) must implement the follo
    - M10: Diagram illustrating the network failure spectrum (where in the path each error originates).
    - M11: Diagram showing direct vs. intermediary HTTP communication path, illustrating hop-by-hop vs. end-to-end headers.
    - M11: Diagram illustrating HTTP caching flow: fresh cache hit vs. conditional request with ETag yielding 304 Not Modified.
-   - M12: Architectural diagram of Chromium's multi-process model (Browser Process, Renderers, GPU, Utility).
-   - M12: Pipeline diagram of the rendering flow (Parse $\rightarrow$ DOM/CSSOM $\rightarrow$ Render Tree $\rightarrow$ Layout $\rightarrow$ Paint $\rightarrow$ Composite).
+   - M12: **Chromium case-study** architecture diagram based on the current EXP-03 source/doc; label process/service topology as implementation/current-practice rather than browser-platform specification.
+   - M12: conceptual rendering-pipeline diagram (parse / DOM+style / layout / paint / composite) with an explicit note that real engines may cache, skip, parallelize, or incrementally schedule stages.
 3. **Lab & Activity Specifications:**
-   - Full implementation of LAB-REQ-01 starter and test harnesses in pure Python.
+   - Design LAB-REQ-01 around original Essential CS localhost fixtures, with Python standard library as the preferred server/intermediary implementation route and `curl` preflighted as required by the selected lab; Design must still specify truthful fallback/block behavior if that tool contract cannot be met.
    - Explicit cleanup routines to kill all spawned child processes and free ports.
 
 ---
@@ -764,13 +764,13 @@ The subsequent Design task (covering M10, M11, and M12) must implement the follo
 ## 19. Open Risks / Open Question Interactions
 
 - **OQ-BP-006 (Canonical Environment & Tool Version Pinning):**
-  - Remains **OPEN**. This dossier provides concrete evidence that Python 3.12/3.13, `curl 8.x`, and standard Linux `iproute2` (`ss`) are sufficient for Core. Specific browser version pinning is avoided because browser architectures maintain stable platform contracts while internal versions advance rapidly.
+  - Remains **OPEN**. Author observations on CPython 3.12/3.13 and available networking tools establish feasibility evidence only. The dossier deliberately does **not** pin `curl 8.x`, iproute2, or any browser family/version as the canonical environment; implementation must preflight actual versions/capabilities.
 - **OQ-BP-001 (AI Literacy) & OQ-BP-003 (Human-Facing Systems Boundary):**
   - Remain **OPEN / RFC-GATED**. S4 does not incorporate generative AI or formal HCI curriculum modules; M12 strictly teaches browser systems architecture and platform security models.
 - **GDB Debt (from M03):**
-  - Fully decoupled. M10–M12 requires zero GDB execution.
+  - No S4 activity currently depends on GDB. The pre-existing M03 GDB runtime debt remains explicit and is neither repaired nor converted to PASS by this Research.
 - **xv6 Grader Status (from M06):**
-  - Fully decoupled. S4 does not depend on xv6 grading.
+  - S4 does not depend on the official xv6 course-fork grader. The pre-existing M06 official grader status remains **NOT RUN**.
 
 ---
 
