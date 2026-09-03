@@ -167,6 +167,20 @@ def observe_dirty_pages_directional(work_dir: str | Path | None = None, size_mb:
     total_bytes = size_mb * 1024 * 1024
     payload = b"D" * block_size
 
+    # Do not run even the bounded real-file observation on a nearly full filesystem.
+    safety_reserve_bytes = 64 * 1024 * 1024
+    free_bytes = shutil.disk_usage(work_path).free
+    if free_bytes < total_bytes + safety_reserve_bytes:
+        if cleanup and temp_obj is not None:
+            temp_obj.cleanup()
+        return {
+            "status": "SKIP",
+            "reason": "Insufficient free-space safety margin for bounded Dirty-page observation",
+            "planned_write_bytes": total_bytes,
+            "free_bytes": free_bytes,
+            "required_reserve_bytes": safety_reserve_bytes,
+        }
+
     try:
         # Write bounded test file without fsync
         with open(target_file, "wb") as f:
