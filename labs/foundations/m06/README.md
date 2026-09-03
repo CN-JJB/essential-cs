@@ -2,66 +2,76 @@
 
 This host activity supports Lessons `L06-01`, `L06-02`, and `L06-03`.
 
-It provides tools and fixtures to explore:
-1. **Process Abstraction & Syscall Interface (L06-01):** Inspecting process identity, reading kernel `/proc/self` process attributes, and observing system calls.
-2. **Process Lifecycle & Exit Status (L06-02):** Using `os.fork()`, observing unshared memory across parent/child contexts, checking exit codes with `waitpid`, and diagnosing zombie processes.
-3. **Scheduling Intuition & Process States (L06-03):** Observing active running (`R`) vs waiting/sleeping (`S`) states in Linux procfs without CPU starvation.
+It provides bounded evidence for:
+1. **Process & Syscall Boundary (L06-01):** process identity, Linux procfs metadata, and a live `write(2)` trace when `strace` works.
+2. **Fork / Exec / Exit / Wait (L06-02):** parent/child return values, ordinary variable-copy separation, exec image replacement with PID preservation, exit status, and controlled zombie observation.
+3. **Scheduling Intuition (L06-03):** bounded Linux `R` / `S` sampling for CPU-active vs sleeping children.
 
 ---
 
 ## File Structure
 
-- `process_observer.py`: Inspects PID, parent PID, `/proc/self/status`, and system calls via `strace` (with deterministic fallback).
-- `fork_exec_fixture.py`: Demonstrates `fork`, child address-space mutation, exit code collection, and safe zombie observation.
-- `scheduler_fixture.py`: Demonstrates running vs sleeping states with strictly timed child processes.
-- `test_activity.py`: Automated test suite for process identity, lifecycle, and procfs attributes.
-- `reset.py`: Cleanup utility to safely terminate any lingering processes and remove temporary files.
+- `process_observer.py`: PID/procfs inspection and live `strace` capability check.
+- `fork_exec_fixture.py`: fork, exec, exit/wait, and leak-free zombie fixture.
+- `scheduler_fixture.py`: bounded process-state sampling with guaranteed child cleanup.
+- `test_activity.py`: machine-checks stable relations and reports environment-sensitive non-observation as skip.
+- `reset.py`: cleanup utility for local generated files.
 
 ---
 
 ## Activity Flow
 
 ### 1. Process Identity & Procfs (L06-01)
-Run the process observer:
+
 ```bash
 python3 process_observer.py
 ```
-- Observe `os.getpid()`.
-- On Linux, observe that `/proc/self/status` contains matching `Pid:`, process `Name:`, and execution `State:`.
-- Observe whether `strace` is functional or whether ptrace restrictions trigger the fallback evidence.
 
-### 2. Fork, Memory Isolation & Exit Status (L06-02)
-Run the fork lifecycle fixture:
+- Verify `os.getpid()` against Linux `/proc/self/status` when procfs exists.
+- If `strace` works, record the actual `write(2)` trace.
+- If `strace` is missing/restricted, the tool reports **NO LIVE SYSCALL TRACE**. Procfs is still process-state evidence but is not equivalent to syscall-entry evidence.
+
+### 2. Fork → Exec → Exit → Wait (L06-02)
+
 ```bash
 python3 fork_exec_fixture.py
 ```
-- Observe that `fork()` returns different values in the parent (child PID) and child ($0$).
-- Observe that when the child mutates `test_var = 999`, the parent's variable remains $100$.
-- Observe that `os.waitpid()` reaps the child and extracts exit code $42$.
-- Observe that an un-reaped terminated child temporarily shows state `Z` (Zombie) in `/proc/<pid>/stat`, and is cleanly reaped in the `finally` block.
 
-### 3. CPU Sharing & Scheduler States (L06-03)
-Run the scheduler state observer:
+Observe:
+- parent receives child PID while child receives `0` from `fork()`;
+- changing an ordinary Python variable in the child does not alter the parent's copy;
+- an exec'd Python image reports the **same PID** as the fork child;
+- parent collects the exec'd image's exit status with `waitpid()`;
+- a Linux zombie may be observed as `Z` before wait/reap; if it is not observed in the bounded window, record **NOT OBSERVED**, while cleanup still must succeed.
+
+This ordinary-variable fixture does **not** prove that processes can never share memory; explicit shared mappings/IPC are later/other mechanisms.
+
+### 3. CPU Sharing & Linux Process States (L06-03)
+
 ```bash
 python3 scheduler_fixture.py
 ```
-- Observe that a CPU-bound worker shows state `R` (Running/Runnable).
-- Observe that a worker sleeping in `time.sleep()` shows state `S` (Interruptible Sleep / Waiting on timer).
+
+The fixture polls for:
+- `R` on a CPU-active child;
+- `S` on a child blocked in `time.sleep()`.
+
+These letters are Linux procfs observations, not a universal OS state machine. A heavily constrained environment may fail to expose the expected sample during the bounded window; record that as **NOT OBSERVED/SKIP**, not a fabricated PASS.
 
 ---
 
 ## Running Verification Tests
 
-Run the automated test suite:
 ```bash
 python3 -m unittest -v test_activity.py
 ```
+
+Read the final `OK` line together with the **skipped** count. A skipped environment-sensitive observation is not evidence that the observation itself passed.
 
 ---
 
 ## Clean Reset
 
-To ensure no lingering child processes or temporary files remain:
 ```bash
 python3 reset.py
 ```
