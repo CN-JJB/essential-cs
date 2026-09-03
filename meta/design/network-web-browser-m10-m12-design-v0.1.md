@@ -172,20 +172,20 @@ This sequence equips the learner to understand exactly what happens under the ho
 1. **Learner Question:** How does my computer send data across thousands of miles of physical cables and routers to reach a specific program on a remote server?
 2. **Before / After Capability:**
    - *Before:* Assumes data moves through a direct, magic pipe connecting a program to a domain name; confuses IP address, port, route, and domain name.
-   - *After:* Can trace a packet hop-by-hop from a local application socket through host routing tables to an interface, distinguishing DNS name resolution (host identity) from IP addressing (topological location) and transport port demultiplexing (endpoint identity).
+   - *After:* Can trace a bounded packet path from a local application socket through host routing/forwarding decisions, distinguishing a DNS name from the network-layer address returned by resolution and distinguishing transport ports/sockets from process identity. IP addresses participate in forwarding and interface identification; they are not a universal permanent "topological identity" for a host.
 3. **Prerequisites & Hidden-Prerequisite Support:**
    - Hard prerequisites: `M06` (processes and execution context) and `M08` (file descriptors and I/O abstractions).
    - Support: Port-number discipline: IANA divides the 16-bit port space into System Ports (0–1023), User Ports (1024–49151), and Dynamic/Private Ports (49152–65535). Binding to port `0` instructs the OS kernel to dynamically allocate an available port; the activity inspects the assigned port via `getsockname()` rather than hardcoding a port.
 4. **Concepts:** Revisits **Interface** (EC-CON-005) and **Representation** (EC-CON-003). No new first homes.
-5. **Mental Model:** Layered indirection. A human-readable name identifies an entity; an IP address specifies its topological network interface; a routing table selects the next physical hop; and a transport port demultiplexes incoming packets to an operating-system socket.
+5. **Mental Model:** Layered indirection. A name is resolved into one or more network-layer addresses; the host routing table chooses how to forward toward a destination; and the transport layer demultiplexes traffic to sockets/endpoints. Names, addresses, routes, ports, sockets, and processes are related but not interchangeable identifiers.
 6. **Mechanism Sequence:**
    $$\text{Application Name} \xrightarrow{\text{getaddrinfo (DNS)}} \text{IP Address} \xrightarrow{\text{Route Table Lookup}} \text{Next-Hop Interface} \xrightarrow{\text{Packet Switching}} \text{Host Port Demux} \xrightarrow{} \text{Target Socket}$$
 7. **Prediction-Before-Observation:** If two distinct Python programs both bind to port 0 on `127.0.0.1`, will the operating system assign them the same port number or distinct port numbers?
 8. **Hands-on Progression (Observe / Build / Break / Explain / Judge):**
    - *Observe:* Run a Python script that creates a TCP socket, binds to `('127.0.0.1', 0)`, and prints `getsockname()`. Observe that the operating system assigns a non-zero port number. If Linux `ss` is available, run `ss -tan` to observe the socket in the `LISTEN` state.
    - *Build:* Construct a client socket that connects to the dynamic server port and transmits a 16-byte payload; server reads and echoes the payload.
-   - *Break:* Attempt to connect a client socket to an IP address with no route or an unbound port; observe that routing/interface resolution occurs before transport connection establishment.
-   - *Explain:* Explain why intermediate IP routers examine only the IP header (destination address) and ignore TCP port numbers or application data payloads.
+   - *Break:* Use the course-owned loopback fixture to connect to a verified unbound port and observe the transport failure disposition. A host-route/no-route observation is optional and environment-sensitive; Core must not depend on an arbitrary external or unroutable address.
+   - *Explain:* Explain that the basic IP forwarding decision is made from network-layer destination/prefix information, while real routers/middleboxes may additionally inspect transport/application metadata for policy, filtering, QoS, telemetry, or load-balancing. Do not teach "routers can only see the IP header" as a universal law.
    - *Judge:* Evaluate the trade-off of decoupling names from addresses: why not route internet packets directly using human-readable domain names?
 9. **Required Commands / Tools:** Python 3 standard library (`socket`), optional Linux CLI (`ss`, `ip route`).
 10. **Machine-Checkable Evidence:** Test harness starts server on port 0, captures the assigned port from stdout/log, connects client, validates payload receipt, and asserts zero remaining open listeners after termination.
@@ -200,7 +200,7 @@ This sequence equips the learner to understand exactly what happens under the ho
     - *Hint 1:* Port 0 is a special sentinel value telling the OS kernel to allocate an available ephemeral port.
     - *Hint 2:* Inspect the socket object's local address using `sock.getsockname()`.
     - *Expected Observation:* `getsockname()` returns a tuple `('127.0.0.1', <port>)` where `<port>` is a non-zero integer.
-    - *Full Explanation:* The OS network stack manages port allocation. Passing 0 avoids hardcoded port collisions and lets the kernel select an unallocated port from the dynamic range.
+    - *Full Explanation:* The OS network stack manages local port allocation. Passing 0 avoids hardcoded port collisions and asks the OS to select an available local port according to that host's policy; the learner records the actual assigned value rather than assuming one fixed ephemeral range.
 15. **Visual Requirements:** Diagram illustrating the 4-layer indirection: Domain Name (Identity) $\rightarrow$ IP Address (Location) $\rightarrow$ Next-Hop Gateway (Route) $\rightarrow$ Transport Port (Process demultiplexing endpoint).
 16. **Exit Criteria:** Learner executes a loopback socket exchange on port 0, inspects the assigned endpoint, and writes a clear trace of the name-to-port indirection path.
 17. **Competency Mapping:** Trace (Primary: socket $\rightarrow$ route $\rightarrow$ packet), Explain (Growth: layered addressing).
@@ -241,7 +241,7 @@ This sequence equips the learner to understand exactly what happens under the ho
 14. **Progressive Support:**
     - *Question:* Why does calling `recv(1024)` not guarantee that you get the exact 100 bytes sent by a single `send(b"hello...")` call?
     - *Hint 1:* TCP is a byte stream, not a packet or message transport.
-    - *Hint 2:* The sender's OS may combine multiple `send()` calls into one packet (Nagle's algorithm), or the network MTU may split a single `send()` into multiple fragments.
+    - *Hint 2:* TCP exposes an ordered byte stream, so neither TCP packet/segment boundaries nor the sender's `send()` call boundaries are part of the receiver's `recv()` interface contract.
     - *Expected Observation:* The byte count returned by `recv()` depends on network arrival and OS buffer state, not on the sender's `send()` call boundaries.
     - *Full Explanation:* TCP provides an ordered stream abstraction. To read discrete messages, the application layer must define its own framing, such as fixed lengths, length prefixes, or delimiter tokens.
 15. **Visual Requirements:** Diagram contrasting (a) TCP packet encapsulation (IP Header $\rightarrow$ TCP Header $\rightarrow$ Payload), (b) the 3-way handshake sequence with sequence/ACK numbers, and (c) TCP byte-stream buffering vs. UDP discrete datagrams.
@@ -271,26 +271,26 @@ This sequence equips the learner to understand exactly what happens under the ho
    $$\text{5. In-Flight Abruption} \xrightarrow{\text{Fail: RST / Peer Crash}} \text{Connection Reset (ECONNRESET)}$$
 7. **Prediction-Before-Observation:** If a client sends an HTTP request to charge a credit card and receives a "Read Timeout" after 5 seconds, is it safe to automatically retry the request immediately?
 8. **Hands-on Progression (Observe / Build / Break / Explain / Judge):**
-   - *Observe (Case 1: Refusal):* Attempt to connect to an unused, unbound port on `127.0.0.1`. Observe an immediate active refusal disposition (`ConnectionRefusedError` / `ECONNREFUSED`).
-   - *Observe (Case 2: Read Timeout):* Connect to a course-owned accepted-but-silent server that accepts the TCP connection but deliberately withholds application bytes. Set `sock.settimeout(1.0)`. Observe that a `TimeoutError` occurs only after the configured deadline expires.
+   - *Observe (Case 1: Refusal):* Attempt to connect to a course-selected verified-unbound port on `127.0.0.1`. Record the actual runtime/OS refusal disposition and elapsed sample. Do not require a fixed exception class, errno, text, or latency.
+   - *Observe (Case 2: Read Timeout):* Connect to a course-owned accepted-but-silent server that accepts the TCP connection but deliberately withholds application bytes. Configure a bounded client read deadline. Record the actual timeout disposition and elapsed sample; use a separate generous harness watchdog only to prevent hangs, not as a timing invariant.
    - *Observe (Case 3: DNS Failure):* Attempt to resolve a domain name in the RFC 2606 reserved `.invalid` TLD (e.g., `test-target.invalid`). If resolver capability is present, record the resolution failure. If resolver capability is absent, record `NO LIVE DNS FAILURE OBSERVATION`.
-   - *Explain:* Contrast active rejection (kernel sends RST or returns refusal) with silent timeout (no response received before deadline). Explain why active refusal is fast while timeout takes the full configured deadline.
-   - *Judge:* Analyze why blindly retrying a timed-out request can cause duplicate database mutations (e.g., double billing), articulating the two-generals problem and partial-failure ambiguity.
+   - *Explain:* Contrast the course-owned active-refusal path with expiry of a local read deadline on an established but silent connection. The two dispositions usually have different elapsed behavior in this fixture, but no fixed speed ratio or exact transport cause is a curriculum invariant.
+   - *Judge:* Analyze why blindly retrying a timed-out request can duplicate application effects (for example, a payment mutation) when the remote outcome is unknown. Keep the lesson at partial-failure/retry ambiguity; do not introduce a formal Two Generals treatment.
 9. **Required Commands / Tools:** Python 3 standard library (`socket`, `time`).
 10. **Machine-Checkable Evidence:** Test script runs all three failure cases: asserts refusal on unbound port, asserts read timeout on silent server, verifies clean process cleanup, and records raw elapsed samples without asserting fixed numeric latency thresholds.
 11. **Reviewer-Required Evidence:** Reviewer evaluates the learner's explanation of partial failure ambiguity: the learner must explain why a timeout leaves the remote server state uncertain, and why an ACK does not establish application-level execution.
 12. **Misconceptions Addressed:**
     - "A request timeout means the server definitely did not receive or process the request." (The server may have received and executed the request, but the network failed before the client received the response).
-    - "Connection refused means the server machine has crashed or is powered off." (Connection refused means the server OS is running and actively rejected the connection because no process was listening on the target port).
+    - "Connection refused means the server machine has crashed or is powered off." (In the course-owned loopback fixture, an unbound listener produces a refusal disposition. On arbitrary networks, hosts/firewalls/policy devices can reject or drop traffic differently, so refusal alone is not a universal proof of one root cause).
     - "Network failures always produce immediate, descriptive error codes." (Packet loss or server hangs produce silent delays that surface only when a local timer expires).
 13. **What You Can Ignore—for Now:** Two-phase commit (2PC), Paxos/Raft consensus algorithms (reserved for S6/M16+), exponential backoff and jitter mathematical derivations.
 14. **Progressive Support:**
-    - *Question:* Why does connecting to an unbound port fail instantly, while connecting to a silent server takes several seconds before failing?
+    - *Question:* Why do the course-owned unbound-port and accepted-but-silent fixtures produce different failure dispositions and elapsed samples?
     - *Hint 1:* Look at what the operating system kernel does when a TCP SYN arrives on an unbound port.
     - *Hint 2:* Look at what happens when a connection is established but no bytes are sent back.
-    - *Expected Observation:* The unbound port generates an immediate connection-refused error, whereas the silent server blocks until the client's configured timeout deadline elapses.
-    - *Full Explanation:* An unbound port triggers an active kernel response (a TCP RST packet), informing the client immediately. A silent server accepts the connection (`ESTABLISHED`), so the client waits for response bytes until its local read deadline expires.
-15. **Visual Requirements:** Diagram of the network failure spectrum, mapping each error type (DNS resolution failure, TCP connection refusal, connect timeout, read timeout, connection reset) to its exact location in the network path.
+    - *Expected Observation:* The unbound-port fixture produces a refusal disposition, while the accepted-but-silent fixture remains connected until the configured read deadline expires. Record the actual exception classes/messages and elapsed samples without fixed thresholds.
+    - *Full Explanation:* In the course loopback case, the OS reports that no listener accepted the selected endpoint; in the silent-server case the TCP connection is established but no application bytes arrive before the client's local read deadline. The lesson distinguishes these interface-level dispositions without universalizing an exact packet/error/timing path.
+15. **Visual Requirements:** Diagram of the network failure spectrum showing the stage where each disposition becomes visible to the client (resolution, connect, established-stream read, peer close/reset) plus an explicit callout that the same client-visible timeout/error can have multiple underlying causes.
 16. **Exit Criteria:** Learner diagnoses failure modes from command-line outputs and writes an architectural defense explaining why a timeout leaves remote state ambiguous.
 17. **Competency Mapping:** Diagnose (Primary: network error classification), Judge (Growth: retry safety and partial failure), Estimate (Growth: timeout threshold trade-offs).
 18. **Provenance / Source Anchors:** RFC 9293 (TCP failure handling), RFC 2606 (Reserved Top Level DNS Names), Saltzer, Reed, Clark (End-to-End Arguments in System Design).
