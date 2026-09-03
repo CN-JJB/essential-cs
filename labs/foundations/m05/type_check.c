@@ -4,10 +4,12 @@
  * Demonstrates a type mismatch diagnostic: assigning a string literal pointer
  * (const char *) to an integer variable (int).
  *
- * GCC diagnostic behavior:
- * - Default flags (gcc -c type_check.c): emits a warning (incompatible pointer to integer conversion).
- * - Promoted flags (gcc -c -Werror type_check.c): compiler diagnostic is promoted to an error,
- *   causing compilation to fail before producing object code.
+ * GCC diagnostic behavior is version/flag dependent.
+ * - GCC 14 treats this int-conversion diagnostic as an error by default.
+ * - GCC 14 -fpermissive can downgrade it to a warning.
+ * - -Werror promotes diagnostics that are warnings under the selected compiler/options.
+ * Record the actual compiler version, flags, exit code, and diagnostic; do not teach one severity
+ * as a universal C-language rule.
  */
 
 int main(void) {
