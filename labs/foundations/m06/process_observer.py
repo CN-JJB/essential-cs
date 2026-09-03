@@ -2,9 +2,11 @@
 """M06 Process Observer.
 
 Inspects:
-1. Process Identity (PID) via os.getpid() and /proc/self/status.
-2. Process State and Memory Footprint from procfs.
-3. System call observation via strace (with graceful fallback if unavailable).
+1. Process identity via os.getpid() and /proc/self/status.
+2. Linux process state and memory metadata from procfs.
+3. A live write(2) syscall via strace when available.
+
+When strace is unavailable/restricted, no synthetic trace is presented as observed evidence.
 """
 
 import os
@@ -65,22 +67,25 @@ def inspect_procfs():
     }
 
 
+def _no_live_trace(status, reason, tested):
+    return {
+        "strace_tested": tested,
+        "status": status,
+        "reason": reason,
+        "fallback_note": (
+            "NO LIVE SYSCALL TRACE WAS OBSERVED in this environment. "
+            "Procfs remains valid process-state evidence but is not equivalent to syscall-entry evidence. "
+            "Use the separately provenance-labeled LAB fallback/source material only as fallback, not as a live trace."
+        ),
+    }
+
+
 def observe_syscall():
-    """Observes system calls via strace, or provides graceful fallback."""
+    """Observes a real Linux write(2) call via strace when available."""
     strace_bin = shutil.which("strace")
     if not strace_bin:
-        return {
-            "strace_tested": False,
-            "status": "UNAVAILABLE",
-            "reason": "strace binary not found in PATH.",
-            "fallback_trace": (
-                "# Fallback deterministic Linux strace excerpt for getpid() & write():\n"
-                "getpid() = 42001\n"
-                "write(1, \"Hello from syscall\\n\", 19) = 19"
-            ),
-        }
+        return _no_live_trace("UNAVAILABLE", "strace binary not found in PATH.", False)
 
-    # Verify if strace actually works (containers may block ptrace via seccomp/Yama)
     probe = subprocess.run(
         [strace_bin, "true"],
         capture_output=True,
@@ -88,33 +93,34 @@ def observe_syscall():
         check=False,
     )
     if probe.returncode != 0:
-        return {
-            "strace_tested": True,
-            "status": "RESTRICTED",
-            "reason": f"strace blocked by environment ptrace policy (code {probe.returncode}).",
-            "fallback_trace": (
-                "# Fallback deterministic Linux strace excerpt (ptrace restricted):\n"
-                "getpid() = 42001\n"
-                "write(1, \"Hello from syscall\\n\", 19) = 19"
-            ),
-        }
+        return _no_live_trace(
+            "RESTRICTED",
+            f"strace probe blocked/failed in this environment (exit {probe.returncode}).",
+            True,
+        )
 
-    # Execute a safe trace on a tiny inline python command
     cmd = [
         strace_bin,
         "-e",
-        "trace=write,getpid",
+        "trace=write",
         sys.executable,
         "-c",
-        "import os; os.getpid(); os.write(1, b'SYSCALL_PROBE_OK\\n')",
+        "import os; os.write(1, b'SYSCALL_PROBE_OK\n')",
     ]
     res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    trace = res.stderr.strip()
+    if res.returncode != 0 or "write(" not in trace:
+        return _no_live_trace(
+            "FAILED",
+            f"strace ran but the bounded write trace was not verified (exit {res.returncode}).",
+            True,
+        )
 
     return {
         "strace_tested": True,
         "status": "PASS",
         "stdout": res.stdout.strip(),
-        "stderr_trace": res.stderr.strip(),
+        "stderr_trace": trace,
     }
 
 
@@ -148,7 +154,7 @@ def run_observer():
         print(sc["stderr_trace"])
     else:
         print(f"Reason: {sc['reason']}")
-        print(sc["fallback_trace"])
+        print(sc["fallback_note"])
     print()
 
 
