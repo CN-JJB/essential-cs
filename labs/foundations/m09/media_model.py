@@ -136,15 +136,15 @@ def estimate_ssd_endurance_tbw(
     pe_cycles: int = 3000,
     waf: float = 3.0,
 ) -> dict:
-    """Calculate estimated Terabytes Written (TBW) under a parameterized WAF workload.
+    """Calculate a simplified host-write budget under parameterized P/E and WAF assumptions.
 
-    Formula:
-    TBW = (Capacity_GB * PE_Cycles) / (WAF * 1000)
+    Teaching formula:
+    Host_Write_Budget_TB = (Capacity_GB * Assumed_PE_Cycles) / (WAF * 1000)
 
-    Limits:
-    TBW ratings provided by drive manufacturers are standardized qualification
-    warranties (JEDEC JESD218/JESD219). They represent statistical endurance under
-    standard test conditions, NOT a guaranteed exact date or second of drive failure.
+    This is ILLUSTRATIVE MODEL EVIDENCE, not a JESD218 endurance-rating calculation.
+    JESD218 defines SSD endurance requirements/test methods and JESD219 defines endurance
+    workloads. Manufacturer TBW ratings and warranty limits must be read from the actual
+    product specification/warranty and are not interchangeable with this teaching model.
     """
     if drive_capacity_gb <= 0 or pe_cycles <= 0 or waf <= 0:
         raise ValueError("Invalid endurance calculation parameters")
@@ -162,9 +162,10 @@ def estimate_ssd_endurance_tbw(
         "total_flash_endurance_tb": round(total_flash_capacity_tb, 2),
         "estimated_host_tbw": round(host_tbw, 2),
         "inference_boundary_warning": (
-            "TBW is an illustrative qualification model based on JEDEC JESD218/219 standards. "
-            "Real-world SSD lifespan is probabilistic and influenced by temperature, retention, "
-            "idle garbage collection, wear-leveling efficiency, and workload locality."
+            "This host-write budget is an illustrative arithmetic model, NOT a JESD218 endurance rating. "
+            "JESD218/JESD219 define endurance requirements/test methods and workloads; actual product TBW "
+            "and warranty terms must come from that product's specification. Real endurance also depends on "
+            "temperature, retention requirements, controller behavior, workload and over-provisioning."
         ),
     }
 
@@ -186,10 +187,10 @@ def main() -> int:
     print(f"    -> Worst-case victim (63 valid / 1 invalid): WAF = {waf_worst['waf']} (Flash writes: {waf_worst['total_flash_bytes_written']} B for {waf_worst['host_bytes_written']} B host)")
     print(f"    -> Balanced victim (32 valid / 32 invalid): WAF = {waf_mid['waf']} (Flash writes: {waf_mid['total_flash_bytes_written']} B for {waf_mid['host_bytes_written']} B host)")
 
-    # 3. SSD Endurance / TBW
+    # 3. Illustrative endurance arithmetic (not a product TBW/warranty rating)
     endurance = estimate_ssd_endurance_tbw(drive_capacity_gb=1000, pe_cycles=3000, waf=2.5)
-    print("\n[3] SSD Endurance Estimation (1000 GB, 3000 P/E, WAF=2.5):")
-    print(f"    -> Estimated Host TBW: {endurance['estimated_host_tbw']} TBW")
+    print("\n[3] Illustrative Host-Write Budget (1000 GB, assumed 3000 P/E, WAF=2.5):")
+    print(f"    -> Illustrative Host-Write Budget: {endurance['estimated_host_tbw']} TB")
     print(f"    -> Boundary: {endurance['inference_boundary_warning']}")
 
     return 0
