@@ -1,0 +1,43 @@
+{
+  "metadata": {
+    "status": "CURRENT_PRACTICE_REFERENCE",
+    "checked_date": "2026-09-02",
+    "currency": "USD",
+    "region": "us-east-1",
+    "note": "These values reflect public cloud pricing documentation checked as of 2026-09-02. Cloud pricing is dynamic current practice, NOT an immutable computing constant. All calculations must remain parameterized."
+  },
+  "tiers": {
+    "block_storage": {
+      "type": "block",
+      "name": "Cloud EBS gp3 General Purpose SSD",
+      "provider_reference": "AWS EBS Pricing (us-east-1, checked 2026-09-02)",
+      "storage_rate_per_gb_month": 0.08,
+      "baseline_iops_included": 3000,
+      "baseline_throughput_mb_s_included": 125.0,
+      "typical_latency_ms": "< 1 ms",
+      "interface": "Raw block device / LBA attached to single host instance",
+      "primary_use_case": "Filesystem root/data volumes, transactional database engines (PostgreSQL, MySQL)"
+    },
+    "file_storage": {
+      "type": "file",
+      "name": "Cloud Managed EFS Standard File System",
+      "provider_reference": "AWS EFS Pricing (us-east-1, checked 2026-09-02)",
+      "storage_rate_per_gb_month": 0.30,
+      "typical_latency_ms": "1 - 5 ms",
+      "interface": "Hierarchical POSIX filesystem accessed over NFS protocol",
+      "primary_use_case": "Multi-instance shared directories, shared media repositories, container persistent volumes"
+    },
+    "object_storage": {
+      "type": "object",
+      "name": "Cloud S3 Standard Object Store",
+      "provider_reference": "AWS S3 Pricing (us-east-1, checked 2026-09-02)",
+      "storage_rate_per_gb_month": 0.023,
+      "request_rate_per_1k_write": 0.005,
+      "request_rate_per_1k_read": 0.0004,
+      "egress_rate_per_gb": 0.09,
+      "typical_latency_ms": "20 - 100 ms",
+      "interface": "REST API over HTTP/HTTPS (GET, PUT, DELETE, HEAD) with unique key/bucket namespace",
+      "primary_use_case": "Unstructured binary assets (images, videos, backups, logs, data-lake parquet files)"
+    }
+  }
+}
