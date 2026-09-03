@@ -3,10 +3,11 @@
 
 Demonstrates:
 1. Deterministic ENOENT reproduction via non-existent path resolution failure.
-2. Capability-gated EACCES handling:
-   - Unprivileged environments: live PermissionError reproduction on read-only file.
-   - Privileged (root / uid 0) environments: truthful SKIP / ENVIRONMENT-LIMITED disposition,
-     explaining why superuser capabilities bypass DAC mode bits.
+2. Behavior-gated EACCES handling:
+   - The tool probes a temporary course-owned 0444 file.
+   - PermissionError/EACCES is recorded only when actually reproduced.
+   - A successful overwrite is truthfully labeled SKIP / ENVIRONMENT-LIMITED.
+   - euid==0 is diagnostic metadata, not a capability proof in container/user namespaces.
 3. Safe, host-bounded ENOSPC modeling via a course-owned capacity abstraction:
    - Demonstrates POSIX partial-write semantics.
    - Strictly forbids and avoids host disk/partition exhaustion.
