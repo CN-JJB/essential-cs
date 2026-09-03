@@ -76,6 +76,18 @@ if [ -d "/proc/self" ] && [ -r "/proc/self/maps" ]; then
 fi
 echo "procfs maps (/proc/self/maps): ${MAPS_STATUS}"
 
+FD_STATUS="MISSING"
+if [ -d "/proc/self/fd" ] && [ -r "/proc/self/fd" ]; then
+    FD_STATUS="PASS"
+fi
+echo "procfs fd (/proc/self/fd): ${FD_STATUS}"
+
+MEMINFO_STATUS="MISSING"
+if [ -f "/proc/meminfo" ] && [ -r "/proc/meminfo" ]; then
+    MEMINFO_STATUS="PASS"
+fi
+echo "procfs meminfo (/proc/meminfo): ${MEMINFO_STATUS}"
+
 STRACE_STATUS="MISSING"
 STRACE_DETAIL="not installed"
 if command -v strace >/dev/null 2>&1; then
@@ -122,6 +134,11 @@ if [ "${PYTHON_STATUS}" = "PASS" ] && [ "${GCC_STATUS}" = "PASS" ] && [ "${MAPS_
     M07_HOST_STATUS="PASS"
 fi
 
+M08_HOST_STATUS="PARTIAL"
+if [ "${PYTHON_STATUS}" = "PASS" ] && [ "${FD_STATUS}" = "PASS" ] && [ "${MEMINFO_STATUS}" = "PASS" ]; then
+    M08_HOST_STATUS="PASS"
+fi
+
 LAB_REQ_02_STATUS="BLOCKED"
 if [ "${GIT_STATUS}" = "PASS" ] &&
    [ "${MAKE_STATUS}" = "PASS" ] &&
@@ -138,6 +155,8 @@ echo "Summary:"
 echo "  M06 Host Activity Capability: ${M06_HOST_STATUS}"
 echo "  M06 Live strace Capability: ${STRACE_STATUS}"
 echo "  M07 Host Activity Capability: ${M07_HOST_STATUS}"
+echo "  M08 Host Activity Capability: ${M08_HOST_STATUS}"
+echo "  M08 Live strace Capability: ${STRACE_STATUS}"
 echo "  LAB-REQ-02 Runnable Capability: ${LAB_REQ_02_STATUS}"
 echo "  NOTE: RUNNABLE means capability-present; build/QEMU smoke still must run and pass separately."
 echo "=== Preflight Complete ==="
