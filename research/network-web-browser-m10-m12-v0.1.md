@@ -50,7 +50,7 @@ $$\text{M10 (Networking I: IP, DNS, Transport)} \longrightarrow \text{M11 (Netwo
      - `EC-CON-017 Trust Boundary`: revisited in M11 (TLS certificate validation, public CA hierarchy) and M12 (Same-Origin Policy, CORS, CSP, browser-enforced site boundaries).
      - `EC-CON-018 Process`: revisited in M12 (browser architecture: browser process, renderer processes, utility processes, GPU process).
 2. **LAB-REQ-01 Re-Audit Verified:**
-   - The selected Required Lab — *HTTP interface, origin, and intermediary trace* (RFC 9110 + learner-owned localhost origin + bounded intermediary adapter + `curl`) — is 100% technically feasible, safe, unprivileged, and reproducible on localhost.
+   - The selected Required Lab — *HTTP interface, origin, and intermediary trace* (RFC 9110 + learner-owned localhost origin + bounded intermediary adapter + `curl`) — is technically feasible as a bounded localhost activity. Required tool availability and process cleanup still need implementation-time preflight/smoke; no one host result is a universal environment guarantee.
    - Evaluated against current normative RFC 9110 (HTTP Semantics, STD 97, June 2022) and RFC 9111 (HTTP Caching, STD 98, June 2022).
    - Uses standard Python libraries (`http.server`, `socket`, `urllib`) for the origin and forwarding adapter fixtures, ephemeral localhost port binding, and `curl` for inspection. No public traffic, no root/sudo privileges, no DNS manipulation, and no third-party services required.
    - Provenance and licensing: IETF Trust Legal Provisions govern RFC 9110/9111. All lab prose, test wrappers, and code fixtures will be original Essential CS creations (Apache-2.0 / CC BY-SA 4.0), referencing RFC sections without wholesale text copying.
@@ -65,7 +65,7 @@ $$\text{M10 (Networking I: IP, DNS, Transport)} \longrightarrow \text{M11 (Netwo
      - `content/browser/security/cpsp/child_process_security_policy_impl.cc` (active, verified live at its updated location under `content/browser/security/cpsp/`).
    - Educational boundary: Source reading is strictly bounded to three specific inspection points. No Chromium compilation is required or permitted.
 5. **Environment and OQ-BP-006 Baseline Feasible:**
-   - Linux and cross-platform command inspection verified: Python 3.12/3.13, `curl`, and `ss` provide the core observation spine.
+   - Python 3 sockets provide the portable required observation spine; `curl` is a required LAB-REQ-01 tool subject to preflight, while Linux `ss`/`ip route` are useful environment-sensitive observations rather than universal prerequisites.
    - Raw packet capture (`tcpdump`) and network namespace operations are classified as **optional / capability-gated** because they require root/`CAP_NET_RAW` privileges that fail in restricted container and hosted environments.
    - System `openssl` CLI is environment-sensitive (often missing from Windows PATH); TLS inspection will use Python's standard `ssl` library and `curl` for core observation.
    - Browser environments: Desktop browsers (Chrome/Edge/Firefox) provide DevTools for visual inspection; headless environments rely on local HTML/JS fixtures with Python servers or deterministic static trace fallbacks. OQ-BP-006 remains open.
@@ -164,8 +164,8 @@ Learners transition from viewing network communication as an abstract, magically
    - Record Types: `A` (IPv4 address), `AAAA` (IPv6 address), `CNAME` (canonical name alias).
    - Caching & TTL: Responses carry a Time-To-Live (TTL) indicating maximum cache validity. Resolvers and operating systems cache records locally.
 3. **Transport Layer (UDP vs. TCP):**
-   - **Ports and Sockets:** Transport endpoints are identified by the tuple `(Protocol, Local IP, Local Port, Remote IP, Remote Port)`. Port numbers (16-bit) demultiplex traffic to specific operating system processes.
-   - **UDP (User Datagram Protocol — RFC 768):** Minimal transport framing. Adds source/destination ports and an optional checksum over IP. Preserves message boundaries (datagrams). No handshakes, no acknowledgments, no ordering, no retransmission, no flow control, no congestion control.
+   - **Ports and Sockets:** A connected transport flow can be identified by protocol plus local/remote addresses and ports. Port numbers participate in demultiplexing to transport endpoints/sockets; they do **not** map one-to-one to operating-system processes because one process may own many sockets and multiple sockets/processes can share a local port under defined reuse/listening rules.
+   - **UDP (User Datagram Protocol — RFC 768):** Minimal datagram transport with source/destination ports and a checksum field. Datagram boundaries are preserved. UDP itself adds no handshake, acknowledgment, ordering, retransmission, flow control, or congestion control. Checksum rules depend on the network layer: a zero checksum is permitted for IPv4 UDP, while IPv6 requires the UDP checksum by default with narrow tunnel exceptions (RFC 8200 / RFC 8085).
    - **TCP (Transmission Control Protocol — RFC 9293, obsoleting RFC 793):**
      - Reliable, connection-oriented, full-duplex, ordered **byte stream**.
      - Connection lifecycle: 3-way handshake (`SYN` $\rightarrow$ `SYN-ACK` $\rightarrow$ `ACK`), graceful connection termination (`FIN`/`ACK`), abortive termination (`RST`).
@@ -174,8 +174,8 @@ Learners transition from viewing network communication as an abstract, magically
 4. **Network Failure Taxonomy:**
    - **Resolution Failure:** DNS name cannot be resolved (`NXDOMAIN`, resolver timeout, `getaddrinfo` returns `EAI_NONAME`). No packets reach any server.
    - **Route Unreachable:** Gateway/router returns ICMP Destination Unreachable (`EHOSTUNREACH`, `ENETUNREACH`), or packets silently drop en route.
-   - **Connection Refused:** Packets reach the destination host, but no process is listening on the target port. The target OS kernel actively responds with a TCP `RST` packet (`ECONNREFUSED` / WinError 10061).
-   - **Connection Timeout:** Packets are sent, but no response (`SYN-ACK` or `RST`) is received before the client timer expires. Caused by dropped packets, silent blackhole firewalls, or physical disconnection (`ETIMEDOUT`).
+   - **Connection Refused:** In the deterministic localhost case, connecting to an unbound TCP port normally produces an active refusal surfaced as `ECONNREFUSED`/the runtime's connection-refused exception. On arbitrary networks, policy devices and host firewalls can drop or reject traffic differently, so `RST = no process listening` is not a universal diagnosis.
+   - **Timeout:** A configured operation deadline expires before the required progress occurs. Depending on the API this can be a connect timeout, read timeout, or higher-level request timeout; it does not by itself identify where packets were lost or whether remote application work occurred.
    - **Connection Reset / Abrupt Termination:** Established connection is terminated abruptly by a peer crash, firewall state timeout, or explicit `RST` (`ECONNRESET`).
    - **Application-Level Silence / Hang:** TCP connection is successfully established (`ESTABLISHED`), request bytes are sent, but the server application hangs, deadlocks, or is overloaded, sending no application response (`read timeout`).
 
@@ -189,31 +189,31 @@ Learners transition from viewing network communication as an abstract, magically
 
 ### 4.4 Hidden Prerequisites / Just-In-Time Support
 - Basic socket abstraction: Python `socket` module provides direct exposure to POSIX socket syscalls (`socket()`, `bind()`, `listen()`, `accept()`, `connect()`, `send()`, `recv()`, `close()`).
-- Ephemeral port understanding: Ports 0–1023 (privileged/well-known), 1024–49151 (registered), 49152–65535 (ephemeral/dynamic). Binding to port 0 dynamically allocates an unused kernel port.
-- Monotonic timing: Timing network RTTs must use `time.perf_counter()` or `time.monotonic()`, not wall-clock time (`time.time()`), reinforcing the M04/M20 invariant.
+- Port-number discipline: IANA divides the 16-bit space into System Ports (0–1023), User Ports (1024–49151), and Dynamic/Private Ports (49152–65535). Whether a process needs privilege to bind a low port is an OS policy, not an IANA property. Binding a socket to local port `0` asks the OS to choose an available port; the activity records the actual assigned port instead of assuming a fixed range.
+- Timing-tool choice: if an activity records elapsed time, use a monotonic elapsed-time API such as `time.perf_counter()`/`time.monotonic()`. M10 uses this operationally without canonically teaching clock semantics, whose accepted later home remains M20.
 
 ### 4.5 Candidate Real Observation / Activity
 - **Activity M10-A (Local Socket Mechanics & State Observation):**
   - Launch a minimal Python TCP server on `127.0.0.1` binding to port 0 (ephemeral).
-  - Inspect socket states using Linux `ss -tan` (or Windows `netstat -ano` / Python `psutil`): observe `LISTEN`, `SYN_SENT`, `ESTABLISHED`, `TIME_WAIT`, `CLOSE_WAIT`.
-  - Connect with a Python client, send chunks of data (e.g. 5 bytes, then 10 bytes), observe receiver reading data in varying slice sizes (e.g. 15 bytes in one `recv()`), proving that TCP provides a byte stream, not message envelopes.
+  - If available, inspect orchestrated socket states using Linux `ss -tan` (or a platform-native equivalent). `LISTEN` and a held-open `ESTABLISHED` connection can be made deterministic; transient states such as `SYN_SENT`, `TIME_WAIT`, and `CLOSE_WAIT` are optional observations and must not be required on every host.
+  - Connect with a Python client and send several application chunks. The receiver accumulates bytes until the expected logical payload length is reached and records the actual `recv()` partition observed. Tests assert byte content/order, **not** that one `recv()` coalesces or preserves the sender's call boundaries.
 - **Activity M10-B (Controlled Network Failure Injection on Localhost):**
-  - Case 1: Connect to an unused port on `127.0.0.1` $\rightarrow$ immediate `ConnectionRefusedError` (kernel sends TCP `RST`).
-  - Case 2: Connect to a non-routable IP (e.g., TEST-NET-1 `192.0.2.1` per RFC 5737) with a short timeout ($0.5\text{s}$) $\rightarrow$ `TimeoutError` (silent drop, no response).
-  - Case 3: Connect to an invalid hostname (`nonexistent.invalid` per RFC 2606 / RFC 6761) $\rightarrow$ `socket.gaierror` (DNS name resolution failure).
-  - Compare error codes, elapsed time (immediate failure vs. timeout duration), and kernel state.
+  - Case 1: Connect to a course-selected currently unused port on `127.0.0.1` and record the runtime's connection-refused disposition. Do not assert a fixed errno or latency.
+  - Case 2: For a deterministic timeout, use a course-owned localhost server that accepts a connection but deliberately withholds the expected application response until the client's configured **read** deadline expires. This demonstrates timeout semantics without depending on external routing/firewall behavior. A true connect-timeout observation is optional/environment-sensitive and must not target TEST-NET as though silence were guaranteed.
+  - Case 3: If resolver capability is available, resolve a name under the reserved `.invalid` TLD and record the actual resolver failure. If name service is unavailable/restricted, report `NO LIVE DNS FAILURE OBSERVATION` rather than fabricating an `NXDOMAIN` transcript.
+  - Compare semantic dispositions and actual elapsed samples only as host evidence; no fixed timing ratio is a curriculum invariant.
 
 ### 4.6 Required Learner Evidence
-- Transcript recording the distinct exception types: `socket.gaierror` (DNS), `ConnectionRefusedError` (RST), and `TimeoutError` (timeout).
-- Measurement record contrasting the immediate return time of `ConnectionRefusedError` ($< 5\text{ms}$) with the configured duration of `TimeoutError` ($500\text{ms}$).
-- Socket table snapshot showing `ss -tan` output in `LISTEN` and `ESTABLISHED` states.
+- Transcript recording the deterministic localhost connection-refused and application read-timeout dispositions, plus a truthful DNS-failure disposition when resolver capability exists.
+- Raw elapsed-time samples may be recorded, but no `<N ms`, `±N%`, or fixed refused-vs-timeout ratio is required.
+- If `ss` is available, preserve a snapshot of the orchestrated `LISTEN`/`ESTABLISHED` sockets; otherwise record a truthful tool-unavailable disposition and preserve the Python endpoint evidence.
 - Written explanation demonstrating why receiving an ACK does not prove the remote application has processed the business request.
 
 ### 4.7 Evidence-Layer Classification
 - **PRINCIPLE:** End-to-end argument; layered communication model; byte-stream abstraction vs. datagram; sequence space wrapping; two-generals problem / failure ambiguity.
 - **SPECIFICATION:** RFC 9293 (TCP); RFC 768 (UDP); RFC 791 (IPv4); RFC 8200 (IPv6); RFC 1034/1035 (DNS); POSIX.1-2017 socket interface.
 - **IMPLEMENTATION:** Linux TCP/IP stack (tcp(7), ip(7), socket(2)); `ss` (iproute2); glibc `getaddrinfo()`; CPython `socket` module.
-- **CURRENT PRACTICE:** CIDR prefix allocation; systemd-resolved local resolver behavior; default TCP initial window size ($10\text{ MSS}$).
+- **CURRENT PRACTICE:** Named resolver implementation behavior (for example systemd-resolved) and platform socket/tool defaults, but only when the exact implementation/version is recorded. No TCP initial-window constant is a curriculum invariant.
 
 ### 4.8 Authoritative Sources
 - IETF STD 7 / RFC 9293: *Transmission Control Protocol (TCP)*, August 2022 (Normative current TCP spec).
@@ -224,16 +224,16 @@ Learners transition from viewing network communication as an abstract, magically
 
 ### 4.9 Likely Misconceptions
 1. *"TCP preserves application message boundaries."* (TCP is a continuous byte stream; application framing must be implemented via delimiters or length prefixes).
-2. *"Receiving an ACK means the remote application executed the command."* (ACK only means the remote OS kernel buffered the bytes into the socket receive buffer).
+2. *"Receiving an ACK means the remote application executed the command."* (A TCP ACK acknowledges sequence-space receipt by the peer TCP endpoint; it does not establish that the remote application consumed, validated, or committed the bytes).
 3. *"A request timeout means the server definitely did not perform the write."* (The request could have been received and committed by the server, but the network failed before the client received the acknowledgment).
 4. *"One domain name maps to exactly one permanent IP address."* (DNS frequently maps one name to multiple dynamic IPs for load balancing, CDN edge steering, and multi-homing).
 5. *"DNS lookups happen before every single HTTP request."* (Browsers, operating systems, and HTTP client connection pools maintain internal caches and reuse existing TCP/TLS connections).
 
 ### 4.10 Environment / Tool Constraints
 - Cross-platform Python 3 standard library `socket` works reliably on Linux, macOS, and Windows.
-- `ss` is Linux-specific (from `iproute2`); on Windows, `netstat -an` or Python `psutil` provides equivalent connection inspection.
+- `ss` is Linux-specific (from `iproute2`) and must be capability-checked. Other platforms may expose different native socket tables; the required activity remains functional using Python endpoint state/evidence without adding an undeclared third-party `psutil` dependency.
 - `nc` (netcat) has syntax variations between OpenBSD netcat and GNU netcat (`-z`, `-l -p`); avoid relying on netcat CLI options; prefer Python socket scripts.
-- `traceroute` is not pre-installed in standard Linux container/WSL environments and requires raw socket privileges. Keep as optional/illustrative only.
+- `traceroute` availability and privilege requirements vary by platform and probe mode (ICMP/UDP/TCP). Keep it optional/capability-gated; lack of the tool or raw-socket capability is a truthful `SKIP`, not a Core failure.
 - Raw packet capture (`tcpdump`, Wireshark) requires elevated privileges (`CAP_NET_RAW` / root) and is classified as Optional / Capability-gated.
 
 ### 4.11 Provenance / License Risk
@@ -241,8 +241,8 @@ Learners transition from viewing network communication as an abstract, magically
 - RFC text is referenced by section under fair use / IETF Trust provisions; no RFC text or figures will be bundled verbatim.
 
 ### 4.12 Implementation-Time Smoke Requirements
-- Python socket smoke: bind to port 0, connect, send, receive, close cleanly within 2 seconds.
-- Failure injection smoke: verify that `ConnectionRefusedError` and `TimeoutError` are triggered reliably without leaving hanging processes or socket leaks.
+- Python socket smoke: bind to port 0, connect, exchange a bounded payload, and close cleanly under a harness deadline used only to prevent hangs (not as learner timing evidence).
+- Failure smoke: reproduce the course-owned localhost refusal and read-timeout paths, capability-gate DNS failure, and verify no hanging processes or socket leaks.
 
 ---
 
