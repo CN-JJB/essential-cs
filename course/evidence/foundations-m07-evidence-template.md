@@ -80,7 +80,7 @@
   - `VmRSS`:
   - `VmSize` Delta from Baseline:
   - `VmRSS` Delta from Baseline:
-  - Explanation of why `VmRSS` remains unchanged:
+  - Observed `VmRSS` relation after reservation (do not assume it must remain unchanged):
 - Stage 2 (Half Touched):
   - `VmRSS`:
   - `VmRSS` Delta:
@@ -99,7 +99,7 @@
 - Reserved `ru_minflt`:
 - Half Touched `ru_minflt`:
 - Fully Touched `ru_minflt`:
-- Total Minor Faults Triggered by Touching:
+- Observed `ru_minflt` Delta During Touching:
 - Why `ru_minflt` is Unix/Linux-family accounting evidence, not universal hardware semantics:
 - Limitations (zero-page optimizations, runtime allocator caching):
 
@@ -108,7 +108,7 @@
 ## J — OOM / Overcommit Explanation Without Destructive Experiment
 - Linux Overcommit Policy Configuration (`/proc/sys/vm/overcommit_memory` modes 0, 1, 2):
 - Why `malloc` / `mmap` can succeed (return non-NULL) even if physical RAM cannot fulfill future writes:
-- Mechanism of the Linux OOM Killer (`out_of_memory()`, `oom_score`, `SIGKILL`):
+- Bounded Linux OOM behavior (memory domain/cgroup, reclaim, candidate selection, possible `SIGKILL`; avoid fixed victim rules):
 - Safety Boundary Statement (Why destructive host exhaustion tests are forbidden):
 
 ---
@@ -139,10 +139,10 @@
 ---
 
 ## M — Fault Handler Resolve-vs-Fail Explanation
-- CPU Hardware Event (Page Fault exception #PF, interrupt vector):
+- CPU Hardware Event (architecture-specific translation/protection fault; record x86 `#PF` only when that architecture is in scope):
 - OS Kernel Decision Tree:
   - How benign faults are resolved and retried transparently (demand allocation, COW, swap-in):
-  - Why illegal/unmapped accesses cannot be resolved and result in `SIGSEGV`:
+  - How an unresolved/protection-invalid user access may become a user-visible failure; record `SIGSEGV` only as hosted observation when reproduced:
 - Correction of the Fault Taxonomy:
   - Distinguish hardware fault events from OS recovery policies and Linux accounting (Minor/Major):
 
