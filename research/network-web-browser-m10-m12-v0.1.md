@@ -304,12 +304,12 @@ Learners transition from raw transport streams to secure, structured application
   - Step 1 (Direct trace): Request directly from origin with `curl -v`. Observe origin processing.
   - Step 2 (Forwarded trace): Start a bounded local forwarding adapter (`IntermediaryAdapter`). Request through adapter. Observe `Via` header injection and socket connection hops: Client $\rightarrow$ Intermediary, Intermediary $\rightarrow$ Origin.
   - Step 3 (Conditional Cache Validation): Issue a second request through the intermediary with `If-None-Match: "etag"`. Intermediary or origin returns `304 Not Modified`. Trace shows zero response body payload transferred.
-  - Step 4 (Controlled Failure): Stop the origin server. Request through the intermediary. Intermediary returns `502 Bad Gateway` or `504 Gateway Timeout`. Trace demonstrates where failure is detected and reported.
+  - Step 4 (Controlled Failure): stop the origin server. The **course fixture policy** maps an upstream connection refusal to `502 Bad Gateway`; a separately modeled upstream deadline may map to `504 Gateway Timeout`. Learners must distinguish this fixture mapping from a universal law that every intermediary maps socket errors identically.
 
 ### 5.6 Required Learner Evidence
 - Complete, verbatim `curl -v` transcripts of direct, forwarded, and conditional requests.
 - Header analysis table comparing headers present at client vs. headers received at origin (identifying hop-by-hop vs. end-to-end headers).
-- Verification of status `304 Not Modified` with matching ETag and zero-byte payload.
+- Verification of status `304 Not Modified` with the expected validator and **no response body/content**. Do not assert `Content-Length: 0`.
 - Error trace for origin failure demonstrating proxy response with `502 Bad Gateway`.
 - Clean reset verification proving all local processes terminated and ports released.
 
@@ -317,7 +317,7 @@ Learners transition from raw transport streams to secure, structured application
 - **PRINCIPLE:** Uniform interface; resource vs. representation; safe vs. idempotent methods; cache freshness vs. validation; end-to-end vs. hop-by-hop boundaries; trust delegation via PKI.
 - **SPECIFICATION:** RFC 9110 (HTTP Semantics, STD 97); RFC 9111 (HTTP Caching, STD 98); RFC 9112 (HTTP/1.1, STD 99); RFC 9113 (HTTP/2); RFC 9114 (HTTP/3); RFC 9000 (QUIC); RFC 8446 (TLS 1.3); RFC 5280 (X.509 PKI).
 - **IMPLEMENTATION:** `curl` (libcurl CLI behavior); Python standard library `http.server`, `urllib.request`, `ssl`; OpenSSL / Schannel / SecureTransport backend differences in `curl`.
-- **CURRENT PRACTICE:** Browser default connection limits ($6$ per origin for HTTP/1.1); ALPN negotiation order (`h2`, `http/1.1`); TLS 1.3 adoption prevalence; Let's Encrypt 90-day certificate lifetimes.
+- **CURRENT PRACTICE:** Named browser/client ALPN preferences, deployed TLS/HTTP version support, certificate lifetimes, and connection-pool limits only when tied to an exact implementation/version/date. None of these values belongs in the curriculum as a permanent constant.
 
 ### 5.8 Authoritative Sources
 - IETF STD 97 / RFC 9110: *HTTP Semantics*, June 2022.
@@ -329,23 +329,23 @@ Learners transition from raw transport streams to secure, structured application
 - IETF RFC 8446: *The Transport Layer Security (TLS) Protocol Version 1.3*, August 2018.
 
 ### 5.9 Likely Misconceptions
-1. *"HTTPS encrypts data, so the website is trustworthy and safe to send money to."* (TLS only proves you are talking to the entity controlling the private key matching the domain name; it says nothing about the business ethics or security of the application).
-2. *"TLS hides all metadata on the wire."* (TLS does not hide destination IP, source IP, packet timing, packet sizes, or the Server Name Indication / SNI unless Encrypted Client Hello is deployed).
-3. *"An idempotent method is always safe to retry automatically under all conditions."* (Idempotency is a contract about intended server state; if an application implements payments via a non-idempotent GET or has non-transactional side effects, blind retries can cause duplicate billing).
-4. *"A 200 OK response means the business transaction succeeded."* (200 OK only indicates that the HTTP server successfully processed the HTTP request and generated a representation; the response body could contain `{"error": "insufficient_funds"}`).
-5. *"HTTP/3 is always faster than HTTP/2 and HTTP/1.1."* (Under zero packet loss and high-bandwidth local connections, user-space UDP processing overhead and crypto operations can make HTTP/3 comparable to or slightly slower than HTTP/2).
+1. *"HTTPS encrypts data, so the website is trustworthy and safe to send money to."* (Successful Web PKI verification establishes a cryptographic channel to a service identity validated under the client's trust policy; it does not establish the service's business legitimacy, authorization policy, or application correctness).
+2. *"TLS hides all metadata on the wire."* (TLS does not hide IP-layer endpoints, packet timing, or packet sizes. Server-name exposure is now conditional: ordinary ClientHello SNI can be visible, while RFC 9849 Encrypted Client Hello (ECH) can protect the real ClientHello/SNI when successfully configured and negotiated. Do not teach either “SNI is always plaintext” or “ECH hides all metadata.”)
+3. *"An idempotent method is always safe to retry automatically under all conditions."* (RFC 9110 defines idempotency in terms of the **intended effect requested by the client**. Idempotent methods are retry-friendly when a communication failure occurs before a response is read, but clients still need application-specific limits, authentication/replay considerations, and knowledge of semantics outside the method contract.)
+4. *"A 200 OK response means the business transaction succeeded."* (`200 OK` means the request succeeded according to HTTP method semantics as reported by the server; it does not prove a domain/business invariant. The representation can still describe an application-level failure or partial outcome.)
+5. *"HTTP/3 is always faster than HTTP/2 and HTTP/1.1."* (Performance depends on RTT, loss/reordering, connection reuse, implementation, CPU, congestion control, server/client behavior, and workload. The Research does not assign a universal winner or fixed speedup.)
 
 ### 5.10 Environment / Tool Constraints
-- `curl` is universal across Linux, macOS, and modern Windows.
+- `curl` is common across the target platforms but must be preflighted; do not infer availability or a particular TLS backend/version from the OS name alone.
 - `openssl` CLI is missing by default from many Windows installations; therefore, TLS verification must be supported via Python's standard `ssl` library or pre-bundled test fixtures rather than mandating an external `openssl` binary.
-- All HTTP fixtures must bind to `127.0.0.1` on ephemeral ports ($> 1024$) to ensure unprivileged execution and prevent port collisions in shared environments.
+- All HTTP fixtures must bind to loopback and request OS-assigned ports (`bind(..., 0)` where supported). This reduces collision risk and avoids fixed privileged ports; the actual port is recorded as evidence.
 
 ### 5.11 Provenance / License Risk
 - LAB-REQ-01 uses original Essential CS code for the server and intermediary adapter (Apache-2.0).
 - RFC 9110 and RFC 9111 are referenced by section number; no text or diagrams from RFCs are copied into the curriculum.
 
 ### 5.12 Implementation-Time Smoke Requirements
-- Start local origin and intermediary adapter, issue request with `curl`, receive valid response, assert `Via` header, issue conditional request, receive `304 Not Modified`, stop origin, assert `502 Bad Gateway`, terminate all processes cleanly. Total runtime $< 5\text{s}$.
+- Start the local origin and intermediary adapter, issue direct/forwarded/conditional requests, verify the fixture's `Via`, 304-with-no-body, and refusal→502 policies, then terminate all processes cleanly. Use a bounded harness deadline only to prevent hangs; do not make a fixed total runtime an acceptance invariant.
 
 ---
 
@@ -519,18 +519,18 @@ The table below verifies that no concept is re-defined, and every mention in M10
 ### 9.1 Feasibility and Normative Foundation
 - **Selected Exercise:** Adapt RFC 9110 (HTTP Semantics) and RFC 9111 (HTTP Caching) into a learner-owned localhost HTTP origin + forwarding adapter + `curl` inspection lab.
 - **Specification Status:** RFC 9110 (STD 97) and RFC 9111 (STD 98) are current, fully published Internet Standards (June 2022).
-- **Core Feasibility:** 100% verified. A complete working Python fixture implementing the origin and forwarding adapter requires only Python's standard library (`http.server`, `urllib.request`, `socket`). It runs unprivileged on `127.0.0.1` using dynamically allocated ephemeral ports.
+- **Core Feasibility:** the bounded fixture design is feasible with Python standard-library networking on loopback; implementation still must preflight `curl`, exercise process cleanup, and record actual host/runtime versions. This Research result does not close OQ-BP-006.
 
 ### 9.2 Controlled Failure and Trace Mechanics
 1. **Direct Trace:** Client issues `curl -v http://127.0.0.1:<origin_port>/resource`. Inspects request headers, response headers, `ETag: "test-v1"`, and status `200 OK`.
 2. **Forwarded Trace:** Client issues `curl -v http://127.0.0.1:<proxy_port>/resource`. Intermediary forwards to origin, appends `Via: 1.1 essential-cs-proxy`, and returns response. Client compares direct vs. forwarded headers.
-3. **Conditional Validation Trace:** Client issues `curl -v -H 'If-None-Match: "test-v1"' http://127.0.0.1:<proxy_port>/resource`. Server returns `304 Not Modified` with zero content body. Client verifies bandwidth savings and caching semantics.
-4. **Controlled Origin Failure:** Learner terminates `OriginServer`. Client repeats request through `IntermediaryAdapter`. Adapter encounters `ConnectionRefusedError` and returns `502 Bad Gateway` (or `504 Gateway Timeout`). Learner verifies how intermediaries translate low-level socket failures into application-level error codes.
+3. **Conditional Validation Trace:** Client issues `curl -v -H 'If-None-Match: "test-v1"' http://127.0.0.1:<proxy_port>/resource`. Server returns `304 Not Modified` with no response content/body. The learner may compare transferred bytes on this fixture, but the lesson must not universalize a fixed bandwidth saving.
+4. **Controlled Origin Failure:** Learner terminates `OriginServer`. The course intermediary maps the resulting upstream refusal to `502 Bad Gateway`. A distinct upstream-deadline fixture may demonstrate `504 Gateway Timeout`; neither mapping is generalized to every proxy implementation.
 
 ### 9.3 Safety and Environment Discipline
 - **Localhost Only:** Strictly bound to `127.0.0.1`. No external network calls, no public proxying, no public internet dependencies.
 - **Unprivileged:** Requires no `sudo`, no `root`, and no raw socket capabilities.
-- **Deterministic Cleanup:** Ephemeral ports and explicit process termination guarantee no lingering listeners or socket leaks.
+- **Deterministic Cleanup:** explicit ownership/PID tracking, shutdown/join logic, and a post-reset listener check establish cleanup. Port `0` allocation by itself does not guarantee that processes or sockets were cleaned up.
 
 ### 9.4 Licensing and Provenance Boundary
 - RFC 9110/9111 are IETF publications under the IETF Trust Legal Provisions (TLP 4.0). Code components extracted from RFCs carry a 3-clause BSD license; text is copyrighted by IETF Trust.
