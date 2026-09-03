@@ -134,6 +134,9 @@ class TestL0802BufferedIO(unittest.TestCase):
         self.assertEqual(rep["buffered_file_bytes_on_disk"], 512 * 32)
         self.assertEqual(rep["unbuffered_file_bytes_on_disk"], 512 * 32)
 
+        with self.assertRaises(ValueError):
+            observe_user_space_buffering(num_chunks=1024 * 1024, chunk_size=2)
+
     def test_durability_boundary_audit(self):
         dur = check_durability_boundary_claim()
         self.assertFalse(
@@ -152,6 +155,9 @@ class TestL0802BufferedIO(unittest.TestCase):
             self.assertIsInstance(mem["writeback_kb"], int)
 
         # Bounded directional observation
+        with self.assertRaises(ValueError):
+            observe_dirty_pages_directional(size_mb=9)
+
         d_rep = observe_dirty_pages_directional(size_mb=4)
         if d_rep["status"] == "PASS":
             self.assertEqual(d_rep["size_written_mb"], 4)
