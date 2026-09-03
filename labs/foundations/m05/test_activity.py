@@ -87,6 +87,8 @@ class BytecodeSemanticRelationTests(unittest.TestCase):
 
     def test_bytecode_contains_semantic_operations(self):
         res = inspect_bytecode()
+        if not res["supported"]:
+            self.skipTest(res["reason"])
         # Must load arguments (either LOAD_FAST or superinstruction like LOAD_FAST_LOAD_FAST)
         self.assertTrue(
             res["has_load_args"],
@@ -105,6 +107,8 @@ class BytecodeSemanticRelationTests(unittest.TestCase):
 
     def test_bytecode_does_not_assert_hardcoded_offsets(self):
         """Ensure test inspects instructions dynamically rather than checking fixed offsets."""
+        if get_environment_info()["python_implementation"] != "CPython":
+            self.skipTest("CPython is required for this bytecode inspection activity")
         instructions = list(dis.get_instructions(add))
         self.assertTrue(len(instructions) >= 3)
         # Verify the last instruction is a return operation
