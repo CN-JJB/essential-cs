@@ -304,6 +304,7 @@ This sequence equips the learner to understand exactly what happens under the ho
 - **Title:** M11 — Networking II: TLS, HTTP, CDN & Proxies (Area 08)
 - **Primary Competency:** Explain
 - **Growth Competencies:** Trace, Observe, Diagnose, Judge, Estimate
+- **Competency Authority Note:** `meta/COMPETENCY_MATRIX.md` is canonical for module primary competency. The accepted Research's use of "Primary: Trace" describes a strong S4 evidence pattern, not a replacement of the Matrix; Design keeps M11 primary **Explain** while preserving Trace throughout activities/evidence.
 - **Module Prerequisites:** Hard: M10 (Networking I: IP, DNS & Transport)
 - **Capability Transition:** Learners transition from raw transport streams to secure, structured application protocol interactions. They master the HTTP request-response model, uniform interface semantics, cache freshness and validation mechanisms, intermediary roles in distributed systems, and the transport evolution from HTTP/1.1 to HTTP/2 and HTTP/3/QUIC. They learn to separate protocol semantics from wire encoding and understand the cryptographic boundaries of TLS.
 
@@ -623,6 +624,7 @@ For learners electing to pursue LAB-OPT-02 independently:
 - **Title:** M12 — Web & Browser: The Integrated Case (Area 08)
 - **Primary Competency:** Observe
 - **Growth Competencies:** Trace, Explain, Diagnose, Judge
+- **Competency Authority Note:** `meta/COMPETENCY_MATRIX.md` is canonical for module primary competency. The accepted Research's page-load Trace emphasis is retained as a growth/evidence path; Design keeps M12 primary **Observe**.
 - **Module Prerequisites:** Hard: M11 (Networking II: TLS, HTTP, CDN & Proxies) + M07 (Virtual Memory & Isolation). Soft/preferred: M05 and M02.
 - **Capability Transition:** Learners transition from viewing the browser as a simple document reader to understanding it as an integrated computing system for safely executing untrusted code. They separate Web Platform specifications from named browser implementations (Chromium case), trace a conceptual rendering pipeline, explain origin-based security boundaries (SOP, CORS, CSP), and observe how the Window/Document event loop schedules tasks, microtasks, and rendering opportunities without canonically defining Concurrency.
 
@@ -895,14 +897,14 @@ Instead, the design classifies runtime capabilities and establishes an empirical
 | **`traceroute`** | M10 | Optional / Capability-gated | Privilege-Sensitive | Raw socket / ICMP permissions vary; often blocked in containers. | If unavailable or blocked, report `SKIP`; reference traces are labeled reference-only. | traceroute / mtr |
 | **`tcpdump` / Wireshark** | M10 | Optional / Capability-gated | Privilege-Sensitive | Live capture permission varies by OS/tool setup (capabilities, capture helper/group configuration, container policy, etc.). | Strictly Optional; never required for Core. Pre-captured PCAP files are reference evidence. | Record actual tool/version/capability if used; no canonical pin |
 | **Desktop Browser (Chromium / Chrome)** | M12 | Preferred Browser Observation | Browser/GUI-Dependent / Current Practice | GUI and browser availability/process behavior vary by version/platform. | If unavailable, record `NO LIVE BROWSER OBSERVATION`; reference traces remain REFERENCE EVIDENCE ONLY. | Record actual browser version/platform; no `120+` baseline |
-| **Alternative Browser (Firefox)** | M12 | Optional Browser Observation | Browser/GUI-Dependent / Current Practice | Process model differs from Chromium; Gecko rendering engine. | Optional comparison; do not use Firefox to validate Chromium internal claims. | Firefox ESR / Release |
+| **Alternative Browser (Firefox)** | M12 | Optional Browser Observation | Browser/GUI-Dependent / Current Practice | Process model and DevTools behavior differ from Chromium and by version/platform. | Optional comparison; do not use Firefox to validate Chromium internal claims. | Record actual version/platform if used; no canonical baseline |
 | **Local HTML/JS Fixtures** | M12 | Required for Core | Course-owned / Unprivileged | Static files served on loopback port 0; standard modern JavaScript. | Browser capability is gated separately from static file serving. | Modern ECMAScript (fetch, Promises) |
 
 ---
 
 ### 10.3 Preflight Verification Script Contract
 
-Before running any network or web module tests, the environment must execute the preflight verification script (`tests/preflight_network_web.py`), which outputs a structured JSON report and human-readable summary:
+Before running any network or web module tests, the environment must execute the preflight verification script (`tests/preflight_network_web.py`), which outputs a structured JSON report and human-readable summary. The JSON below is an **ILLUSTRATIVE SCHEMA/EXAMPLE ONLY**, not committed evidence and not a canonical version baseline; implementation records the actual host values:
 
 ```json
 {
@@ -1221,7 +1223,7 @@ Every Lesson across M10–M12 must implement the mandatory 5-step progressive-su
 - **Hint 1:** How does a TLS client determine whether a server's public key actually belongs to the claimed hostname?
 - **Hint 2:** If any unsigned certificate were accepted, what could an attacker on the same network do to your traffic?
 - **Expected Observation:** The TLS library raises a certificate verification error indicating the issuer is untrusted or the hostname does not match `subjectAltName`.
-- **Full Explanation:** TLS relies on a chain of trust anchored in trusted root certificates. Disabling certificate verification allows a man-in-the-middle attacker to present their own certificate and intercept all encrypted data, completely neutralizing the security guarantees of TLS.
+- **Full Explanation:** In the certificate-authenticated case, the client combines certificate-path validation with service-identity matching under its trust policy. Disabling those verification checks removes the intended server-authentication protection and can enable an active on-path attacker to impersonate the service; it does not mean every other cryptographic property disappears under every threat model.
 
 ### Checkpoint Support Ladder: L11-02 (HTTP Semantics & Uniform Interface)
 - **Question:** If an API endpoint modifies database records when receiving an HTTP `GET` request, why is this an architectural defect even if the code runs without errors?
