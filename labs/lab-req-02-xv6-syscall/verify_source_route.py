@@ -1,97 +1,124 @@
 #!/usr/bin/env python3
-"""LAB-REQ-02 Source Route Verifier.
+"""Verify the pinned Fall-2025 xv6 sleep -> pause/sys_pause route."""
 
-Statically audits the xv6-riscv source tree to verify the 6 route anchors
-connecting the `sleep` user program to the underlying `pause/sys_pause` system call.
-
-Verifies:
-1. Absence of stale SYS_sleep / sys_sleep definitions.
-2. Presence of SYS_pause in kernel/syscall.h.
-3. Registration of sys_pause in kernel/syscall.c.
-4. Implementation of sys_pause in kernel/sysproc.c.
-5. User library prototype in user/user.h.
-6. Syscall stub entry in user/usys.pl.
-"""
-
+import re
+import subprocess
 import sys
 from pathlib import Path
 
+PINNED_COMMIT = "35b088427ef37611c38afdeed5a52a278cae38f9"
+
+
+def read(path: Path):
+    return path.read_text(encoding="utf-8", errors="replace")
+
 
 def verify_xv6_route(tree_path: Path):
-    print(f"=== Verifying xv6 Syscall Route in: {tree_path} ===")
+    print(f"=== Verifying pinned xv6 syscall route in: {tree_path} ===")
     errors = []
 
-    if not tree_path.exists():
-        print(f"[-] Directory not found: {tree_path}")
-        return False, ["Directory does not exist"]
+    if not (tree_path / ".git").exists():
+        return False, ["tree is not a Git checkout; exact source pin cannot be verified"]
 
-    # 1. kernel/syscall.h
-    sc_h = tree_path / "kernel" / "syscall.h"
-    if not sc_h.exists():
-        errors.append("kernel/syscall.h missing")
+    head = subprocess.run(
+        ["git", "-C", str(tree_path), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if head.returncode != 0 or head.stdout.strip() != PINNED_COMMIT:
+        errors.append(
+            f"HEAD is not exact pin {PINNED_COMMIT}: {head.stdout.strip() or 'unresolved'}"
+        )
     else:
-        content = sc_h.read_text(encoding="utf-8", errors="replace")
-        if "SYS_pause" not in content:
-            errors.append("SYS_pause definition missing from kernel/syscall.h")
-        else:
-            print("[+] Anchor 1: kernel/syscall.h defines SYS_pause")
-        if "SYS_sleep" in content:
-            errors.append("Stale SYS_sleep definition found in kernel/syscall.h")
+        print(f"[+] Pin: HEAD == {PINNED_COMMIT}")
 
-    # 2. kernel/syscall.c
-    sc_c = tree_path / "kernel" / "syscall.c"
-    if not sc_c.exists():
-        errors.append("kernel/syscall.c missing")
-    else:
-        content = sc_c.read_text(encoding="utf-8", errors="replace")
-        if "sys_pause" not in content or "[SYS_pause]" not in content:
-            errors.append("sys_pause dispatcher entry missing from kernel/syscall.c")
-        else:
-            print("[+] Anchor 2: kernel/syscall.c registers [SYS_pause] = sys_pause")
+    required = {
+        "kernel/syscall.h": tree_path / "kernel" / "syscall.h",
+        "kernel/syscall.c": tree_path / "kernel" / "syscall.c",
+        "kernel/sysproc.c": tree_path / "kernel" / "sysproc.c",
+        "kernel/trap.c": tree_path / "kernel" / "trap.c",
+        "kernel/trampoline.S": tree_path / "kernel" / "trampoline.S",
+        "user/user.h": tree_path / "user" / "user.h",
+        "user/usys.pl": tree_path / "user" / "usys.pl",
+    }
+    for label, path in required.items():
+        if not path.exists():
+            errors.append(f"{label} missing")
 
-    # 3. kernel/sysproc.c
-    sp_c = tree_path / "kernel" / "sysproc.c"
-    if not sp_c.exists():
-        errors.append("kernel/sysproc.c missing")
-    else:
-        content = sp_c.read_text(encoding="utf-8", errors="replace")
-        if "sys_pause(void)" not in content:
-            errors.append("sys_pause(void) function implementation missing from kernel/sysproc.c")
-        else:
-            print("[+] Anchor 3: kernel/sysproc.c implements sys_pause(void)")
+    if errors:
+        return False, errors
 
-    # 4. user/user.h
-    u_h = tree_path / "user" / "user.h"
-    if not u_h.exists():
-        errors.append("user/user.h missing")
-    else:
-        content = u_h.read_text(encoding="utf-8", errors="replace")
-        if "pause(int" not in content and "pause(int)" not in content:
-            errors.append("int pause(int); prototype missing from user/user.h")
-        else:
-            print("[+] Anchor 4: user/user.h declares int pause(int);")
+    sc_h = read(required["kernel/syscall.h"])
+    sc_c = read(required["kernel/syscall.c"])
+    sp_c = read(required["kernel/sysproc.c"])
+    trap_c = read(required["kernel/trap.c"])
+    tramp_s = read(required["kernel/trampoline.S"])
+    user_h = read(required["user/user.h"])
+    usys_pl = read(required["user/usys.pl"])
 
-    # 5. user/usys.pl
-    u_pl = tree_path / "user" / "usys.pl"
-    if not u_pl.exists():
-        errors.append("user/usys.pl missing")
+    if not re.search(r"#define\s+SYS_pause\s+13\b", sc_h):
+        errors.append("kernel/syscall.h does not define pinned SYS_pause 13")
     else:
-        content = u_pl.read_text(encoding="utf-8", errors="replace")
-        if 'entry("pause")' not in content:
-            errors.append('entry("pause") missing from user/usys.pl')
-        else:
-            print('[+] Anchor 5: user/usys.pl contains entry("pause")')
+        print("[+] syscall number: SYS_pause == 13")
 
-    # 6. kernel/trap.c
-    trap_c = tree_path / "kernel" / "trap.c"
-    if not trap_c.exists():
-        errors.append("kernel/trap.c missing")
+    stale_blob = "\n".join((sc_h, sc_c, sp_c, usys_pl))
+    if "SYS_sleep" in stale_blob or re.search(r"\bsys_sleep\b", stale_blob):
+        errors.append("stale SYS_sleep/sys_sleep route found")
+
+    if "[SYS_pause]" not in sc_c or "sys_pause" not in sc_c:
+        errors.append("kernel/syscall.c pause dispatcher mapping missing")
     else:
-        content = trap_c.read_text(encoding="utf-8", errors="replace")
-        if "usertrap" not in content or "syscall" not in content:
-            errors.append("usertrap syscall dispatch missing from kernel/trap.c")
+        print("[+] dispatcher: [SYS_pause] -> sys_pause")
+
+    if not re.search(r"\bsys_pause\s*\(\s*void\s*\)", sp_c):
+        errors.append("kernel/sysproc.c sys_pause(void) implementation missing")
+    else:
+        print("[+] kernel implementation: sys_pause(void)")
+
+    if not re.search(r"\bint\s+pause\s*\(\s*int\s*\)\s*;", user_h):
+        errors.append("user/user.h int pause(int); declaration missing")
+    else:
+        print("[+] user declaration: int pause(int);")
+
+    for needle, description in (
+        ('entry("pause")', 'entry("pause")'),
+        ('li a7, SYS_${name}', "generator loads a7 from SYS_<name>"),
+        ("ecall", "generator emits ecall"),
+        ("ret", "generator emits ret"),
+    ):
+        if needle not in usys_pl:
+            errors.append(f"user/usys.pl missing {description}")
+    if not any("user/usys.pl" in e for e in errors):
+        print("[+] stub generator: pause entry -> a7 syscall number -> ecall -> ret")
+
+    if "usertrap" not in trap_c or "r_scause() == 8" not in trap_c or "syscall();" not in trap_c:
+        errors.append("kernel/trap.c U-mode ecall -> syscall() path not verified")
+    else:
+        print("[+] trap: U-mode ecall scause 8 -> syscall()")
+
+    if "uservec:" not in tramp_s:
+        errors.append("kernel/trampoline.S uservec entry missing")
+    else:
+        print("[+] trampoline: uservec entry present")
+
+    sleep_c = tree_path / "user" / "sleep.c"
+    if sleep_c.exists():
+        sleep_src = read(sleep_c)
+        if not re.search(r"\bpause\s*\(", sleep_src):
+            errors.append("learner user/sleep.c exists but does not call pause(...)")
         else:
-            print("[+] Anchor 6: kernel/trap.c routes ecall trap to syscall()")
+            print("[+] learner utility: user/sleep.c calls pause(...)")
+    else:
+        print("[*] learner user/sleep.c not present yet; upstream route still checked")
+
+    generated = tree_path / "user" / "usys.S"
+    if generated.exists():
+        generated_text = read(generated)
+        if not re.search(r"(?ms)^pause:\s*.*?li\s+a7,\s*SYS_pause\s*.*?ecall\s*.*?ret", generated_text):
+            errors.append("generated user/usys.S pause stub does not match expected pinned relation")
+        else:
+            print("[+] generated stub: pause -> SYS_pause -> ecall -> ret")
 
     if errors:
         print("[-] ROUTE VERIFICATION FAILED:")
@@ -99,15 +126,14 @@ def verify_xv6_route(tree_path: Path):
             print(f"    - {err}")
         return False, errors
 
-    print("STATUS: PASS — All 6 route anchors verified against Fall 2025 specification.")
+    print("STATUS: PASS — Exact pin and current pause/sys_pause route verified.")
     return True, []
 
 
 def main():
-    default_dir = Path(__file__).parent / "worktree"
-    target_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else default_dir
-    success, _ = verify_xv6_route(target_dir)
-    sys.exit(0 if success else 1)
+    target = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / "worktree"
+    ok, _ = verify_xv6_route(target)
+    raise SystemExit(0 if ok else 1)
 
 
 if __name__ == "__main__":
