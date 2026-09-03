@@ -50,6 +50,7 @@ Blueprint closure means the project may now build and validate the curriculum th
 - **Issue #44 / PR #45 — M04 Memory Hierarchy, Locality & Measurement learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes aligning canonical Caching/Locality definitions, making elapsed-time subtraction explicit, and machine-checking counterbalanced trial order. Committed author-smoke statistics independently recomputed exactly; final-head Lead rerun on x86-64 Debian/GCC reproduced the predicted direction with 30 trials and a ~19.72× column/row median ratio. This remains environment-specific microbenchmark evidence, not a universal hardware claim.
 - **Issue #47 / PR #48 — Runtime, OS & Persistence Research Dossier v0.1 (M05–M09):** Lead-reviewed and merged with **READY FOR DESIGN** after current-source/boundary fixes covering Fall 2025 xv6 `sleep`→`pause` routing, lab-page licensing uncertainty, ptrace/strace permissions, durability write-path checkpoints, CPython implementation boundaries, and SSD source classification. LAB-REQ-02 selection remains accepted; OQ-BP-006 remains OPEN.
 - **Issue #50 / PR #51 — Runtime, OS & Persistence Design Dossier v0.1 (M05–M09):** Lead-reviewed and merged with **READY FOR LESSON / ACTIVITY IMPLEMENTATION** after SIMPLE DESIGN FIXes tightening write-path/durability claims, hosted ptrace/QEMU/root-permission assumptions, M07 bad-address/OOM evidence, Isolation vs Trust Boundary wording, and SSD/WAL inference boundaries. All 15 canonical Lesson IDs and first homes remain intact.
+- **Issue #53 / PR #54 — M05 Languages, VM & Compiler Pipeline learner packet v0.1:** Lead-reviewed and merged after SIMPLE FIXes separating Python specification from CPython AST/bytecode implementation evidence, removing unsafe/fixed bytecode/performance claims, tightening type-system/GCC diagnostic boundaries, and gating bytecode inspection to CPython. Author Windows CPython 3.13.1/GCC 14.2 tests passed 9/9; Lead Debian CPython 3.13.5/GCC 14.2 independently reproduced the core 9/9 contract and compiler/bytecode relations.
 
 ## Active workstream
 
@@ -69,11 +70,11 @@ Production now follows D-027's bounded build-first sequence:
 
 `Research → Design → Lesson/Lab/Project Implementation → Independent Verification/Lead Review → Next Ready Batch`
 
-Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is now Lead-accepted and merged**. The next bounded production step is learner-facing **M05 — Languages, VM & Compiler Pipeline** implementation, followed by independent Lead review before M06.
+Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is now fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is Lead-accepted; M05 implementation is now Lead-reviewed and merged**. The next bounded production step is learner-facing **M06 — Processes, Syscalls & Execution Context**, including LAB-REQ-02.
 
 ## Current priority
 
-1. Implement the next bounded learner-facing **M05 — Languages, VM & Compiler Pipeline** packet from the accepted M05–M09 Design; do not jump ahead to M06 in the same PR.
+1. Implement the next bounded learner-facing **M06 — Processes, Syscalls & Execution Context** packet plus **LAB-REQ-02** from the accepted M05–M09 Design; do not jump ahead to M07 in the same PR.
 2. Keep independent Verification/Lead Review on every bounded implementation batch even though learner validation is deferred.
 3. Keep **Issue #34 OPEN / DEFERRED / NON-BLOCKING** until real learning begins; never fabricate learner evidence.
 4. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
