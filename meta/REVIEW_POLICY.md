@@ -60,6 +60,17 @@ Use:
 
 `Open Question → Research → RFC if needed → Decision → New Task`
 
+## Review communication surface
+
+Lead Review must preserve the Issue → PR handoff model:
+
+- the assigned Issue body is the Lead-to-Agent Task/Rework Contract;
+- the PR body plus branch commits are the Agent-to-Lead delivery surface;
+- when review requires material rework, update/reopen the Issue or create a bounded follow-up Issue before redispatch;
+- do not use Issue/PR comments for routine acknowledgements, progress chatter, repeated status reports, or task-contract revisions that belong in the canonical Issue/PR bodies;
+- comments are reserved for focused durable findings, external contributor discussion, or exceptional audit context that does not fit the canonical bodies;
+- the authoring Agent does not merge its own PR.
+
 ## Completion comparison
 
 Review Local Agent work against:
