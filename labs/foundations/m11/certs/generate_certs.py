@@ -7,8 +7,14 @@ Generates:
 2. Course Server Leaf Certificate (server.pem, server.key) with SAN (localhost, 127.0.0.1)
 3. Separate Untrusted Root CA (untrusted_ca.pem) for deterministic path-rejection tests.
 
-Adheres strictly to RFC 5280, RFC 9846, and RFC 9525.
-Validity: 10 years (3650 days) from 2026-09-04 to avoid unexpected test failure due to expiry.
+Creates a bounded, course-owned X.509 test fixture used by the M11 TLS activity.
+The committed keys/certificates are PUBLIC TEST MATERIAL and MUST NEVER be reused for
+real services. This script is a maintenance/regeneration tool and may require the
+optional third-party `cryptography` package; learner Core execution uses only the
+committed fixture plus Python's standard-library `ssl`.
+
+Validity: 3650 days from the time of regeneration. This is a course-fixture
+maintenance choice, not a public Web PKI lifetime recommendation.
 """
 
 import datetime
@@ -47,7 +53,7 @@ def generate_all_certs(output_dir=None):
         .subject_name(ca_name)
         .issuer_name(ca_name)
         .public_key(ca_key.public_key())
-        .serial_number(1)
+        .serial_number(x509.random_serial_number())
         .not_valid_before(start_time)
         .not_valid_after(end_time)
         .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
@@ -87,7 +93,7 @@ def generate_all_certs(output_dir=None):
         .subject_name(leaf_name)
         .issuer_name(ca_name)
         .public_key(leaf_key.public_key())
-        .serial_number(2)
+        .serial_number(x509.random_serial_number())
         .not_valid_before(start_time)
         .not_valid_after(end_time)
         .add_extension(
@@ -101,7 +107,7 @@ def generate_all_certs(output_dir=None):
         .add_extension(
             x509.KeyUsage(
                 digital_signature=True,
-                key_encipherment=True,
+                key_encipherment=False,
                 key_cert_sign=False,
                 crl_sign=False,
                 content_commitment=False,
@@ -136,7 +142,7 @@ def generate_all_certs(output_dir=None):
         .subject_name(untrusted_name)
         .issuer_name(untrusted_name)
         .public_key(untrusted_key.public_key())
-        .serial_number(999)
+        .serial_number(x509.random_serial_number())
         .not_valid_before(start_time)
         .not_valid_after(end_time)
         .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
@@ -162,6 +168,7 @@ def generate_all_certs(output_dir=None):
     with open(untrusted_ca_path, "wb") as f:
         f.write(untrusted_cert.public_bytes(serialization.Encoding.PEM))
 
+    print("WARNING: generated keys are PUBLIC COURSE TEST FIXTURES; never reuse them for real services.")
     print(f"Generated certificates in: {output_dir}")
     print(f"  CA Certificate:       {ca_pem_path}")
     print(f"  Server Certificate:   {server_pem_path}")
