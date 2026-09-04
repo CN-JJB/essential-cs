@@ -55,18 +55,18 @@ $$\text{M15 (Concurrency: Threads, Races \& Synchronization)}$$
    - Truthful outcome respected: SQLite may choose `SCAN` even when an index exists. The lab records the actual plan and workload rather than treating a fixed selectivity threshold or literal sequential-disk-I/O story as a rule.
 3. **LAB-REQ-05 Re-Audit (SQLite Transactions, Isolation, Rollback & Recovery Boundary):**
    - Feasible using two concurrent connections to a local SQLite database file without server daemon, root privileges, or external dependencies.
-   - Demonstrates committed-only visibility (prevention of dirty reads), writer serialization under SQLite's locking model (`SQLITE_BUSY` / `database is locked`), and atomicity via `ROLLBACK`.
-   - Explores crash recovery via bounded learner-owned child process interruption (`SIGKILL`), observing the rollback journal / WAL recovery boundary.
+   - Demonstrates committed-only visibility under the declared SQLite configuration, a bounded second-writer/conflict disposition, and atomicity via `ROLLBACK`; actual result codes/messages are recorded rather than fixed.
+   - Explores recovery after abrupt termination of an **owned child** on canonical Linux, recording the declared journal mode and actual side-file/reopen behavior. This is process-crash evidence, not a universal rollback-journal/WAL narrative.
    - Critical claim boundary enforced: Child process interruption demonstrates recovery from *client process abnormal termination*; it does *not* prove physical durability against power loss or hardware storage failure.
 4. **LAB-REQ-03 Re-Audit (POSIX Threads Race, Rendezvous & Progress Boundaries):**
    - Feasible as an Essential CS original C11 + POSIX threads activity (`gcc -std=c11 -pthread`).
    - **Critical UB-free broken path:** The intentional lost-update scenario avoids undefined behavior from unsynchronized conflicting scalar accesses. It uses defined atomic load/store operations to make the **compound** read→compute→write transition non-atomic. A `sched_yield()` or bounded delay may widen the observation window, but neither POSIX scheduling nor one host guarantees that a particular lost-update interleaving will occur. Design must use bounded repetition and/or a course-controlled phase handoff if deterministic evidence is required, and record the actual observed interleaving.
    - Mutex repair can protect the course compound transition. For the Required Lab, the condition-variable rendezvous uses the canonical `while (!predicate) pthread_cond_wait(...)` pattern so the predicate is re-evaluated after wakeup; this is the course design rule grounded in POSIX condition-wait semantics, not a claim that POSIX mandates one literal C syntax.
-   - Safety boundary: Deliberate deadlock variant is guarded by a parent watchdog process with a hard timeout, guaranteeing zero hung learner terminals.
+   - Safety boundary: Deliberate deadlock work runs only in an owned child under a configured watchdog with termination/reaping. The watchdog bounds the course process; its duration and the wider host/UI behavior are not guarantees.
 5. **Optional Labs & Source Expedition Audited:**
-   - **LAB-OPT-03 (PostgreSQL EXPLAIN & Isolation Comparison):** Remains strictly **Optional**. It provides an advanced client-server comparison (demonstrating `EXPLAIN (ANALYZE, BUFFERS)` and Snapshot Isolation serialization failures). PostgreSQL is not a required dependency for the Core.
+   - **LAB-OPT-03 (PostgreSQL EXPLAIN & Isolation Comparison):** Remains strictly **Optional**. It can compare `EXPLAIN (ANALYZE, BUFFERS)` and one documented PostgreSQL isolation/update-conflict behavior. PostgreSQL is not a required Core dependency, and current PostgreSQL labels/semantics must be used rather than a blanket “Snapshot Isolation” description.
    - **LAB-OPT-05 (OSTEP Semaphore Rendezvous):** Remains strictly **Optional and link-only** (commit `afb36ca8ddbf81d847d18f6bd18a87f0a18667f2`). Due to upstream repository licensing ambiguity (no formal OSS license declared in `ostep-homework`), Essential CS supplies zero copied skeleton code, instructions, or test suites.
-   - **EXP-02 (PostgreSQL Planner and Buffer Source Route):** Rechecked against current PostgreSQL source (`master` / stable 18). All three canonical paths (`src/backend/optimizer/plan/README`, `src/backend/optimizer/path/costsize.c`, and `src/backend/storage/buffer/README`) are active and verified. The expedition remains link-only and inspection-based; no PostgreSQL compilation is required.
+   - **EXP-02 (PostgreSQL Planner and Buffer Source Route):** All three canonical paths still exist on moving PostgreSQL `master`, but **Target 1 has pedagogical drift**: `src/backend/optimizer/plan/README` is largely historical subselect notes rather than the current high-level Path→Plan overview. `costsize.c` and `buffer/README` remain directly useful. Keep the canonical route for Research; Design must surface this source-route risk instead of pretending all three files prove the originally intended claims.
 6. **Environment and OQ-BP-006 Dispositions:**
    - Canonical feasibility is **Linux + the actually recorded toolchain/filesystem capabilities**. WSL and Dev Containers can be useful hosted Linux environments, but parity is not assumed: compiler, filesystem locking, process-signal, sanitizer, and package behavior must be preflighted on the actual host.
    - OQ-BP-006 (environment and version pinning) remains **OPEN**. The Agent host observation was Python 3.13.1 with its bundled SQLite 3.45.3 and GCC 14.2; current upstream checks on 2026-09-04 separately identify SQLite 3.53.4, PostgreSQL 18.6, and Python 3.14.7 as current stable releases. Host observations and current upstream versions are evidence, not curriculum-wide pins.
@@ -1039,13 +1039,13 @@ The subsequent Design pass (`meta/design/data-concurrency-m13-m15-design-v0.1.md
    - Anchor `L15-01` as the canonical first home of `EC-CON-015 Concurrency`, establishing the distinction between logical interleaving and physical parallelism.
    - Structure `L13-03` around the R6 application patterns (schema evolution, reader/writer compatibility, migration trade-offs, source of truth vs. derived data, lightweight provenance) under existing concepts without introducing new IDs.
 2. **Lab Fixture Specifications:**
-   - **LAB-REQ-04:** Provide the complete schema, data generator (100 rows vs. 50,000 rows), and EQP inspection harness. Ensure test runners gracefully accept truthful planner scan choices on small tables.
-   - **LAB-REQ-05:** Specify the dual-connection Python runner, invariant verification logic, and child process termination harness.
-   - **LAB-REQ-03:** Provide the exact C11 source file with the UB-free atomic compound update, mutex repair, condition-variable rendezvous, and parent watchdog harness.
+   - **LAB-REQ-04:** Specify a bounded deterministic schema/data generator and EQP inspection harness, but choose fixture sizes from implementation smoke rather than canonizing “100 vs 50,000 rows”. Tests must accept truthful planner choices and assert semantic evidence/result equivalence rather than exact text or timing.
+   - **LAB-REQ-05:** Specify the dual-connection runner, invariant verification, journal-mode declaration, bounded second-writer/conflict evidence, owned-child interruption/reaping, reopen evidence, and backup/restore boundary without fixed exception text.
+   - **LAB-REQ-03:** Specify a C11-compatible source using atomic accesses for the broken compound transition, mutex repair, condition-variable predicate loop, and owned-child watchdog. If the natural scheduler path is unreliable, add a bounded course-controlled phase handoff rather than a probability threshold.
 3. **Optional Content & Source Expedition Guidelines:**
    - Specify `LAB-OPT-03` as an optional Docker/local comparison module.
    - Define `LAB-OPT-05` as a link-only guide to OSTEP `threads-sema`.
-   - Bounded navigation instructions for `EXP-02` across the three verified PostgreSQL source files (`plan/README`, `costsize.c`, `buffer/README`), reinforcing the strict "no compilation" gate.
+   - Bounded EXP-02 instructions must preserve the three canonical paths while explicitly noting that `plan/README` no longer serves as the current general Path→Plan overview. If the parent `src/backend/optimizer/README` is added to the learner route, treat that as an explicit Lead source-selection adjustment. No PostgreSQL compilation is required.
 
 ---
 
@@ -1062,6 +1062,12 @@ The subsequent Design pass (`meta/design/data-concurrency-m13-m15-design-v0.1.md
    - SQLite concurrency semantics depend on the selected VFS and filesystem locking behavior.
    - Remote/network filesystems have implementation- and configuration-specific locking semantics; Research does not classify all NFS/SMB mounts as broken.
    - Design must use a course-owned local writable directory on the accepted environment and record the actual location/VFS capability. Do not require the literal path `/tmp` on every platform.
+5. **EXP-02 source-route drift:**
+   - The canonical Target 1 path still exists, but its current content does not provide the high-level planner architecture the Blueprint description expected.
+   - This is a **non-blocking source-selection risk for Design**, not permission for Research to silently replace the route. The Design pass must either use Target 1 for what it actually contains or explicitly route a source adjustment through Lead review.
+6. **Scheduler-dependent race manifestation:**
+   - The UB-free atomic compound update is sound as a mechanism, but `sched_yield()` alone does not guarantee a lost-update observation on every environment.
+   - Design must establish a bounded evidence strategy (attempt budget or controlled phase handoff) before implementation acceptance.
 
 ---
 
@@ -1069,4 +1075,4 @@ The subsequent Design pass (`meta/design/data-concurrency-m13-m15-design-v0.1.md
 
 **READY FOR DESIGN**
 
-The research foundation for Stage 5 (M13, M14, M15) is technically authoritative, pedagogically sound, empirically verified, and strictly aligned with all Curriculum Invariants and Blueprint constraints. The Web Lead may proceed immediately to authoring the M13–M15 Design Dossier.
+The research foundation for Stage 5 is **READY FOR DESIGN with explicit non-blocking research risks carried forward**: EXP-02 Target 1 source-route drift, scheduler-dependent race manifestation, environment/version pinning, and Optional OSTEP rights. These do not require a Core architecture change before Design, but Design must resolve them into truthful learner/evidence contracts rather than erase them.
