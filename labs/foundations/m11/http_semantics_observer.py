@@ -16,7 +16,6 @@ import json
 import socket
 import sys
 import threading
-import time
 import urllib.request
 
 
@@ -67,7 +66,13 @@ class CourseHTTPHandler(http.server.BaseHTTPRequestHandler):
             body = self.rfile.read(content_len) if content_len > 0 else b"{}"
             try:
                 payload = json.loads(body.decode("utf-8"))
-                self.resources["42"].update(payload)
+                if not isinstance(payload, dict):
+                    raise ValueError("PUT representation must be a JSON object")
+                # Course PUT contract: replace the selected resource representation
+                # rather than applying a PATCH-like partial update.
+                replacement = dict(payload)
+                replacement["item_id"] = 42
+                self.resources["42"] = replacement
                 resp = json.dumps(self.resources["42"]).encode("utf-8")
                 self.send_framed_response(200, resp)
             except Exception:
@@ -94,11 +99,17 @@ class CourseHTTPHandler(http.server.BaseHTTPRequestHandler):
 
 
 def run_http_semantics_observation():
+    # Reset bounded fixture state so repeated runs remain deterministic.
+    CourseHTTPHandler.resources = {
+        "42": {"item_id": 42, "name": "Mechanical Keyboard", "stock": 10},
+    }
+    CourseHTTPHandler.next_id = 43
+
     # Start server on 127.0.0.1:0
     server = http.server.HTTPServer(("127.0.0.1", 0), CourseHTTPHandler)
     bound_host, bound_port = server.server_address
 
-    srv_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    srv_thread = threading.Thread(target=server.serve_forever, daemon=False)
     srv_thread.start()
 
     base_url = f"http://{bound_host}:{bound_port}"
@@ -119,14 +130,18 @@ def run_http_semantics_observation():
             body = json.loads(resp.read().decode("utf-8"))
             results["step1_safe_get"] = {
                 "method": "GET",
-                "semantic": "SAFE (Requests no state change)",
+                "semantic": "SAFE (client does not request an unsafe state change; incidental effects may exist)",
                 "status_code": resp.status,
                 "headers": dict(resp.headers),
                 "representation": body,
             }
 
         # Step 2: Idempotent PUT
-        put_payload = json.dumps({"name": "Custom Mechanical Keyboard"}).encode("utf-8")
+        put_payload = json.dumps({
+            "item_id": 42,
+            "name": "Custom Mechanical Keyboard",
+            "stock": 10,
+        }).encode("utf-8")
         req_put1 = urllib.request.Request(
             f"{base_url}/items/42",
             data=put_payload,
@@ -147,7 +162,7 @@ def run_http_semantics_observation():
 
         results["step2_idempotent_put"] = {
             "method": "PUT",
-            "semantic": "IDEMPOTENT (Multiple identical requests yield same target state)",
+            "semantic": "IDEMPOTENT (repeating the same request asks for the same intended target-resource effect)",
             "status_code": resp2.status,
             "idempotency_verified": (body1 == body2),
             "resulting_state": body2,
@@ -165,7 +180,7 @@ def run_http_semantics_observation():
             body = json.loads(resp.read().decode("utf-8"))
             results["step3_non_idempotent_post"] = {
                 "method": "POST",
-                "semantic": "NON-IDEMPOTENT (Subsequent requests create new distinct resources)",
+                "semantic": "POST is not defined idempotent by default; this course endpoint creates a new resource per submission",
                 "status_code": resp.status,
                 "location_header": resp.headers.get("Location"),
                 "created_item": body,
@@ -177,10 +192,10 @@ def run_http_semantics_observation():
             body = json.loads(resp.read().decode("utf-8"))
             results["step4_protocol_vs_business_status"] = {
                 "http_status_code": resp.status,
-                "http_status_meaning": "Protocol exchange successful (server understood and answered)",
+                "http_status_meaning": "200 OK: this course request succeeded according to GET semantics as reported by the server",
                 "business_status": body.get("status"),
                 "business_error_code": body.get("error_code"),
-                "lesson_takeaway": "HTTP 200 OK establishes protocol transport success, NOT domain business correctness",
+                "lesson_takeaway": "HTTP 200 OK does not establish a domain/business invariant",
             }
 
         # Step 5: Raw wire-level HTTP/1.1 message inspection over raw socket
@@ -218,7 +233,8 @@ def run_http_semantics_observation():
     finally:
         server.shutdown()
         server.server_close()
-        srv_thread.join(timeout=1.0)
+        srv_thread.join(timeout=2.0)
+        results["server_thread_reaped"] = not srv_thread.is_alive()
 
     return results
 
