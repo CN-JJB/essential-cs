@@ -1,209 +1,218 @@
-# Foundations M11 Evidence Template: Networking II (TLS, HTTP, CDN & Proxies)
+# Foundations M11 Evidence Template — Networking II: TLS, HTTP, CDN & Proxies
 
-This evidence template records empirical host execution results, claim boundaries, and architectural evaluations for **M11 — Networking II: TLS, HTTP, CDN & Proxies**.
+Use this template for **actual execution evidence**. Do not pre-fill another host's cipher, exception, curl version, ports, timings, or tool availability.
 
----
+## A — Execution identity / preflight
 
-## A — Actual Environment / Python / Capability Preflight
+- Dispatch base: `f82847e7b4a63ccbb0ab1e4b7ad0cdd0d786d4df`
+- Execution commit/ref: `<actual>`
+- OS / kernel / architecture: `<actual>`
+- Python implementation/version: `<actual>`
+- Python `ssl.OPENSSL_VERSION` / TLS backend: `<actual>`
+- TLS 1.3 capability: `<actual>`
+- loopback port-0 bind/connect: `<actual>`
+- curl path / `curl --version`: `<actual>`
+- optional OpenSSL CLI: `<actual AVAILABLE / TOOL_UNAVAILABLE>`
+- preflight disposition: `<actual>`
+- OQ-BP-006: **OPEN**
 
-- **Dispatch Base**: `f82847e7b4a63ccbb0ab1e4b7ad0cdd0d786d4df`
-- **Execution / Working Commit**: `<record the exact commit actually executed>`
-- **Execution Branch / Ref**: `<record the actual branch or detached ref>`
-- **Host Operating System (`platform.system()`, `release`, `version`)**: `<record actual>`
-- **Hardware Architecture (`platform.machine()`)**: `<record actual>`
-- **Python Implementation & Version (`platform.python_implementation()`, `python_version()`)**: `<record actual>`
-- **OpenSSL Runtime Version (`ssl.OPENSSL_VERSION`)**: `<record actual>`
-- **TLS 1.3 Protocol Support (`ssl.HAS_TLSv1_3`)**: `<record actual True / False>`
-- **Loopback Bind Port 0 Capability (`can_bind_port_0`)**: `<record actual True / False>`
-- **Loopback Connect Capability (`can_connect_loopback`)**: `<record actual True / False>`
-- **`curl` Binary Availability (`which curl` / version)**: `<record actual path and version, e.g. curl 8.21.0>`
-- **Preflight Verification Script Disposition**: `<record READY_M11_CORE_AND_LAB_REQ_01 or exact output>`
+## B — L11-01 TLS 1.3 course path
 
-> This is a reusable evidence template. Author/Lead environment observations belong in the PR Completion Report or filled evidence instance, **not** as canonical pre-populated learner evidence.
+Normative/current anchors:
+- RFC 9846 — current project TLS 1.3 authority; obsoletes RFC 8446.
+- RFC 5280 — PKIX certificate-path validation.
+- RFC 9525 — service identity; obsoletes RFC 6125.
+- RFC 9849 — Encrypted Client Hello.
 
----
+Course path:
+- fresh certificate-authenticated TLS 1.3;
+- DHE-based key establishment;
+- dedicated course trust context;
+- matching service identity.
 
-## B — L11-01 TLS 1.3 Handshake & X.509 Dual-Pillar Verification
+Boundary:
+- TLS 1.3 removed static RSA key exchange, but RSA can still be used for certificate signatures.
+- DHE-based paths provide forward secrecy against later compromise of the long-term authentication key; PSK-only `psk_ke` does **not** have the same DHE forward-secrecy property.
+- resumption / PSK / 0-RTT paths differ and are not collapsed into the fresh course handshake.
 
-- **TLS 1.3 Architectural Redesign**:
-  1. **Mandatory Forward Secrecy**: Static RSA key exchange is completely abolished in TLS 1.3; ephemeral Diffie-Hellman ((EC)DHE) is strictly enforced.
-  2. **Handshake Latency**: 1-RTT standard handshake (reduced from TLS 1.2's 2-RTT); 0-RTT PSK is optional with explicit replay vulnerability boundaries.
-  3. **Metadata Confidentiality**: Server certificate, extensions, and handshake transcript signatures are encrypted over the wire; only initial `ClientHello` remains plaintext (unless ECH is active).
-- **Dual-Pillar X.509 Verification State Machine**:
-  - **Pillar 1: Path / Chain Validation**: Validates signature chain backwards from leaf certificate to local trusted Root CA anchor in client trust store; checks validity dates and RFC 5280 extensions (`BasicConstraints`, `KeyUsage`, `ExtendedKeyUsage`).
-  - **Pillar 2: Subject Alternative Name (SAN) Identity Matching**: RFC 6125 requires matching expected request host against SAN extension entries (`DNS:` or `IP:`). Common Name (CN) is obsolete.
-  - *Invariant*: Both pillars must pass simultaneously. A valid CA signature on an unrelated host certificate (`attacker.com`) must be rejected when accessing `bank.example.com`.
+Record actual successful run:
+- endpoint: `<actual loopback port>`
+- negotiated TLS version: `<actual>`
+- negotiated cipher: `<actual observation; not curriculum constant>`
+- payload exchange: `<actual>`
+- server worker reaped: `<actual>`
 
----
+## C — Certificate path vs service identity
 
-## C — Controlled Test PKI Endpoint Observations (3 Discrete Cases)
+### Path / trust policy
+Record:
+- course CA loaded only into dedicated verification context: `<evidence>`
+- system trust store modified? expected **NO**.
+- certificate validity window: `<actual fixture>`
+- relevant BasicConstraints / KeyUsage / EKU: `<actual fixture>`
 
-- **Command Run**: `python labs/foundations/m11/tls_fixture.py`
-- **PKI Parameters**: Course-owned test Root CA (`ca.pem`), Leaf Server Certificate (`server.pem` with SAN `DNS:localhost, IP:127.0.0.1`), Untrusted Test CA (`untrusted_ca.pem`). All certs generated with 10-year validity (RFC 5280 conformant).
-- **Case 1 (Trusted Root CA + Matching SAN `localhost`)**:
-  - Disposition: `TLS_HANDSHAKE_SUCCESS`
-  - Negotiated Protocol: `TLSv1.3`
-  - Negotiated Cipher Suite: `<record empirical suite, e.g. TLS_AES_256_GCM_SHA384>`
-  - Bypass Flags: **ZERO** (`verify_mode=CERT_REQUIRED`, `check_hostname=True`).
-- **Case 2 (Trusted Root CA + Mismatched SAN `wrong.example.internal`)**:
-  - Disposition: `HOSTNAME_MISMATCH_REJECTED`
-  - Observed Exception: `ssl.SSLCertVerificationError` (Certificate hostname mismatch)
-  - Connection State: Terminated immediately; no application bytes sent.
-- **Case 3 (Untrusted Root CA + Matching SAN `localhost`)**:
-  - Disposition: `UNTRUSTED_ROOT_REJECTED`
-  - Observed Exception: `ssl.SSLCertVerificationError` (Self-signed certificate in certificate chain / untrusted issuer)
-  - Connection State: Terminated immediately; no application bytes sent.
+### Service identity
+Record:
+- reference identity: `localhost`
+- presented SAN identifiers: `<actual fixture>`
+- RFC 9525 service-identity match result: `<actual>`
 
----
+These are separate checks. A certificate path can be valid while the certificate belongs to a different service.
 
-## D — Trust Boundary Demarcation (EC-CON-017)
+## D — Three controlled TLS cases
 
-- **What TLS Guarantees**:
-  - Confidentiality of data transmitted across untrusted network links against passive eavesdropping.
-  - Integrity of in-flight records against active tampering and packet injection (via AEAD ciphers).
-  - Authenticity of the server endpoint identity (under strict dual-pillar validation).
-- **What TLS Does NOT Guarantee**:
-  - Does NOT guarantee application software security (SQL injection, XSS, unauthorized API access).
-  - Does NOT guarantee host memory integrity or endpoint defense against compromise/malware.
-  - Does NOT protect against an attacker possessing a compromised or rogue root certificate installed in the client's local OS trust store.
-  - Does NOT hide SNI destination host from network eavesdroppers unless Encrypted Client Hello (ECH) is deployed.
-- **Bypass Prohibition**:
-  - Flags such as `verify=False`, `check_hostname=False`, and `curl -k` strip both verification pillars, completely abolishing the system's trust boundary.
+1. Trusted course CA + matching reference identity
+   - disposition: success
+   - actual runtime details: `<actual>`
 
----
+2. Trusted course CA + deliberately mismatched reference identity
+   - semantic disposition: service identity rejected
+   - actual exception class/text: `<actual host evidence>`
 
-## E — L11-02 HTTP Uniform Interface: Resource vs Representation
+3. Dedicated trust context that does not trust the course CA
+   - semantic disposition: path/trust rejection
+   - actual exception class/text: `<actual host evidence>`
 
-- **Decoupling Matrix**:
-  - **Resource**: Conceptual entity identified by URI (e.g. `/api/v1/accounts/101`).
-  - **Representation**: Byte serialization of the resource's current state transmitted with specific media metadata (`Content-Type: application/json` or `text/csv`).
-- **Architectural Value**:
-  - Uniform interface allows servers to re-architect internal storage engines or database schemas without altering client interaction contracts.
+Do **not** require one `SSLCertVerificationError` message/code across all Python/TLS backends.
 
----
+## E — TLS trust boundary / ECH
 
-## F — HTTP Method Semantics Matrix (Safe vs Idempotent)
+Explain what the course observation supports:
+- encrypted/authenticated TLS records protect application content according to the negotiated connection and verification policy;
+- successful Web-PKI-style verification does not establish business legitimacy, authorization, endpoint-memory safety, or application correctness;
+- normal non-ECH ClientHello SNI can expose a service name;
+- successful ECH can protect the inner ClientHello/SNI, but IP endpoints, packet sizes/timing and provider/anonymity-set metadata remain outside that guarantee;
+- ECH does not require one universal DoH/DoT deployment path.
 
-| Method | Safe (RFC 9110) | Idempotent (RFC 9110) | State Machine Semantic |
-|---|---|---|---|
-| `GET` | **YES** | **YES** | Read-only representation retrieval; promises zero server state change. |
-| `HEAD` | **YES** | **YES** | Identical to GET but transfers no response body bytes. |
-| `PUT` | **NO** | **YES** | Replaces/creates target resource state with provided representation. |
-| `DELETE` | **NO** | **YES** | Removes resource identified by request URI. |
-| `POST` | **NO** | **NO** | Submits representation for arbitrary target processing (creates child, mutates). |
+No learner activity may disable certificate/service-identity verification.
 
----
+## F — Course test PKI provenance
 
-## G — Idempotence vs Blind Retry Safety (Partial Failure Reality)
+The committed `ca.key` and `server.key` are intentionally **public, non-secret localhost test fixtures**.
 
-- **Fundamental Distributed Systems Axiom (EC-CON-010)**:
-  - Idempotence guarantees that multiple identical successful requests have the same net server state effect as a single request.
-  - **Idempotent != Retry-Safe after Timeout**: A client-side socket read timeout leaves server state fundamentally ambiguous (request lost, server processing slow, or response lost in transit).
-  - Blindly re-issuing a `PUT` after timeout can trigger non-idempotent downstream side effects (e.g. audit log duplication, notification triggers, or overwriting newer concurrent mutations).
-- **Remediation Contract**:
-  - Requires conditional concurrency controls (optimistic locking via `If-Match: <ETag>`) or dedicated reconciliation queries (`GET`) before retry.
+Record acknowledgement:
+- never reuse these keys/certs for a real service;
+- never install the course CA system-wide;
+- learner Core uses committed fixture + Python stdlib `ssl`;
+- `generate_certs.py` is optional maintenance tooling and can require third-party `cryptography`;
+- the long fixture validity window is a maintenance choice, not a production/Web-PKI recommendation.
 
----
+## G — L11-02 resource / representation / method semantics
 
-## H — Protocol Status vs Business Outcome Decoupling
+Record one course HTTP observation:
+- logical resource URI: `<actual>`
+- representation media type/body: `<actual>`
+- HTTP/1.1 protocol explicitly configured: `<evidence>`
+- message content framing: `<actual>`
 
-- **Protocol Layer (`200 OK`)**:
-  - Confirms the HTTP transport request was received, parsed, and answered by the HTTP stack.
-- **Business Layer (`ERR_INSUFFICIENT_FUNDS`)**:
-  - The business domain logic failed to execute (e.g. account balance insufficient).
-- **Empirical Observation**:
-  - In `labs/foundations/m11/http_semantics_observer.py`, the observer records:
-    - HTTP Status: `200 OK`
-    - Payload JSON: `{"success": false, "code": "ERR_INSUFFICIENT_FUNDS", "message": "Transaction failed..."}`
-- **Architectural Rule**:
-  - Applications must never treat HTTP 200 as business execution proof.
+Method semantics:
+- GET/HEAD are safe: the client does not request unsafe state change; incidental logging/accounting/cache work can still occur.
+- PUT/DELETE are idempotent by RFC semantics: repeating the same request asks for the same **intended effect**; incidental side effects can differ.
+- POST is not defined idempotent by default; the course POST endpoint specifically creates a new resource per submission.
 
----
+For the PUT course fixture, record that identical full replacements produce the same resulting target state.
 
-## I — HTTP/1.1 Wire Framing Observation (CRLF Demarcation)
+## H — HTTP status vs business outcome
 
-- **Framing Invariant**:
-  - Header lines delimited strictly by CRLF (`\r\n`, hex `0x0D 0x0A`).
-  - Header block terminates upon encountering an empty line (`\r\n\r\n`).
-- **Empirical Host Evidence**:
-  - Directly verified by raw TCP socket byte exchange in `labs/foundations/m11/http_semantics_observer.py`.
+Record the course `/business-failure` response:
+- HTTP status: `<actual>`
+- representation business status: `<actual>`
 
----
+Explanation:
+- `200 OK` reports success according to HTTP method semantics as represented by the server;
+- it does not prove a domain/business invariant such as “funds transferred exactly once”.
 
-## J — L11-03 Caching Architecture: Freshness vs Validation
+## I — Partial failure / retry judgment
 
-- **Pillar 1: Freshness Lifetime (`Cache-Control: max-age`)**:
-  - Evaluated locally by client/cache without initiating any network exchange. Zero latency overhead.
-- **Pillar 2: Conditional Validation (`ETag` / `If-None-Match`)**:
-  - Executed when stale; initiates lightweight round-trip to verify whether cached representation remains authoritative.
+Explain:
+- a communication timeout can leave remote application outcome ambiguous;
+- idempotent methods have a stronger basis for automatic retry than non-idempotent methods, but this does not mean infinite/blind retry;
+- application constraints such as versioning/concurrency, auth/quota, external side effects and retry budgets still matter;
+- `If-Match`, stable operation IDs + deduplication, and query/reconciliation are possible mechanisms, not one universal required recipe.
 
----
+## J — L11-03 freshness / validation
 
-## K — Strong ETag Opaque Validator & 304 Zero Body Bytes
+Record:
+- course ETag: `<actual>`
+- initial response status/body bytes: `<actual>`
+- matching `If-None-Match` status: `304`
+- 304 response content/body bytes: **0**
+- mismatched validator status/body bytes: `<actual>`
 
-- **Opaque Validator Principle**:
-  - RFC 9110 specifies that an Entity Tag (`ETag`) is an opaque string token. It is not universally required to be a cryptographic hash.
-- **304 Not Modified Body Constraint (RFC 9111 Section 4.1)**:
-  - The 304 response **MUST NOT** contain a message body.
-  - Empirical verification in `labs/foundations/m11/caching_observer.py`:
-    - Received bytes following double CRLF: strictly **0 bytes**.
-    - Notice: RFC 9111 does not mandate `Content-Length: 0` in 304; representation headers may be present, but body transmission is 0.
+Boundary:
+- strong ETag is an opaque validator suitable for strong comparison, not inherently a hash;
+- 304 has no response content; `Content-Length: 0` is **not required**;
+- fresh stored responses can often be reused without revalidation when the full cache rules/request directives permit it; “fresh always means zero network work” is too broad.
 
----
+## K — Intermediary / Via / failure
 
-## L — Intermediary Adapter, Header Transformation & Upstream Outage
+For LAB-REQ-01, record:
+- `Connection` options parsed dynamically;
+- fields named by `Connection` removed before forwarding;
+- known connection-specific fields handled;
+- `Via` received-protocol corresponds to the actual hop;
+- stopped-origin connect failure maps to course `502`;
+- actual host failure disposition recorded without fixed errno/exception/timing.
 
-- **Hop-by-hop Headers Stripping**:
-  - Headers `Connection`, `Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailers`, `Transfer-Encoding`, `Upgrade` are stripped before forwarding.
-- **Via Header Injection**:
-  - Appends `Via: 1.1 essential-cs-intermediary` on request and response hops.
-- **Upstream Failure Mapping (EC-CON-010)**:
-  - When upstream origin server is terminated or connection refused, intermediary catches `ConnectionRefusedError` and returns `502 Bad Gateway` with diagnostic JSON.
+The 502 mapping is a **course policy**, not a universal proxy law.
 
----
+## L — HTTP/1.1 / HTTP/2 / HTTP/3 judgment
 
-## M — Transport Generational Evolution & Trade-offs (No Universal Winner)
+Use mechanism language:
+- HTTP/1.1 has no H2-style independent multiplexed streams; serial/pipelined/multi-connection behavior depends on client/server implementation.
+- HTTP/2 multiplexes streams over one TCP connection; TCP loss/reordering can delay bytes needed by unrelated streams.
+- HTTP/3 maps HTTP to QUIC streams; one stream's missing data need not block another stream's data delivery, while congestion control/path/CPU/resources remain shared factors.
+- HTTPS HTTP/2 commonly uses TLS/ALPN, but HTTP/2 specification also defines a cleartext prior-knowledge path.
+- no fixed browser connection count, packet-loss threshold, H3 CPU multiplier, or universal performance winner.
 
-| Protocol | Transport Base | Head-of-Line (HOL) Blocking | Core Architectural Trade-off |
-|---|---|---|---|
-| **HTTP/1.1** | TCP (Text / CRLF) | Severe Application-layer HOL | Simple & transparent; requires multiple concurrent TCP connections. |
-| **HTTP/2** | TCP (Binary Framing) | Solves App-layer HOL; suffers TCP-layer HOL | Single-connection multiplexing; high packet loss drops throughput for all streams. |
-| **HTTP/3** | QUIC (UDP + Integrated TLS 1.3) | Eliminates Transport HOL; per-stream independent loss recovery | High user-space CPU load; susceptible to network UDP QoS rate-limiting/filtering. |
+## M — Bounded Estimate
 
-- *Conclusion*: **No Universal Transport Winner**. System selection depends on packet loss profile, CPU budget, and middlebox network constraints.
+Illustrative assumptions only:
+- origin RTT component = 100 ms;
+- edge RTT component = 5 ms;
+- representation size = 2 MiB;
+- request rate = 10,000 req/s;
+- cache hit ratio = 0.9.
 
----
+Arithmetic:
+- no-cache origin representation rate:
+  `10,000 × 2 MiB/s = 20,000 MiB/s ≈ 19.53 GiB/s`
+- 90%-hit origin representation rate:
+  `10,000 × 0.1 × 2 MiB/s = 2,000 MiB/s ≈ 1.95 GiB/s`
+- reduction in this simplified representation-egress model: 90%.
+- weighted RTT component:
+  `0.9 × 5 ms + 0.1 × (5 + 100) ms = 15 ms`.
 
-## N — Bounded Estimate Task: Bandwidth & Latency Savings
+Inference limits:
+- these values are model inputs, **not observed Internet/CDN constants**;
+- 15 ms is not full page latency or a TLS/HTTP handshake SLO;
+- protocol overhead, object mix, cache fill/eviction, concurrency, origin fetch sharing and implementation are omitted;
+- no hardware/cost reduction is inferred from the bandwidth ratio alone.
 
-- **Illustrative Parameters**:
-  - Origin RTT: $\text{RTT}_{\text{origin}} = 100\text{ ms}$
-  - Edge Cache RTT: $\text{RTT}_{\text{edge}} = 5\text{ ms}$
-  - Static Resource Bundle Size: $S = 2\text{ MiB}$
-  - Concurrency: $N = 10{,}000\text{ req/s}$
-  - Cache Hit Ratio: $H = 90\%$ ($0.9$)
-- **Calculations**:
-  - Uncached Origin Egress Bandwidth: $B_{\text{nocache}} = 10{,}000 \times 2\text{ MiB/s} = 20\text{ GiB/s} = 160\text{ Gbps}$
-  - Cached Origin Egress Bandwidth: $B_{\text{cached}} = 10{,}000 \times (1 - 0.9) \times 2\text{ MiB/s} = 2\text{ GiB/s} = 16\text{ Gbps}$ ($90\%$ bandwidth reduction).
-  - Average User Latency: $T_{\text{avg}} = 0.9 \times 5\text{ ms} + 0.1 \times (5 + 100)\text{ ms} = 4.5\text{ ms} + 10.5\text{ ms} = 15\text{ ms}$ ($85\%$ latency reduction).
-- **Inference Limits**:
-  - Assumes uniform static cacheability. Dynamic uncacheable API endpoints do not realize these gains. Cache invalidation spikes can induce severe cache stampedes.
+## N — Progressive support / visuals / safety
 
----
+Record:
+- each lesson has one collapsed `Question → Hint 1 → Hint 2 → Expected Observation → Full Explanation` ladder;
+- no open-by-default details;
+- all diagrams are original/editable;
+- all runtime network endpoints are course-owned loopback;
+- no public proxy/CDN/cloud account/root/sudo/raw-packet/system-trust-store mutation.
 
-## O — Concept Audit & Verification Boundaries
+## O — Concepts / competencies / status
 
-- **Canonical Concept Revisits**:
-  - `EC-CON-005 Interface`: Revisits in L11-01 (TLS/socket boundary), L11-02 (HTTP uniform interface), L11-03 (proxy/hop-by-hop headers).
-  - `EC-CON-010 Failure`: Revisits in L11-01 (handshake rejection), L11-02 (partial failure/timeout), L11-03 (502 Bad Gateway mapping).
-  - `EC-CON-011 Caching`: Revisits in L11-03 (freshness vs validation, 304, CDN caching).
-  - `EC-CON-012 Locality`: Revisits in L11-03 (CDN edge caching proximity).
-  - `EC-CON-017 Trust Boundary`: Revisits in L11-01 (TLS 1.3 trust boundary, X.509 dual pillars, zero bypass flags).
-- **Concept Governance Audit**:
-  - Total new concepts introduced: **0** [AUDIT: CONFIRMED]
-  - Future concepts `EC-CON-014 Consistency` and `EC-CON-015 Concurrency` NOT defined [AUDIT: CONFIRMED]
-- **Progressive Support Details Audit**:
-  - Zero open-by-default details tags (`<details open>` count: **0**) [AUDIT: CONFIRMED]
-- **Learner Validation Status**:
-  - Module M11 status: `READY FOR LEAD REVIEW` (v0.1).
-  - Author does not self-promote to `VERIFIED` or `RELEASED`.
+Canonical M11 revisits only:
+- EC-CON-005 Interface
+- EC-CON-010 Failure
+- EC-CON-011 Caching
+- EC-CON-012 Locality
+- EC-CON-017 Trust Boundary
+
+Future homes:
+- EC-CON-014 Consistency remains M14/L14-02.
+- EC-CON-015 Concurrency remains M15/L15-01.
+
+M11 module primary competency: **Explain**.
+
+Use only canonical competency names: Trace, Explain, Observe, Diagnose, Correctness, Judge, Estimate, Learn-New-Tech.
+
+This evidence does **not** constitute learner validation, VERIFIED, or RELEASED.
