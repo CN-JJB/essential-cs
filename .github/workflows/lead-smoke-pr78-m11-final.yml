@@ -1,0 +1,136 @@
+name: Lead Smoke PR78 M11 Final
+on:
+  push:
+    branches:
+      - lead-smoke/pr-78-m11-final
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Environment
+        run: |
+          python3 --version
+          python3 - <<'PY'
+          import platform, ssl
+          print("platform", platform.platform())
+          print("machine", platform.machine())
+          print("ssl", ssl.OPENSSL_VERSION)
+          print("HAS_TLSv1_3", getattr(ssl, "HAS_TLSv1_3", None))
+          PY
+          curl --version
+
+      - name: Certificate fixture audit
+        run: |
+          openssl x509 -in labs/foundations/m11/certs/server.pem -noout -subject -issuer -serial -dates -ext subjectAltName
+          openssl x509 -in labs/foundations/m11/certs/ca.pem -noout -subject -issuer -serial -dates -ext basicConstraints
+          grep -qi "public" labs/foundations/m11/certs/README.md
+          grep -qi "never" labs/foundations/m11/certs/README.md
+
+      - name: Python compile
+        run: |
+          python3 -m py_compile             labs/foundations/m11/tls_fixture.py             labs/foundations/m11/http_semantics_observer.py             labs/foundations/m11/caching_observer.py             labs/foundations/m11/reset.py             labs/foundations/m11/test_activity.py             labs/lab_req_01/origin_server.py             labs/lab_req_01/intermediary_adapter.py             labs/lab_req_01/harness.py             labs/lab_req_01/reset.py             labs/lab_req_01/test_lab.py             tests/preflight_network_web.py
+
+      - name: Preflight
+        run: python3 tests/preflight_network_web.py --json
+
+      - name: M11 tests
+        run: python3 -m unittest discover -s labs/foundations/m11 -p "test_*.py" -v
+
+      - name: M11 activity smoke
+        run: |
+          python3 labs/foundations/m11/tls_fixture.py --json
+          python3 labs/foundations/m11/http_semantics_observer.py --json
+          python3 labs/foundations/m11/caching_observer.py --json
+
+      - name: LAB-REQ-01 tests
+        run: python3 -m unittest discover -s labs/lab_req_01 -p "test_*.py" -v
+
+      - name: LAB-REQ-01 four-step curl trace
+        run: python3 labs/lab_req_01/harness.py --json
+
+      - name: Reset twice
+        run: |
+          python3 labs/foundations/m11/reset.py --json
+          python3 labs/foundations/m11/reset.py --json
+          python3 labs/lab_req_01/reset.py
+          python3 labs/lab_req_01/reset.py
+
+      - name: Static gates
+        run: |
+          git diff --check f82847e7b4a63ccbb0ab1e4b7ad0cdd0d786d4df..8942049fbfc71691e058ee09923ae513a54e24fd
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          lessons = [
+              Path("book/11-networking-tls-http-cdn-proxies/L11-01.md"),
+              Path("book/11-networking-tls-http-cdn-proxies/L11-02.md"),
+              Path("book/11-networking-tls-http-cdn-proxies/L11-03.md"),
+          ]
+          expected = ["L11-01", "L11-02", "L11-03"]
+          all_text = "\n".join(p.read_text(encoding="utf-8") for p in lessons)
+
+          for lesson, ident in zip(lessons, expected):
+              t = lesson.read_text(encoding="utf-8")
+              assert ident in t
+              assert "<details open" not in t.lower()
+              assert "### Question" in t
+              for marker in [
+                  "<summary>Hint 1</summary>",
+                  "<summary>Hint 2</summary>",
+                  "<summary>Expected Observation</summary>",
+                  "<summary>Full Explanation</summary>",
+              ]:
+                  assert marker in t, (ident, marker)
+
+          ids = sorted(set(re.findall(r"EC-CON-\d{3}", all_text)))
+          allowed = {
+              "EC-CON-005","EC-CON-010","EC-CON-011","EC-CON-012",
+              "EC-CON-014","EC-CON-015","EC-CON-017",
+          }
+          assert set(ids) <= allowed, ids
+
+          canonical = {
+              "Trace","Explain","Observe","Diagnose","Correctness",
+              "Judge","Estimate","Learn-New-Tech",
+          }
+          labels = set(re.findall(r"- \*\*([A-Za-z][A-Za-z -]*)\*\*[：:]", all_text))
+          competency_like = {
+              x for x in labels
+              if x in canonical or x in {
+                  "Build","Classify","Demarcate","Dissect","Distinguish","Contrast"
+              }
+          }
+          assert competency_like <= canonical, competency_like
+
+          lab_readme = Path("labs/lab_req_01/README.md").read_text(encoding="utf-8")
+          assert "curl -s -i " not in lab_readme
+          assert "curl -sS -v -i --http1.1" in lab_readme
+
+          harness = Path("labs/lab_req_01/harness.py").read_text(encoding="utf-8")
+          assert '"-v"' in harness
+          assert "ENVIRONMENT_BLOCKED_NOT_RUN" in harness
+          assert "all_owned_processes_reaped" in harness
+          assert "old_endpoints_not_accepting" in harness
+
+          intermediary = Path("labs/lab_req_01/intermediary_adapter.py").read_text(encoding="utf-8")
+          assert "_connection_tokens_from_values" in intermediary
+          assert "_http_version_token" in intermediary
+          assert "send_response_only(resp.status)" in intermediary
+
+          tls_lesson = lessons[0].read_text(encoding="utf-8")
+          assert "RFC 9846" in tls_lesson
+          assert "RFC 9525" in tls_lesson
+          assert "RFC 9849" in tls_lesson
+          assert "requests.get" not in tls_lesson
+          assert "verify_mode = ssl.CERT_NONE" not in tls_lesson
+          assert "check_hostname = False" not in tls_lesson
+
+          print("lesson ids", expected)
+          print("concept ids", ids)
+          print("competency labels", sorted(competency_like))
+          PY
