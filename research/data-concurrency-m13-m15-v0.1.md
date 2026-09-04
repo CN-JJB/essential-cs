@@ -60,16 +60,16 @@ $$\text{M15 (Concurrency: Threads, Races \& Synchronization)}$$
    - Critical claim boundary enforced: Child process interruption demonstrates recovery from *client process abnormal termination*; it does *not* prove physical durability against power loss or hardware storage failure.
 4. **LAB-REQ-03 Re-Audit (POSIX Threads Race, Rendezvous & Progress Boundaries):**
    - Feasible as an Essential CS original C11 + POSIX threads activity (`gcc -std=c11 -pthread`).
-   - **Critical UB-free broken path:** The intentional lost-update scenario avoids undefined behavior (data races on unsynchronized scalar variables). Instead, it implements a compound read-modify-write state transition constructed from defined C11 relaxed atomic operations (`atomic_load_explicit` $\to$ `sched_yield()` $\to$ `atomic_store_explicit`). Memory accesses remain strictly defined under ISO/IEC 9899:2011, yet the compound multi-step operation suffers real, deterministic lost updates under thread interleaving.
-   - Mutex repair establishes atomic state transitions; condition-variable rendezvous enforces an ordering predicate via a mandatory `while (!predicate) pthread_cond_wait(...)` loop, handling spurious wakeups.
+   - **Critical UB-free broken path:** The intentional lost-update scenario avoids undefined behavior from unsynchronized conflicting scalar accesses. It uses defined atomic load/store operations to make the **compound** read→compute→write transition non-atomic. A `sched_yield()` or bounded delay may widen the observation window, but neither POSIX scheduling nor one host guarantees that a particular lost-update interleaving will occur. Design must use bounded repetition and/or a course-controlled phase handoff if deterministic evidence is required, and record the actual observed interleaving.
+   - Mutex repair can protect the course compound transition. For the Required Lab, the condition-variable rendezvous uses the canonical `while (!predicate) pthread_cond_wait(...)` pattern so the predicate is re-evaluated after wakeup; this is the course design rule grounded in POSIX condition-wait semantics, not a claim that POSIX mandates one literal C syntax.
    - Safety boundary: Deliberate deadlock variant is guarded by a parent watchdog process with a hard timeout, guaranteeing zero hung learner terminals.
 5. **Optional Labs & Source Expedition Audited:**
    - **LAB-OPT-03 (PostgreSQL EXPLAIN & Isolation Comparison):** Remains strictly **Optional**. It provides an advanced client-server comparison (demonstrating `EXPLAIN (ANALYZE, BUFFERS)` and Snapshot Isolation serialization failures). PostgreSQL is not a required dependency for the Core.
    - **LAB-OPT-05 (OSTEP Semaphore Rendezvous):** Remains strictly **Optional and link-only** (commit `afb36ca8ddbf81d847d18f6bd18a87f0a18667f2`). Due to upstream repository licensing ambiguity (no formal OSS license declared in `ostep-homework`), Essential CS supplies zero copied skeleton code, instructions, or test suites.
    - **EXP-02 (PostgreSQL Planner and Buffer Source Route):** Rechecked against current PostgreSQL source (`master` / stable 18). All three canonical paths (`src/backend/optimizer/plan/README`, `src/backend/optimizer/path/costsize.c`, and `src/backend/storage/buffer/README`) are active and verified. The expedition remains link-only and inspection-based; no PostgreSQL compilation is required.
 6. **Environment and OQ-BP-006 Dispositions:**
-   - All Core mechanisms run reliably in the standard Linux / POSIX environment, with complete functional parity in Dev Containers, WSL, and native environments.
-   - OQ-BP-006 (environment and version pinning) remains **OPEN**; this dossier records current verified versions (Python 3.13.1, SQLite 3.45.3 / 3.53.4, GCC 14.2, PostgreSQL 18.6) without prematurely freezing curriculum-wide constants.
+   - Canonical feasibility is **Linux + the actually recorded toolchain/filesystem capabilities**. WSL and Dev Containers can be useful hosted Linux environments, but parity is not assumed: compiler, filesystem locking, process-signal, sanitizer, and package behavior must be preflighted on the actual host.
+   - OQ-BP-006 (environment and version pinning) remains **OPEN**. The Agent host observation was Python 3.13.1 with its bundled SQLite 3.45.3 and GCC 14.2; current upstream checks on 2026-09-04 separately identify SQLite 3.53.4, PostgreSQL 18.6, and Python 3.14.7 as current stable releases. Host observations and current upstream versions are evidence, not curriculum-wide pins.
 
 ---
 
@@ -247,23 +247,24 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 - **To:** Declarative relational database access where queries express *what* data is needed, while the storage engine and query optimizer determine *how* records are indexed, laid out on disk pages, cached in memory, and retrieved.
 
 ### 6.2 Minimum Mechanism Model
-1. **Slotted Page and Row Layout:**
-   - Database tables are stored as fixed-size pages (e.g., SQLite default 4,096 bytes; PostgreSQL default 8,192 bytes).
-   - Slotted page architecture: Page header points to cell/record offsets at the end of the page, allowing variable-length records without external fragmentation.
-2. **B-Tree and B+ Tree Indexing:**
-   - Self-balancing multi-way search tree where internal nodes contain keys and child page pointers, and leaf nodes store keys and table pointers (or row payloads).
-   - High branching factor ($B \approx 100\text{--}1000$) results in shallow tree height (typically 2 to 4 levels for millions of records), bounding the worst-case disk page reads to $O(\log_B N)$.
-   - Clustered index (e.g., SQLite `rowid` table) vs. Secondary index (mapping indexed column value $\to$ rowid).
-   - Covering index: An index containing all columns requested by a query, allowing the engine to satisfy the query entirely from the index leaf pages without traversing back to the table heap (`USING COVERING INDEX`).
-3. **Query Compilation and Optimization Pipeline:**
-   - Pipeline: SQL Text $\to$ Lexer/Parser $\to$ Abstract Syntax Tree (AST) $\to$ Query Planner/Optimizer $\to$ Physical Plan $\to$ Execution Engine (Iterator/Volcano model `open()` / `next()` / `close()`).
-   - Planner Cost Estimation: The optimizer estimates disk I/O and CPU costs for candidate access paths based on table statistics (row count, selectivity, index presence).
+1. **Paged Storage and Row Layout:**
+   - Database engines commonly organize persistent data into fixed-size pages, but page size and row/page layout are implementation/configuration facts. SQLite's default page size is currently 4,096 bytes and PostgreSQL commonly uses 8,192-byte blocks; neither value is a universal database law.
+   - A slotted-page model is a useful generic teaching pattern for variable-length records. SQLite and PostgreSQL have their own documented on-disk/page formats; Design must not present one generic slot-array diagram as the literal physical layout of every engine.
+2. **B-Tree / B+ Tree Family Indexing:**
+   - Multi-way balanced search trees give logarithmic-height lookup intuition, but exact node shape, fanout, height, payload placement, and page-probe count depend on engine format, key width, page size, fill, cache state, and query.
+   - SQLite uses B-trees for tables and indexes. A rowid table is stored in a table B-tree keyed by rowid; calling that a universal “clustered index” would import terminology with engine-specific meanings.
+   - A covering index can satisfy the columns needed by a query without an additional table lookup in a particular chosen plan; `USING COVERING INDEX` is SQLite EQP implementation evidence, not SQL-standard vocabulary.
+3. **Query Compilation / Planning / Execution Boundary:**
+   - Stable teaching model: SQL text is parsed; an engine chooses an executable strategy; execution produces rows/effects.
+   - **SQLite implementation:** current official architecture documents SQL → parser/AST → code generation/query planning → VDBE bytecode → virtual-machine execution. Do not label SQLite as a Volcano `open/next/close` engine.
+   - **PostgreSQL implementation:** Query/Path/Plan/executor objects provide a different concrete route. Generic “logical plan → physical plan → iterator” diagrams must be labeled conceptual or tied to the named engine.
+   - Planner estimates can use statistics and cost assumptions, but the exact model and inputs are implementation-specific.
 4. **Access Path Selection:**
-   - Sequential Scan (`SCAN TABLE`): Reads all pages of a table sequentially. Preferred when a large fraction of table rows match, or when tables are small (fitting in 1–2 pages).
-   - Index Search (`SEARCH TABLE ... USING INDEX`): Traverses the B-tree to locate matching keys, then fetches corresponding table rows.
-5. **Database Buffer Pool vs. OS Page Cache:**
-   - The database maintains an in-memory buffer pool of database pages to avoid repetitive disk I/O.
-   - Buffer pool management (pinning pages, dirty page lists, eviction algorithms like LRU/Clock sweep) operates independently of the host operating system's page cache.
+   - SQLite EQP `SCAN` means the engine will scan the relevant table/subquery/index access path rather than perform the named selective search. Do not infer literal sequential disk I/O from the token alone.
+   - SQLite EQP `SEARCH ... USING INDEX` records use of an index for a subset lookup. Whether it wins depends on the query, statistics, data distribution, covering behavior, cache state, and engine version; there is no fixed selectivity threshold.
+5. **Database Cache / Buffer Management vs. OS Page Cache:**
+   - Some DBMSs, notably PostgreSQL, maintain an explicit shared buffer pool with pins/content locks and replacement policy while the OS may also cache file pages.
+   - SQLite has a pager/page-cache subsystem but does not share PostgreSQL's server buffer-manager architecture. “Database buffer pool” is therefore a mechanism family, not one universal implementation. EXP-02 may use PostgreSQL pins/clock-sweep as named implementation evidence.
 6. **Schema Evolution and Invariant Preservation (R6 Application Pattern):**
    - Schema invariants (`NOT NULL`, `CHECK`, `UNIQUE`, `FOREIGN KEY`, `PRIMARY KEY`).
    - Evolution patterns: Adding nullable/default fields vs. dropping/renaming fields. Backward and forward reader/writer compatibility.
@@ -285,12 +286,12 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 ### 6.5 Candidate Real Observation / Activity
 - Execute `EXPLAIN QUERY PLAN` in SQLite on a synthetic table with 50,000 rows.
 - Observe `SCAN TABLE` on an unindexed column vs. `SEARCH TABLE ... USING INDEX` on an indexed column.
-- Demonstrate query execution times before and after indexing across selective queries (0.01% matching) vs. non-selective queries (50% matching).
-- Measure the write cost (`INSERT` latency and file size inflation) caused by maintaining secondary indexes.
+- Demonstrate query execution time before/after indexing for **explicit course fixture selectivities**, recording actual plan, cache/warmup state, repetitions, distribution, environment, and inference limits.
+- Measure the actual write-time and file-size difference caused by maintaining the course index; do not pre-state a universal percentage overhead.
 
 ### 6.6 Required Learner Evidence
 - Plan inspection: Identify whether SQLite chose `SCAN` or `SEARCH`.
-- Workload judgment: Explain why an index accelerated point lookups but increased bulk insertion time.
+- Workload judgment: Explain the actual measured plan/read/write/space trade-off. If the index did not accelerate the observed workload, preserve that result.
 - Equivalence verification: Confirm that indexed and unindexed queries return identical result sets.
 - Selectivity prediction: Predict why the query planner may reject an index when a query matches 80% of the table.
 
@@ -298,7 +299,7 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 - **PRINCIPLE:** Relational algebra, B-tree search complexity ($O(\log_B N)$), cost-based access path selection, index read/write trade-off.
 - **SPECIFICATION:** ANSI/ISO SQL standard grammar and semantics.
 - **IMPLEMENTATION:** SQLite 3 query planner heuristics, B-tree page layout, `EXPLAIN QUERY PLAN` output format.
-- **CURRENT PRACTICE:** SQLite default page size (4,096 bytes), automatic index creation heuristics, CLI output formatting.
+- **CURRENT PRACTICE / IMPLEMENTATION:** SQLite 3.53.4 current release behavior, current default page-size setting, planner/automatic-index heuristics, VDBE/EQP and CLI presentation. Record exact engine/library/CLI versions because the Python module may embed a different SQLite version.
 
 ### 6.8 Authoritative Sources
 - SQLite Official Query Planner Guide: <https://sqlite.org/queryplanner.html>
@@ -308,7 +309,7 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 - Ramakrishnan & Gehrke. *Database Management Systems* (3rd ed.), Chapters 8–12.
 
 ### 6.9 Likely Misconceptions
-- *"Adding an index always makes queries faster."* (False: On low-selectivity queries or small tables, an index increases random I/O and latency; indexes always slow down writes).
+- *"Adding an index always makes queries faster."* (False: plan and runtime depend on workload, statistics, covering behavior, cache state, write pattern, and engine. An index adds maintenance/storage work, but the magnitude and even measured wall-time effect are workload-specific.)
 - *"`EXPLAIN` executes the query and measures actual run time."* (False: Standard `EXPLAIN` or `EXPLAIN QUERY PLAN` displays the optimizer's estimated plan without executing the query).
 - *"Database buffer pool is the same thing as the OS page cache."* (False: The DB buffer pool is application-level allocated memory managed with domain-specific replacement policies; the OS page cache operates at the kernel VFS layer).
 - *"The exact text of a query plan is stable across database versions."* (False: Planner heuristics and plan formatting evolve across minor engine versions).
@@ -319,8 +320,8 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 - Cleanliness: Must clean up temporary database and journal files upon completion.
 
 ### 6.11 Implementation-Time Smoke Requirements
-- Verify that SQLite correctly reports `SEARCH ... USING INDEX` when an indexed column is queried.
-- Confirm that synthetic dataset generation (50,000 rows) completes within < 2 seconds.
+- Verify the fixture can produce at least one **documented, version-recorded** indexed-search case while also accepting truthful `SCAN` outcomes when the planner chooses them.
+- Verify bounded fixture generation completes under a harness watchdog; do not make a fixed two-second wall-clock threshold a curriculum invariant.
 
 ---
 
@@ -934,7 +935,7 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
 
 ### 21.1 Query & Indexing Misconceptions (M13)
 - **Misconception:** *"Indexes make every query faster."*
-  - **Inference Boundary:** Indexes introduce substantial write overhead (maintaining B-tree leaf nodes and page balance on `INSERT`/`UPDATE`) and consume storage. For small tables or queries with low selectivity ($>20\text{--}30\%$ of rows matching), sequential scans are faster than random page lookups via an index.
+  - **Inference Boundary:** Indexes consume storage and add maintenance work on affected writes. Whether a full `SCAN`, index search, covering index, or another plan is faster depends on the named engine/version, query, statistics, data distribution, cache state, and storage. **No universal 20–30% selectivity cutoff is accepted.**
 - **Misconception:** *"`EXPLAIN` output proves real-world performance."*
   - **Inference Boundary:** `EXPLAIN` displays the query optimizer's static mathematical model and chosen access path. It does not measure runtime latency, disk I/O wait, or buffer pool contention. Only empirical benchmarking under stated cache conditions measures execution time.
 - **Misconception:** *"The database buffer cache is just a wrapper around the OS page cache."*
