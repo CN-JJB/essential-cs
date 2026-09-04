@@ -2,12 +2,11 @@
 """
 M11 Cleanup and Reset Utility.
 
-Provides idempotent, course-scoped cleanup of M11 activity artifacts and endpoints.
-Adheres strictly to Essential CS invariants:
-- Harness owns process/socket handles.
-- Cooperative and platform-appropriate termination.
-- Post-reset checks confirm course endpoints are not serving.
-- Never wildcard-deletes learner files or unrelated temp data.
+Reports the idempotent no-persistent-artifact disposition for M11 lesson activities.
+
+Listener/thread teardown is verified by each owning activity/test while it still
+has the actual handles. This standalone command does not claim to rediscover or
+probe arbitrary old endpoints.
 """
 
 import argparse
