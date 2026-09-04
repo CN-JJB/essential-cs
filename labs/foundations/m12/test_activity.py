@@ -18,7 +18,6 @@ Invariants:
 import json
 import unittest
 import urllib.request
-import urllib.parse
 import urllib.error
 
 from rendering_fixture import RenderingServerFixture
@@ -30,7 +29,8 @@ class TestM12RenderingFixture(unittest.TestCase):
     """Tests for L12-02 rendering pipeline and script loading assets."""
 
     def test_rendering_fixture_endpoints(self):
-        with RenderingServerFixture() as fixture:
+        fixture = RenderingServerFixture()
+        with fixture:
             port = fixture.port
             self.assertIsNotNone(port)
             self.assertGreater(port, 0)
@@ -70,12 +70,19 @@ class TestM12RenderingFixture(unittest.TestCase):
                 body = resp.read().decode("utf-8")
                 self.assertIn("deferred_script_executed", body)
 
+        self.assertTrue(fixture.last_stop_record["server_thread_reaped"])
+
+    def test_rendering_fixture_rejects_non_loopback_bind(self):
+        with self.assertRaises(ValueError):
+            RenderingServerFixture("0.0.0.0")
+
 
 class TestM12DualOriginCORS(unittest.TestCase):
     """Tests for L12-03 dual-origin CORS security model."""
 
     def test_dual_origin_cors_flow(self):
-        with DualOriginCORSFixture() as fixture:
+        fixture = DualOriginCORSFixture()
+        with fixture:
             port_a = fixture.port_a
             port_b = fixture.port_b
             self.assertIsNotNone(port_a)
@@ -94,7 +101,7 @@ class TestM12DualOriginCORS(unittest.TestCase):
             # 2. Case 1: Simple request without CORS permission
             req = urllib.request.Request(
                 f"{url_b}/api/data?mode=unauthorized",
-                headers={"Origin": url_a, "User-Agent": "TestBrowserAgent/1.0"}
+                headers={"Origin": url_a, "User-Agent": "CourseRawHTTPClient/1.0"}
             )
             with urllib.request.urlopen(req, timeout=3.0) as resp:
                 self.assertEqual(resp.status, 200)
@@ -137,18 +144,40 @@ class TestM12DualOriginCORS(unittest.TestCase):
                 self.assertIn("POST", headers_lower.get("access-control-allow-methods", ""))
                 self.assertIn("x-course-custom", headers_lower.get("access-control-allow-headers", "").lower())
 
-            # 5. Non-browser client contrast
+            # 5. A mismatched-origin preflight is denied by course policy.
+            bad_opt = urllib.request.Request(
+                f"{url_b}/api/preflighted",
+                headers={
+                    "Origin": "http://127.0.0.1:1",
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "X-Course-Custom, Content-Type",
+                },
+                method="OPTIONS",
+            )
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(bad_opt, timeout=3.0)
+            self.assertEqual(ctx.exception.code, 403)
+
+            # 6. Non-browser client contrast: HTTP reachability only, not browser CORS evidence.
             non_browser = fetch_from_non_browser_client(f"{url_b}/api/data?mode=unauthorized")
             self.assertEqual(non_browser["status_code"], 200)
             self.assertFalse(non_browser["has_cors_header"])
             self.assertIn("course-data-token-42", non_browser["body"])
+
+        self.assertTrue(fixture.last_stop_record["origin_a_thread_reaped"])
+        self.assertTrue(fixture.last_stop_record["origin_b_thread_reaped"])
+
+    def test_cors_fixture_rejects_non_loopback_bind(self):
+        with self.assertRaises(ValueError):
+            DualOriginCORSFixture("0.0.0.0")
 
 
 class TestM12EventLoopFixture(unittest.TestCase):
     """Tests for L12-04 event loop and responsiveness fixture."""
 
     def test_event_loop_page_served(self):
-        with EventLoopServerFixture() as fixture:
+        fixture = EventLoopServerFixture()
+        with fixture:
             port = fixture.port
             self.assertIsNotNone(port)
             self.assertGreater(port, 0)
@@ -161,6 +190,14 @@ class TestM12EventLoopFixture(unittest.TestCase):
                 self.assertIn("runOrderingTest", body)
                 self.assertIn("triggerLongTask", body)
                 self.assertIn("spin", body)
+                self.assertIn("1500", body)
+                self.assertIn("chunkSizeMs = 20", body)
+
+        self.assertTrue(fixture.last_stop_record["server_thread_reaped"])
+
+    def test_event_loop_fixture_rejects_non_loopback_bind(self):
+        with self.assertRaises(ValueError):
+            EventLoopServerFixture("0.0.0.0")
 
 
 if __name__ == "__main__":
