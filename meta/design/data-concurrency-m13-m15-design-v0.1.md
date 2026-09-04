@@ -198,9 +198,9 @@ Batch 3: S5-B3 (M15 Core)
 
 ### 6.7 Lesson Contract Audit
 - **Canonical Competencies:** `Explain`, `Observe`, `Estimate`.
-- **Concepts & Revisits:** Canonical revisits `EC-CON-001 State`, `EC-CON-005 Indirection`, `EC-CON-006 Trade-Off`, `EC-CON-011 Caching`.
+- **Concepts & Revisits:** Canonical revisits `EC-CON-001 State`, `EC-CON-005 Interface`, `EC-CON-006 Trade-off`, `EC-CON-011 Caching`.
 - **Learner Evidence:** Verbatim CLI capture of `EXPLAIN QUERY PLAN` showing observed access paths (`SCAN` or `SEARCH ... USING INDEX`) on unindexed vs. indexed queries; query elapsed time observations across bounded scales; result row count equivalence ($\Delta = 0$); and a written explanation of the sequential scan vs. index lookup trade-off.
-- **Provenance & Currentness:** SQLite Public Domain; `sqlite3` CLI / library 3.45+ observed behavior.
+- **Provenance & Currentness:** SQLite Public Domain; official SQLite implementation and documentation as authority; actual CLI/library version is recorded in learner evidence / preflight without implying a permanent version range (OQ-BP-006 remains OPEN).
 - **Exact Inference Limits:** Observing `SEARCH ... USING INDEX` on a specific query shape does not prove an index improves overall workload throughput; observing fast execution on an in-memory or operating system cache does not prove disk I/O reduction; single-query timing does not represent multi-client concurrency.
 
 ---
@@ -246,7 +246,7 @@ Batch 3: S5-B3 (M15 Core)
 
 ### 7.7 Lesson Contract Audit
 - **Canonical Competencies:** `Trace`, `Explain`, `Judge`.
-- **Concepts & Revisits:** Canonical revisits `EC-CON-003 Interface`, `EC-CON-005 Indirection`, `EC-CON-006 Trade-Off`, `EC-CON-012 Locality`.
+- **Concepts & Revisits:** Canonical revisits `EC-CON-003 Representation`, `EC-CON-005 Interface`, `EC-CON-006 Trade-off`, `EC-CON-012 Locality`.
 - **Learner Evidence:** CLI trace of EQP showing a sargable predicate (`WHERE username = 'Alice'`) utilizing index search vs. a non-sargable expression predicate (`WHERE UPPER(username) = 'ALICE'`) forcing a table scan; written evaluation explaining why expression evaluation breaks the index abstraction layer.
 - **Provenance & Currentness:** ANSI SQL-92 declarative grammar; SQLite VDBE compiler model vs. PostgreSQL parser/planner/executor model.
 - **Exact Inference Limits:** Demonstrating that an expression on an indexed column prevents index utilization in SQLite does not prove that all relational engines lack expression indexing; functional/expression indexes exist in some engines as an explicit DDL feature.
@@ -296,7 +296,7 @@ Batch 3: S5-B3 (M15 Core)
 
 ### 8.7 Lesson Contract Audit
 - **Canonical Competencies:** `Correctness`, `Judge`, `Diagnose`, `Learn-New-Tech`.
-- **Concepts & Revisits:** Canonical revisits `EC-CON-001 State`, `EC-CON-003 Interface`, `EC-CON-005 Indirection`, `EC-CON-008 Invariant`, `EC-CON-009 Correctness` (R6 Schema Evolution & Provenance application pattern; no new concept ID).
+- **Concepts & Revisits:** Canonical revisits `EC-CON-001 State`, `EC-CON-003 Representation`, `EC-CON-005 Interface`, `EC-CON-008 Invariant`, `EC-CON-009 Correctness` (R6 Schema Evolution & Provenance application pattern; no new concept ID).
 - **Learner Evidence:** DDL migration script executing the expand-contract pattern: (1) schema change adding nullable/default column, (2) backfill update populating historical rows, (3) reader query validation; plus definition of a bounded derived view intentionally recomputed from the named source-of-truth data plus declared transformation/provenance inputs (`created_at`, `schema_version`).
 - **Provenance & Currentness:** SQL DDL specification; SQLite `ALTER TABLE` table-rewrite vs. metadata-only evolution capabilities across versions.
 - **Exact Inference Limits:** The expand-contract pattern guarantees backward compatibility for application readers across transitions, but does not eliminate concurrency serialization conflicts or the operational cost of large-table backfills. Bounded derived data is recomputable only when the transformation and source-of-truth data are fully preserved.
@@ -480,11 +480,11 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 13.7 Visual Specification & Exit Criteria
 - **Visual:** Timeline interleaving diagram comparing Connection 1 ($T_1$) and Connection 2 ($T_2$). Displays $T_1$ modifying Row A, $T_2$ reading Row A (observing original committed value under committed-only visibility), and $T_2$ attempting to write (blocked by exclusive lock). Prominently displays the exact one-sentence definition of **EC-CON-014 Consistency** along with its mandatory named qualifier.
-- **Exit Criteria:** Learner reproduces a concurrent conflict across two connections, correctly identifies the prevented anomaly, and states `EC-CON-014` with its required qualifier.
+- **Exit Criteria:** Learner reproduces a concurrent conflict across two connections, correctly identifies the prevented anomaly, and states `EC-CON-014 Consistency` with its required qualifier.
 
 ### 13.8 Lesson Contract Audit
 - **Canonical Competencies:** `Diagnose`, `Judge`, `Correctness`.
-- **Concepts & Revisits:** **EC-CON-014 Consistency (First Home)**; canonical revisits `EC-CON-006 Trade-Off`, `EC-CON-007 Specification`, `EC-CON-008 Invariant`, `EC-CON-013 Isolation`.
+- **Concepts & Revisits:** **EC-CON-014 Consistency (First Home)**; canonical revisits `EC-CON-006 Trade-off`, `EC-CON-007 Specification`, `EC-CON-008 Invariant`, `EC-CON-013 Isolation`.
 - **Learner Evidence:** Dual-connection CLI log showing: Session 1 holding an active uncommitted write; Session 2 executing `SELECT` and observing only committed data (verifying absence of dirty reads under SQLite's committed-only visibility guarantee); Session 2 attempting write access and failing with busy conflict; verbatim recitation of `EC-CON-014 Consistency` with its mandatory named qualifier.
 - **Provenance & Currentness:** ANSI SQL-92 isolation levels; Berenson et al. 1995 anomaly taxonomy; SQLite locking and journal visibility model.
 - **Exact Inference Limits:** Committed-only visibility prevents dirty reads, but does not prevent non-repeatable reads, phantom reads, or write skew under concurrent interleavings. Single-node transaction consistency does not guarantee distributed linearizability or cross-datacenter consistency.
@@ -501,7 +501,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 - **Mechanism:**
   - *Atomic Single-Statement vs. Multi-Statement Transactions:* Using atomic expressions (`UPDATE inventory SET stock = stock - 1 WHERE id = 10 AND stock > 0;`) vs. multi-step transactions (`BEGIN IMMEDIATE ... COMMIT`).
   - *Conflict Handling & Appropriate Transaction Boundary Retries:* Handling writer/lock-upgrade conflicts. When a write conflict occurs, retry must restart from an **appropriate transaction boundary** (where state is refreshed). Do not teach that any statement failure unconditionally requires a whole-transaction retry (e.g., parameter or constraint errors do not require blind retries).
-  - *Lock-Upgrade Conflicts:* `BEGIN DEFERRED` defers starting the actual transaction until the first database access. If the first access is a `SELECT`, a read transaction begins (acquiring a shared lock). A later write statement attempts to upgrade that read transaction to a write transaction (acquiring a reserved lock). If another connection has already acquired a reserved lock, the upgrade attempt cannot proceed and returns a busy conflict (`SQLITE_BUSY`). SQLite does not run a general wait-for-graph cycle detector; deadlock is kept strictly conceptual/light here, with the deterministic deadlock evidence contract residing in M15. The learner must record the actual SQLite result code and driver disposition.
+  - *Lock-Upgrade Conflicts:* Under the declared SQLite rollback-journal baseline, locking transitions through engine-specific lock states (`SHARED`, `RESERVED`, `EXCLUSIVE`). Note that these lock states are **SQLite rollback-journal locking implementation details under the declared baseline**, not universal transaction semantics and not WAL-mode behavior. `BEGIN DEFERRED` defers starting the actual transaction until the first database access. If the first access is a `SELECT`, a read transaction begins (acquiring a shared lock under rollback-journal mode). A later write statement attempts to upgrade that read transaction to a write transaction (attempting to acquire a reserved lock). If another connection has already acquired a reserved lock, the upgrade attempt cannot proceed and returns a busy conflict (`SQLITE_BUSY`). SQLite does not run a general wait-for-graph cycle detector; deadlock is kept strictly conceptual/light here, with the deterministic deadlock evidence contract residing in M15. The learner must record the actual SQLite result code and driver disposition.
   - *Idempotency Preview:* Ensuring that re-executing a transaction (e.g., following a transient conflict or network retry) does not duplicate state mutations (using unique transaction tokens or idempotency keys).
 - **Claim Layers:**
   - *PRINCIPLE:* Atomic state transitions; conflict preconditions; idempotency invariant ($f(f(x)) = f(x)$); transaction retry boundaries.
@@ -511,9 +511,9 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 14.3 Hands-On Activity & Controlled Failure
 - **Activity:** Write a Python script simulating two concurrent workers transferring balances. Worker 1 transfers Account 1 $\to$ Account 2; Worker 2 transfers Account 2 $\to$ Account 1 using `BEGIN DEFERRED`. Both workers begin by reading account balances.
-- **Prediction Before Observation:** Predict what happens when both workers read their source accounts (starting read transactions), and then both attempt to execute writes that upgrade their read transactions to write transactions.
-- **Controlled Break:** Both workers attempt lock upgrade; SQLite encounters a writer/lock-upgrade conflict and returns a busy conflict (recording actual SQLite result code `SQLITE_BUSY` and driver disposition, without hardcoding a fixed error string).
-- **Correction:** Refactor both workers to use `BEGIN IMMEDIATE`, which acquires a reserved write lock at the start of the transaction before any data access, serializing write intent and avoiding lock-upgrade collisions.
+- **Prediction Before Observation:** Predict what happens when both workers read their source accounts (starting read transactions), and then both attempt to execute writes that upgrade their read transactions to write transactions under rollback-journal locking.
+- **Controlled Break:** Both workers attempt lock upgrade; SQLite encounters a writer/lock-upgrade conflict under the rollback-journal implementation and returns a busy conflict (recording actual SQLite result code `SQLITE_BUSY` and driver disposition, without hardcoding a fixed error string).
+- **Correction:** Refactor both workers to use `BEGIN IMMEDIATE`, which acquires a reserved write lock at the start of the transaction before any data access under the rollback-journal baseline, serializing write intent and avoiding lock-upgrade collisions.
 
 ### 14.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
@@ -525,7 +525,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 ### 14.5 Progressive Support Ladder
 - **Question:** Why does using `BEGIN DEFERRED` cause concurrent writer lock-upgrade conflicts in SQLite?
 - **Hint 1:** When does `BEGIN DEFERRED` actually start a transaction or acquire a lock?
-- **Hint 2:** `BEGIN DEFERRED` defers starting the actual transaction until first database access. If the first access is a `SELECT`, a read transaction begins; a later write must attempt an upgrade to a write transaction.
+- **Hint 2:** `BEGIN DEFERRED` defers starting the actual transaction until first database access. If the first access is a `SELECT`, a read transaction begins (acquiring a shared lock under rollback-journal mode); a later write must attempt an upgrade to a write transaction (attempting to acquire a reserved lock). Note that shared/reserved lock states are SQLite rollback-journal implementation details under the declared baseline, not universal transaction semantics or WAL behavior.
 - **Expected Observation:** If another connection has already acquired a reserved lock or also holds a shared lock preventing an exclusive upgrade, the upgrade attempt cannot proceed and returns a busy conflict (`SQLITE_BUSY`).
 - **Full Explanation:** `BEGIN IMMEDIATE` acquires a reserved write lock at transaction start, serializing write intent upfront and preventing concurrent connections from colliding during later lock-upgrade attempts.
 
@@ -536,7 +536,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 ### 14.7 Lesson Contract Audit
 - **Canonical Competencies:** `Judge`, `Correctness`.
 - **Concepts & Revisits:** Canonical revisits `EC-CON-001 State`, `EC-CON-008 Invariant`, `EC-CON-009 Correctness`.
-- **Learner Evidence:** Python script execution log demonstrating: (1) two concurrent connections executing deferred reads and colliding on write lock upgrades, capturing the actual `SQLITE_BUSY` result code and driver disposition; (2) correction using `BEGIN IMMEDIATE` to prevent upgrade conflicts; (3) transaction-boundary retry harness with exponential backoff and idempotency verification.
+- **Learner Evidence:** Python script execution log demonstrating: (1) two concurrent connections executing deferred reads and colliding on write lock upgrades under the declared rollback-journal baseline, capturing the actual `SQLITE_BUSY` result code and driver disposition; (2) correction using `BEGIN IMMEDIATE` to prevent upgrade conflicts; (3) transaction-boundary retry harness with exponential backoff and idempotency verification.
 - **Provenance & Currentness:** SQLite locking specification (`sqlite3_busy_timeout`, `BEGIN DEFERRED`, `BEGIN IMMEDIATE`); application retry patterns.
 - **Exact Inference Limits:** Upfront locking (`BEGIN IMMEDIATE`) prevents concurrent writer lock-upgrade conflicts in SQLite, but serializes writers and limits write concurrency. Retrying from the transaction boundary resolves transient concurrency conflicts, but cannot resolve persistent constraint, schema, or application logic errors.
 
@@ -723,7 +723,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 ### 19.2 Mechanism Model & Claim Layer
 - **Mechanism:**
   - *OS Threads:* Preemptive kernel scheduling; private execution stack; kernel context switches; transparent blocking on system calls. Threads can execute concurrently across multiple physical cores when supported by the underlying language runtime and platform.
-  - *Asynchronous Event Loops:* Cooperative multitasking (`async`/`await`); lightweight coroutines/tasks multiplexed over I/O notification mechanisms (`epoll`/`kqueue`/`IOCP`). A single event loop cooperatively schedules its Tasks without thread preemption between `await` points, while blocking operations or heavy CPU computations may be explicitly delegated to thread/process/sub-interpreter executors.
+  - *Asynchronous Event Loops:* Cooperative multitasking (`async`/`await`); lightweight coroutines/tasks multiplexed over I/O notification mechanisms (`epoll`/`kqueue`/`IOCP`). A single event loop cooperatively schedules its Tasks without thread preemption between `await` points, while blocking operations or heavy CPU computations may be explicitly delegated to executors. For CPU-bound work, process executors (`ProcessPoolExecutor`) or sub-interpreter executors can provide multi-core parallel execution under their respective process/interpreter isolation contracts; thread executors (`ThreadPoolExecutor`) can provide CPU parallelism only when the named runtime/build (such as free-threaded CPython / PEP 779) or invoked native C extensions explicitly release the GIL without imposing interpreter lock contention.
   - *CPython Runtime & GIL Reality:* The Global Interpreter Lock (GIL) is a CPython implementation mechanism, not an invariant of the Python language. In a named GIL-enabled CPython build, the GIL serializes bytecode execution within an interpreter instance to protect runtime memory structures. It does *not* make Python application-level compound operations thread-safe; thread switching between bytecode instructions can interleave compound operations.
   - *Python 3.14 Free-Threading Capability:* In Python 3.14 / PEP 779, free-threading is in **supported phase II** (officially supported build configuration without a global interpreter lock), allowing multi-threaded Python bytecode to execute simultaneously across multiple physical CPU cores.
   - *Workload Judgment Criteria:* Architectural selection between threads and async depends on blocking behavior (I/O-wait vs. CPU computation), task scale and memory overhead, runtime/build capabilities (GIL vs. free-threaded vs. multi-process), C-extension behaviors, and executor composition.
@@ -742,7 +742,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 ### 19.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
   1. *"The GIL means multi-threaded Python programs never need mutexes or locks."* (False: The GIL protects interpreter memory; compound application updates lose data under thread interleaving in GIL-enabled builds).
-  2. *"Async is universally faster than threaded code or provides zero parallel speedup."* (False: Performance depends on workload and architecture; single-loop async minimizes thread memory overhead for high-concurrency I/O, and CPU-intensive work can achieve parallel speedup when delegated to thread or process executors or in free-threaded runtimes).
+  2. *"Async is universally faster than threaded code or provides zero parallel speedup."* (False: Performance depends on workload and architecture; single-loop async minimizes task memory overhead for high-concurrency I/O. For CPU-intensive work, process or sub-interpreter executors can provide multi-core execution under their respective isolation contracts; a thread executor can provide CPU parallelism only when the named runtime/build or invoked native extension releases/does not impose the relevant GIL constraint; free-threaded CPython may allow parallel Python bytecode execution; actual workload/runtime capability remains the judgment authority).
   3. *"The GIL is a permanent rule of the Python language."* (False: The GIL is an implementation detail of standard CPython; alternative runtimes and Python 3.14 PEP 779 free-threaded builds operate without it).
 - **What You Can Ignore — For Now:** Deep CPython C-API internal reference counting macros; custom asyncio event loop policy implementations; Rust async executor internals.
 
