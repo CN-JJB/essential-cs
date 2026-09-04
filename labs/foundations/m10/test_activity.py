@@ -5,7 +5,7 @@ M10 Automated Activity Test Suite.
 Verifies:
 1. Endpoint observation on dynamic port 0 (getsockname, 16-byte exchange, clean teardown).
 2. TCP byte-stream reconstruction across arbitrary recv() buffer partitions (framing loop).
-3. UDP datagram boundary preservation.
+3. Bounded loopback UDP fixture observation: successful recvfrom() calls return at most one datagram's data; the fixture records whether all small test datagrams happened to arrive in send order.
 4. Failure fixture cases (active refusal, silent read timeout, DNS .invalid observation).
 5. Teardown and reset idempotency.
 
@@ -91,14 +91,18 @@ class TestM10StreamFraming(unittest.TestCase):
                 expected_total = sum(len(m) for m in test_messages)
                 self.assertEqual(result["total_logical_bytes_sent"], expected_total)
 
-    def test_udp_datagram_preservation(self):
+    def test_udp_loopback_fixture_observes_datagram_boundaries(self):
         test_datagrams = [
             b"DATAGRAM_ONE",
             b"DATAGRAM_TWO_WITH_DIFFERENT_LENGTH",
             b"DATAGRAM_THREE",
         ]
         result = run_udp_datagram_contrast(test_datagrams)
-        self.assertTrue(result["boundaries_preserved"], f"UDP test failed: {result.get('error')}")
+        # This is a bounded course-fixture operation check, not a claim that UDP
+        # guarantees delivery or ordering on arbitrary networks.
+        self.assertTrue(result["all_fixture_datagrams_observed"], f"UDP fixture failed: {result.get('error')}")
+        self.assertTrue(result["boundaries_preserved"])
+        self.assertFalse(result["udp_delivery_order_guaranteed"])
         self.assertEqual(result["datagrams_received_count"], len(test_datagrams))
 
 
