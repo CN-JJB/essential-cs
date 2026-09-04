@@ -30,20 +30,21 @@ $$\text{M15 (Concurrency: Threads, Races \& Synchronization)}$$
    - M15 hard prerequisite: `M06` (OS Kernel & Processes); soft/preferred `M14` + `M03` + `M12`.
    - **M14 $\leftrightarrow$ M15 is not a hard DAG edge.** Concurrency in M15 does not assume database transaction mastery; transaction isolation in M14 does not assume C pthread synchronization mastery. S4 (M10–M12) is not a hard prerequisite for S5.
 2. **Concept Registry & Canonical First-Home Protection:**
-   - **Zero new concept IDs introduced.** All concepts remain within the 18 canonical entries in `meta/CONCEPT_REGISTRY.md`.
-   - **EC-CON-014 Consistency (一致性)** enters its canonical first home in **M14 (`L14-02`)**. Definition: *"The relationship between allowed state transitions and what observers may see, according to a named ordering/visibility guarantee. It must be qualified; 'consistent' does not mean merely fresh, durable, or correct in every sense."* The qualifier is mandatory. ACID "Consistency" is explicitly disambiguated as application invariant preservation rather than an engine-level visibility contract.
-   - **EC-CON-015 Concurrency (并发)** enters its canonical first home in **M15 (`L15-01`)**. Definition: *"Overlapping progress or interleaving of operations, whether or not they execute simultaneously on hardware. Concurrency creates ordering and shared-state obligations."* Concurrency is fundamentally distinguished from physical parallelism. M12's event loop and M14's transaction overlap are treated strictly as previews.
+   - **Zero new concept IDs introduced.** All concepts remain strictly within the 18 canonical entries in `meta/CONCEPT_REGISTRY.md`.
+   - **EC-CON-014 Consistency (一致性)** enters its canonical first home in **M14 (`L14-02`)**. Exact canonical definition: **“The relationship between allowed state transitions and what observers may see, according to a named ordering/visibility guarantee.”** The qualifier mandate is enforced separately: It must be qualified; "consistent" does not mean merely fresh, durable, or correct in every sense. ACID "Consistency" is explicitly disambiguated as application invariant preservation rather than an engine-level visibility contract. SQLite's declared visibility behavior is treated under its own engine locking/journal contract, not labeled as generic ANSI Read Committed.
+   - **EC-CON-015 Concurrency (并发)** enters its canonical first home in **M15 (`L15-01`)**. Exact canonical definition: **“Overlapping progress or interleaving of operations, whether or not they execute simultaneously on hardware. Concurrency creates ordering and shared-state obligations.”** Concurrency is fundamentally distinguished from physical parallelism. M12's event loop and M14's transaction overlap are treated strictly as previews.
    - **R6 Schema Evolution & Provenance:** Handled in M13 `L13-03` as an **application pattern** spanning existing concepts (`EC-CON-001`, `003`, `005`, `008`). No new concept ID is created.
+   - **Concept Revisit Alignment:** In accordance with the canonical Concept Registry contract, `EC-CON-018 Process` is not an authorized canonical revisit in M15 (its first home is M06); thread-vs-process comparisons remain pedagogical context without claiming an unapproved Concept Registry revisit.
 3. **Lab & Source Expedition Contracts:**
-   - **LAB-REQ-04 (SQLite Query Plans & Indexing):** Required baseline is the `sqlite3` CLI. Python stdlib `sqlite3` is permitted for fixture generation and automated evaluation, but is not an equivalent interactive replacement. If `sqlite3` CLI is absent, the learner path is classified `ENVIRONMENT-BLOCKED / NOT RUN`. Fixture sizes are determined by implementation smoke (small: 1–2 pages; medium: multi-page), rejecting hardcoded "100 vs 50,000 rows" constants. Truthful planner scans on small tables or low selectivity are explicitly accepted and celebrated.
-   - **LAB-REQ-05 (SQLite Transactions & Recovery):** Required baseline is local SQLite with **rollback journal** (`DELETE` mode). WAL mode is an optional comparison. Dual-connection architecture verifies committed-only visibility and writer serialization (`SQLITE_BUSY`). Child process termination via `SIGKILL` tests client crash recovery; Design strictly prohibits inferring physical power-loss durability from process interruption.
-   - **LAB-REQ-03 (POSIX Threads Race & Rendezvous):** Required baseline is C11 + POSIX threads on canonical Linux. The broken path uses C11 atomics (`<stdatomic.h>`) for defined atomic accesses in a compound read-modify-write update, avoiding C language data race / Undefined Behavior (UB). To prevent flaky scheduling, the design specifies a bounded coordination contract (phase handoff / attempt budget), rejecting fixed percentage assertions ($\ge 95\%$). Mutex repair, condition-variable while-loop rendezvous, and an owned-child deadlock watchdog with explicit timeout are fully specified.
+   - **LAB-REQ-04 (SQLite Query Plans & Indexing):** Required baseline is the `sqlite3` CLI. Python stdlib `sqlite3` is permitted for fixture generation and automated evaluation, but is not an equivalent interactive replacement. If `sqlite3` CLI is absent, the learner path is classified `ENVIRONMENT-BLOCKED / NOT RUN`. Fixture sizes are determined by implementation smoke test (e.g. smaller baseline vs. larger multi-page workload), rejecting hardcoded row/page constants. Truthful planner scans on smaller fixtures or low selectivity are explicitly accepted and celebrated; tests do not force `SEARCH ... USING INDEX`. DB file size is an empirical observation and must not be machine-asserted as inevitably increasing.
+   - **LAB-REQ-05 (SQLite Transactions & Recovery):** Required baseline is local SQLite with **rollback journal** (`DELETE` mode). WAL mode is an optional comparison. Dual-connection architecture verifies committed-only visibility and writer/lock-upgrade conflicts without fixed exception string matching. Child process termination via `SIGKILL` tests client crash recovery; Design strictly prohibits inferring physical power-loss durability from process interruption.
+   - **LAB-REQ-03 (POSIX Threads Race & Rendezvous):** Required baseline is C11 + POSIX threads on canonical Linux. The broken path uses C11 atomics (`<stdatomic.h>`) for defined atomic accesses in a compound read-modify-write update, avoiding C language data race / Undefined Behavior (UB). Preferred evidence utilizes course-controlled phase handoff / barrier coordination to produce real pthread lost-update interleaving without simulating threads; natural scheduler observation is supplemental only and truthfully bounded by an attempt budget, rejecting fixed percentage assertions ($\ge 95\%$) or fixed count ranges. Mutex repair, condition-variable predicate loop, and an owned-child deadlock watchdog with a configurable timeout parameter are fully specified without absolute shell-freeze promises.
    - **LAB-OPT-03 (PostgreSQL EXPLAIN & Isolation):** Strictly Optional. Requires explicit rollback design for `EXPLAIN ANALYZE` mutation statements. PostgreSQL/Docker must never become hidden Core requirements.
    - **LAB-OPT-05 (OSTEP Semaphore Rendezvous):** Strictly Optional and **link-only** (commit `afb36ca8ddbf81d847d18f6bd18a87f0a18667f2`). Zero bundled code, tests, or skeletons.
    - **EXP-02 (PostgreSQL Source Expedition):** Preserves the exact three canonical paths (`src/backend/optimizer/plan/README`, `src/backend/optimizer/path/costsize.c`, `src/backend/storage/buffer/README`). The learner-facing card explicitly documents Target 1's historical subselect drift. The parent `optimizer/README` is cited as supplemental reviewer context, not a substitute or fourth canonical step. No PostgreSQL compilation.
 4. **Environment & OQ-BP-006 Preservation:**
-   - Preflight contract classifies capabilities into Required, Optional, Environment-Sensitive, and Privileged.
-   - OQ-BP-006 remains explicitly **OPEN**. Current tool versions are treated as empirical evidence, not permanent curriculum constants.
+   - Preflight contract classifies capabilities across 14 explicit dimensions into Required, Optional, Environment-Sensitive, and Privileged.
+   - OQ-BP-006 remains explicitly **OPEN**. Current tool versions are treated as empirical observations, not permanent curriculum constants.
 
 ---
 
@@ -106,12 +107,13 @@ $$\text{M15 (Concurrency: Threads, Races \& Synchronization)}$$
 | Item / Finding | Research Dossier Status | Design Pass Disposition | Hard Design Boundary Enforced |
 |---|---|---|---|
 | **EXP-02 Target 1 Drift** | Target 1 (`plan/README`) is largely historical subselect notes; does not describe general Path $\to$ Plan. | **Adopted with boundary** | Preserve Target 1; document historical drift on the learner card; cite parent `optimizer/README` as supplemental support only. Do NOT replace Target 1. |
-| **LAB-REQ-03 Scheduling** | `sched_yield()` alone does not guarantee a lost-update observation across all OS schedulers. | **Adopted with boundary** | Design bounded coordination (phase handoff or attempt budget). Reject hardcoded "$\ge 95\%$" or "100%" occurrence assertions. |
-| **LAB-REQ-04 Dataset Sizes** | 100 vs. 50,000 rows was empirical smoke evidence, not a universal constant. | **Adopted** | Specify small (1–2 pages) vs. medium (multi-page) based on implementation smoke; do not canonize specific row counts. |
+| **LAB-REQ-03 Scheduling** | `sched_yield()` alone does not guarantee a lost-update observation across all OS schedulers. | **Adopted with boundary** | Preferred evidence uses course-controlled phase handoff / barrier coordination; natural scheduler observation is supplemental under an attempt budget. Reject hardcoded "$\ge 95\%$" or "100%" occurrence assertions and fixed count ranges. |
+| **LAB-REQ-04 Dataset Sizes** | Bounded fixture sizes must be chosen from implementation smoke, not canonized constants. | **Adopted** | Specify smaller baseline vs. larger multi-page workload determined by smoke test; do not canonize specific row counts or page counts. |
+| **LAB-REQ-04 Plan Choice** | Query planner choice is cost- and workload-dependent. | **Adopted** | Tests must accept truthful planner scan choices on small tables or low selectivity; do not force `SEARCH ... USING INDEX`. File size is an observation, not machine-asserted. |
 | **LAB-REQ-04 CLI Baseline** | `sqlite3` CLI is required for authentic plan and tool interaction. | **Adopted** | Missing CLI = `ENVIRONMENT-BLOCKED / NOT RUN`. Python is not an interactive substitute. |
 | **LAB-REQ-05 Baseline** | Rollback journal is SQLite default; WAL is optional comparison. | **Adopted** | Establish rollback journal (`DELETE`) as default; WAL as bounded extension. No fixed exception string matching. |
 | **Process Interruption** | `SIGKILL` tests client abnormal termination, not hardware power loss. | **Adopted** | Explicit inference boundary: Process kill $\ne$ power loss. |
-| **L15-03 Python GIL** | Free-threaded Python 3.14.7 / PEP 779; GIL is implementation detail. | **Adopted** | Do not teach GIL as a Python language invariant or `counter += 1` as guaranteed to fail. |
+| **L15-03 Python GIL** | Free-threaded Python 3.14 / PEP 779 in supported phase II; conventional GIL build common. | **Adopted** | Do not teach GIL as a Python language invariant or `counter += 1` as guaranteed to fail; observe named runtime capability. |
 | **OQ-BP-006 Versions** | Agent host vs. upstream currentness separated; neither is a pin. | **Adopted** | OQ-BP-006 remains **OPEN**. Current versions recorded as evidence only. |
 
 ---
@@ -149,8 +151,8 @@ Batch 3: S5-B3 (M15 Core)
 
 ## 5. Module M13 Architecture — Databases: Storage & Indexing
 
-- **Module Purpose:** Establish the mental model of a database engine: declarative SQL $\to$ engine parser/planner $\to$ access path $\to$ page/buffer I/O $\to$ result set. Unpack the trade-offs of B-tree indexing and schema invariants.
-- **Primary Competency:** **Observe** (query execution plans, table scans vs. index searches, storage overhead, timing variance).
+- **Module Purpose:** Establish the mental model of a database engine: declarative SQL $\to$ engine parser/planner/code generator in a named engine $\to$ access path $\to$ page/cache/storage work $\to$ result set. Unpack the trade-offs of B-tree indexing and schema invariants without claiming universal pipeline or node structures.
+- **Primary Competency:** **Observe** (query execution plans, access paths, storage footprint observations, timing distributions).
 - **Secondary Competencies:** Trace, Explain, Estimate, Judge, Correctness.
 - **Canonical Concepts Revisit:** `EC-CON-001 State`, `EC-CON-003 Representation`, `EC-CON-005 Interface`, `EC-CON-006 Trade-off`, `EC-CON-008 Invariant`, `EC-CON-009 Correctness`, `EC-CON-011 Caching`, `EC-CON-012 Locality`.
 - **Application Pattern:** Schema evolution, reader/writer compatibility, migration trade-offs, source of truth vs. derived data, lightweight provenance (R6).
@@ -160,38 +162,39 @@ Batch 3: S5-B3 (M15 Core)
 ## 6. Lesson L13-01 Design — “Why is my query fast/slow?”
 
 ### 6.1 Learner Question & Capability Transition
-- **Learner Question:** "Why does the exact same `SELECT` statement run in sub-milliseconds on some tables, but take seconds on others—and why does adding an index sometimes make no difference at all?"
+- **Learner Question:** "Why does the exact same `SELECT` statement run quickly on some tables, but take noticeably longer on others—and why does adding an index sometimes make no difference at all?"
 - **Capability Transition:** Moves from treating a database as a black box where queries have mysterious speeds to inspecting the engine's access path (`EXPLAIN QUERY PLAN`), understanding page-level I/O, and evaluating B-tree index trade-offs.
 
 ### 6.2 Mechanism Model & Claim Layer
-- **Mechanism:** Tables are stored on disk in fixed-size pages (e.g., SQLite 4,096 bytes). A table scan (`SCAN TABLE`) reads every page sequentially ($O(N)$ pages). A B-tree index stores keys and row pointers in balanced multi-way tree pages; lookups probe root $\to$ internal $\to$ leaf pages ($O(\log_B N)$ pages, where $B \approx 100\text{--}1000$).
+- **Mechanism:** Tables are stored on disk as structured pages managed by the database engine. A full table scan reads pages sequentially. A B-tree index stores keys and row pointers in balanced multi-way tree pages; lookups probe root through internal nodes down to leaf pages. Plan choice is cost- and workload-dependent: when a query matches a large fraction of table rows or when the table is small enough that scanning pages sequentially costs less than index traversal plus scattered page lookups, the optimizer chooses a scan.
 - **Claim Layers:**
-  - *PRINCIPLE:* $O(\log_B N)$ tree lookup vs. $O(N)$ linear scan; random vs. sequential I/O trade-off; index maintenance overhead on mutations.
+  - *PRINCIPLE:* Tree lookup ($O(\log N)$ access steps) vs. linear scan ($O(N)$ access steps); random vs. sequential page access trade-off; index maintenance cost on data mutations.
   - *SPECIFICATION:* SQL declarative semantics specify the result set, not the retrieval path.
-  - *IMPLEMENTATION:* SQLite query planner cost estimation; `EXPLAIN QUERY PLAN` output format (`SCAN`, `SEARCH`, `USING INDEX`, `USING COVERING INDEX`).
-  - *CURRENT PRACTICE:* SQLite 4KB default page size; automatic temporary index generation heuristics.
+  - *IMPLEMENTATION:* SQLite query planner cost estimation heuristics; `EXPLAIN QUERY PLAN` semantic output (`SCAN`, `SEARCH ... USING INDEX`, `USING COVERING INDEX`).
+  - *CURRENT PRACTICE:* Default engine page allocations; automatic index generation heuristics in specific CLI or embedded environments.
 
 ### 6.3 Hands-On Activity & Controlled Failure
-- **Activity:** In the `sqlite3` CLI, load a synthetic table at two bounded scales (Small: 1–2 pages; Medium: hundreds of pages). Execute queries on indexed vs. unindexed columns. Capture `EXPLAIN QUERY PLAN`.
+- **Activity:** In the `sqlite3` CLI, load a synthetic table across bounded scales selected by implementation smoke. Execute queries on indexed vs. unindexed columns. Capture `EXPLAIN QUERY PLAN`.
 - **Prediction Before Observation:** Before running `EXPLAIN QUERY PLAN`, learner must predict whether the engine will choose a table scan or an index lookup based on table size and predicate selectivity.
-- **Controlled Break:** Execute a query matching $>50\%$ of rows with an index available. Observe that SQLite chooses `SCAN TABLE` despite the index. Explain why: Traversing the index and performing random I/O for 50% of the rows is slower than a sequential scan of all pages.
+- **Controlled Break:** Execute a query with lower selectivity or a modified query shape where SQLite chooses `SCAN TABLE` despite an available index. Observe and document this authentic planner choice: Traversing the index to fetch scattered rows incurs higher estimated cost than scanning pages sequentially.
 
 ### 6.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
-  1. *"Adding an index always makes queries faster."* (False: On small tables or low selectivity, indexes add overhead; indexes always slow down `INSERT`/`UPDATE`).
-  2. *"`EXPLAIN QUERY PLAN` executes the query and measures actual time."* (False: EQP displays the static chosen plan, not execution measurements).
-- **What You Can Ignore — For Now:** Internal B-tree page balancing and page-split algorithms; VDBE bytecode instructions; LSM-trees; bitmap index structures.
+  1. *"Adding an index always makes queries faster."* (False: On small tables or low selectivity, indexes add overhead; indexes always add maintenance overhead to insertions and updates).
+  2. *"`EXPLAIN QUERY PLAN` executes the query and measures actual run time."* (False: EQP displays the optimizer's estimated plan without executing the query).
+  3. *"The database page size or B-tree node shape is universal across all systems."* (False: Page sizes, branching factors, and page formats are named-engine implementation choices).
+- **What You Can Ignore — For Now:** Internal B-tree page balancing and page-split algorithms; VDBE bytecode opcodes; LSM-trees; bitmap index structures.
 
 ### 6.5 Progressive Support Ladder
 - **Question:** How do you determine whether SQLite will use an index for `SELECT * FROM orders WHERE user_id = 42`?
-- **Hint 1:** The declarative query does not state how rows are fetched. You need to ask SQLite for its chosen access path.
+- **Hint 1:** The declarative query does not state how rows are fetched. You need to inspect the engine's chosen access path.
 - **Hint 2:** Prefix the query with `EXPLAIN QUERY PLAN` in the `sqlite3` shell.
-- **Expected Observation:** The detail column reports `SEARCH orders USING INDEX idx_orders_user (user_id=?)` or `SCAN orders`.
-- **Full Explanation:** SQLite's planner evaluates available indexes. If `idx_orders_user` exists and selectivity justifies it, EQP outputs `SEARCH ... USING INDEX`. If no index exists, it outputs `SCAN orders`.
+- **Expected Observation:** The detail column reports a semantic access path such as `SEARCH orders USING INDEX ...` or `SCAN orders`.
+- **Full Explanation:** SQLite's planner evaluates available access paths. If an index exists and selectivity justifies it, EQP outputs an index search detail. If no index exists or scanning is estimated to be cheaper, it outputs `SCAN orders`.
 
 ### 6.6 Visual Specification & Exit Criteria
-- **Visual:** Diagram showing a declarative SQL query entering the query engine, branching into two access paths: Path A (Sequential Page Scan visiting all physical disk pages) vs. Path B (B-Tree traversal visiting Root $\to$ Internal $\to$ Leaf $\to$ Data Page). Prominently labeled: **PLAN CHOICE IS WORKLOAD AND IMPLEMENTATION DEPENDENT**.
-- **Exit Criteria:** Learner captures an actual EQP output showing both `SCAN` and `SEARCH ... USING INDEX`, and writes an evidence-based explanation of why an index is not a universal performance solution.
+- **Visual:** Diagram showing a declarative SQL query entering the query engine, branching into two possible access paths: Path A (Sequential Page Scan visiting physical table pages) vs. Path B (B-Tree traversal visiting Root $\to$ Internal $\to$ Leaf $\to$ Data Page). Prominently labeled: **PLAN CHOICE IS WORKLOAD AND IMPLEMENTATION DEPENDENT**.
+- **Exit Criteria:** Learner captures an actual CLI EQP output showing observed access paths (e.g. `SCAN` or `SEARCH ... USING INDEX`), and writes an evidence-based explanation of why an index is not a universal performance solution.
 
 ---
 
@@ -199,37 +202,40 @@ Batch 3: S5-B3 (M15 Core)
 
 ### 7.1 Learner Question & Capability Transition
 - **Learner Question:** "If SQL only describes what data I want, who decides how to get it, and where is the line between relational logic and storage engine reality?"
-- **Capability Transition:** Moves from viewing SQL as an imperative programming language to understanding it as a declarative interface (`EC-CON-005`) backed by a query optimization and execution pipeline.
+- **Capability Transition:** Moves from viewing SQL as an imperative programming language to understanding it as a declarative interface (`EC-CON-005`) backed by a query optimization and execution pipeline in a named engine.
 
 ### 7.2 Mechanism Model & Claim Layer
-- **Mechanism:** Relational Model (Codd 1970). Relational algebra operations: Selection ($\sigma$), Projection ($\pi$), Join ($\bowtie$). The query pipeline: SQL text $\to$ Parser $\to$ Abstract Syntax Tree $\to$ Logical Query Plan $\to$ Query Optimizer / Planner $\to$ Physical Plan $\to$ Execution Engine (Iterator/Volcano model: `open()`, `next()`, `close()`). The storage engine manages physical pages, record formats (slotted pages), and buffer pool caching.
+- **Mechanism:** The bounded named-engine model:
+  $$\text{SQL intent} \longrightarrow \text{parser/planner/code generation in a named engine} \longrightarrow \text{access path} \longrightarrow \text{page/cache/storage work} \longrightarrow \text{result}$$
+  Relational algebra operations: Selection ($\sigma$), Projection ($\pi$), Join ($\bowtie$). The storage engine manages physical pages, record formats (such as slotted pages), and buffer pool caching.
 - **Claim Layers:**
-  - *PRINCIPLE:* Relational algebra equivalence; declarative interface abstraction; separation of logical query from physical access path.
+  - *PRINCIPLE:* Relational model equivalence; declarative interface abstraction; separation of logical query intent from physical access path.
   - *SPECIFICATION:* ANSI/ISO SQL standard grammar and semantics.
-  - *IMPLEMENTATION:* SQLite query engine pipeline; virtual database engine (VDBE) opcodes; rowid table structure.
-  - *CURRENT PRACTICE:* SQLite single-file database architecture; absence of dedicated background server processes.
+  - *IMPLEMENTATION:* Named engine execution strategies (e.g., SQLite compiles SQL queries into Virtual Database Engine / VDBE bytecode; PostgreSQL parses SQL into parse trees, generates path trees, and produces plan nodes for an executor).
+  - *CURRENT PRACTICE:* Engine-specific query preparation interfaces and execution models.
+- **Explicit Non-Universal Rule:** Do not teach a universal AST $\to$ logical plan $\to$ physical plan $\to$ Volcano pipeline. Specific pipeline stages and execution paradigms (Volcano iterator, bytecode evaluation, JIT compilation, or vectorized batch execution) are engine-specific implementation models, not universal laws of relational databases.
 
 ### 7.3 Hands-On Activity & Controlled Failure
-- **Activity:** Query a multi-table SQLite database. Compare an un-sargable query (`WHERE UPPER(username) = 'ALICE'`) with an indexed query (`WHERE username = 'Alice'`).
+- **Activity:** Query a multi-table SQLite database. Compare an un-sargable query (`WHERE UPPER(username) = 'ALICE'`) with a sargable indexed query (`WHERE username = 'Alice'`).
 - **Prediction Before Observation:** Predict whether SQLite can use a standard B-tree index on `username` when wrapped in a function call.
-- **Controlled Break:** Observe that wrapping the indexed column in `UPPER(...)` forces a full table scan (`SCAN TABLE`), breaking the index abstraction. Explain why: B-tree indexes are sorted by raw column values, not transformed function outputs.
+- **Controlled Break:** Observe that wrapping the indexed column in `UPPER(...)` forces a table scan (`SCAN TABLE`), breaking the index abstraction. Explain why: Standard B-tree indexes are ordered by raw column values, not transformed function outputs.
 
 ### 7.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
   1. *"SQL executes in the exact order written (SELECT first, then FROM)."* (False: Logical processing evaluates `FROM` $\to$ `WHERE` $\to$ `GROUP BY` $\to$ `HAVING` $\to$ `SELECT` $\to$ `ORDER BY`).
-  2. *"Every relational database uses the Volcano iterator model."* (False: Modern columnar/analytical engines use vectorized execution or JIT compilation).
+  2. *"Every relational database uses the same query compilation pipeline and Volcano iterator executor."* (False: Different engines compile to bytecode, interpreted trees, or native machine code; execution models range from Volcano iterators to vectorized batch processing).
 - **What You Can Ignore — For Now:** Cost-based join order dynamic programming (Selinger optimizer); VDBE register allocation details; cost-model tuning parameters.
 
 ### 7.5 Progressive Support Ladder
 - **Question:** Why does `SELECT * FROM users WHERE id + 1 = 100` fail to use the primary key index on `id`?
-- **Hint 1:** Look at the left side of the comparison operator. Is `id` isolated?
-- **Hint 2:** The query planner evaluates expressions. It does not perform algebraic inversion to rewrite `id + 1 = 100` into `id = 99`.
-- **Expected Observation:** EQP displays `SCAN users` instead of `SEARCH users USING INTEGER PRIMARY KEY`.
-- **Full Explanation:** Expressions on indexed columns prevent index usage unless an expression index exists. Rewriting the predicate to `WHERE id = 99` enables direct index search.
+- **Hint 1:** Look at the predicate on the column. Is `id` an isolated term?
+- **Hint 2:** The query planner matches expressions. It does not perform algebraic inversion to rewrite `id + 1 = 100` into `id = 99`.
+- **Expected Observation:** EQP displays a table scan access path instead of an index search on the primary key.
+- **Full Explanation:** Expressions on indexed columns prevent index access unless an expression-specific index exists. Rewriting the predicate to `WHERE id = 99` allows the optimizer to utilize the primary key index.
 
 ### 7.6 Visual Specification & Exit Criteria
-- **Visual:** Two-layer architectural diagram. Top Layer: SQL Declarative Contract (`SELECT`, `FROM`, `WHERE` relational intent). Bottom Layer: Named Engine Implementation (Parser $\to$ Planner $\to$ Physical Access Path $\to$ Slotted Page Storage Engine). Shows the abstraction boundary and how expression predicates leak through to force scans.
-- **Exit Criteria:** Learner traces one query through logical vs. physical access paths and explains the performance difference between a sargable and non-sargable predicate.
+- **Visual:** Two-layer architectural diagram. Top Layer: SQL Declarative Contract (`SELECT`, `FROM`, `WHERE` relational intent). Bottom Layer: Named Engine Implementation (Parser/Planner/Code Generator $\to$ Physical Access Path $\to$ Storage Engine / Page Cache). Shows the abstraction boundary and how expression predicates leak through to force full scans.
+- **Exit Criteria:** Learner traces one query through logical intent vs. physical access path in a named engine and explains the performance difference between a sargable and non-sargable predicate.
 
 ---
 
@@ -249,17 +255,17 @@ Batch 3: S5-B3 (M15 Core)
 - **Claim Layers:**
   - *PRINCIPLE:* Invariant preservation across state transitions; trade-offs of redundancy (normalization vs. denormalization); expand-contract migration lifecycle.
   - *SPECIFICATION:* SQL DDL constraint definitions (`ALTER TABLE`).
-  - *IMPLEMENTATION:* SQLite `ALTER TABLE` capabilities and limitations (e.g., historical constraints on dropping columns vs. modern table recreations).
-  - *CURRENT PRACTICE:* Online schema migration tools (gh-ost, pt-online-schema-change) in enterprise environments.
+  - *IMPLEMENTATION:* SQLite `ALTER TABLE` capabilities and limitations across versions.
+  - *CURRENT PRACTICE:* Online schema migration patterns and tools in operational environments.
 
 ### 8.3 Hands-On Activity & Controlled Failure
 - **Activity:** Design a user account schema. Add a new required field (`email_verified BOOLEAN NOT NULL`) to an existing populated table.
 - **Prediction Before Observation:** Predict what happens when you execute `ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL;` on a table with existing rows without specifying a default value.
-- **Controlled Break:** SQLite returns an error (`Cannot add a NOT NULL column with default value NULL`). Explain the failure: Adding a non-nullable column to existing data violates the table's invariant for historical rows unless a default or backfill is provided.
+- **Controlled Break:** SQLite returns an error indicating that a `NOT NULL` column cannot be added without a default value. Explain the failure: Adding a non-nullable column to existing data violates the table's invariant for historical rows unless a default or backfill is provided.
 
 ### 8.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
-  1. *"Schema migrations can always be performed instantly with a single ALTER TABLE."* (False: On large tables, schema changes can trigger full table rewrites and exclusive locks).
+  1. *"Schema migrations can always be performed instantly with a single ALTER TABLE."* (False: On large tables or older systems, schema changes can trigger table rewrites and exclusive locks).
   2. *"Derived data is just as authoritative as source-of-truth data."* (False: Derived data can become stale or inconsistent; only source-of-truth state is canonical).
 - **What You Can Ignore — For Now:** Distributed schema registries (Avro/Protobuf); W3C PROV-O semantic ontologies; enterprise ETL data pipelines; NoSQL document schema design.
 
@@ -268,7 +274,7 @@ Batch 3: S5-B3 (M15 Core)
 - **Hint 1:** Existing rows must satisfy the `NOT NULL` constraint immediately upon column creation.
 - **Hint 2:** Provide a sensible default value in the `ALTER TABLE` statement.
 - **Expected Observation:** `ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE';` succeeds.
-- **Full Explanation:** Supplying `DEFAULT 'ACTIVE'` allows the engine to satisfy the invariant for all existing rows without requiring immediate row rewrites in metadata-only evolution engines.
+- **Full Explanation:** Supplying `DEFAULT 'ACTIVE'` allows the engine to satisfy the invariant for all existing rows without requiring immediate table rebuilds in metadata-only evolution engines.
 
 ### 8.6 Visual Specification & Exit Criteria
 - **Visual:** Schema Evolution Lifecycle diagram showing Version $N$ migrating to Version $N+1$ across three stages: Stage 1 (Expand: Add new nullable column, application dual-writes), Stage 2 (Backfill: Batch update historical rows), Stage 3 (Contract: Readers consume new column, old column dropped). Includes a sidecar showing Source-of-Truth table feeding a Derived View with a Provenance timestamp.
@@ -287,9 +293,7 @@ Batch 3: S5-B3 (M15 Core)
 
 ### 9.2 Fixture & Data Generation
 - Synthetic dataset: An `orders` table with columns `(id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, status TEXT, created_at TEXT)`.
-- Bounded dataset sizes determined by implementation smoke test:
-  - *Small Scale:* Sized so the table occupies 1–2 pages (e.g., ~50–100 rows).
-  - *Medium Scale:* Sized so the table occupies hundreds of pages (e.g., tens of thousands of rows; exact count determined at smoke time).
+- Bounded dataset sizes selected by implementation smoke test (e.g., a smaller baseline fixture vs. a larger multi-page fixture). Do not canonize fixed row counts or page counts.
 - Synthetic data generator generates deterministic, pseudo-random records using a fixed seed.
 
 ### 9.3 Experimental Procedure
@@ -300,16 +304,16 @@ Batch 3: S5-B3 (M15 Core)
 2. **Checkpoint 2 — Index Creation & EQP Inspection:**
    - Create index: `CREATE INDEX idx_orders_user ON orders(user_id);`
    - Run `EXPLAIN QUERY PLAN` for the selective query.
-   - Assert semantic access path: Detail contains `SEARCH orders USING INDEX idx_orders_user`. (Do not bind to exact ASCII tree formatting).
+   - Assert semantic access path without forcing an index: If the optimizer chooses an index, record `SEARCH ... USING INDEX`; if the optimizer chooses a scan on a small fixture, accept and record that truthful result. (Do not bind tests to exact ASCII tree formatting).
 3. **Checkpoint 3 — Result Equivalence Verification:**
    - Verify that results returned by the indexed query are identical to the unindexed query:
      $$\text{Result}(\text{Query}_{\text{unindexed}}) \equiv \text{Result}(\text{Query}_{\text{indexed}})$$
 4. **Checkpoint 4 — Workload Measurement & Trade-offs:**
-   - Measure repeated read query execution times (capturing median and spread across multiple iterations, accounting for warm cache).
+   - Measure repeated read query execution times (capturing raw timing samples, median, and spread across iterations, explicitly recording warmup and cache state).
    - Observe write overhead: Measure execution time of bulk `INSERT` statements with and without the secondary index.
-   - Observe database file size inflation via filesystem `ls -l` / file stat before and after index creation.
+   - Observe database file size via filesystem stat before and after index creation. (DB file size is an empirical observation and must not be machine-asserted as inevitably increasing).
 5. **Checkpoint 5 — Truthful Scan Acceptance:**
-   - Execute a query matching a large fraction of table rows (e.g., `WHERE status = 'ACTIVE'`).
+   - Execute a query with lower selectivity or a changed workload.
    - If SQLite chooses `SCAN TABLE` despite an available index, record this truthful result and explain why cost estimation preferred sequential I/O.
 
 ### 9.4 Machine-Checkable vs. Reviewer-Required Gates
@@ -317,7 +321,7 @@ Batch 3: S5-B3 (M15 Core)
   - Automated runner executes SQL script;
   - Parses EQP detail string semantically (`SCAN` vs. `SEARCH ... USING INDEX`);
   - Asserts result set equivalence ($\Delta = 0$ rows);
-  - Asserts DB file size increased after index creation.
+  - Records DB file size observation without machine-asserting a mandatory increase.
 - **Reviewer-Required:**
   - Review learner's written justification of the write/space trade-off;
   - Confirm learner did not assert universal "index = faster" claims.
@@ -414,22 +418,24 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 - **Claim Layers:**
   - *PRINCIPLE:* Isolation anomaly classifications (Berenson et al. 1995); serializability theory; optimistic vs. pessimistic concurrency control.
   - *SPECIFICATION:* ANSI SQL-92 isolation levels (Read Uncommitted, Read Committed, Repeatable Read, Serializable).
-  - *IMPLEMENTATION:* SQLite locking architecture: Single active writer; shared read locks; `SQLITE_BUSY` conflict handling; committed-only visibility.
-  - *CURRENT PRACTICE:* PostgreSQL default Read Committed vs. MySQL InnoDB default Repeatable Read.
+  - *IMPLEMENTATION:* SQLite locking architecture: Single active writer; shared read locks; busy conflict handling; committed-only visibility under its engine locking and journal architecture. (Do not label SQLite's declared visibility behavior as generic ANSI Read Committed).
+  - *CURRENT PRACTICE:* Engine default isolation settings across enterprise databases.
 
 ### 13.3 Canonical Concept First Home: EC-CON-014 Consistency
 - **Exact First Home:** M14 / `L14-02`.
-- **Mandatory Canonical Definition:**
-  > **“The relationship between allowed state transitions and what observers may see, according to a named ordering/visibility guarantee. It must be qualified; 'consistent' does not mean merely fresh, durable, or correct in every sense.”**
+- **Exact Canonical Definition:**
+  > **“The relationship between allowed state transitions and what observers may see, according to a named ordering/visibility guarantee.”**
+- **Mandatory Qualifier Mandate (Written Separately):**
+  - The qualifier is mandatory: It must be qualified; "consistent" does not mean merely fresh, durable, or correct in every sense.
 - **Disambiguation Mandate in Teaching:**
   - Disambiguate ACID $C$ from systems consistency. ACID "Consistency" is application-level invariant preservation.
-  - Transaction consistency is defined by a **named isolation level** (e.g., Read Committed guarantees observers never see uncommitted state transitions).
+  - Transaction consistency is defined by a **named isolation level** (e.g., Serializable guarantees observers see outcomes equivalent to some serial schedule; SQLite provides committed-only visibility where observers do not see uncommitted transitions).
   - Explicitly warn learners: Transaction isolation on a single database node is not distributed consistency (which M17 revisits).
 
 ### 13.4 Hands-On Activity & Controlled Failure
 - **Activity:** Open two separate terminal sessions with `sqlite3` connecting to the same database. Session 1 begins an immediate transaction and updates a row. Session 2 queries the row.
 - **Prediction Before Observation:** Predict whether Session 2 will observe the uncommitted modification made by Session 1.
-- **Controlled Break:** Session 2 observes the committed value, proving absence of dirty reads. Session 2 then attempts to execute `BEGIN IMMEDIATE;` and immediately fails with a busy/lock conflict, demonstrating SQLite writer serialization.
+- **Controlled Break:** Session 2 observes the committed value, proving absence of dirty reads under SQLite's committed-only visibility contract. Session 2 then attempts to execute `BEGIN IMMEDIATE;` and immediately fails with a busy/lock conflict, demonstrating SQLite writer serialization.
 
 ### 13.5 Misconceptions & What You Can Ignore
 - **Misconceptions:**
@@ -439,13 +445,13 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 13.6 Progressive Support Ladder
 - **Question:** If Connection 1 has an uncommitted update, why doesn't Connection 2 see the new value?
-- **Hint 1:** What isolation level does SQLite enforce by default?
+- **Hint 1:** What visibility contract does SQLite enforce by default?
 - **Hint 2:** SQLite enforces committed-only visibility; uncommitted changes in the journal or WAL are invisible to other connections.
 - **Expected Observation:** Connection 2's `SELECT` returns the original value until Connection 1 commits.
-- **Full Explanation:** SQLite prevents Dirty Reads ($P_1$). Under its visibility guarantee, observers only see committed state transitions.
+- **Full Explanation:** SQLite prevents Dirty Reads ($P_1$). Under its declared visibility guarantee, observers only see committed state transitions.
 
 ### 13.7 Visual Specification & Exit Criteria
-- **Visual:** Timeline interleaving diagram comparing Connection 1 ($T_1$) and Connection 2 ($T_2$). Displays $T_1$ modifying Row A, $T_2$ reading Row A (observing original committed value under Read Committed), and $T_2$ attempting to write (blocked by exclusive lock). Prominently displays the full text of **EC-CON-014 Consistency** with its mandatory named qualifier.
+- **Visual:** Timeline interleaving diagram comparing Connection 1 ($T_1$) and Connection 2 ($T_2$). Displays $T_1$ modifying Row A, $T_2$ reading Row A (observing original committed value under committed-only visibility), and $T_2$ attempting to write (blocked by exclusive lock). Prominently displays the exact one-sentence definition of **EC-CON-014 Consistency** along with its mandatory named qualifier.
 - **Exit Criteria:** Learner reproduces a concurrent conflict across two connections, correctly identifies the prevented anomaly, and states `EC-CON-014` with its required qualifier.
 
 ---
@@ -453,43 +459,44 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 ## 14. Lesson L14-03 Design — “How do I design an atomic write?”
 
 ### 14.1 Learner Question & Capability Transition
-- **Learner Question:** "When multiple processes write to a database, how do I design write operations that handle lock conflicts, avoid deadlocks, and remain safe against retries?"
-- **Capability Transition:** Moves from writing naive single-statement queries to designing robust, retryable transactional write operations with deadlock awareness and idempotency previews.
+- **Learner Question:** "When multiple processes write to a database, how do I design write operations that handle lock conflicts, avoid lock-upgrade deadlocks, and remain safe against retries?"
+- **Capability Transition:** Moves from writing naive single-statement queries to designing robust, retryable transactional write operations with conflict awareness and idempotency previews.
 
 ### 14.2 Mechanism Model & Claim Layer
 - **Mechanism:**
   - *Atomic Single-Statement vs. Multi-Statement Transactions:* Using atomic expressions (`UPDATE inventory SET stock = stock - 1 WHERE id = 10 AND stock > 0;`) vs. multi-step transactions (`BEGIN IMMEDIATE ... COMMIT`).
-  - *Conflict Handling & Whole-Transaction Retries:* Handling `SQLITE_BUSY` / lock conflicts. Retries must restart at the outer transaction boundary, not blindly retry a failed mid-transaction statement.
-  - *Deadlock Light:* Coffman circular wait conditions in database locks. Prevented by consistent lock ordering (e.g., always update Account A before Account B).
-  - *Idempotency Preview:* Ensuring that re-executing a transaction (e.g., following a network timeout or retry) does not duplicate state mutations (using unique transaction tokens or idempotency keys).
+  - *Conflict Handling & Appropriate Transaction Boundary Retries:* Handling writer/lock-upgrade conflicts. When a write conflict occurs, retry must restart from an **appropriate transaction boundary** (where state is refreshed). Do not teach that any statement failure unconditionally requires a whole-transaction retry (e.g., parameter or constraint errors do not require blind retries).
+  - *Lock-Upgrade Conflicts:* When two connections begin deferred transactions and both attempt to upgrade from shared read locks to reserved/exclusive write locks, an immediate lock-upgrade conflict occurs. SQLite does not run a general wait-for-graph cycle detector; it returns a busy conflict (`SQLITE_BUSY`).
+  - *Idempotency Preview:* Ensuring that re-executing a transaction (e.g., following a transient conflict or network retry) does not duplicate state mutations (using unique transaction tokens or idempotency keys).
 - **Claim Layers:**
-  - *PRINCIPLE:* Atomic state transitions; deadlock preconditions; idempotency invariant ($f(f(x)) = f(x)$); transaction retry boundaries.
+  - *PRINCIPLE:* Atomic state transitions; conflict preconditions; idempotency invariant ($f(f(x)) = f(x)$); transaction retry boundaries.
   - *SPECIFICATION:* SQL transaction retry and conflict error specifications.
-  - *IMPLEMENTATION:* SQLite busy handler timeout (`sqlite3_busy_timeout`); `BEGIN DEFERRED` vs. `BEGIN IMMEDIATE` vs. `BEGIN EXCLUSIVE`.
+  - *IMPLEMENTATION:* SQLite busy handler timeout (`sqlite3_busy_timeout`); `BEGIN DEFERRED` vs. `BEGIN IMMEDIATE` vs. `BEGIN EXCLUSIVE`; actual SQLite result codes and driver dispositions.
   - *CURRENT PRACTICE:* Exponential backoff with jitter in application retry loops.
 
 ### 14.3 Hands-On Activity & Controlled Failure
 - **Activity:** Write a Python script simulating two concurrent workers transferring balances. Worker 1 transfers Account 1 $\to$ Account 2; Worker 2 transfers Account 2 $\to$ Account 1 using `BEGIN DEFERRED`.
-- **Prediction Before Observation:** Predict what happens when both workers read their source accounts, then both attempt to upgrade their shared read locks to exclusive write locks simultaneously.
-- **Controlled Break:** Both workers attempt lock upgrade; SQLite detects lock deadlock and rejects one connection with `SQLITE_BUSY` (`database is locked`).
+- **Prediction Before Observation:** Predict what happens when both workers read their source accounts, then both attempt to upgrade their shared read locks to exclusive write locks.
+- **Controlled Break:** Both workers attempt lock upgrade; SQLite encounters a lock-upgrade conflict and returns a busy conflict (recording actual SQLite result code and driver disposition, without hardcoding a fixed error string).
 - **Correction:** Refactor both workers to use `BEGIN IMMEDIATE`, acquiring write intent locks upfront and serializing access safely.
 
 ### 14.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
-  1. *"Retrying a single failed SQL query inside a transaction is sufficient."* (False: If a statement fails or encounters a conflict, the entire transaction must be rolled back and retried from the beginning).
+  1. *"Any SQL statement failure unconditionally requires retrying the entire transaction."* (False: Retries belong at transaction boundaries for transient conflicts or serialization failures; syntax or constraint violations must be diagnosed and handled).
   2. *"Setting a high busy timeout guarantees your write will never fail."* (False: Under sustained write contention, timeouts expire; applications must handle persistent contention gracefully).
+  3. *"SQLite runs a full cycle-detection deadlock graph algorithm."* (False: SQLite detects immediate lock-upgrade collisions where multiple connections hold shared locks and attempt to upgrade to reserved/exclusive locks).
 - **What You Can Ignore — For Now:** Distributed transaction managers; sagas; compensating transaction workflows; two-phase locking wait-for-graph cycle detection algorithms.
 
 ### 14.5 Progressive Support Ladder
-- **Question:** Why does using `BEGIN DEFERRED` cause concurrent writer deadlocks in SQLite?
+- **Question:** Why does using `BEGIN DEFERRED` cause concurrent writer lock-upgrade conflicts in SQLite?
 - **Hint 1:** When does `BEGIN DEFERRED` actually acquire a write lock?
-- **Hint 2:** It starts with a shared read lock and attempts to upgrade to an exclusive write lock on the first write.
-- **Expected Observation:** If two connections hold shared locks, neither can upgrade to an exclusive lock, resulting in an immediate lock conflict.
-- **Full Explanation:** `BEGIN IMMEDIATE` acquires a reserved write lock at transaction start, preventing multiple connections from entering conflicting upgrade cycles.
+- **Hint 2:** It starts with a shared read lock and attempts to upgrade to a write lock on the first write.
+- **Expected Observation:** If two connections hold shared locks, neither can upgrade to an exclusive lock, resulting in an immediate lock-upgrade conflict.
+- **Full Explanation:** `BEGIN IMMEDIATE` acquires a reserved write lock at transaction start, preventing multiple connections from entering conflicting lock-upgrade deadlocks.
 
 ### 14.6 Visual Specification & Exit Criteria
-- **Visual:** Flowchart comparing Naive Retry vs. Transaction-Boundary Retry. Displays Worker encountering a conflict, issuing an immediate `ROLLBACK`, entering an exponential backoff sleep, and restarting at `BEGIN IMMEDIATE`. Includes an idempotency key check preventing duplicate processing.
-- **Exit Criteria:** Learner designs a multi-statement transaction script featuring upfront write-locking (`BEGIN IMMEDIATE`), whole-transaction retry on busy conflict, and invariant verification.
+- **Visual:** Flowchart comparing Naive Retry vs. Transaction-Boundary Retry. Displays Worker encountering a conflict, issuing an immediate `ROLLBACK`, entering an exponential backoff sleep, and restarting at `BEGIN IMMEDIATE` from the appropriate transaction boundary. Includes an idempotency key check preventing duplicate processing.
+- **Exit Criteria:** Learner designs a multi-statement transaction script featuring upfront write-locking (`BEGIN IMMEDIATE`), retry from the appropriate transaction boundary on busy conflict, and invariant verification.
 
 ---
 
@@ -509,7 +516,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
    - Connection 2 queries Account A. Assert that Connection 2 observes original committed balance (prevention of dirty reads).
 2. **Checkpoint 2 — Bounded Writer Conflict:**
    - Connection 2 attempts `BEGIN IMMEDIATE;` while Connection 1 holds its transaction open.
-   - Record the actual SQLite result code and driver exception (e.g., `sqlite3.OperationalError` reporting database locking / busy conflict).
+   - Record the actual SQLite result code and driver exception (e.g., `SQLITE_BUSY`, recording the driver disposition without asserting one fixed error string).
    - Verify that Connection 2 does not corrupt database state.
 3. **Checkpoint 3 — Explicit Rollback:**
    - Connection 1 issues `ROLLBACK;`.
@@ -540,22 +547,23 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 - **Primary Competency:** **Diagnose** (identifying thread interleavings, reproducing lost updates, diagnosing deadlocks).
 - **Secondary Competencies:** Trace, Correctness, Explain, Judge.
 - **Canonical Concept First Home:** **EC-CON-015 Concurrency (L15-01)**.
-- **Canonical Concepts Revisit:** `EC-CON-001 State`, `EC-CON-007 Specification`, `EC-CON-008 Invariant`, `EC-CON-009 Correctness`, `EC-CON-013 Isolation` (synchronization scope), `EC-CON-018 Process`.
+- **Canonical Concepts Revisit:** `EC-CON-001 State`, `EC-CON-007 Specification`, `EC-CON-008 Invariant`, `EC-CON-009 Correctness`, `EC-CON-013 Isolation` (synchronization scope).
+  *(Note: `EC-CON-018 Process` is not an authorized canonical Concept Revisit in M15; thread-vs-process comparisons remain pedagogical context without an unauthorized Concept Registry mapping).*
 
 ---
 
 ## 17. Lesson L15-01 Design — “Why is my threaded code wrong?”
 
 ### 17.1 Learner Question & Capability Transition
-- **Learner Question:** "Why does running code in two threads produce different, incorrect results every time, and why does my code pass tests when I run it once but fail under load?"
+- **Learner Question:** "Why does running code in two threads produce different, incorrect results, and why does my code pass tests when I run it once but fail under load?"
 - **Capability Transition:** Moves from assuming sequential line-by-line execution to understanding preemptive kernel scheduling, arbitrary instruction interleaving, and anchoring the formal definition of **EC-CON-015 Concurrency**.
 
 ### 17.2 Mechanism Model & Claim Layer
 - **Mechanism:**
-  - *Threads vs. Processes (`EC-CON-018`):* Processes possess private virtual address spaces. Threads within a process share the heap, global variables, and file descriptors, but maintain private program counters, registers, and stacks.
+  - *Threads vs. Processes:* Processes possess private virtual address spaces. Threads within a process share heap, global variables, and file descriptors, but maintain private program counters, registers, and stacks.
   - *Interleaving:* The kernel scheduler preempts threads arbitrarily. Instructions interleave across threads.
   - *Logical Race Condition vs. C Data Race (UB):* A data race in C (concurrent unsynchronized accesses where at least one is a write) is **Undefined Behavior (UB)** under ISO C11 §5.1.2.4. Compilers may optimize away loops containing data races.
-  - *The Essential CS Teaching Solution:* To demonstrate race conditions rigorously without UB, we use C11 atomics (`<stdatomic.h>`) with relaxed memory order for individual reads and writes. Individual memory operations are strictly legal and defined, but the multi-step compound read-modify-write operation is non-atomic, deterministically exposing lost updates.
+  - *The Essential CS Teaching Solution:* To demonstrate race conditions rigorously without UB, we use C11 atomics (`<stdatomic.h>`) with relaxed memory order for individual reads and writes. Individual memory operations are strictly legal and defined, but the multi-step compound read-modify-write operation is non-atomic, exposing real lost updates under thread interleaving.
 - **Claim Layers:**
   - *PRINCIPLE:* Concurrency vs. parallelism; logical race conditions; non-deterministic interleaving.
   - *SPECIFICATION:* ISO/IEC 9899:2011 (C11) atomics specification; POSIX IEEE Std 1003.1-2024 thread model.
@@ -564,32 +572,35 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 17.3 Canonical Concept First Home: EC-CON-015 Concurrency
 - **Exact First Home:** M15 / `L15-01`.
-- **Mandatory Canonical Definition:**
+- **Exact Canonical Definition:**
   > **“Overlapping progress or interleaving of operations, whether or not they execute simultaneously on hardware. Concurrency creates ordering and shared-state obligations.”**
 - **Disambiguation Mandate in Teaching:**
   - Explicitly distinguish concurrency (system composition allowing interleaved progress) from parallelism (physical simultaneous execution on multiple cores).
   - Prove that concurrency bugs occur on single-core processors due to preemptive time-slicing.
 
 ### 17.4 Hands-On Activity & Controlled Failure
-- **Activity:** Compile and run a C11 program with two threads executing a compound update on an atomic counter using `atomic_load_explicit` and `atomic_store_explicit` with a cooperative yield (`sched_yield()`).
-- **Prediction Before Observation:** Predict the final counter value after two threads each execute 10,000 increments.
-- **Controlled Break:** The final counter value is significantly less than 20,000 (typically ~10,000–15,000), proving real lost updates despite 100% legal atomic memory accesses.
+- **Activity:** Compile and run a C11 program with two threads executing a compound update on an atomic counter using `atomic_load_explicit` and `atomic_store_explicit`.
+- **Preferred Evidence Contract:** The activity uses a **course-controlled phase handoff / barrier coordination** between threads to deterministically produce a real pthread lost-update interleaving with defined C11 atomic accesses.
+- **Supplemental Scheduler Observation:** Natural scheduler observation under cooperative yield (`sched_yield()`) is supplemental only and bounded by an attempt budget. Tests must not assert fixed failure percentages (such as $\ge 95\%$ or $100\%$) or fixed count ranges.
+- **Prediction Before Observation:** Predict the final counter value if both threads interleave during the read-modify-write sequence.
+- **Controlled Break:** The final counter value reflects lost updates despite 100% legal atomic memory accesses, proving a logical race condition without language-level undefined behavior.
 
 ### 17.5 Misconceptions & What You Can Ignore
 - **Misconceptions:**
   1. *"Concurrency and parallelism are the exact same thing."* (False: Concurrency is about structure and interleaving; parallelism is about physical simultaneous hardware execution).
   2. *"Making a variable atomic automatically makes compound multi-step operations correct."* (False: Atomic reads and writes prevent memory corruption, but compound state transitions remain non-atomic).
-- **What You Can Ignore — For Now:** Formal C++ memory model release-acquire formal operational proofs; lock-free algorithms; kernel futex internals.
+  3. *"A race condition must be a C/C++ data race."* (False: A data race is an undefined memory access; a race condition is a logical flaw in state transition ordering).
+- **What You Can Ignore — For Now:** Formal C++ memory model release-acquire operational semantics proofs; lock-free algorithms; kernel futex internals.
 
 ### 17.6 Progressive Support Ladder
-- **Question:** Why did our counter lose thousands of updates even though every load and store was an atomic C11 operation?
+- **Question:** Why did our counter lose updates even though every load and store was an atomic C11 operation?
 - **Hint 1:** Trace the sequence of events when Thread 1 reads `42`.
 - **Hint 2:** Thread 1 reads `42`. Before it can store `43`, Thread 2 also reads `42`.
 - **Expected Observation:** Both threads compute `43` and write `43`. One increment vanished.
 - **Full Explanation:** Individual memory operations were atomic, but the compound state transition (Read $\to$ Compute $\to$ Store) was not. Interleaving caused a lost update.
 
 ### 17.7 Visual Specification & Exit Criteria
-- **Visual:** Interleaving Trace diagram contrasting Concurrency (single core, time-sliced interleaved execution blocks) vs. Parallelism (dual cores, simultaneous timeline bars). Shows Thread 1 reading Counter $= 42$, Thread 2 reading Counter $= 42$, both computing $43$, and both writing $43$. Prominently displays the full text of **EC-CON-015 Concurrency**.
+- **Visual:** Interleaving Trace diagram contrasting Concurrency (single core, time-sliced interleaved execution blocks) vs. Parallelism (dual cores, simultaneous timeline bars). Shows Thread 1 reading Counter $= 42$, Thread 2 reading Counter $= 42$, both computing $43$, and both writing $43$. Prominently displays the exact one-sentence definition of **EC-CON-015 Concurrency**.
 - **Exit Criteria:** Learner draws an instruction interleaving diagram explaining a lost update and correctly recites `EC-CON-015`.
 
 ---
@@ -604,7 +615,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 - **Mechanism:**
   - *POSIX Mutex (`pthread_mutex_t`):* Guarantees that at most one thread executes a critical section at any instant. Enforces acquire/release memory visibility. Does *not* guarantee fair FIFO ordering among waiting threads.
   - *POSIX Condition Variable (`pthread_cond_t`):* Mechanism for event rendezvous. Atomically releases associated mutex and suspends calling thread in `pthread_cond_wait`. Upon wake, re-acquires the mutex.
-  - *Spurious Wakeups & The Mandatory While Loop:* A thread may wake up without any explicit signal. The condition predicate must **always** be checked in a `while` loop:
+  - *Condition-Variable Re-check Contract:* The predicate must be rechecked under mutex protection after wake; the course adopts the `while (!predicate)` pattern:
     ```c
     pthread_mutex_lock(&lock);
     while (!predicate_is_true) {
@@ -613,6 +624,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
     // Critical invariant guaranteed
     pthread_mutex_unlock(&lock);
     ```
+    *(Do not claim that POSIX specification mandates literal `while` syntax; POSIX specifies that `pthread_cond_wait` may return spuriously, requiring condition re-evaluation upon return; `while` is the idiomatic course pattern).*
   - *Deadlock & Coffman Conditions:* Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait. Avoidance via lock acquisition hierarchies.
 - **Claim Layers:**
   - *PRINCIPLE:* Mutual exclusion; Dijkstra critical section invariants; condition synchronization; Coffman deadlock conditions.
@@ -622,26 +634,27 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 18.3 Hands-On Activity & Controlled Failure
 - **Activity:** Protect the compound update from L15-01 with a POSIX mutex. Implement a condition-variable rendezvous where Worker 2 waits for Worker 1 to produce data.
-- **Prediction Before Observation:** Predict whether replacing the `while` loop with an `if` statement around `pthread_cond_wait` is safe under POSIX specifications.
-- **Controlled Break:** Demonstrate the spurious wakeup hazard theoretically and explain why POSIX specification requires re-checking the predicate in a `while` loop.
-- **Controlled Deadlock:** Implement a reversed lock acquisition order (Thread 1: Lock A $\to$ B; Thread 2: Lock B $\to$ A) using a controlled barrier handshake so both threads hold their first lock before requesting their second lock. Run under an owned-child watchdog with a configured timeout.
+- **Prediction Before Observation:** Predict whether checking the condition only once without a loop around `pthread_cond_wait` is safe under POSIX specifications.
+- **Controlled Break:** Explain the spurious wakeup hazard and why the condition predicate must be rechecked upon return from `pthread_cond_wait`.
+- **Controlled Deadlock:** Implement a reversed lock acquisition order (Thread 1: Lock A $\to$ B; Thread 2: Lock B $\to$ A) using a controlled handshake so both threads hold their first lock before requesting their second lock. Run under an owned-child watchdog with a configurable timeout parameter.
 
 ### 18.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
   1. *"A mutex guarantees that threads take turns fairly."* (False: POSIX mutexes do not guarantee fairness; newly unblocked threads can re-acquire locks ahead of long-waiting threads).
   2. *"A condition variable notification means the predicate is currently true."* (False: A signal wakes a thread, but by the time the thread re-acquires the mutex, another thread may have altered the predicate; spurious wakeups can also occur).
+  3. *"A timeout alone proves a deadlock occurred."* (False: A timeout only proves progress stalled within the allotted duration; deadlock proof requires demonstrating that threads hold locks in circular wait).
 - **What You Can Ignore — For Now:** Lock-free hazard pointers; reader-writer lock starvation engineering; priority inheritance protocols in real-time kernels.
 
 ### 18.5 Progressive Support Ladder
-- **Question:** Why does POSIX Issue 8 explicitly state that `pthread_cond_wait` may return spuriously?
-- **Hint 1:** Consider low-level kernel signal interruptions or multi-processor wake optimizations.
+- **Question:** Why does POSIX Issue 8 state that `pthread_cond_wait` may return spuriously?
+- **Hint 1:** Consider kernel signal interruptions or multi-processor wake optimizations.
 - **Hint 2:** If waking up does not guarantee the predicate changed, how must you structure your check?
-- **Expected Observation:** The waiting code must re-evaluate the predicate: `while (!ready) pthread_cond_wait(...)`.
-- **Full Explanation:** Kernel scheduling and multiprocessor memory events permit spurious wakeups. The `while` loop ensures the thread never proceeds unless the shared predicate is genuinely true.
+- **Expected Observation:** The waiting code must re-evaluate the predicate under mutex protection.
+- **Full Explanation:** Kernel scheduling and multiprocessor memory events permit spurious wakeups. Rechecking the predicate ensures the thread never proceeds unless the shared condition is genuinely true.
 
 ### 18.6 Visual Specification & Exit Criteria
 - **Visual:** Mutex & Condition Rendezvous diagram. Panel 1: Mutex Lock Invariant (one thread in critical section, other threads blocked in wait queue). Panel 2: Condition Variable Protocol (Worker 1 holds lock $\to$ `pthread_cond_wait` atomically unlocks and sleeps $\to$ Worker 2 acquires lock, updates predicate, calls `signal` $\to$ Worker 1 re-awakens, re-acquires lock, and loops on predicate).
-- **Exit Criteria:** Learner repairs a broken threaded counter with a mutex (verifying 100% correct counts) and implements a condition rendezvous with a verified `while` loop predicate.
+- **Exit Criteria:** Learner repairs a broken threaded counter with a mutex (verifying that every completed run satisfies the declared invariant) and implements a condition rendezvous with a verified predicate recheck loop.
 
 ---
 
@@ -653,37 +666,37 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 19.2 Mechanism Model & Claim Layer
 - **Mechanism:**
-  - *OS Threads:* Preemptive kernel scheduling; private execution stack (2–8 MB); kernel context switches; transparent blocking on system calls. Ideal for CPU-intensive parallel work across physical cores.
-  - *Asynchronous Event Loops:* Cooperative single-threaded multitasking (`async`/`await`); lightweight coroutines (bytes of memory); non-blocking I/O multiplexing (`epoll`/`kqueue`/`IOCP`). Cooperative yields occur only at explicit `await` points.
-  - *CPython GIL Reality:* The Global Interpreter Lock is a CPython implementation detail, not a Python language invariant. The GIL protects interpreter internals; it does **not** make Python application code thread-safe. Bytecode switches between instructions cause lost updates in compound expressions like `counter += 1`.
-  - *Currentness Note:* Upstream Python 3.14.7 / PEP 779 free-threaded build provides an experimental option to disable the GIL, but conventional GIL builds remain common.
+  - *OS Threads:* Preemptive kernel scheduling; private execution stack; kernel context switches; transparent blocking on system calls. Ideal for CPU-intensive parallel work across physical cores.
+  - *Asynchronous Event Loops:* Cooperative single-threaded multitasking (`async`/`await`); lightweight coroutines; non-blocking I/O multiplexing (`epoll`/`kqueue`/`IOCP`). Cooperative yields occur only at explicit `await` points.
+  - *CPython Runtime & GIL Reality:* The Global Interpreter Lock is a CPython implementation detail, not a Python language invariant. The GIL protects interpreter memory; it does **not** make Python application code thread-safe. Thread switching between bytecode instructions can interleave compound operations.
+  - *Python 3.14 Free-Threading Status:* In Python 3.14 / PEP 779, free-threading is in **supported phase II** (officially supported build configuration), while conventional GIL-enabled builds remain the default baseline.
 - **Claim Layers:**
   - *PRINCIPLE:* Preemptive vs. cooperative scheduling; memory footprint trade-offs; I/O multiplexing mechanics.
   - *SPECIFICATION:* Python language syntax (`async`/`await` coroutines).
-  - *IMPLEMENTATION:* CPython interpreter bytecode evaluation loop and GIL implementation.
-  - *CURRENT PRACTICE:* Python 3.13 / 3.14 free-threaded builds (`--disable-gil`).
+  - *IMPLEMENTATION:* CPython interpreter bytecode evaluation loop and GIL capability.
+  - *CURRENT PRACTICE:* Python 3.14 PEP 779 supported phase II free-threaded builds (`--disable-gil`).
 
 ### 19.3 Hands-On Activity & Controlled Failure
-- **Activity:** Run a companion Python script with two threads incrementing a shared variable `counter += 1`.
-- **Prediction Before Observation:** Predict whether Python's GIL prevents lost updates when two native threads update a shared variable without a lock.
-- **Controlled Break:** On standard CPython, the final count is less than the expected total because `counter += 1` compiles into four distinct bytecode opcodes (`LOAD_GLOBAL`, `LOAD_CONST`, `BINARY_OP`, `STORE_GLOBAL`), and thread switching occurs between opcodes.
-- **Comparison:** Implement the same task using `asyncio` and explain why cooperative concurrency avoids data races between `await` points, while still requiring logical locking across multi-step `await` workflows.
+- **Activity:** Run a companion Python script inspecting bytecode disassembly of a compound update (`x += 1`) using Python's `dis` module, and evaluate thread vs. async execution models under a stated workload.
+- **Observation:** Observe that compound operations compile to multi-step bytecode sequences, demonstrating why preemptive thread switching can interleave operations in Python. Do not claim that `counter += 1` is guaranteed to lose updates or that it has a fixed four-opcode sequence across all versions.
+- **Comparison:** Implement an asynchronous task using `asyncio` and explain why cooperative concurrency avoids data races between `await` points, while still requiring logical synchronization across multi-step `await` workflows.
 
 ### 19.4 Misconceptions & What You Can Ignore
 - **Misconceptions:**
-  1. *"The GIL means multi-threaded Python programs never need mutexes."* (False: The GIL protects interpreter memory; compound application updates lose data).
+  1. *"The GIL means multi-threaded Python programs never need mutexes."* (False: The GIL protects interpreter memory; compound application updates lose data under thread interleaving).
   2. *"Async code is always faster than threaded code."* (False: Async code avoids thread memory overhead for high-concurrency I/O, but provides zero parallel speedup for CPU-bound computations).
+  3. *"The GIL is a timeless law of the Python language."* (False: The GIL is an implementation detail of standard CPython; alternative implementations and Python 3.14 PEP 779 free-threaded builds operate without it).
 - **What You Can Ignore — For Now:** Deep CPython C-API extension internals; custom asyncio event loop policy implementations; Rust async executor internals.
 
 ### 19.5 Progressive Support Ladder
-- **Question:** If the GIL only lets one thread execute Python bytecode at a time, how can `x += 1` lose updates?
+- **Question:** If the GIL only lets one thread execute Python bytecode at a time, how can a compound update lose data?
 - **Hint 1:** Disassemble `x += 1` using Python's `dis` module.
-- **Hint 2:** Is `x += 1` a single atomic opcode?
-- **Expected Observation:** It requires loading `x`, loading `1`, computing addition, and storing `x`.
-- **Full Explanation:** Preemptive thread switching can occur between `BINARY_OP` and `STORE_GLOBAL`. Both threads read the same initial value and store the same incremented value.
+- **Hint 2:** Is `x += 1` executed as a single indivisible instruction?
+- **Expected Observation:** It compiles into multiple bytecode operations (e.g., loading the object, executing the increment, and storing the reference back) rather than an indivisible single step.
+- **Full Explanation:** Preemptive thread switching can occur between individual bytecode operations. Both threads can read the same initial value and store the same updated value.
 
 ### 19.6 Visual Specification & Exit Criteria
-- **Visual:** Execution Model Comparison matrix. Columns: OS Preemptive Threads vs. Cooperative Async Event Loop vs. CPython GIL Reality. Rows: Scheduling Type, Memory per Task, CPU Parallelism, Data Race Vulnerability across Steps, Best Workload Fit.
+- **Visual:** Execution Model Comparison matrix. Columns: OS Preemptive Threads vs. Cooperative Async Event Loop vs. CPython Runtime Reality. Rows: Scheduling Type, Memory per Task, CPU Parallelism, Data Race Vulnerability across Steps, Best Workload Fit.
 - **Exit Criteria:** Learner disassembles a Python compound operation, explains why the GIL does not guarantee application thread safety, and articulates when to choose threads vs. async based on workload constraints.
 
 ---
@@ -698,27 +711,19 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 20.2 The UB-Free Broken Path Contract
 - **No Undefined Behavior:** The broken path strictly uses C11 atomics (`<stdatomic.h>`) with `memory_order_relaxed`. Individual reads and writes are defined, legal atomic operations under ISO C11.
-- **Scheduler Evidence Contract:**
-  - Because `sched_yield()` alone is not a deterministic scheduler guarantee across all kernel platforms, the design specifies a **controlled phase-handoff / attempt-budget contract**:
-  - The fixture runs a loop where two threads execute non-atomic compound updates:
-    ```c
-    int val = atomic_load_explicit(&counter, memory_order_relaxed);
-    sched_yield();
-    atomic_store_explicit(&counter, val + 1, memory_order_relaxed);
-    ```
-  - If a natural scheduler run produces a lost update within an attempt budget (e.g., 5 runs of 10,000 iterations), the learner records the natural trace.
-  - If a host scheduler serializes threads without interruption, the fixture provides a cooperative step barrier demonstrating the exact interleaved execution trace.
-  - **Prohibition:** Tests must never assert hardcoded "$\ge 95\%$" or "100%" failure probabilities or fixed erroneous count ranges.
+- **Evidence Contract:**
+  - *Preferred Evidence:* The fixture uses **course-controlled phase handoff / barrier coordination** between threads to deterministically produce a real pthread lost-update interleaving using defined C11 atomic accesses.
+  - *Supplemental Scheduler Observation:* Natural scheduler observation under cooperative yield is supplemental only and bounded by an attempt budget. Tests must never assert hardcoded failure percentages (such as $\ge 95\%$ or $100\%$) or fixed erroneous count ranges.
 
 ### 20.3 Mutex Repair & Condition Rendezvous
-- **Mutex Repair:** Wrapping the compound update in `pthread_mutex_lock` / `unlock` guarantees that every completed run satisfies the invariant ($\text{final\_count} == 2 \times \text{iterations}$).
-- **Condition Variable Rendezvous:** Worker 2 waits for Worker 1 to signal that a shared buffer is ready. The wait is enclosed in a mandatory `while (!buffer_ready) pthread_cond_wait(&cond, &mutex);` loop.
+- **Mutex Repair:** Wrapping the compound update in `pthread_mutex_lock` / `unlock` guarantees that every completed run satisfies the invariant.
+- **Condition Variable Rendezvous:** Worker 2 waits for Worker 1 to signal that a shared buffer is ready. The wait is enclosed in a condition predicate recheck loop under mutex protection (`while (!buffer_ready) pthread_cond_wait(&cond, &mutex);`).
 
 ### 20.4 Controlled Deadlock & Watchdog Harness
-- **Deadlock Precondition:** Thread 1 acquires Lock A $\to$ Lock B; Thread 2 acquires Lock B $\to$ Lock A.
+- **Deadlock Preconditions:** Thread 1 acquires Lock A $\to$ Lock B; Thread 2 acquires Lock B $\to$ Lock A.
 - **Deterministic Coordination:** Threads synchronize via a start gate so both threads hold their first lock before either attempts to acquire its second lock.
-- **Watchdog Execution:** The deadlock test runs in an owned child process. The parent watchdog enforces a configured timeout (e.g., 2–3 seconds).
-- **Inference Boundary:** The parent records that both threads entered their respective first locks and stalled on their second locks before interpreting the timeout as deadlock evidence. The timeout duration is an execution parameter, not a curriculum constant.
+- **Watchdog Execution:** The deadlock test runs in an owned child process. The parent watchdog enforces a **configurable timeout parameter**.
+- **Inference Boundary:** The parent records that both threads entered their respective first locks and stalled on their second locks before interpreting the timeout as deadlock evidence. The safety harness bounds the course child process with a configured timeout; it cannot literally guarantee that host environments or terminal UIs never stall. The timeout duration is a harness parameter, not a curriculum constant.
 
 ---
 
@@ -726,7 +731,7 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ### 21.1 LAB-OPT-03 Design — PostgreSQL EXPLAIN & Isolation Comparison
 - **Status:** Strictly Optional.
-- **Scope:** Adapts official PostgreSQL 18.x documentation for query plan inspection (`EXPLAIN (ANALYZE, BUFFERS)`) and repeatable read serialization conflict detection.
+- **Scope:** Adapts official PostgreSQL documentation for query plan inspection (`EXPLAIN (ANALYZE, BUFFERS)`) and repeatable read serialization conflict detection.
 - **Safety Gate:** Any `EXPLAIN ANALYZE` examples that execute mutations (`INSERT`/`UPDATE`) must be wrapped inside a transaction and rolled back (`BEGIN; EXPLAIN ANALYZE ...; ROLLBACK;`).
 - **Dependency Boundary:** PostgreSQL and Docker are not required. If unavailable, the lab is recorded as **`OPTIONAL LAB NOT RUN / TOOL UNAVAILABLE`**.
 
@@ -739,28 +744,26 @@ The three canonical paths from the Curriculum Blueprint are preserved exactly:
 
 ## 22. S5 Preflight & Environment Contract
 
-The S5 preflight script must evaluate host capabilities before Lab execution without closing OQ-BP-006:
+The S5 preflight script evaluates host capabilities before Lab execution without closing OQ-BP-006. It inspects and records actual:
 
-```
-+-----------------------------------------------------------------------------------------+
-| S5 Environment Preflight Check                                                          |
-+-----------------------------------------------------------------------------------------+
-| 1. POSIX Kernel & OS Architecture: Linux / POSIX environment verified                   |
-| 2. Python Environment: Python 3.x available (record actual version)                     |
-| 3. SQLite Library: Embedded sqlite3 version reported                                    |
-| 4. SQLite CLI: sqlite3 binary checked in PATH -> [PASS | BLOCKED]                       |
-| 5. C Compiler: GCC or Clang checked -> [PASS | BLOCKED]                                 |
-| 6. C11 Atomics: <stdatomic.h> compilation test -> [PASS | BLOCKED]                       |
-| 7. POSIX Threads: -pthread linking test -> [PASS | BLOCKED]                             |
-| 8. Local Storage: Course-owned local writable directory -> [PASS | BLOCKED]             |
-| 9. Child Watchdog: Process spawn & SIGKILL reaping capability -> [PASS | BLOCKED]       |
-| 10. Optional Tools: PostgreSQL / psql / Docker checked -> [AVAILABLE | SKIP]            |
-+-----------------------------------------------------------------------------------------+
-```
+1. **Host OS / Kernel / Architecture:** Actual platform, kernel release, and CPU architecture where available.
+2. **Python Implementation & Version:** Runtime identity and version (e.g., CPython 3.14.x / 3.13.x).
+3. **Embedded SQLite Version:** Reported via `sqlite3.sqlite_version`.
+4. **SQLite CLI Availability & Version:** Presence and version of `sqlite3` binary in PATH.
+5. **Local Filesystem & VFS Disposition:** Course-owned writable directory path and VFS locking capability.
+6. **Compiler Identity & Version:** GCC or Clang compiler identity and version.
+7. **C11 & Pthreads Compilation Capability:** Verification of `-std=c11 -pthread` compilation.
+8. **C11 Atomics Capability:** Compilation check for `<stdatomic.h>`.
+9. **POSIX Mutex & Condition Variable Capability:** Linkage and execution check for `pthread_mutex_*` and `pthread_cond_*`.
+10. **Owned Child Process & Watchdog Capability:** Subprocess spawn, timeout, and reaping capability.
+11. **Optional PostgreSQL Server / `psql` Client:** Availability and version of `psql` and local database service.
+12. **Optional Container Runtime:** Availability of Docker or Podman.
+13. **Optional Sanitizer / Race Tool Capability:** Availability of ThreadSanitizer (`-fsanitize=thread`).
+14. **EXP-02 Source Access & Current Revision:** Local source access and git commit hash disposition for PostgreSQL source tree.
 
 ### Truthful Preflight Dispositions
 - `REQUIRED CAPABILITY PASS`: All Required Core capabilities confirmed.
-- `ENVIRONMENT-BLOCKED / NOT RUN`: Specific missing tool blocks a specific Lab (e.g., missing `sqlite3` CLI blocks LAB-REQ-04; missing `gcc` blocks LAB-REQ-03).
+- `ENVIRONMENT-BLOCKED / NOT RUN`: Specific missing tool blocks a specific Lab (e.g., missing `sqlite3` CLI blocks LAB-REQ-04; missing compiler blocks LAB-REQ-03; does not block the entire course automatically).
 - `OPTIONAL TOOL UNAVAILABLE / SKIP`: Optional PostgreSQL or Docker missing; optional labs skipped without penalty.
 - `NO LIVE SOURCE RECHECK`: Network disconnected; EXP-02 uses local source snapshot or cached reference.
 
@@ -774,7 +777,7 @@ Later implementation must produce standardized evidence templates for learner re
 - **Section A:** Environment / CLI / SQLite versions recorded.
 - **Section B:** L13-01 prediction + actual CLI `EXPLAIN QUERY PLAN` capture.
 - **Section C:** Result set equivalence confirmation ($\Delta = 0$).
-- **Section D:** Read timing distributions and cache-state assumptions.
+- **Section D:** Read timing distributions, cache-state assumptions, warmup protocol, environment notes, and **raw timing samples**.
 - **Section E:** Write latency and file size observations after index creation.
 - **Section F:** Inference limit articulation (index $\ne$ universal speedup).
 - **Section G:** L13-02 SQL declarative intent vs. physical access path explanation.
@@ -786,7 +789,7 @@ Later implementation must produce standardized evidence templates for learner re
 
 ### 23.2 M14 Evidence Template Structure
 - **Section A:** SQLite environment, journal mode (`DELETE`), and synchronous settings.
-- **Section B:** Declared transaction balance invariant ($\sum = 1000$).
+- **Section B:** Declared transaction balance invariant.
 - **Section C:** Dual-connection committed-only visibility timeline.
 - **Section D:** Second-writer conflict observation and actual driver disposition.
 - **Section E:** Explicit rollback verification.
@@ -805,7 +808,7 @@ Later implementation must produce standardized evidence templates for learner re
 - **Section C:** Broken compound-update source code audit confirming legal atomic accesses (no UB).
 - **Section D:** Observed lost-update interleaving and scheduler disposition.
 - **Section E:** Mutex repair verification proving invariant restoration.
-- **Section F:** Condition variable while-loop predicate rendezvous verification.
+- **Section F:** Condition variable predicate rendezvous verification.
 - **Section G:** Controlled deadlock preconditions and watchdog reaping record.
 - **Section H:** Fairness and scheduler progress inference limits.
 - **Section I:** Thread vs. async architectural evaluation.
@@ -817,7 +820,9 @@ Later implementation must produce standardized evidence templates for learner re
 - **Path 1 Finding (`src/backend/optimizer/plan/README`):** Summary of historical subselect notes; explicit confirmation of historical drift.
 - **Path 2 Finding (`src/backend/optimizer/path/costsize.c`):** Code citation for `cost_seqscan()` and `cost_index()`, explaining CPU vs. I/O cost estimation weights.
 - **Path 3 Finding (`src/backend/storage/buffer/README`):** Summary of clock-sweep page replacement and buffer pinning protocols.
-- **Bound & Safety Confirmation:** Explicit confirmation that inspection stopped at the bounded lines; zero compilation attempted; zero source code vendored.
+- **Supplemental-Source Note:** Record if parent `src/backend/optimizer/README` was consulted as supplemental reviewer context.
+- **Bound & Safety Confirmation:** Explicit confirmation that inspection stopped at bounded lines; zero compilation attempted; zero source code vendored.
+- **Provenance / License Disposition:** Confirmation of PostgreSQL License notice preservation.
 
 ---
 
@@ -833,7 +838,7 @@ Every future Lesson and Lab checkpoint must follow the strict five-tier progress
   |-- Focuses the learner's attention on the relevant mechanism without naming the solution.
   v
 [ Tier 3: Hint 2 ]
-  |-- Points to specific tools, syntax, or inspection methods (e.g., EQP or while-loop guards).
+  |-- Points to specific tools, syntax, or inspection methods (e.g., EQP or predicate loops).
   v
 [ Tier 4: Expected Observation ]
   |-- Describes the pattern or semantic structure to expect (using placeholders, never fake data).
@@ -843,7 +848,19 @@ Every future Lesson and Lab checkpoint must follow the strict five-tier progress
 ```
 
 - **Formatting Rule:** HTML `<details open>` is strictly prohibited. Hints must remain collapsed until explicitly opened by the learner.
-- **Truthful Placeholder Rule:** Expected observations must never invent exact timings, page counts, or machine-specific memory addresses.
+- **Truthful Placeholder Rule:** Expected observations must **never fabricate** any of the following:
+  1. exact SQLite plan text;
+  2. timing;
+  3. page count;
+  4. file-size ratio;
+  5. error string;
+  6. lock timing;
+  7. scheduler ordering;
+  8. race manifestation rate;
+  9. GIL mode;
+  10. PostgreSQL plan;
+  11. source revision.
+  Expected observations must use structural placeholders, patterns, and learner-recorded values.
 
 ---
 
@@ -854,14 +871,14 @@ All visual assets must be original, editable diagrams complying with `meta/VISUA
 | Lesson / Lab | Visual Title | Core Pedagogical Content | Mandatory Inscription / Label |
 |---|---|---|---|
 | **L13-01** | Query Access Paths & Storage | SQL intent branching into Sequential Scan vs. B-Tree index lookup visiting disk pages. | **"PLAN CHOICE IS IMPLEMENTATION AND WORKLOAD DEPENDENT"** |
-| **L13-02** | Declarative Intent vs. Engine Reality | Two-layer diagram: Declarative SQL intent mapped to Engine Parser, Planner, and Storage Engine. | Abstraction boundary and sargable vs. non-sargable predicate leakage. |
+| **L13-02** | Declarative Intent vs. Engine Reality | Two-layer diagram: Declarative SQL intent mapped to Engine Parser/Planner/Code Generator and Storage Engine. | Abstraction boundary and sargable vs. non-sargable predicate leakage. |
 | **L13-03** | Schema Evolution Lifecycle | Expand-Contract three-stage migration pattern (Expand $\to$ Backfill $\to$ Contract) with Source of Truth vs. Derived View. | Source of Truth is authoritative; Derived Data is recomputable. |
 | **L14-01** | Transaction State & Recovery Boundary | State transition from $S_0$ through dirty buffer changes to $S_1$ via `COMMIT` vs. Rollback Journal restoration. | Rollback reverts uncommitted mutations; client kill $\ne$ power loss. |
-| **L14-02** | Concurrent Interleaving & Visibility | Timeline showing $T_1$ and $T_2$ interleavings, dirty read prevention, and writer lock conflicts. | **EC-CON-014 Consistency: Full canonical definition with mandatory qualifier.** |
+| **L14-02** | Concurrent Interleaving & Visibility | Timeline showing $T_1$ and $T_2$ interleavings, committed-only visibility, and writer lock conflicts. | **EC-CON-014 Consistency: Full canonical definition with mandatory qualifier.** |
 | **L14-03** | Transaction-Boundary Retry | Flowchart comparing naive statement retry with whole-transaction rollback, exponential backoff, and idempotency key check. | Whole-transaction retry boundary. |
 | **L15-01** | Concurrency vs. Parallelism & Interleaving | Visual contrasting single-core time-slicing vs. multi-core simultaneous execution, detailing atomic lost update. | **EC-CON-015 Concurrency: Full canonical definition.** |
-| **L15-02** | Mutex Invariant & Condition Rendezvous | Mutex critical section exclusion combined with condition variable predicate while-loop wait protocol. | Mandatory while-loop predicate evaluation guard. |
-| **L15-03** | Concurrency Execution Models | Comparison matrix: OS Preemptive Threads vs. Async Event Loops vs. CPython GIL reality. | No universal winner; workload-driven model selection. |
+| **L15-02** | Mutex Invariant & Condition Rendezvous | Mutex critical section exclusion combined with condition variable predicate recheck loop protocol. | Mandatory predicate evaluation recheck guard. |
+| **L15-03** | Concurrency Execution Models | Comparison matrix: OS Preemptive Threads vs. Async Event Loops vs. CPython Runtime Reality. | No universal winner; workload-driven model selection. |
 | **EXP-02** | PostgreSQL Planner & Buffer Map | Tabular route map covering the three canonical paths, actual findings, and historical caveats. | Target 1 historical drift note; no compilation required. |
 
 ---
@@ -875,10 +892,10 @@ All visual assets must be original, editable diagrams complying with `meta/VISUA
 | - Semantic parsing of SQLite EQP output (SCAN vs. SEARCH ... USING INDEX).              |
 | - Result set equivalence assertions (unindexed == indexed rows).                        |
 | - Multi-connection committed-only visibility verification (no dirty reads).             |
-| - Atomic counter lost-update demonstration (erroneous count under compound update).     |
-| - Mutex-protected counter verification (100% target count reached).                     |
+| - Atomic counter lost-update demonstration under compound update.                       |
+| - Mutex-protected counter verification (target invariant satisfied).                    |
 | - Condition rendezvous ordering verification.                                           |
-| - Deadlock watchdog timeout termination (< 5 seconds).                                  |
+| - Deadlock watchdog timeout termination under configured harness parameter.             |
 | - Deterministic cleanup of temporary database files and child processes.                |
 +-----------------------------------------------------------------------------------------+
                                             |
@@ -903,7 +920,7 @@ All visual assets must be original, editable diagrams complying with `meta/VISUA
 - **Synthetic Data Exclusively:** All schemas and datasets are generated procedurally with random strings and numbers. Zero sensitive or personal data.
 - **Zero Privileged Operations:** No `sudo`, `root`, or kernel-level capabilities permitted for any Required Lab.
 - **Destruction Prevention:** Zero filesystem-fill tests (synthetic databases capped at $< 10\text{ MB}$); zero power-cut tests; zero kernel panics.
-- **Process & Thread Boundaries:** Thread pools bounded to 2–4 workers. Deadlock demonstrations must run in an owned child process governed by an automated watchdog timer, guaranteeing that learner shells never freeze.
+- **Process & Thread Boundaries:** Thread pools bounded to 2–4 workers. Deadlock demonstrations must run in an owned child process governed by an automated watchdog timer with a configurable timeout parameter. The safety harness bounds the course child process; it cannot literally guarantee that host environments or terminal UIs never stall.
 
 ### 27.2 Cleanup Protocol
 - **Idempotent Removal:** Lab teardown functions must clean up all generated files: `<name>.db`, `<name>.db-journal`, `<name>.db-wal`, `<name>.db-shm`.
@@ -931,6 +948,10 @@ All visual assets must be original, editable diagrams complying with `meta/VISUA
 - **EC-CON-015 Concurrency First Home:** `M15` / `L15-01`. Fully specified and distinguished from parallelism.
 - **New Concept IDs Introduced:** **Zero (0)**.
 - **Schema Evolution / Provenance:** Treated strictly as an application pattern under existing concepts (`EC-CON-001`, `003`, `005`, `008`).
+- **Canonical Concept Revisit Mappings:**
+  - `M13`: `EC-CON-001`, `003`, `005`, `006`, `008`, `009`, `011`, `012`.
+  - `M14`: `EC-CON-001`, `006`, `007`, `008`, `009`, `013`, `016`.
+  - `M15`: `EC-CON-001`, `007`, `008`, `009`, `013`. (`EC-CON-018 Process` is not an authorized canonical revisit in M15).
 
 ### 29.2 Competency Audit
 Only canonical competencies from `meta/COMPETENCY_MATRIX.md` are used:
@@ -951,7 +972,7 @@ Upon Lead approval of this Design Dossier, implementation may be dispatched acro
 ### 30.2 Explicit Non-Blocking Risks
 1. **EXP-02 Target 1 Drift:** Target 1 contains historical subselect notes. Handled transparently by learner documentation; does not block implementation.
 2. **SQLite Plan Variability Across Minor Versions:** Handled by semantic EQP checking (`SCAN` vs. `SEARCH ... USING INDEX`) rather than literal string matching.
-3. **Scheduler Sensitivity in Lost Updates:** Handled by the bounded coordination / attempt-budget contract in LAB-REQ-03, avoiding flakiness without UB.
+3. **Scheduler Sensitivity in Lost Updates:** Handled by the bounded coordination contract in LAB-REQ-03, avoiding flakiness without UB.
 4. **OQ-BP-006 (Environment Pinning):** Remains open; tool versions are treated as empirical observations rather than permanent curriculum constants.
 5. **Historical Debt:** Issue #34 (learner validation deferred under D-027), M03 GDB debt, and M06 MIT grader debt remain non-blocking.
 
