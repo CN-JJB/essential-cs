@@ -52,37 +52,36 @@ Confirm the strict 4-layer evidence discipline:
 ## D — Site Isolation Platform & Current-Practice Boundary
 
 Record understanding of Site Isolation boundaries:
-- Desktop Chromium: Full Site Isolation defaults on, isolating cross-site iframes into Out-Of-Process Iframes (OOPIF).
-- Mobile / low-memory devices: Full site isolation may be disabled or limited (e.g., password-triggered site isolation) due to OS process limits and RAM constraints.
-- Motivation: Defense in depth against compromised renderers (UXSS) and microarchitectural speculative execution attacks (Spectre / Meltdown).
+- **Chromium current-practice evidence:** desktop builds use Full Site Isolation in the current process-model documentation; Chrome for Android has Partial/No Site Isolation modes depending on current platform/resource policy. Record the exact source revision/date rather than turning a current threshold into curriculum law.
+- OOPIF/process assignment is implementation evidence, not a Web Platform guarantee.
+- Motivation: defense in depth against compromised renderers and Spectre-like speculative-execution threats. Do not claim Site Isolation eliminates every side channel.
 
 ---
 
 ## E — L12-02 Conceptual Rendering Pipeline
 
 Confirm tracing of the 6 conceptual stages:
-1. HTML Parse &rarr; DOM Tree
-2. CSS Parse &rarr; CSSOM Tree
-3. Style Resolution &rarr; Render / Layout Tree (Computed Styles)
-4. Layout / Reflow &rarr; Geometry Coordinates (Box Model)
-5. Paint &rarr; Display Lists (Draw Commands)
-6. Compositing &rarr; Layer Tiles to GPU Framebuffer
+1. HTML parse &rarr; DOM
+2. CSS parse &rarr; style rules / CSSOM conceptual data
+3. Style resolution &rarr; styled boxes / implementation-specific layout structures
+4. Layout &rarr; geometry
+5. Paint &rarr; implementation-specific drawing records
+6. Compositing / rasterization &rarr; displayable pixels
 
-Marked explicitly as: **CONCEPTUAL PIPELINE**. Modern engines apply dirty-subtree invalidations, layer caching, and off-thread compositing.
+Marked explicitly as: **CONCEPTUAL PIPELINE**. Incremental invalidation, caching, thread assignment, layer structure, software/GPU rasterization and DevTools labels are implementation/runtime evidence.
 
 ---
 
 ## F — Parser-Blocking vs. Defer Structural Evidence
 
-Record output from `labs/foundations/m12/rendering_fixture.py`:
+Record the course fixture structure:
 - Server dynamic port: `<actual port>`
-- Classical synchronous script (`/blocking.js?delay=0.3`):
-  - Injected delay: `0.3s`
-  - Parser observation: Later HTML parsing markers paused until script fetch and execution finished.
-- Classical `defer` script (`/deferred.js`):
-  - Fetched in parallel during parsing;
-  - Executed strictly after DOM parsing completed and before `DOMContentLoaded`.
-- Inference boundary: `defer` alters the critical path but does not provide an absolute machine guarantee that FCP occurs first.
+- parser-blocking classic script URL/delay parameter: `<actual fixture config>`
+- classic `defer` asset present: `<actual fixture config>`
+
+If a **real browser** was used, separately record actual browser event-marker evidence supporting parser-blocking / defer ordering. If no real browser executed the page, record `NO LIVE BROWSER PARSER-ORDER OBSERVATION`; Python HTTP tests verify only the served asset/header structure, not JavaScript parser scheduling.
+
+Inference boundary: `defer` changes parser interaction but does not guarantee FCP ordering or milliseconds.
 
 ---
 
@@ -92,24 +91,25 @@ Record output from `labs/foundations/m12/rendering_fixture.py`:
   - Network waterfall & execution rows: `<actual trace>`
 - If no GUI browser used:
   - Disposition: `NO LIVE DEVTOOLS OBSERVATION`
-  - Structural ordering confirmed via fixture progress timestamps.
+  - No DevTools/parser/rendering timing is claimed. Course fixture structure and specification/reference material remain separate evidence.
 
 ---
 
 ## H — Origin Tuple vs. Opaque-Origin Explanation
 
 - Tuple Origin: `(scheme, host, port)`
-- Opaque Origin: Internal unguessable identifier serialized as `"null"` (e.g., `data:` URLs, sandboxed `<iframe>` without `allow-same-origin`).
-- Contrast with Site: Site is typically `scheme + eTLD+1` in Chromium desktop practice; not an origin synonym.
+- Opaque Origin: an implementation-internal opaque value with serialization commonly `null` in relevant serialization contexts; distinct opaque origins are not made equal merely because they serialize alike.
+- Contrast with Site: in Chromium Full Site Isolation current process-model context, site locks commonly use scheme + eTLD+1; this is not a universal Web-wide definition and is not an origin synonym.
 
 ---
 
 ## I — Same-Origin Policy vs. Cookie Rule Separation
 
 - SOP governs: DOM tree access, `localStorage`, `sessionStorage`, `indexedDB`, and JavaScript read access to HTTP responses.
-- Cookie rules govern: Browser cookie transmission.
-  - **Ignores port by default**: A cookie set for `example.com` is sent to `http://example.com:8080` and `http://example.com:9000`.
-  - Scoped by: `Domain`, `Path`, `SameSite`, `HttpOnly`, `Secure`.
+- Cookie rules govern storage/transmission under their own host/domain/path/Secure/SameSite/etc. rules.
+  - Port is not a Cookie domain/path matching key, so different ports on the same host are not independently cookie-scoped.
+  - Actual sending still depends on host-only/Domain, Path, Secure, SameSite, expiry and request context.
+  - `HttpOnly` restricts script access; it is not part of the network-domain matching rule.
 
 ---
 
@@ -124,17 +124,19 @@ Record output from `labs/foundations/m12/rendering_fixture.py`:
   - Origin B request log proved the HTTP request **arrived and executed** on the server.
 - If no live browser used:
   - Disposition: `NO LIVE BROWSER CORS OBSERVATION`
-  - Proven via course automated test suite asserting server request arrival and header absence.
+  - Automated tests establish only that the raw HTTP course request reached Origin B and whether ACAO/preflight headers were present. They **do not** prove browser CORS enforcement.
 
 ---
 
-## K — Authorized CORS Browser Evidence
+## K — Authorized CORS Evidence
 
-- When Origin B returned `Access-Control-Allow-Origin: http://127.0.0.1:<portA>`:
-  - Browser JavaScript successfully resolved Promise and read response JSON.
-- Deterministic preflight:
-  - Request with `X-Course-Custom` sent `OPTIONS` probe;
-  - Origin B returned 204 with `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`.
+If a real browser was used:
+- record whether JavaScript could read the matching-ACAO response;
+- record actual preflight/actual-request behavior without fixed console wording.
+
+Without a real browser:
+- record `NO LIVE BROWSER CORS OBSERVATION`;
+- raw tests may verify the course server's matching ACAO policy and bounded `OPTIONS` response shape, but must not label that a browser CORS PASS.
 
 ---
 
@@ -153,6 +155,7 @@ Record output from `labs/foundations/m12/rendering_fixture.py`:
 ## M — CSP Defense-in-Depth Judgment & Document Status
 
 - CSP Level 3 document status: **W3C Working Draft (13 August 2026)**.
+- Long Tasks API document status (if referenced for the 50 ms reporting threshold): **W3C Working Draft (19 March 2026)**.
 - Defense in depth: Restricts script sources and fetch destinations; mitigates XSS data exfiltration.
 - Does not replace input validation or secure coding.
 
@@ -160,24 +163,18 @@ Record output from `labs/foundations/m12/rendering_fixture.py`:
 
 ## N — L12-04 Task/Microtask Relative Ordering Evidence
 
-Record relative ordering from `labs/foundations/m12/event_loop_fixture.py`:
-- `1_sync_start`
-- `2_sync_end`
-- `3_microtask_promise_1`
-- `3b_microtask_promise_chained`
-- `3c_microtask_queueMicrotask`
-- `4_timer_task`
-- Microtask queue drained completely at microtask checkpoint before timer task ran.
+If a real browser executes `labs/foundations/m12/event_loop_fixture.py`, record the actual relative log order for synchronous code, Promise/`queueMicrotask`, and the later timer task. Do not add milliseconds as acceptance criteria.
+
+If no real browser executes the JavaScript, record `NO LIVE BROWSER EVENT-LOOP OBSERVATION`; Python/static tests can verify that the fixture contains the intended code but cannot prove browser scheduling.
 
 ---
 
 ## O — Long-Main-Thread-Task Observation & Compositor Caveat
 
-- Configurable long task executed under strict safety cap (< 2.0s):
-  - Main-thread rAF counter froze during execution;
-  - User interaction delayed;
-  - GPU-accelerated CSS `transform` spinner on Compositor thread continued rotating smoothly.
-- Invariant confirmed: Do NOT claim all CSS animations freeze; Compositor thread concurrency handles independent transform layers.
+- Course long-task fixture is bounded below 2 seconds (current cap 1500 ms).
+- With a real browser, record the actual delay in same-window main-thread handlers/rAF updates.
+- Record whether the CSS transform candidate continued, stuttered, or stopped; compositor promotion is browser/runtime evidence and is **not guaranteed**.
+- Without a real browser: `NO LIVE BROWSER LONG-TASK/COMPOSITOR OBSERVATION`.
 
 ---
 
