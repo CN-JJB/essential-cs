@@ -49,10 +49,10 @@ $$\text{M15 (Concurrency: Threads, Races \& Synchronization)}$$
      - **EC-CON-015 Concurrency (并发)** enters its canonical first home in **M15 (`L15-01`)**. Canonical definition: *"Overlapping progress or interleaving of operations, whether or not they execute simultaneously on hardware. Concurrency creates ordering and shared-state obligations."* M12's event loop and M14's transaction overlap were previews only.
    - **Schema Evolution & Provenance as Application Pattern:** In accordance with R6 and Blueprint reconciliation, schema evolution, reader/writer compatibility, migration/backfill trade-offs, source-of-truth vs. derived data, and lightweight provenance are treated as an **application pattern** spanning existing concepts (`EC-CON-001 State`, `EC-CON-003 Representation`, `EC-CON-005 Interface`, `EC-CON-008 Invariant`). No new concept ID is created.
 2. **LAB-REQ-04 Re-Audit (SQLite Query Plans, Indexing & Workload Evidence):**
-   - Feasible as a self-contained, deterministic localhost activity using standard SQLite tools (`sqlite3` CLI or Python stdlib `sqlite3`).
-   - Investigates table scan (`SCAN TABLE`) vs. B-tree index lookup (`SEARCH TABLE ... USING INDEX`) across small (single-page) and medium (multi-page) synthetic tables.
+   - Feasible as a self-contained **local-file** activity using the Blueprint-required `sqlite3` CLI plus Essential CS-owned Python support/test fixtures. Determinism applies to generated data and semantic checks, not to planner choice, timing, cache state, or exact EQP text.
+   - Investigates SQLite EQP's semantic **`SCAN` vs `SEARCH`** categories and index use across bounded synthetic workloads. Exact detail strings, page counts, and planner choices remain version/data/statistics dependent.
    - Preserves result equivalence before and after indexing while exposing the trade-off of index maintenance on `INSERT`/`UPDATE` writes and storage space.
-   - Truthful outcome respected: On small tables or queries with low selectivity, SQLite's cost-based query planner truthfully chooses a sequential scan; the lab will document and celebrate this authentic engine behavior rather than artificially forcing index usage.
+   - Truthful outcome respected: SQLite may choose `SCAN` even when an index exists. The lab records the actual plan and workload rather than treating a fixed selectivity threshold or literal sequential-disk-I/O story as a rule.
 3. **LAB-REQ-05 Re-Audit (SQLite Transactions, Isolation, Rollback & Recovery Boundary):**
    - Feasible using two concurrent connections to a local SQLite database file without server daemon, root privileges, or external dependencies.
    - Demonstrates committed-only visibility (prevention of dirty reads), writer serialization under SQLite's locking model (`SQLITE_BUSY` / `database is locked`), and atomicity via `ROLLBACK`.
@@ -192,7 +192,7 @@ The database sequence (M13 $\to$ M14) traces data management from physical disk 
 | M13: Databases: Storage & Indexing                                                      |
 | Storage Engine: Slotted page format, heap files, row-oriented tuple storage             |
 | Index Structure: B-tree / B+ tree pages (root, internal, leaf), branch factor B         |
-| Access Paths: Table Scan (O(N) pages) vs. B-tree Index Search (O(log_B N) page probes)  |
+| Access Paths: full scan vs. indexed search; asymptotic tree intuition plus actual engine plan/evidence              |
 | Query Pipeline: SQL Text -> AST -> Logical Plan -> Cost Planner -> Physical Plan       |
 | Cost Model: Estimated I/O & CPU cost -> Plan Choice (Scan vs. Index Search)             |
 | Buffer Pool: Engine memory pages, eviction policies, dirty page flushing               |
@@ -285,7 +285,7 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 
 ### 6.5 Candidate Real Observation / Activity
 - Execute `EXPLAIN QUERY PLAN` in SQLite on a synthetic table with 50,000 rows.
-- Observe `SCAN TABLE` on an unindexed column vs. `SEARCH TABLE ... USING INDEX` on an indexed column.
+- Observe actual SQLite `SCAN` / `SEARCH` detail categories on the committed fixture; do not bind acceptance to the assumed phrase `SCAN TABLE`.
 - Demonstrate query execution time before/after indexing for **explicit course fixture selectivities**, recording actual plan, cache/warmup state, repetitions, distribution, environment, and inference limits.
 - Measure the actual write-time and file-size difference caused by maintaining the course index; do not pre-state a universal percentage overhead.
 
@@ -616,7 +616,7 @@ Core 1:        [Task B: step 1] ------> [Task B: step 2] ------> [Task B: step 3
 - **ID:** `LAB-REQ-04`
 - **Module Placement:** M13 Databases: Storage & Indexing
 - **Type:** Build — Essential CS original
-- **Core Mechanism:** Relational query execution, access path selection (`SCAN TABLE` vs. `SEARCH TABLE ... USING INDEX`), B-tree indexing trade-offs, and empirical workload measurement.
+- **Core Mechanism:** Relational query execution, semantic `SCAN` vs `SEARCH` access-path evidence, index trade-offs, result equivalence, and empirical workload measurement.
 
 ### 12.2 Technical Verification & Plan Output Structure
 Empirical testing on SQLite 3.45.3 / 3.53.4 confirms that `EXPLAIN QUERY PLAN` outputs a structured 4-column record `(id, parent, notused, detail)`:
@@ -656,10 +656,25 @@ CREATE INDEX idx_orders_user ON orders(user_id);
    ```
 
 ### 12.3 Workload Trade-off Verification
-Empirical smoke tests with synthetic datasets at two scales:
-- **Small Scale (100 rows):** Table occupies a single 4,096-byte page. The query optimizer may choose `SCAN` even when an index exists, because reading one table page sequentially is faster than traversing index B-tree pages and then fetching the table page.
-- **Medium Scale (50,000 rows):** Table occupies ~2.5 MB (hundreds of pages). Point lookups with the index require 2–3 page reads (sub-millisecond), whereas `SCAN` requires reading all pages (~15–30 ms un-cached).
-- **Write and Storage Cost:** Adding the index inflates database file size by ~35% and increases bulk `INSERT` execution time by ~40% due to B-tree node insertion, page balancing, and journal updates.
+The Agent performed bounded synthetic smoke work at small and medium fixture sizes. Those numbers are **author-host evidence only**, not Design constants.
+
+The Design handoff should preserve:
+- actual row count, schema, data distribution, SQLite CLI/library versions and database page settings;
+- actual `SCAN`/`SEARCH` detail before/after the index;
+- result equivalence;
+- repeated timing with warmup/cache-state notes and raw samples;
+- database-file and write-time deltas.
+
+Do **not** require:
+- “100 rows = one page”;
+- “50,000 rows = 2.5 MB”;
+- 2–3 index page reads;
+- sub-millisecond lookup;
+- 15–30 ms scan;
+- 35% file growth;
+- 40% insert slowdown.
+
+All of those depend on schema, values, page size, cache/filesystem/storage, build, query and engine version.
 
 ### 12.4 Truthful Fallback & Pedagogical Integrity
 - If SQLite's cost-based optimizer chooses `SCAN` on a small table despite an available index, the lab **must celebrate this as a truthful teaching moment** rather than forcing an index via query hints. This reinforces the core principle: *An index is an implementation mechanism with trade-offs, not a magic speed button.*
@@ -768,8 +783,9 @@ void* worker(void* arg) {
      ```
    - Reinforces the course rule that the predicate is re-evaluated in a `while` loop after condition-wait returns, covering spurious wakeups and competing-thread predicate changes.
 3. **Deadlock Watchdog Architecture:**
-   - To illustrate deadlock, a deliberately reversed lock acquisition scenario (Thread 1: Lock A $\to$ Lock B; Thread 2: Lock B $\to$ Lock A) is compiled into a separate binary.
-   - The test runner wraps execution in a subprocess with a strict 2-second timeout (`alarm()` or `subprocess.run(timeout=2)`). When deadlock occurs, the runner terminates the child gracefully, logs the deadlock state, and exits with a structured diagnostic. The learner's shell never hangs.
+   - Reversed lock order creates a **deadlock possibility**, not a scheduler guarantee. If deterministic evidence is desired, Design should add a bounded course-controlled handshake proving each worker acquired its first lock before both attempt the second.
+   - An owned-child watchdog supplies a safety deadline and then performs platform-appropriate termination/reaping. A watchdog timeout by itself proves only “the child did not finish by the deadline”; interpret deadlock only together with the fixture's lock-state evidence.
+   - The timeout value is configuration recorded in evidence, not a universal two-second rule; cleanup must be idempotent and must never target unrelated processes.
 
 ---
 
@@ -787,13 +803,10 @@ void* worker(void* arg) {
      - Estimated rows vs. actual returned rows;
      - Shared buffer hits, reads, dirtied, and written pages.
    - This exposes the direct relationship between query plan execution and buffer pool cache behavior.
-2. **Repeatable Read Serialization Failure:**
-   - Demonstrates multi-version concurrency control (MVCC) conflict detection.
-   - When two concurrent transactions under `REPEATABLE READ` attempt to update the same row, PostgreSQL halts the second transaction with:
-     ```
-     ERROR: could not serialize access due to concurrent update (SQLSTATE 40001)
-     ```
-   - Exposes the requirement for application-level retry loops when using optimistic concurrency control.
+2. **Repeatable Read Update-Conflict Example:**
+   - PostgreSQL 18 documents that a Repeatable Read transaction trying to update a row changed by another transaction since its snapshot can be rolled back with a serialization-failure disposition.
+   - Record the actual SQLSTATE/message from the tested PostgreSQL version rather than binding the course to one exact English string.
+   - PostgreSQL documentation requires applications using Repeatable Read to be prepared to retry a failed transaction from the beginning. Do not flatten PostgreSQL's MVCC + locking/conflict machinery into a generic “optimistic concurrency control” label.
 
 ### 15.3 Licensing & Provenance
 - Source: Official PostgreSQL Documentation (<https://www.postgresql.org/docs/current/>).
@@ -803,7 +816,7 @@ void* worker(void* arg) {
 ### 15.4 Environment & Non-Requirement Boundary
 - **PostgreSQL must remain strictly Optional.**
 - Core curriculum mastery must never depend on a running PostgreSQL daemon or container.
-- For learners undertaking this optional lab, provide a lightweight local `initdb` / `pg_ctl` runner script or disposable Docker compose fixture. If neither is available, the lab provides deterministic recorded execution traces.
+- For learners undertaking this Optional Lab, a local `initdb`/`pg_ctl` path or disposable container may be documented. If PostgreSQL cannot be run, record `OPTIONAL LAB NOT RUN / TOOL UNAVAILABLE`; a course reference trace may support explanation but must not be counted as the learner's live PostgreSQL observation.
 
 ---
 
@@ -832,12 +845,12 @@ void* worker(void* arg) {
 ## 17. EXP-02 PostgreSQL Source-Route Recheck
 
 ### 17.1 Canonical Route Verification
-All three inspection targets specified in the Curriculum Blueprint have been re-verified live against the PostgreSQL source repository (`master` / stable 18, checked 2026-09-04):
+All three canonical paths still exist in PostgreSQL's moving `master` source. Lead recheck on 2026-09-04 observed `master` at commit `7344937cbe640cd8c5304cefe7d6b726187ad4ab`. This **development branch is not “stable 18”**; PostgreSQL 18.6 is the separate current stable release/documentation line.
 
 ```
 Target 1: src/backend/optimizer/plan/README
-Status: Active, authoritative architecture document.
-Role: Explains how the planner transforms the best Path tree chosen by the optimizer into a Plan tree ready for executor dispatch.
+Status: Path still exists, but current content is largely historical subselect implementation notes originating in 1998.
+Role: **Does not support the dossier's previous claim of being the current high-level Path→Plan architecture overview.** The parent `src/backend/optimizer/README` currently provides that overview, but it is supplemental Research authority only; this Research PR does not silently replace the Blueprint's canonical EXP-02 target.
 
 Target 2: src/backend/optimizer/path/costsize.c
 Status: Active, primary cost-estimation implementation.
@@ -851,9 +864,10 @@ Role: Explains shared buffer pool management, page pin/unpin semantics, buffer h
 ```
 
 ### 17.2 Bounded Pedagogical Stopping Point
-- **What implementation reality becomes visible:** The learner observes that behind a simple `EXPLAIN` output lie thousands of lines of cost modeling (`costsize.c`), plan tree assembly (`plan/README`), and page caching protocols (`buffer/README`).
+- **What implementation reality becomes visible:** `costsize.c` exposes current cost-model implementation and `buffer/README` exposes current shared-buffer access rules. The canonical `plan/README` target primarily exposes historical/subselect implementation notes, which itself is useful currentness evidence: source-file names can remain while pedagogical meaning drifts.
+- **Source-route risk:** later Design must not claim Target 1 proves the current general Path→Plan architecture. If Design needs the parent `src/backend/optimizer/README` in the learner's exact route, that is an explicit Lead source-selection adjustment rather than a silent replacement.
 - **What the learner must ignore:** The learner must ignore executor dispatch loops, individual access method internals (GiST, GIN, BRIN), planner configuration variables (GUCs), catalog statistics generation, and WAL recovery logic.
-- **Compilation Gate:** **PostgreSQL compilation is strictly forbidden for Core.** Source inspection is conducted via web links or local file reading only.
+- **Compilation Gate:** EXP-02 requires no PostgreSQL compilation. Learner inspection remains link/source-reading-only. “No compile required” is the Core boundary; a learner's unrelated local PostgreSQL install for LAB-OPT-03 is a separate Optional capability.
 
 ---
 
@@ -981,7 +995,7 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
    - Run the broken atomic compound counter under a bounded attempt budget; PASS requires preserving at least one actual lost-update trace on the accepted environment, not a fixed percentage or count range.
    - Run the mutex-protected counter; every completed repaired run must satisfy the declared target-count invariant.
    - Execute condition-variable rendezvous; assert that consumer never executes before producer sets payload.
-   - Execute deadlock test under watchdog; assert that child process is cleanly terminated by timeout within $\le 3$ seconds.
+   - Execute the bounded deadlock/progress fixture under an owned-child watchdog. If Design uses a coordinated “each thread holds its first lock” handshake, record that precondition before interpreting a timeout as deadlock evidence. The configured timeout is a harness parameter, not a ≤3-second curriculum law.
 
 ### 22.2 Reviewer-Required Evidence (Pedagogical & Conceptual Judgment)
 1. **Workload Justification (M13):**
@@ -1003,7 +1017,7 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
   - Zero filesystem-fill experiments (database file sizes capped at $\le 10\text{ MB}$).
   - Zero power-cut or kernel panic experiments.
   - Zero thread-storm or fork-bomb experiments (thread counts bounded to 2–4 workers).
-  - Bounded deadlock experiments: Deadlock demonstrations must run under an automated parent watchdog process with a hard 2-second timeout, guaranteeing that learner shells never freeze.
+  - Bounded deadlock experiments: run only in an owned child under a configured watchdog with explicit termination/reaping. The safety harness bounds the course child; it cannot literally guarantee the host/UI can never stall, and the timeout duration is not a curriculum constant.
 
 ### 23.2 Cleanup Protocol
 Every test script and lab fixture must incorporate deterministic cleanup logic:
