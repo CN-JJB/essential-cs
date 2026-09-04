@@ -11,17 +11,18 @@ Verifies:
 from __future__ import annotations
 
 import http.client
-import os
-import subprocess
-import sys
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
 
 # Local imports
 from origin_server import ETAG_RESOURCE, OriginRequestHandler
-from intermediary_adapter import make_proxy_handler
-from harness import run_lab_req_01_trace
+from intermediary_adapter import (
+    _connection_tokens_from_values,
+    _remove_for_forwarding,
+    make_proxy_handler,
+)
+from harness import LAB_BLOCKED_STATUS, run_lab_req_01_trace
 from reset import reset_lab_req_01
 
 
@@ -32,13 +33,16 @@ class TestOriginServer(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), OriginRequestHandler)
         cls.port = cls.server.server_port
-        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
+        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=False)
         cls.thread.start()
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.server.shutdown()
         cls.server.server_close()
+        cls.thread.join(timeout=2.0)
+        if cls.thread.is_alive():
+            raise RuntimeError("origin test server thread did not terminate")
 
     def test_origin_resource_and_caching(self) -> None:
         # 1. Uncached GET /resource -> 200 OK + ETag
@@ -74,7 +78,17 @@ class TestOriginServer(unittest.TestCase):
 
 
 class TestIntermediaryAdapter(unittest.TestCase):
-    """Test intermediary adapter failure mapping."""
+    """Test bounded intermediary transformation and failure mapping."""
+
+    def test_connection_nominated_fields_are_removed(self) -> None:
+        tokens = _connection_tokens_from_values(["X-Course-Hop, Another-Hop"])
+        self.assertTrue(_remove_for_forwarding("Connection", tokens))
+        self.assertTrue(_remove_for_forwarding("X-Course-Hop", tokens))
+        self.assertTrue(_remove_for_forwarding("Another-Hop", tokens))
+        self.assertTrue(_remove_for_forwarding("Keep-Alive", tokens))
+        self.assertTrue(_remove_for_forwarding("Trailer", tokens))
+        self.assertTrue(_remove_for_forwarding("Proxy-Connection", tokens))
+        self.assertFalse(_remove_for_forwarding("If-None-Match", tokens))
 
     def test_proxy_upstream_down_yields_502(self) -> None:
         # Pick an unbound loopback port for upstream
@@ -86,7 +100,7 @@ class TestIntermediaryAdapter(unittest.TestCase):
         handler_class = make_proxy_handler("127.0.0.1", unbound_port)
         proxy = ThreadingHTTPServer(("127.0.0.1", 0), handler_class)
         proxy_port = proxy.server_port
-        thread = threading.Thread(target=proxy.serve_forever, daemon=True)
+        thread = threading.Thread(target=proxy.serve_forever, daemon=False)
         thread.start()
 
         try:
@@ -103,6 +117,8 @@ class TestIntermediaryAdapter(unittest.TestCase):
         finally:
             proxy.shutdown()
             proxy.server_close()
+            thread.join(timeout=2.0)
+            self.assertFalse(thread.is_alive())
 
 
 class TestLabHarnessIntegration(unittest.TestCase):
@@ -110,13 +126,23 @@ class TestLabHarnessIntegration(unittest.TestCase):
 
     def test_full_trace_execution(self) -> None:
         results = run_lab_req_01_trace()
+        if results["status"] == LAB_BLOCKED_STATUS:
+            self.skipTest(results["curl"]["reason"])
         self.assertEqual(results["status"], "ALL_STEPS_PASSED")
         self.assertTrue(results["steps"]["step_1_direct_origin"]["pass"])
         self.assertTrue(results["steps"]["step_2_proxy_forward"]["pass"])
         self.assertTrue(results["steps"]["step_3_conditional_304"]["pass"])
         self.assertTrue(results["steps"]["step_4_upstream_failure_502"]["pass"])
-        # Step 3 must have strictly zero body bytes
+        # Step 3 must have no response content/body.
         self.assertEqual(results["steps"]["step_3_conditional_304"]["body_bytes_len"], 0)
+        # Canonical Required-Lab evidence is a real curl -v trace, not a Python substitute.
+        for step in results["steps"].values():
+            self.assertIn("-v", step["cmd_argv"])
+            self.assertTrue(step["verbose_trace"].strip())
+            self.assertEqual(step["returncode"], 0)
+        self.assertTrue(results["cleanup"]["all_owned_processes_reaped"])
+        self.assertTrue(results["cleanup"]["old_endpoints_not_accepting"])
+        self.assertFalse(results["origin_closed_probe"]["connection_established"])
 
 
 class TestLabReset(unittest.TestCase):
