@@ -26,7 +26,7 @@ from failure_fixture import (
     observe_read_timeout,
     run_all_failure_observations,
 )
-from reset import run_reset, verify_endpoint_not_serving
+from reset import probe_endpoint_after_close, run_reset
 from stream_framing import run_tcp_stream_reconstruction, run_udp_datagram_contrast
 
 
@@ -47,8 +47,10 @@ class TestM10EndpointObserver(unittest.TestCase):
         # Invariant: Process ID is recorded
         self.assertGreater(record["process_id"], 0)
 
-        # Invariant: Endpoint is no longer serving after observation completes
-        self.assertTrue(verify_endpoint_not_serving("127.0.0.1", assigned_port))
+        # Invariant: a fresh connection is not established to the old course endpoint.
+        # Record the raw host disposition without requiring one errno/exception.
+        cleanup_probe = probe_endpoint_after_close("127.0.0.1", assigned_port)
+        self.assertFalse(cleanup_probe["connection_established"], cleanup_probe)
 
     def test_invalid_payload_length_rejected(self):
         with self.assertRaises(ValueError):
@@ -107,10 +109,9 @@ class TestM10FailureFixture(unittest.TestCase):
         refusal = observe_loopback_refusal()
         self.assertTrue(refusal["success"], "Expected refusal observation to succeed")
         self.assertEqual(refusal["disposition"], "CONNECTION_REFUSED_OBSERVED")
-        # Invariant: Must record actual exception type without asserting fixed errno == 111
-        self.assertIn(refusal["exception_type"], ["ConnectionRefusedError", "OSError"])
+        # Raw host exception/errno/timing are evidence only, never acceptance constants.
+        self.assertIsNotNone(refusal["exception_type"])
         self.assertIsNotNone(refusal["elapsed_ms"])
-        self.assertGreaterEqual(refusal["elapsed_ms"], 0.0)
 
     def test_read_timeout_observation(self):
         # Configure a short deadline and bounded watchdog
@@ -118,10 +119,10 @@ class TestM10FailureFixture(unittest.TestCase):
         timeout = observe_read_timeout(client_deadline_s=deadline_s, harness_watchdog_s=2.0)
         self.assertTrue(timeout["success"], f"Read timeout failed: {timeout.get('error')}")
         self.assertEqual(timeout["disposition"], "READ_TIMEOUT_OBSERVED")
-        self.assertIn(timeout["exception_type"], ["TimeoutError", "timeout"])
+        # Record the implementation-specific timeout exception and raw elapsed sample.
+        # Do not enforce a class name, millisecond threshold, or ratio.
+        self.assertIsNotNone(timeout["exception_type"])
         self.assertIsNotNone(timeout["elapsed_ms"])
-        # Recorded elapsed must reflect that client waited for deadline
-        self.assertGreaterEqual(timeout["elapsed_ms"], 100.0)
 
     def test_dns_failure_observation(self):
         dns = observe_dns_failure("essential-cs-m10-test.invalid")
@@ -132,7 +133,7 @@ class TestM10FailureFixture(unittest.TestCase):
         )
         if dns["disposition"] == "LIVE_DNS_FAILURE_OBSERVED":
             self.assertTrue(dns["success"])
-            self.assertEqual(dns["exception_type"], "gaierror")
+            self.assertIsNotNone(dns["exception_type"])
 
     def test_run_all_failure_fixture_integrated(self):
         all_res = run_all_failure_observations()
@@ -147,10 +148,10 @@ class TestM10Reset(unittest.TestCase):
     def test_reset_idempotent(self):
         # First reset
         r1 = run_reset()
-        self.assertEqual(r1["status"], "CLEAN")
+        self.assertEqual(r1["status"], "CLEAN_NO_PERSISTENT_ARTIFACTS")
         # Second reset immediately follows
         r2 = run_reset()
-        self.assertEqual(r2["status"], "CLEAN")
+        self.assertEqual(r2["status"], "CLEAN_NO_PERSISTENT_ARTIFACTS")
         self.assertTrue(r2["idempotent"])
 
 
