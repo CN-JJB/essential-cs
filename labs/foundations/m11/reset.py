@@ -11,43 +11,26 @@ Adheres strictly to Essential CS invariants:
 """
 
 import argparse
-import gc
 import json
-import socket
 import sys
 
 
-def verify_endpoint_not_serving(host="127.0.0.1", port=0):
-    if port == 0:
-        return True
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(0.5)
-    try:
-        sock.connect((host, port))
-        sock.close()
-        return False
-    except Exception:
-        return True
-    finally:
-        try:
-            sock.close()
-        except Exception:
-            pass
-
-
 def run_reset():
-    gc.collect()
+    """
+    M11 activities own no persistent daemon or learner artifact.
 
+    Listener/thread lifecycle is verified by the owning activity/test while the
+    actual endpoint and worker handle are still known. A standalone reset
+    cannot truthfully rediscover arbitrary old ports or prove process cleanup.
+    """
     return {
-        "status": "CLEAN",
+        "status": "CLEAN_NO_PERSISTENT_ARTIFACTS",
         "actions_taken": [
-            "Collected lingering garbage and closed unreferenced sockets",
-            "Verified M11 course loopback endpoints are dormant",
+            "No persistent M11 course daemon or learner artifact requires deletion",
+            "Endpoint/thread teardown is verified by the owning activity/test",
         ],
         "idempotent": True,
     }
-
 
 def main():
     if hasattr(sys.stdout, "reconfigure"):
