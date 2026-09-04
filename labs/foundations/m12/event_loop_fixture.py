@@ -82,12 +82,12 @@ class EventLoopHTTPHandler(http.server.BaseHTTPRequestHandler):
 
   <div class="card">
     <h3>Demonstration 2: Main-Thread Long Task vs. Compositor Concurrency</h3>
-    <p>The animated box below rotates using CSS <code>transform</code> (compositor thread). The counter updates via <code>requestAnimationFrame</code> on the main thread.</p>
+    <p>The animated box below uses CSS <code>transform</code> and is a compositor-friendly candidate. Whether this browser actually promotes/advances it independently is runtime evidence. The counter uses <code>requestAnimationFrame</code> in the Window context.</p>
 
     <div style="display: flex; gap: 2rem; align-items: center;">
       <div>
         <div class="spinner-box"></div>
-        <small>Compositor Thread (CSS Transform)</small>
+        <small>CSS Transform Candidate (record actual compositor behavior)</small>
       </div>
       <div>
         <div class="counter-display" id="raf-counter">Frame: 0</div>
@@ -257,7 +257,7 @@ def main():
     print(" To observe in browser:")
     print(f"   1. Open: http://127.0.0.1:{port}/")
     print("   2. Run Demonstration 1 to verify microtask queue draining before timer tasks.")
-    print("   3. Run Demonstration 2 to observe main-thread lockup vs compositor thread animation.")
+    print("   3. Run Demonstration 2 and record whether the transform candidate continues, stutters, or stops.")
     print("=" * 60)
     try:
         while True:
