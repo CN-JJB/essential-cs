@@ -170,11 +170,25 @@ class OriginBRequestHandler(http.server.BaseHTTPRequestHandler):
         pass
 
     def record_incoming_request(self):
+        # Keep diagnostics course-scoped. Do not reflect arbitrary Cookie,
+        # Authorization, or other ambient credential headers into Origin A.
+        safe_header_names = (
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "Content-Type",
+            "X-Course-Custom",
+        )
+        safe_headers = {
+            name: self.headers.get(name)
+            for name in safe_header_names
+            if self.headers.get(name) is not None
+        }
         log_entry = {
             "timestamp": time.time(),
             "method": self.command,
             "path": self.path,
-            "headers": dict(self.headers),
+            "headers": safe_headers,
         }
         with self.server.lock:
             self.server.received_requests.append(log_entry)
@@ -225,7 +239,7 @@ class OriginBRequestHandler(http.server.BaseHTTPRequestHandler):
             mode = query.get("mode", ["unauthorized"])[0]
             data = {
                 "source": "Origin B",
-                "secret_payload": "course-data-token-42",
+                "course_payload": "course-data-token-42",
                 "received_origin": origin_header,
                 "message": "Origin B generated this representation."
             }
@@ -310,7 +324,7 @@ class DualOriginCORSFixture:
     def start(self):
         # 1. Start Origin B (API Server)
         class OriginBServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
-            daemon_threads = True
+            daemon_threads = False
             allow_reuse_address = True
 
         self.server_b = OriginBServer((self.host, 0), OriginBRequestHandler)
