@@ -59,7 +59,8 @@ jobs:
               text = lesson.read_text(encoding="utf-8")
               assert ident in text, ident
               assert "<details open" not in text.lower()
-              for marker in ["<summary>Question</summary>", "<summary>Hint 1</summary>", "<summary>Hint 2</summary>", "<summary>Expected Observation</summary>", "<summary>Full Explanation</summary>"]:
+              assert "### Question" in text, (ident, "Question")
+              for marker in ["<summary>Hint 1</summary>", "<summary>Hint 2</summary>", "<summary>Expected Observation</summary>", "<summary>Full Explanation</summary>"]:
                   assert marker in text, (ident, marker)
           ids = sorted(set(__import__("re").findall(r"EC-CON-\d{3}", all_text)))
           allowed = {"EC-CON-005","EC-CON-010","EC-CON-011","EC-CON-012","EC-CON-014","EC-CON-015","EC-CON-017"}
