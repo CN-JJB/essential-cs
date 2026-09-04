@@ -84,7 +84,9 @@ class OriginRequestHandler(BaseHTTPRequestHandler):
 
 
 def run_origin_server(host: str = "127.0.0.1", port: int = 0) -> None:
-    """Run origin server until interrupted."""
+    """Run the localhost-only course origin until interrupted."""
+    if host != "127.0.0.1":
+        raise ValueError("LAB-REQ-01 origin is localhost-only and must bind 127.0.0.1")
     server = ThreadingHTTPServer((host, port), OriginRequestHandler)
     actual_port = server.server_port
     # Print machine-readable handshake for harness / learners
