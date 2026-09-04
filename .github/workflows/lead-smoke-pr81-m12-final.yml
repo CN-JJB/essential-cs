@@ -1,0 +1,199 @@
+name: Lead Smoke PR81 M12 Final
+on:
+  push:
+    branches:
+      - lead-smoke/pr-81-m12-final
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Environment
+        run: |
+          python3 --version
+          python3 - <<'PY'
+          import platform
+          print("platform", platform.platform())
+          print("machine", platform.machine())
+          PY
+          curl --version
+
+      - name: Python compile
+        run: |
+          python3 -m py_compile             labs/foundations/m12/rendering_fixture.py             labs/foundations/m12/cors_fixture.py             labs/foundations/m12/event_loop_fixture.py             labs/foundations/m12/reset.py             labs/foundations/m12/test_activity.py             tests/preflight_network_web.py
+
+      - name: Default local preflight
+        run: |
+          python3 tests/preflight_network_web.py --json | tee /tmp/preflight-default.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open("/tmp/preflight-default.json", encoding="utf-8"))
+          src=data["chromium_source"]
+          assert src["disposition"] == "NO LIVE CHROMIUM SOURCE RECHECK", src
+          assert src["reason"] == "NOT_REQUESTED", src
+          assert data["browser"]["cors_observation_disposition"] == "NO LIVE BROWSER CORS OBSERVATION"
+          assert data["browser"]["devtools_observation_disposition"] == "NO LIVE DEVTOOLS OBSERVATION"
+          print("default preflight keeps Chromium source check opt-in")
+          PY
+
+      - name: EXP-03 live source currentness
+        run: |
+          python3 tests/preflight_network_web.py --json --check-chromium-source | tee /tmp/preflight-exp03.json
+          python3 - <<'PY'
+          import base64, json, urllib.request
+
+          pre=json.load(open("/tmp/preflight-exp03.json", encoding="utf-8"))
+          src=pre["chromium_source"]
+          assert src["disposition"] == "LIVE_CHROMIUM_SOURCE_ACCESSIBLE", src
+          assert src["commit"], src
+          print("Chromium main revision", src["commit"], src.get("date"))
+
+          targets = {
+            "docs/process_model_and_site_isolation.md": [
+              "Site Isolation", "Full Site Isolation", "Partial Site Isolation"
+            ],
+            "content/browser/site_instance_impl.cc": [
+              "SiteInstanceImpl::GetProcess", "GetOrCreateProcess"
+            ],
+            "content/browser/security/cpsp/child_process_security_policy_impl.cc": [
+              "CanAccessDataForOrigin"
+            ],
+          }
+          base="https://chromium.googlesource.com/chromium/src/+/refs/heads/main/"
+          for path, needles in targets.items():
+              req=urllib.request.Request(base+path+"?format=TEXT", headers={"User-Agent":"Essential-CS-Lead-Smoke/0.1"})
+              with urllib.request.urlopen(req, timeout=10) as response:
+                  text=base64.b64decode(response.read()).decode("utf-8", errors="replace")
+              for needle in needles:
+                  assert needle in text, (path, needle)
+              print("EXP-03 route OK", path)
+          PY
+
+      - name: M12 tests
+        run: python3 -m unittest discover -s labs/foundations/m12 -p "test_*.py" -v
+
+      - name: Regression M10
+        run: python3 -m unittest discover -s labs/foundations/m10 -p "test_*.py" -v
+
+      - name: Regression M11
+        run: python3 -m unittest discover -s labs/foundations/m11 -p "test_*.py" -v
+
+      - name: Regression LAB-REQ-01
+        run: python3 -m unittest discover -s labs/lab_req_01 -p "test_*.py" -v
+
+      - name: M12 reset twice
+        run: |
+          python3 labs/foundations/m12/reset.py --json
+          python3 labs/foundations/m12/reset.py --json
+
+      - name: Static gates
+        run: |
+          git diff --check 8e271f8c827178b4a36b97c620a553ede34d467d..d7e6d64f22a87d8e5f8f122805811545d3adce1e
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast, re
+
+          lesson_dir=Path("book/12-web-browser-integrated-case")
+          lessons=[
+            lesson_dir/"L12-01.md",
+            lesson_dir/"L12-02.md",
+            lesson_dir/"L12-03.md",
+            lesson_dir/"L12-04.md",
+          ]
+          for i,p in enumerate(lessons,1):
+              t=p.read_text(encoding="utf-8")
+              ident=f"L12-{i:02d}"
+              assert ident in t, ident
+              assert "<details open" not in t.lower()
+              assert "### Question" in t
+              for marker in [
+                "<summary>Hint 1</summary>",
+                "<summary>Hint 2</summary>",
+                "<summary>Expected Observation</summary>",
+                "<summary>Full Explanation</summary>",
+              ]:
+                  assert marker in t, (ident, marker)
+
+          all_lessons="\n".join(p.read_text(encoding="utf-8") for p in lessons)
+          ids=set(re.findall(r"EC-CON-\d{3}", all_lessons))
+          assert ids <= {"EC-CON-005","EC-CON-013","EC-CON-015","EC-CON-017","EC-CON-018"}, ids
+          assert "EC-CON-014" not in all_lessons
+          assert "EC-CON-015" in lessons[3].read_text(encoding="utf-8")
+          for line in lessons[3].read_text(encoding="utf-8").splitlines():
+              if "EC-CON-015" in line:
+                  assert any(x in line for x in ["不定义","保留","Preview","preview"]), line
+
+          canonical={"Trace","Explain","Observe","Diagnose","Correctness","Judge","Estimate","Learn-New-Tech"}
+          labels=set(re.findall(r"- \*\*([A-Za-z][A-Za-z -]*)\*\*[：:]", all_lessons))
+          competency_like={x for x in labels if x in canonical or x in {"Build","Classify","Demarcate","Dissect","Distinguish","Contrast"}}
+          assert competency_like <= canonical, competency_like
+
+          l1201=lessons[0].read_text(encoding="utf-8")
+          assert "IMPLEMENTATION / CURRENT PRACTICE" in l1201
+          assert "NOT WEB PLATFORM SPEC" in l1201
+          l1202=lessons[1].read_text(encoding="utf-8")
+          assert "CONCEPTUAL PIPELINE" in l1202
+          l1203=lessons[2].read_text(encoding="utf-8")
+          assert "NO LIVE BROWSER CORS OBSERVATION" in l1203
+          l1204=lessons[3].read_text(encoding="utf-8")
+          assert "W3C Working Draft, 19 March 2026" in l1204
+          assert "3a_microtask_promise_1" in l1204
+          assert "3b_microtask_queueMicrotask" in l1204
+          assert "3c_microtask_promise_chained" in l1204
+
+          exp=(lesson_dir/"EXP-03-chromium-process-model-site-isolation.md").read_text(encoding="utf-8")
+          for path in [
+            "docs/process_model_and_site_isolation.md",
+            "content/browser/site_instance_impl.cc",
+            "content/browser/security/cpsp/child_process_security_policy_impl.cc",
+          ]:
+              assert path in exp, path
+          assert "compile Chromium" not in exp
+          assert "一个 site = 一个 process" not in exp
+
+          evidence=Path("course/evidence/foundations-m12-evidence-template.md").read_text(encoding="utf-8")
+          assert "W3C Working Draft (13 August 2026)" in evidence
+          assert "W3C Working Draft (19 March 2026)" in evidence
+          assert "NO LIVE BROWSER CORS OBSERVATION" in evidence
+          assert "NO LIVE BROWSER EVENT-LOOP OBSERVATION" in evidence
+
+          exp_ev=Path("course/evidence/exp-03-evidence-template.md").read_text(encoding="utf-8")
+          assert "<actual>" in exp_ev
+          assert "cd4ff71" not in exp_ev
+          assert "blanket fair-use" in exp_ev
+
+          m12_py=list(Path("labs/foundations/m12").glob("*.py"))
+          for p in m12_py:
+              source=p.read_text(encoding="utf-8")
+              tree=ast.parse(source)
+              constants={n.value for n in ast.walk(tree) if isinstance(n,ast.Constant)}
+              assert 8000 not in constants and 9000 not in constants, p
+              for node in ast.walk(tree):
+                  if isinstance(node,(ast.Import,ast.ImportFrom)):
+                      names=[]
+                      if isinstance(node,ast.Import):
+                          names=[a.name.split(".")[0] for a in node.names]
+                      elif node.module:
+                          names=[node.module.split(".")[0]]
+                      assert not ({"playwright","selenium","puppeteer"} & set(names)), (p,names)
+
+          cors=Path("labs/foundations/m12/cors_fixture.py").read_text(encoding="utf-8")
+          assert '"Cookie"' in cors and '"Authorization"' in cors
+          assert "allowed_origin" in cors
+          event=Path("labs/foundations/m12/event_loop_fixture.py").read_text(encoding="utf-8")
+          assert "chunkSizeMs = 20" in event
+          assert "1500" in event
+
+          preflight=Path("tests/preflight_network_web.py").read_text(encoding="utf-8")
+          assert "--check-chromium-source" in preflight
+          assert 'reason": "NOT_REQUESTED"' in preflight
+
+          print("M12 static gates PASS")
+          print("concept ids", sorted(ids))
+          print("competencies", sorted(competency_like))
+          PY
