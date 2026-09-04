@@ -199,7 +199,7 @@ def probe_tools():
 
 
 def probe_browser():
-    """Generic detection for desktop browsers without asserting M10 acceptance."""
+    """Record browser binary presence only; M10 does not probe GUI/browser capability."""
     candidates = ["google-chrome", "chrome", "chromium", "chromium-browser", "firefox"]
     detected = {}
     for name in candidates:
@@ -207,8 +207,9 @@ def probe_browser():
         if path:
             detected[name] = path
     return {
-        "gui_detected": bool(detected),
+        "browser_binary_detected": bool(detected),
         "detected_binaries": detected,
+        "gui_capability": "NOT_PROBED_IN_M10",
     }
 
 
