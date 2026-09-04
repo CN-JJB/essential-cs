@@ -44,7 +44,6 @@ def probe_python():
         import ssl
         info["has_ssl"] = True
         info["ssl_version"] = getattr(ssl, "OPENSSL_VERSION", None)
-        # Check TLS 1.3 support
         has_tls13 = hasattr(ssl, "HAS_TLSv1_3") and ssl.HAS_TLSv1_3
         info["tls1_3_supported"] = bool(has_tls13)
     except ImportError:
@@ -132,6 +131,7 @@ def probe_tool_binary(tool_name, version_flags=("-v", "--version")):
         return {"available": False, "path": None, "version": None}
 
     version_str = None
+    full_output = []
     for flag in version_flags:
         try:
             proc = subprocess.run(
@@ -142,7 +142,9 @@ def probe_tool_binary(tool_name, version_flags=("-v", "--version")):
             )
             out = proc.stdout.strip() or proc.stderr.strip()
             if out:
-                version_str = out.splitlines()[0]
+                lines = out.splitlines()
+                version_str = lines[0]
+                full_output = lines[:5]
                 break
         except Exception:
             continue
@@ -151,22 +153,55 @@ def probe_tool_binary(tool_name, version_flags=("-v", "--version")):
         "available": True,
         "path": path,
         "version": version_str,
+        "details": full_output,
+    }
+
+
+def probe_curl():
+    """Specialized probe for curl to extract version, TLS backend, and features."""
+    base = probe_tool_binary("curl", ["--version"])
+    if not base["available"]:
+        return {
+            "available": False,
+            "path": None,
+            "version": None,
+            "tls_backend": None,
+            "features": None,
+        }
+
+    lines = base.get("details", [])
+    v_line = lines[0] if len(lines) > 0 else base.get("version", "")
+    tls_backend = "UNKNOWN"
+    # curl 8.21.0 (Windows) libcurl/8.21.0 Schannel zlib/1.3.2 ...
+    if "libcurl/" in v_line:
+        parts = v_line.split("libcurl/")[1].split()
+        if len(parts) > 1:
+            tls_backend = parts[1]
+
+    features = []
+    for line in lines:
+        if line.startswith("Features:"):
+            features = line.replace("Features:", "").strip().split()
+
+    return {
+        "available": True,
+        "path": base["path"],
+        "version": v_line,
+        "tls_backend": tls_backend,
+        "features": features,
     }
 
 
 def probe_tools():
     tools = {}
 
-    # Linux routing / socket tools
     tools["ss"] = probe_tool_binary("ss", ["-V", "--version"])
     tools["ip_route"] = probe_tool_binary("ip", ["-V", "-Version"])
 
-    # Optional network tracing / inspection tools
     tools["traceroute"] = probe_tool_binary("traceroute", ["--version", "-V"])
     if not tools["traceroute"]["available"]:
         tools["tracert"] = probe_tool_binary("tracert", ["/?"])
 
-    # Packet capture tool capability
     tcpdump_probe = probe_tool_binary("tcpdump", ["--version"])
     if tcpdump_probe["available"]:
         tools["tcpdump"] = {
@@ -189,17 +224,14 @@ def probe_tools():
                 "reason": "TOOL_UNAVAILABLE",
             }
 
-    # External curl
-    tools["curl"] = probe_tool_binary("curl", ["--version"])
-
-    # OpenSSL CLI
+    tools["curl"] = probe_curl()
     tools["openssl_cli"] = probe_tool_binary("openssl", ["version"])
 
     return tools
 
 
 def probe_browser():
-    """Record browser binary presence only; M10 does not probe GUI/browser capability."""
+    """Record browser binary presence only; M10/M11 do not probe GUI/browser capability."""
     candidates = ["google-chrome", "chrome", "chromium", "chromium-browser", "firefox"]
     detected = {}
     for name in candidates:
@@ -209,7 +241,7 @@ def probe_browser():
     return {
         "browser_binary_detected": bool(detected),
         "detected_binaries": detected,
-        "gui_capability": "NOT_PROBED_IN_M10",
+        "gui_capability": "NOT_PROBED_IN_M10_M11",
     }
 
 
@@ -227,11 +259,29 @@ def run_preflight():
         and loopback_info["can_connect_loopback"]
     )
 
-    status = "READY_M10_CORE" if m10_core_ready else "BLOCKED_M10_CORE"
+    m11_core_ready = (
+        m10_core_ready
+        and py_info["has_ssl"]
+        and py_info["tls1_3_supported"]
+    )
+
+    curl_ready = tools_info["curl"].get("available", False)
+
+    if m11_core_ready and curl_ready:
+        status = "READY_M11_CORE_AND_LAB_REQ_01"
+    elif m11_core_ready and not curl_ready:
+        status = "READY_M11_CORE_LAB_REQ_01_BLOCKED"
+    elif m10_core_ready:
+        status = "READY_M10_CORE"
+    else:
+        status = "BLOCKED_CORE"
 
     return {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "preflight_status": status,
+        "m10_status": "READY" if m10_core_ready else "BLOCKED",
+        "m11_status": "READY" if m11_core_ready else "BLOCKED",
+        "lab_req_01_status": "READY" if curl_ready else "TOOL_MISSING_CURL",
         "os": os_info,
         "python": py_info,
         "loopback": loopback_info,
@@ -255,34 +305,49 @@ def main():
     print("=" * 60)
     print(" Essential CS: Network & Web Preflight Capability Report")
     print("=" * 60)
-    print(f" Timestamp:      {report['timestamp']}")
-    print(f" Overall Status: {report['preflight_status']}")
+    print(f" Timestamp:          {report['timestamp']}")
+    print(f" Overall Status:     {report['preflight_status']}")
+    print(f" M10 Core Status:    {report['m10_status']}")
+    print(f" M11 Core Status:    {report['m11_status']}")
+    print(f" LAB-REQ-01 Status:  {report['lab_req_01_status']}")
     print("-" * 60)
     print(" [Host Operating System]")
-    print(f"   System:       {report['os']['system']} {report['os']['release']} ({report['os']['architecture']})")
-    print(f"   Version:      {report['os']['version']}")
+    print(f"   System:           {report['os']['system']} {report['os']['release']} ({report['os']['architecture']})")
+    print(f"   Version:          {report['os']['version']}")
     print("-" * 60)
     print(" [Python Runtime]")
-    print(f"   Implementation: {report['python']['implementation']}")
-    print(f"   Version:        {report['python']['version']}")
-    print(f"   Socket Support: {'YES' if report['python']['has_socket'] else 'NO'}")
-    print(f"   SSL Support:    {'YES' if report['python']['has_ssl'] else 'NO'} ({report['python'].get('ssl_version')})")
-    print(f"   TLS 1.3:        {'YES' if report['python']['tls1_3_supported'] else 'NO'}")
+    print(f"   Implementation:   {report['python']['implementation']}")
+    print(f"   Version:          {report['python']['version']}")
+    print(f"   Socket Support:   {'YES' if report['python']['has_socket'] else 'NO'}")
+    print(f"   SSL Support:      {'YES' if report['python']['has_ssl'] else 'NO'} ({report['python'].get('ssl_version')})")
+    print(f"   TLS 1.3:          {'YES' if report['python']['tls1_3_supported'] else 'NO'}")
     print("-" * 60)
     print(" [Loopback Socket Capability]")
-    print(f"   Port 0 Bind:    {'YES' if report['loopback']['can_bind_port_0'] else 'NO'} (Assigned: {report['loopback']['assigned_port']})")
-    print(f"   Loopback Conn:  {'YES' if report['loopback']['can_connect_loopback'] else 'NO'}")
+    print(f"   Port 0 Bind:      {'YES' if report['loopback']['can_bind_port_0'] else 'NO'} (Assigned: {report['loopback']['assigned_port']})")
+    print(f"   Loopback Conn:    {'YES' if report['loopback']['can_connect_loopback'] else 'NO'}")
     if report["loopback"]["error"]:
-        print(f"   Error:          {report['loopback']['error']}")
+        print(f"   Error:            {report['loopback']['error']}")
+    print("-" * 60)
+    print(" [curl Capability (Required for LAB-REQ-01)]")
+    curl_info = report["tools"]["curl"]
+    if curl_info.get("available"):
+        print(f"   Available:        YES ({curl_info['path']})")
+        print(f"   Version:          {curl_info['version']}")
+        print(f"   TLS Backend:      {curl_info['tls_backend']}")
+        print(f"   Features:         {', '.join(curl_info['features'])}")
+    else:
+        print("   Available:        NO (TOOL MISSING: curl is required for LAB-REQ-01)")
     print("-" * 60)
     print(" [Resolver Observation Capability]")
-    print(f"   Disposition:    {report['resolver']['disposition']}")
-    print(f"   Available:      {report['resolver']['resolver_available']}")
+    print(f"   Disposition:      {report['resolver']['disposition']}")
+    print(f"   Available:        {report['resolver']['resolver_available']}")
     if report["resolver"]["details"]:
-        print(f"   Details:        {report['resolver']['details']}")
+        print(f"   Details:          {report['resolver']['details']}")
     print("-" * 60)
     print(" [Optional / Auxiliary Tools]")
     for tool_name, tool_data in report["tools"].items():
+        if tool_name == "curl":
+            continue
         avail = tool_data.get("available", False)
         ver = tool_data.get("version") or tool_data.get("reason", "N/A")
         status_str = "AVAILABLE" if avail else "UNAVAILABLE"
