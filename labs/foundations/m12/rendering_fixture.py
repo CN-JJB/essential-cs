@@ -10,9 +10,7 @@ Invariants:
 """
 
 import http.server
-import socket
 import socketserver
-import sys
 import threading
 import time
 import urllib.parse
@@ -173,26 +171,36 @@ class RenderingServerFixture:
     """Manages the lifecycle of a loopback rendering test server on port 0."""
 
     def __init__(self, host="127.0.0.1"):
+        if host != "127.0.0.1":
+            raise ValueError("M12 rendering fixture is localhost-only and must bind 127.0.0.1")
         self.host = host
         self.server = None
         self.thread = None
         self.port = None
+        self.last_stop_record = None
 
     def start(self):
         self.server = ThreadedHTTPServer((self.host, 0), RenderingHTTPHandler)
         self.port = self.server.server_address[1]
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=False)
         self.thread.start()
         return self.port
 
     def stop(self):
+        thread = self.thread
         if self.server:
             self.server.shutdown()
             self.server.server_close()
             self.server = None
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=2.0)
-            self.thread = None
+        reaped = True
+        if thread:
+            thread.join(timeout=2.0)
+            reaped = not thread.is_alive()
+            if not reaped:
+                raise RuntimeError("rendering fixture server thread did not terminate cleanly")
+        self.thread = None
+        self.last_stop_record = {"server_thread_reaped": reaped}
+        return self.last_stop_record
 
     def __enter__(self):
         self.start()
