@@ -119,7 +119,7 @@ class TestM12DualOriginCORS(unittest.TestCase):
             # 3. Case 2: Authorized cross-origin request
             req_auth = urllib.request.Request(
                 f"{url_b}/api/data?mode=authorized",
-                headers={"Origin": url_a, "User-Agent": "TestBrowserAgent/1.0"}
+                headers={"Origin": url_a, "User-Agent": "CourseRawHTTPClient/1.0"}
             )
             with urllib.request.urlopen(req_auth, timeout=3.0) as resp:
                 self.assertEqual(resp.status, 200)
