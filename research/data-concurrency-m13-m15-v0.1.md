@@ -184,18 +184,18 @@ The database sequence (M13 $\to$ M14) traces data management from physical disk 
 ```
 +-----------------------------------------------------------------------------------------+
 | M08 / M09 Foundations                                                                   |
-| Block storage -> OS page cache -> fsync() -> Write-Ahead Logging (WAL) -> Durability   |
+| Files/storage layers + named synchronization/failure bounds -> Durability (M09)        |
 +-------------------------------------------+---------------------------------------------+
-                                            | Physical page layout & log guarantees
+                                            | Page/storage mechanisms and named durability assumptions
                                             v
 +-----------------------------------------------------------------------------------------+
 | M13: Databases: Storage & Indexing                                                      |
-| Storage Engine: Slotted page format, heap files, row-oriented tuple storage             |
-| Index Structure: B-tree / B+ tree pages (root, internal, leaf), branch factor B         |
-| Access Paths: full scan vs. indexed search; asymptotic tree intuition plus actual engine plan/evidence              |
-| Query Pipeline: SQL Text -> AST -> Logical Plan -> Cost Planner -> Physical Plan       |
-| Cost Model: Estimated I/O & CPU cost -> Plan Choice (Scan vs. Index Search)             |
-| Buffer Pool: Engine memory pages, eviction policies, dirty page flushing               |
+| Storage Engine: named engine page/row representation; generic page model only as concept |
+| Index Structure: B-tree-family mechanism; exact node/page shape is implementation evidence |
+| Access Paths: full scan vs. indexed search; asymptotic intuition + actual plan evidence   |
+| Query Route: parse -> named engine planning/code generation -> execution                  |
+| Cost/Planner: estimates and heuristics are named-engine implementation evidence           |
+| Cache/Buffer: SQLite pager/page cache vs PostgreSQL shared buffers kept distinct           |
 | Schema Evolution: Invariant preservation, compatibility, source of truth vs. derived    |
 +-------------------------------------------+---------------------------------------------+
                                             | Atomic page modifications & concurrent access
@@ -227,14 +227,14 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 +-----------------------------------------------------------------------------------------+
 | M15: Concurrency: Threads, Races & Synchronization                                      |
 | Thread Execution: Shared heap/globals, private execution contexts (registers & stacks)  |
-| Interleaving (EC-CON-015): Preemptive OS scheduling, arbitrary instruction interleaving |
-| Hazards: Logical race conditions vs. C/C++ Data Races (Undefined Behavior / UB)         |
-| Hardware Baseline: C11 atomics, memory ordering, atomic read-modify-write (RMW)        |
+| Interleaving (EC-CON-015): permitted ordering/interleaving; observed schedule is host evidence |
+| Hazards: logical race conditions vs. C language data-race undefined behavior                |
+| Required Lab path: C11-compatible atomic accesses around a deliberately non-atomic compound update |
 | Mutual Exclusion: POSIX Mutex (pthread_mutex_t), critical sections, lock invariants     |
 | Coordination: POSIX Condition Variables (pthread_cond_t), predicate while-loop wait     |
 | Progress Failures: Deadlock (Coffman conditions), lock hierarchies, watchdogs           |
-| Execution Models: Preemptive OS Threads vs. Cooperative Asynchronous Event Loops        |
-| Runtime Realities: CPython GIL mechanics, bytecode switching, free-threaded PEP 703    |
+| Execution Models: OS threads vs. async/event-loop tasks; mechanism/cost depends on runtime |
+| Runtime Realities: CPython GIL modes; PEP 703 foundation + PEP 779 supported free-threading |
 +-----------------------------------------------------------------------------------------+
 ```
 
@@ -504,6 +504,7 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
   - `pthread_cond_wait`: <https://pubs.opengroup.org/onlinepubs/9799919799/functions/pthread_cond_wait.html>
 - ISO/IEC 9899:2011 (C11), atomics introduced for the Required C11-compatible path; current-standard status must also cite ISO/IEC 9899:2024 (C23).
 - Python Software Foundation: PEP 703 – *Making the Global Interpreter Lock Optional in CPython*: <https://peps.python.org/pep-0703/>
+- Python Software Foundation: PEP 779 – *Criteria for Supported Status for Free-Threaded Python*: <https://peps.python.org/pep-0779/>
 - Python Official Threading Documentation: <https://docs.python.org/3/library/threading.html>
 - OSTEP: Arpaci-Dusseau, R. & Arpaci-Dusseau, A. *Operating Systems: Three Easy Pieces*, Concurrency chapters (26–32).
 
@@ -541,11 +542,11 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 |---|---|---|---|
 | **ACID "C" (Traditional DB)** | Application and schema invariant preservation (e.g., account balance $\ge 0$, total conservation of money). | Application logic + database schema constraints (`CHECK`, `FOREIGN KEY`). | Application bug commits state where invariants are violated. |
 | **Transaction Isolation (EC-CON-014 Home)** | Named ordering and visibility guarantees for concurrent transactions (Read Committed, Repeatable Read, Snapshot, Serializable). | Database engine concurrency control (2PL, MVCC, Locks, WAL). | Anomalies: Dirty read, non-repeatable read, lost update, write skew. |
-| **Replicated Systems (M17 Revisit)** | Agreement on state updates and read visibility across independent physical nodes (Linearizability, Sequential, Eventual). | Distributed consensus protocols (Raft, Paxos), quorum replication. | Split-brain, stale reads, causal order violations, partition divergence. |
+| **Replicated Systems (M17 Revisit)** | Named replicated-state visibility/ordering models such as linearizability or eventual consistency. | Implementation may use leaders, quorums, consensus, anti-entropy, or other mechanisms depending on the system. | Stale/ordering/divergence observations must be interpreted under the named model and failure assumptions. |
 
 ### 9.3 Pedagogy in L14-02
 - In `L14-02`, learners analyze concurrent database transactions.
-- They observe that without isolation, two transactions executing concurrently read and write overlapping records, resulting in an inconsistent state where the total account balance invariant is violated.
+- They analyze an interleaving whose final state **violates the stated account invariant**. Avoid using bare “inconsistent state” here before the named EC-CON-014 guarantee is stated.
 - The lesson introduces `EC-CON-014` by demonstrating that "consistent" cannot be claimed without specifying the **exact named guarantee**:
   - Under *Read Committed*, an observer is guaranteed never to see uncommitted state transitions (preventing dirty reads), but concurrent writers can still produce lost updates.
   - Under *Serializable*, the database guarantees that all observers see results consistent with *some* sequential execution of allowed state transitions.
@@ -595,7 +596,7 @@ Core 1:        [Task B: step 1] ------> [Task B: step 2] ------> [Task B: step 3
 | `EC-CON-006` | Trade-off (权衡) | Revisit: Index read acceleration vs. write/space overhead | Revisit: Isolation level strictness vs. concurrency throughput | — | Requires explicit constraints; not vague "pros and cons" |
 | `EC-CON-007` | Specification (规格) | — | Revisit: Transaction contract and isolation specifications | Revisit: POSIX thread and synchronization specifications | Contractual guarantees vs. implementation details |
 | `EC-CON-008` | Invariant (不变量) | Revisit: Schema constraints (`CHECK`, `NOT NULL`, `FOREIGN KEY`) | Revisit: Transaction-preserving domain invariants | Revisit: Mutex-protected critical section invariants | A property that holds across all valid state transitions |
-| `EC-CON-009` | Correctness (正确性) | Revisit: Result equivalence (indexed query == unindexed query) | Revisit: Execution free from prohibited isolation anomalies | Revisit: Interleaving produces specified outcome under all schedules | Conformance to specification under concurrent interleaving |
+| `EC-CON-009` | Correctness (正确性) | Revisit: Result equivalence for the declared query | Revisit: Transaction execution satisfies the declared invariant / named isolation contract | Revisit: Synchronization preserves the declared invariant for executions allowed by the stated model | One observed run is evidence, not proof of all schedules |
 | `EC-CON-011` | Caching (缓存) | Revisit: Database engine buffer pool | — | — | Distinguish DB buffer pool from OS page cache and hardware cache |
 | `EC-CON-012` | Locality (局部性) | Revisit: B-tree page layout, clustered indexing, sequential I/O | — | — | Spatial locality on storage blocks |
 | `EC-CON-013` | Isolation (隔离) | — | Revisit: Database transaction isolation levels | Revisit: Synchronization boundaries protecting shared state | Distinguish transaction isolation from OS process address space isolation |
@@ -712,12 +713,13 @@ val = cur2.fetchone()[0]
 try:
     conn2.execute("BEGIN IMMEDIATE;")
 except sqlite3.OperationalError as e:
-    # VERIFICATION: e reports "database is locked"
-    # Proves SQLite writer serialization.
+    # Record the actual SQLite result code / Python exception / message.
+    # The stable evidence is the bounded second-writer conflict disposition,
+    # not one fixed English string.
 ```
 
 ### 13.3 Rollback and Child Crash Recovery
-1. **Explicit Rollback:** Calling `conn1.rollback()` immediately restores account balances to their pre-transaction values, verified by `conn2`.
+1. **Explicit Rollback:** In the isolated course fixture, calling `conn1.rollback()` removes conn1's uncommitted transfer effects; verify the declared account invariant and the rows visible from a fresh/appropriate second-connection observation. Do not generalize this to restoring a whole multi-user database to one prior global state.
 2. **Interrupted Child Process:**
    - A child process opens a transaction and modifies rows in a declared journal mode.
    - Before `COMMIT`, the parent terminates only that owned child under a bounded watchdog.
@@ -764,13 +766,13 @@ void* worker(void* arg) {
 }
 ```
 
-- **Why this works:** Every memory access is an atomic operation complying with ISO C11. There are **zero data races** and **zero undefined behaviors**.
+- **Why this path is useful:** accesses to the shared counter are atomic, so the intended lost-update example does not rely on an unsynchronized conflicting access to that object. Research should not claim the entire future program has “zero undefined behaviors” until the exact implemented source is reviewed.
 - **The observed failure:** Because the two-step sequence (Read $\to$ Write) is not atomic as a compound operation, Thread 1 and Thread 2 both read `current = 42`, both compute `43`, and both store `43`. One update is completely lost.
 - **Agent host observation:** one tested source/toolchain/run set produced lost updates. Preserve raw run counts if useful, but **do not promote a 10,000–15,000 range or 100% manifestation rate into the Lab contract**; `sched_yield()` is not an interleaving guarantee.
 
 ### 14.3 Mutex Repair & Condition Rendezvous
 1. **Mutex Repair:**
-   - Wrapping the compound sequence inside `pthread_mutex_lock(&lock)` and `pthread_mutex_unlock(&lock)` restores the compound invariant. The final count reaches exactly 20,000 across all runs.
+   - Wrapping the course compound sequence with the shared mutex is the proposed repair. For a fixture with two workers × 10,000 intended increments, every **completed repaired run** should satisfy the declared final target 20,000; repeated passing runs are not proof over every possible program/environment schedule.
 2. **Condition-Variable Rendezvous:**
    - Worker 2 waits for Worker 1 to produce a payload:
      ```c
@@ -918,8 +920,8 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
 | IMPLEMENTATION (Concrete Database & Runtime Engine Mechanics)                                                     |
 | - SQLite 3 Query Planner & Storage Engine (B-tree pages, master table, EQP detail strings)                       |
 | - SQLite Transaction & Locking Engine (Rollback journal, WAL, busy handler, file locking)                        |
-| - Linux NPTL (Native POSIX Thread Library) & Kernel Futex Scheduling                                              |
-| - CPython Bytecode Dispatcher & Global Interpreter Lock (GIL) Implementation                                     |
+| - Linux/glibc/NPTL behavior only where actually inspected during implementation smoke; POSIX remains authority   |
+| - Named CPython build/runtime GIL/free-threading behavior; Python language contract kept separate                  |
 | - PostgreSQL Backend Optimizer & Buffer Manager (costsize.c, plan/README, buffer/README)                         |
 +------------------------------------------------------------------------------------------------------------------+
                                                         |
