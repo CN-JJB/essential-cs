@@ -44,25 +44,29 @@ def observe_loopback_refusal():
     }
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.settimeout(2.0)
     t0 = time.perf_counter()
     try:
-        # Default blocking connect receives OS loopback refusal immediately
-        client.connect(("127.0.0.1", unbound_port))
-        # If connection unexpectedly succeeded, an external process bound the port
-        record["disposition"] = "UNEXPECTED_CONNECTION_SUCCESS"
-    except (ConnectionRefusedError, OSError) as exc:
+        connect_result = client.connect_ex(("127.0.0.1", unbound_port))
         t1 = time.perf_counter()
-        record["disposition"] = "CONNECTION_REFUSED_OBSERVED"
+        record["elapsed_ms"] = round((t1 - t0) * 1000.0, 3)
+        record["connect_ex_result"] = connect_result
+        if connect_result == 0:
+            # Race: another local process acquired the just-released port.
+            record["disposition"] = "UNEXPECTED_CONNECTION_SUCCESS"
+        else:
+            record["disposition"] = "UNBOUND_LOOPBACK_CONNECT_FAILURE_OBSERVED"
+            record["success"] = True
+    except Exception as exc:
+        t1 = time.perf_counter()
+        record["elapsed_ms"] = round((t1 - t0) * 1000.0, 3)
+        record["disposition"] = "UNBOUND_LOOPBACK_CONNECT_EXCEPTION_OBSERVED"
         record["exception_type"] = type(exc).__name__
         record["errno"] = getattr(exc, "errno", None)
         record["strerror"] = str(exc)
-        record["elapsed_ms"] = round((t1 - t0) * 1000.0, 3)
         record["success"] = True
     finally:
-        try:
-            client.close()
-        except Exception:
-            pass
+        client.close()
 
     return record
 
@@ -109,7 +113,7 @@ def observe_read_timeout(client_deadline_s=0.25, harness_watchdog_s=3.0):
                 except Exception:
                     pass
 
-    srv_thread = threading.Thread(target=silent_server_worker, daemon=True)
+    srv_thread = threading.Thread(target=silent_server_worker, daemon=False)
     srv_thread.start()
 
     client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -146,7 +150,11 @@ def observe_read_timeout(client_deadline_s=0.25, harness_watchdog_s=3.0):
             server_sock.close()
         except Exception:
             pass
-        srv_thread.join(timeout=1.0)
+        srv_thread.join(timeout=min(harness_watchdog_s, 1.0))
+        record["server_thread_reaped"] = not srv_thread.is_alive()
+        if not record["server_thread_reaped"]:
+            record["success"] = False
+            record["error"] = "Silent-server worker did not terminate under teardown watchdog"
 
     return record
 
@@ -193,7 +201,7 @@ def run_all_failure_observations():
         "dns_failure_observation": dns,
         "partial_failure_doctrine": {
             "ambiguity": "A client-visible timeout proves only that the client's local read timer expired before bytes were received. The remote server may have (1) never received the request, (2) received and crashed mid-execution, or (3) completed execution successfully while the response was lost.",
-            "retry_judgment": "Automatic retries of non-idempotent operations (such as mutations or payment transfers) carry severe duplicate-execution risks. Safe retries require idempotency keys or explicit deduplication contracts.",
+            "retry_judgment": "A timeout does not by itself authorize a retry. Retry safety requires an application-level contract appropriate to the operation, such as naturally idempotent semantics, a unique operation identifier with deduplication, or an explicit query/reconciliation step.",
         },
     }
 
@@ -243,7 +251,7 @@ def main():
     print("-" * 60)
     print(" [Partial Failure & Retry Doctrine]")
     print("   Remote Ambiguity: Timeout leaves server outcome uncertain.")
-    print("   Retry Judgment:   Do not blindly retry non-idempotent mutations.")
+    print("   Retry Judgment:   Retry only under an explicit application-level contract.")
     print("=" * 60)
 
     return 0 if (r["success"] and t["success"]) else 1
