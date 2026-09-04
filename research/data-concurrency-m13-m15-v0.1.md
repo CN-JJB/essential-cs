@@ -329,16 +329,16 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 
 ### 7.1 Capability Transition
 - **From:** Single queries operating on stable tables without considering concurrent modifications or mid-operation system crashes.
-- **To:** Transactional systems guaranteeing atomic multi-step state transitions, consistent isolation boundaries between concurrent sessions, and crash recovery.
+- **To:** Transactional systems that provide named atomicity/isolation/recovery mechanisms under a specific engine/configuration, while the application and schema still own the business invariant they intend each transaction to preserve.
 
 ### 7.2 Minimum Mechanism Model
 1. **Transaction Boundary & Invariant Preservation:**
-   - A transaction (`BEGIN ... COMMIT / ROLLBACK`) is an invariant-preserving state transition from valid state $S_0$ to valid state $S_1$.
-   - If an error occurs or invariant verification fails mid-transaction, `ROLLBACK` restores the database to $S_0$.
-2. **Atomicity and Write-Ahead Logging (WAL):**
-   - Write-Ahead Logging (WAL) invariant: Log records describing state modifications must be persisted to non-volatile storage before corresponding dirty database pages are written to the database file.
-   - Traditional Rollback Journal: Before modifying a page in place, the original unmutated page is copied to `<db>-journal`. On crash, subsequent openers restore the journal.
-   - WAL Mode: Updates are appended sequentially to a separate write-ahead log file (`<db>-wal`). The main database file remains unmodified. Readers read from the database file and WAL concurrently without locking. Checkpointing periodically flushes WAL pages into the database file.
+   - A transaction supplies an atomicity/isolation boundary for a group of operations; it does **not by itself prove** an application invariant. The learner must state the invariant/constraints and show that the transaction's intended transition preserves them.
+   - `ROLLBACK` removes the effects of the current uncommitted transaction according to the named engine semantics. It should not be described as restoring the entire database to one universal global $S_0$ when other committed activity may exist.
+2. **Atomicity / Journal / WAL Boundaries:**
+   - **General WAL principle:** recovery designs arrange log/data ordering so enough recovery information reaches the required durability boundary before data pages whose recovery depends on it. The exact record/page/flush protocol is engine-specific.
+   - **SQLite rollback-journal mode:** original page content is journaled before in-place database changes; a hot rollback journal may be used by a later opener to restore an interrupted transaction under SQLite's documented rules.
+   - **SQLite WAL mode:** changed database pages are appended as WAL frames; a commit is represented in the WAL and checkpointing later transfers eligible content back to the main database. Readers can coexist with a writer by using snapshots, but SQLite still uses locking/shared-memory coordination. Do not teach “WAL readers run without locking”.
 3. **Isolation Anomalies (Berenson et al. / ANSI SQL-92):**
    - **Dirty Read ($P_1 / A_1$):** Transaction $T_1$ modifies data; Transaction $T_2$ reads uncommitted modification; $T_1$ rolls back.
    - **Non-Repeatable Read ($P_2 / A_2$):** $T_1$ reads data; $T_2$ modifies/commits data; $T_1$ re-reads and observes mutated values.
@@ -352,9 +352,9 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 5. **Recovery vs. Durability Boundaries:**
    - Distinguish distinct failure classes:
      1. Application `ROLLBACK`: Intentional programmatic cancellation.
-     2. Client Process Interruption (`SIGKILL`): Operating system cleans up process memory; database recovery restores committed state on next file access.
-     3. OS Crash / Kernel Panic: Unflushed volatile memory lost; recovery depends on `fsync()` guarantees.
-     4. Power Loss / Hardware Storage Failure: Durability depends on non-volatile drive caches and device flush compliance.
+     2. Learner-owned client process interruption: the process dies and OS-owned locks/resources are released. In rollback-journal mode a later open may perform hot-journal recovery; in WAL mode uncommitted frames are not a committed transaction. Record the actual journal mode and artifacts rather than asserting one identical recovery path.
+     3. OS crash / kernel failure: volatile kernel/application state may be lost; guarantees depend on the named SQLite journal/synchronous settings plus filesystem/device semantics.
+     4. Power loss / hardware failure: a stronger failure bound involving device/controller persistence and ordering behavior. The course process-kill experiment does not exercise this bound.
 
 ### 7.3 Explicit Non-Goals
 - Implementing the ARIES recovery algorithm.
@@ -372,8 +372,8 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 - Initialize an account balance table with invariant: `balance_a + balance_b == 1000`.
 - Open two independent SQLite connections:
   - Connection 1 opens a transaction and updates `balance_a = 900`.
-  - Connection 2 performs a `SELECT` and confirms committed-only visibility (observes original balance 1000, proving absence of dirty reads).
-- Connection 2 attempts an immediate write and encounters `SQLITE_BUSY` (`database is locked`), demonstrating SQLite writer serialization.
+  - Connection 2 performs a `SELECT` and records the committed snapshot visible under the fixture's actual SQLite configuration. This is evidence for the documented committed-only visibility path; one run is not a universal proof about every SQLite shared-cache/read-uncommitted configuration.
+- Connection 2 attempts a bounded concurrent write and records the actual SQLite/Python disposition (for example a busy/locked result, wait, or WAL snapshot-related conflict depending on transaction/journal configuration). Do not require one fixed exception string as the curriculum invariant.
 - Connection 1 issues `ROLLBACK`; Connection 2 verifies balances remain exactly 1000.
 - Execute an uncommitted transaction in a child process, kill the child with `SIGKILL`, reopen the database from the parent process, and verify that recovery leaves the database in its pre-transaction state.
 
@@ -384,7 +384,7 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 
 ### 7.7 Authority Classification
 - **PRINCIPLE:** ACID definitions (Haerder & Reuter 1983), isolation anomaly taxonomy (Berenson et al. 1995), Write-Ahead Logging invariant.
-- **SPECIFICATION:** ANSI/ISO SQL-92 isolation levels.
+- **SPECIFICATION / HISTORICAL AUTHORITY:** SQL standard isolation-level terminology plus the Berenson et al. critique/taxonomy. Research must name which source defines each anomaly because SQL-standard phenomena and later anomaly labels are not one universal taxonomy.
 - **IMPLEMENTATION:** SQLite locking states (`UNLOCKED`, `SHARED`, `RESERVED`, `PENDING`, `EXCLUSIVE`), WAL checkpointing, `sqlite3` busy timeout handling.
 - **CURRENT PRACTICE:** SQLite default journal mode (`DELETE` rollback journal) vs. WAL mode (`PRAGMA journal_mode=WAL`).
 
@@ -400,17 +400,17 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 ### 7.9 Likely Misconceptions
 - *"ACID Consistency is the same as distributed consistency (or EC-CON-014)."* (False: ACID Consistency means preserving application/schema invariants; EC-CON-014 defines named ordering and visibility guarantees).
 - *"Serializable isolation means transactions execute one at a time on a single CPU core."* (False: Serializable means the observable outcome is equivalent to *some* serial execution order; engines can execute transactions concurrently if interleavings are serializable).
-- *"Killing a database process tests physical power-loss durability."* (False: Terminating a process leaves kernel file buffers and OS filesystem metadata intact; power loss abruptly halts hardware and loses uncommitted volatile device cache).
+- *"Killing a database client process tests physical power-loss durability."* (False: terminating one learner-owned process leaves the OS/filesystem/device running. Power-loss behavior depends on additional volatile caches, ordering and persistence assumptions not exercised by this test.)
 - *"Database rollback is the same thing as a backup."* (False: Rollback reverts uncommitted mutations in the active transaction log; backup produces a point-in-time snapshot copy of the database file).
 
 ### 7.10 Environment & Tool Constraints
 - Tools: Python stdlib `sqlite3` supports multi-connection and subprocess management out of the box.
-- Concurrency: Requires filesystem locking support (standard local filesystems support POSIX `fcntl` / `flock` / Windows locking; NFS/SMB network mounts can exhibit broken locking).
+- Concurrency: SQLite depends on the selected VFS/filesystem locking semantics. The Required Lab must use a course-owned **local** writable directory and record the actual VFS/environment. Network/remote filesystem semantics vary by implementation/configuration and are outside the Core acceptance path.
 - Cleanup: Must cleanly remove test database files and sidecars (`.db`, `.db-journal`, `.db-wal`, `.db-shm`).
 
 ### 7.11 Implementation-Time Smoke Requirements
-- Verify that a second connection receives `sqlite3.OperationalError: database is locked` when attempting a concurrent write during an active transaction.
-- Confirm that child process termination via `SIGKILL` cleanly releases file locks and allows parent process recovery.
+- Verify a bounded second-writer/conflict scenario and record the actual SQLite result/code/exception without binding the Lab to one message string.
+- On canonical Linux, an owned child may be terminated abruptly (for example via `SIGKILL`); verify bounded child reaping, lock release, reopen behavior, journal-mode-specific artifacts, and invariant state. Process termination remains a process-crash observation only.
 
 ---
 
@@ -701,11 +701,11 @@ except sqlite3.OperationalError as e:
 
 ### 13.3 Rollback and Child Crash Recovery
 1. **Explicit Rollback:** Calling `conn1.rollback()` immediately restores account balances to their pre-transaction values, verified by `conn2`.
-2. **Crash Recovery (Interrupted Child Process):**
-   - A child process opens a transaction via `BEGIN IMMEDIATE` and modifies rows.
-   - Before `COMMIT`, the parent process terminates the child abruptly using `SIGKILL` (`process.kill()`).
-   - The parent process opens a new connection to the database file.
-   - SQLite detects the pending rollback journal (or WAL file), executes recovery, rolls back the uncommitted transaction, and restores the database to a consistent state.
+2. **Interrupted Child Process:**
+   - A child process opens a transaction and modifies rows in a declared journal mode.
+   - Before `COMMIT`, the parent terminates only that owned child under a bounded watchdog.
+   - The parent reaps the child and reopens the database.
+   - Record the actual side files and reopen behavior. In rollback-journal mode a hot journal may require recovery; in WAL mode the presence of WAL content does not mean an uncommitted transaction is “rolled back from WAL” in the same way. Verify the declared application invariant/committed state, not one universal internal recovery narrative.
 3. **Safety & Claim Boundary:**
    - The lab explicitly instructs learners: Terminating a child process tests **client crash recovery** (recovery from an abnormal application crash). It does **not** test physical durability against hardware power failure.
 
@@ -942,14 +942,14 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
   - **Inference Boundary:** The database buffer pool is user-space application memory managed by domain-aware replacement algorithms (Clock, LRU, 2Q) with transactional page-pinning semantics. The OS page cache operates at the kernel VFS level and is unaware of database transaction boundaries.
 
 ### 21.2 Transactions & Isolation Misconceptions (M14)
-- **Misconception:** *"ACID Consistency means distributed data consistency."*
-  - **Inference Boundary:** ACID Consistency ($C$) means preserving application invariants and schema integrity across state transitions. Distributed consistency (`EC-CON-014` in M17) defines read-visibility and operation-ordering contracts across independent networked nodes.
+- **Misconception:** *"ACID Consistency means the same thing as every systems consistency model."*
+  - **Inference Boundary:** Historical ACID “C” is commonly framed around integrity/application constraints for a transaction, while **EC-CON-014 is first defined here in M14** as a qualified ordering/visibility guarantee and later revisited in M17 for replicated systems. Do not relocate the concept's first home to M17.
 - **Misconception:** *"Serializable isolation means transactions run one-by-one sequentially."*
   - **Inference Boundary:** Serializability guarantees that the observable outcome of concurrent execution is equivalent to *some* serial execution. High-performance engines execute transactions concurrently using locking or multi-versioning, intervening only when an interleaving threatens serial equivalence.
 - **Misconception:** *"WAL guarantees complete durability against any physical failure."*
-  - **Inference Boundary:** WAL guarantees recovery up to the last `fsync()` acknowledged to non-volatile storage. It cannot protect against physical drive destruction, corrupted storage controllers, or disks that falsely acknowledge un-flushed volatile cache writes.
+  - **Inference Boundary:** A WAL design supports recovery only under its named commit/flush/filesystem/device assumptions. SQLite's guarantee also depends on journal mode, `synchronous` configuration and storage behavior. No single `fsync()` sentence is a universal physical-durability guarantee.
 - **Misconception:** *"Killing a test process proves power-loss durability."*
-  - **Inference Boundary:** Process termination drops private process memory, but leaves kernel page cache and filesystem metadata intact. Power failure abruptly terminates all volatile components, testing device write caches and atomic sector write boundaries.
+  - **Inference Boundary:** Process termination removes one process while the OS/filesystem/device continue running. A power-loss bound concerns additional volatile state and storage ordering/atomicity behavior; this course experiment does not test those layers.
 
 ### 21.3 Concurrency Misconceptions (M15)
 - **Misconception:** *"Threads always execute at the exact same physical instant."*
@@ -973,7 +973,7 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
    - Assert result-set identity: $\text{Result}(\text{Indexed}) == \text{Result}(\text{Unindexed})$.
 2. **Transaction Isolation & Invariant Verification (M14):**
    - Execute two concurrent connections; assert that Connection 2 cannot observe uncommitted writes from Connection 1.
-   - Assert that attempting concurrent writes raises `sqlite3.OperationalError` (`database is locked`).
+   - Assert the **fixture-defined conflict contract** using SQLite result codes/transaction state and record the actual Python exception/message if one occurs; do not require a fixed `database is locked` string across versions/configurations.
    - Terminate child process mid-transaction; assert that post-crash state preserves original invariant: `balance_a + balance_b == 1000`.
 3. **Atomic Race & Mutex Repair Verification (M15):**
    - Run broken atomic compound counter; assert that final count $< 20,000$ in $\ge 95\%$ of runs.
