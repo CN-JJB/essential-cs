@@ -163,7 +163,7 @@ recordEvent("async_script_executed");
 
 
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
-    daemon_threads = True
+    daemon_threads = False
     allow_reuse_address = True
 
 
