@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""LAB-REQ-01 Intermediary Adapter (Reverse Proxy).
+"""LAB-REQ-01 bounded HTTP/1.1 intermediary.
 
-HTTP/1.1 Intermediary / Proxy Adapter:
-- Binds to 127.0.0.1 with port 0 (dynamic allocation).
-- Prints PROXY_READY_PORT=<port> to stdout immediately upon listening.
-- Forwards incoming client requests to the configured origin server.
-- Injects Via header: "1.1 essential-cs-intermediary".
-- Correctly handles hop-by-hop headers (RFC 9110 Section 7.6.1).
-- Maps upstream connection failure / refusal to 502 Bad Gateway.
+Course contract:
+- localhost only, dynamic port 0;
+- GET/HEAD only;
+- parse Connection options and remove nominated connection-specific fields;
+- append a truthful Via entry using the protocol actually received on each hop;
+- map the course-owned upstream connect failure to 502;
+- never act as an open/public proxy.
 """
 
 from __future__ import annotations
@@ -15,99 +15,172 @@ from __future__ import annotations
 import argparse
 import http.client
 import json
-import sys
+from email.message import Message
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Iterable
 
-HOP_BY_HOP_HEADERS = {
+# Known fields that must not be blindly forwarded by this bounded intermediary.
+# The dynamic Connection option set is handled separately below.
+KNOWN_CONNECTION_SPECIFIC = {
     "connection",
+    "proxy-connection",  # legacy/non-standard but common enough to reject here
     "keep-alive",
     "proxy-authenticate",
     "proxy-authorization",
     "te",
-    "trailers",
+    "trailer",
     "transfer-encoding",
     "upgrade",
 }
 
 
+def _connection_tokens_from_values(values: Iterable[str]) -> set[str]:
+    tokens: set[str] = set()
+    for value in values:
+        for item in value.split(","):
+            token = item.strip().lower()
+            if token:
+                tokens.add(token)
+    return tokens
+
+
+def _request_connection_tokens(headers: Message) -> set[str]:
+    return _connection_tokens_from_values(headers.get_all("Connection", []) or [])
+
+
+def _response_connection_tokens(headers: list[tuple[str, str]]) -> set[str]:
+    return _connection_tokens_from_values(
+        value for name, value in headers if name.lower() == "connection"
+    )
+
+
+def _remove_for_forwarding(name: str, connection_tokens: set[str]) -> bool:
+    lower = name.lower()
+    return lower in KNOWN_CONNECTION_SPECIFIC or lower in connection_tokens
+
+
+def _http_version_token(version: str | int) -> str:
+    """Return the Via received-protocol token for the versions this lab supports."""
+    if isinstance(version, int):
+        if version == 11:
+            return "1.1"
+        if version == 10:
+            return "1.0"
+        return f"unknown-{version}"
+
+    text = version.upper()
+    if text.startswith("HTTP/"):
+        return text.split("/", 1)[1]
+    return text
+
+
+def _append_via(existing: str | None, received_protocol: str) -> str:
+    course_entry = f"{received_protocol} essential-cs-intermediary"
+    return f"{existing}, {course_entry}" if existing else course_entry
+
+
 def make_proxy_handler(origin_host: str, origin_port: int):
     class IntermediaryRequestHandler(BaseHTTPRequestHandler):
-        """HTTP request handler forwarding to upstream origin."""
+        """Forward the bounded course GET/HEAD subset to one configured origin."""
 
         protocol_version = "HTTP/1.1"
 
         def log_message(self, format: str, *args: object) -> None:
-            """Suppress verbose server stderr logs during tests."""
             pass
 
+        def _send_course_error(self, status: int, payload: dict[str, object]) -> None:
+            body = json.dumps(payload).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header(
+                "Via",
+                _append_via(None, _http_version_token(self.request_version)),
+            )
+            self.send_header("Connection", "close")
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(body)
+
+        def _method_not_allowed(self) -> None:
+            body = json.dumps(
+                {
+                    "error": "Method Not Allowed",
+                    "allowed": ["GET", "HEAD"],
+                    "course_scope": "LAB-REQ-01 bounded intermediary",
+                }
+            ).encode("utf-8")
+            self.send_response(405)
+            self.send_header("Allow", "GET, HEAD")
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(body)
+
         def _forward_request(self) -> None:
-            # 1. Prepare upstream headers (strip hop-by-hop)
+            request_connection_tokens = _request_connection_tokens(self.headers)
+
             upstream_headers: dict[str, str] = {}
-            for k, v in self.headers.items():
-                if k.lower() not in HOP_BY_HOP_HEADERS and k.lower() != "host":
-                    upstream_headers[k] = v
+            for name, value in self.headers.items():
+                lower = name.lower()
+                if lower == "host":
+                    continue
+                if _remove_for_forwarding(name, request_connection_tokens):
+                    continue
+                upstream_headers[name] = value
 
             upstream_headers["Host"] = f"{origin_host}:{origin_port}"
+            upstream_headers["Via"] = _append_via(
+                self.headers.get("Via"),
+                _http_version_token(self.request_version),
+            )
 
-            # 2. Inject / extend Via header
-            client_via = self.headers.get("Via")
-            if client_via:
-                upstream_headers["Via"] = f"{client_via}, 1.1 essential-cs-intermediary"
-            else:
-                upstream_headers["Via"] = "1.1 essential-cs-intermediary"
-
-            # 3. Read body if present
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(content_length) if content_length > 0 else None
-
-            # 4. Attempt upstream forward
-            conn = None
+            conn = http.client.HTTPConnection(origin_host, origin_port, timeout=3.0)
             try:
-                conn = http.client.HTTPConnection(origin_host, origin_port, timeout=3.0)
-                conn.request(self.command, self.path, body=body, headers=upstream_headers)
+                conn.request(self.command, self.path, headers=upstream_headers)
                 resp = conn.getresponse()
             except (OSError, http.client.HTTPException) as exc:
-                # Upstream connection failed/refused -> 502 Bad Gateway
-                if conn:
-                    conn.close()
-                err_body = json.dumps({
-                    "error": "Bad Gateway",
-                    "reason": "Origin server unreachable or connection refused",
-                    "upstream": f"{origin_host}:{origin_port}",
-                    "exception": type(exc).__name__,
-                }).encode("utf-8")
-                self.send_response(502)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", str(len(err_body)))
-                self.send_header("Via", "1.1 essential-cs-intermediary")
-                self.send_header("Connection", "close")
-                self.end_headers()
-                self.wfile.write(err_body)
+                conn.close()
+                self._send_course_error(
+                    502,
+                    {
+                        "error": "Bad Gateway",
+                        "reason": "Course origin connection failed",
+                        "upstream": f"{origin_host}:{origin_port}",
+                        "host_disposition": type(exc).__name__,
+                    },
+                )
                 return
 
-            # 5. Upstream responded: relay status and headers
             try:
-                self.send_response(resp.status)
-                resp_headers = resp.getheaders()
-                via_seen = False
-                for k, v in resp_headers:
-                    if k.lower() in HOP_BY_HOP_HEADERS:
-                        continue
-                    if k.lower() == "via":
-                        via_seen = True
-                        self.send_header("Via", f"{v}, 1.1 essential-cs-intermediary")
-                    else:
-                        self.send_header(k, v)
+                response_headers = resp.getheaders()
+                response_connection_tokens = _response_connection_tokens(response_headers)
+                response_via_values = [
+                    value for name, value in response_headers if name.lower() == "via"
+                ]
+                existing_response_via = ", ".join(response_via_values) or None
+                upstream_received_protocol = _http_version_token(resp.version)
 
-                if not via_seen:
-                    self.send_header("Via", "1.1 essential-cs-intermediary")
+                self.send_response(resp.status)
+                for name, value in response_headers:
+                    lower = name.lower()
+                    if lower == "via":
+                        continue
+                    if _remove_for_forwarding(name, response_connection_tokens):
+                        continue
+                    self.send_header(name, value)
+
+                self.send_header(
+                    "Via",
+                    _append_via(existing_response_via, upstream_received_protocol),
+                )
+                # The course intermediary deliberately closes each downstream response.
                 self.send_header("Connection", "close")
                 self.end_headers()
 
-                # 6. Relay response body (unless 304, 204, or HEAD)
                 if resp.status not in (204, 304) and self.command != "HEAD":
-                    resp_body = resp.read()
-                    self.wfile.write(resp_body)
+                    self.wfile.write(resp.read())
             finally:
                 conn.close()
 
@@ -118,10 +191,16 @@ def make_proxy_handler(origin_host: str, origin_port: int):
             self._forward_request()
 
         def do_POST(self) -> None:
-            self._forward_request()
+            self._method_not_allowed()
 
         def do_PUT(self) -> None:
-            self._forward_request()
+            self._method_not_allowed()
+
+        def do_DELETE(self) -> None:
+            self._method_not_allowed()
+
+        def do_CONNECT(self) -> None:
+            self._method_not_allowed()
 
     return IntermediaryRequestHandler
 
@@ -129,6 +208,9 @@ def make_proxy_handler(origin_host: str, origin_port: int):
 def run_intermediary_adapter(
     origin_host: str, origin_port: int, host: str = "127.0.0.1", port: int = 0
 ) -> None:
+    if host != "127.0.0.1" or origin_host != "127.0.0.1":
+        raise ValueError("LAB-REQ-01 is localhost-only: both bind and origin host must be 127.0.0.1")
+
     handler_class = make_proxy_handler(origin_host, origin_port)
     server = ThreadingHTTPServer((host, port), handler_class)
     actual_port = server.server_port
@@ -142,10 +224,10 @@ def run_intermediary_adapter(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="LAB-REQ-01 Intermediary Adapter")
-    parser.add_argument("--origin-host", default="127.0.0.1", help="Origin host (default: 127.0.0.1)")
-    parser.add_argument("--origin-port", type=int, required=True, help="Origin port (required)")
-    parser.add_argument("--host", default="127.0.0.1", help="Proxy bind host (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=0, help="Proxy bind port (default: 0 for dynamic)")
+    parser = argparse.ArgumentParser(description="LAB-REQ-01 bounded intermediary")
+    parser.add_argument("--origin-host", default="127.0.0.1")
+    parser.add_argument("--origin-port", type=int, required=True)
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=0)
     args = parser.parse_args()
     run_intermediary_adapter(args.origin_host, args.origin_port, args.host, args.port)
