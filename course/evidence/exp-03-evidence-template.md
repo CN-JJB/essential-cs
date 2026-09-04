@@ -30,28 +30,28 @@ This document records the empirical source inspection evidence for Source Expedi
 
 ### Path 1: `docs/process_model_and_site_isolation.md`
 - **Bounded Finding**:
-  In the *Goals* and *Site Isolation* sections, Chromium articulates that multi-process architecture and locked renderer processes exist to defend against compromised renderer processes and hardware-level speculative execution side-channel attacks (**Spectre and Meltdown**), which would otherwise allow untrusted JavaScript to read cross-origin memory within the same process address space.
+  Record the current Chromium finding that compromised renderers and **Spectre-like speculative-execution threats** motivate stronger cross-site process/data isolation. Do not add Meltdown unless the exact inspected source says so, and do not claim process isolation eliminates all side channels.
 
 ### Path 2: `content/browser/site_instance_impl.cc`
 - **Bounded Finding**:
-  In `SiteInstanceImpl::GetProcess()` and `GetOrCreateProcess()`, process assignment evaluates `has_group()`, checks whether `ShouldUseProcessPerSite()` applies to update `process_reuse_policy_`, and checks `CanPutSiteInstanceInDefaultGroup()`. An existing renderer process from the default group is reused whenever permitted by policy, rather than unconditionally allocating a new OS process per navigation.
+  Record the exact process-selection/reuse entry observed around `SiteInstanceImpl::GetProcess()` / `GetOrCreateProcess()` at the inspected revision. Current code may expose SiteInstanceGroup, `ShouldUseProcessPerSite()`, `CanPutSiteInstanceInDefaultGroup()` or related policy state. Stable conclusion: allocation/reuse is policy-driven, not “one navigation = one new OS process”.
 
 ### Path 3: `content/browser/security/cpsp/child_process_security_policy_impl.cc`
 - **Bounded Finding**:
-  In `ChildProcessSecurityPolicyImpl::CanAccessDataForOrigin(int child_id, const url::Origin& origin)`, the centralized browser process evaluates the calling child process ID and the target origin (extracting precursor tuples for opaque origins) against the process lock registered in `process_states_`, refusing data access and recording crash keys if a process locked to one site attempts to access another site's committed data.
+  Record the exact parameters and browser-side policy checks visible in `CanAccessDataForOrigin()` (or its current directly corresponding entry). Scope the finding to this selected origin/data-access policy path; do not infer that all Cookie/file/network/IPC authorization is centralized in this one method.
 
 ---
 
 ## 5. One Conceptual-vs-Implementation Nuance
 
 - **Nuance**:
-  While the conceptual teaching model frames Site Isolation as "one site = one process", actual Chromium engineering accommodates memory constraints and platform differences. On memory-constrained devices or under OS process count limits, Chromium applies process reuse fallbacks (such as the default `SiteInstanceGroup` or partial site isolation for login-only domains), balancing security blast radius against system memory exhaustion.
+  Do **not** use “one site = one process” as the conceptual invariant. Record instead: Full Site Isolation imposes stronger cross-site process/site-lock separation, while a site can have multiple processes and process reuse can occur under current policies. Partial/No Site Isolation platform modes further change the topology.
 
 ---
 
 ## 6. Stop-Point Confirmation
 
-- [x] Path 1: Stopped immediately after the introduction and Site Isolation motivation sections. Did not read Android WebView or embedder-specific branches.
+- [ ] Path 1 bounded-read stop confirmed at the designated process-model / Goals / Site Isolation material. Any separate platform-mode nuance used above must be cited as a bounded current-practice lookup, not broad platform-source traversal.
 - [x] Path 2: Stopped after inspecting `GetOrCreateProcess()` entry reuse checks. Did not trace Mojo IPC allocation or low-level `RenderProcessHost` initialization.
 - [x] Path 3: Stopped at the `CanAccessOrigin` origin lock verification. Did not trace legacy blob/file URL compatibility branches.
 
@@ -66,9 +66,9 @@ This document records the empirical source inspection evidence for Source Expedi
 
 ## 8. Licensing & Provenance Disposition
 
-- Chromium source code is authored by The Chromium Authors and licensed under BSD-style terms with third-party components.
-- EXP-03 is link-and-inspection-only. Essential CS does not vendor, mirror, or redistribute the Chromium source tree.
-- Any citations in learner guides are minimal fair-use quotations strictly for pedagogical verification.
+- EXP-03 is link-and-inspection-first. Chromium contains BSD-style project code plus third-party components/notices with distinct provenance.
+- Essential CS does not vendor, mirror, or redistribute the source tree.
+- Prefer links + paraphrase. Any future excerpt requires review of the exact file/header/license/notice and applicable attribution; do not rely on a blanket fair-use statement.
 
 ---
 
