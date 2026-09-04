@@ -5,7 +5,7 @@ M11 Lesson 1 Activity: Local Course TLS 1.3 Fixture.
 Demonstrates:
 1. TLS 1.3 secure channel establishment with dedicated course test CA (RFC 9846).
 2. Service-identity verification matching SAN hostname (RFC 9525).
-3. Certificate-path validation failure when hostname does not match.
+3. Service-identity verification failure when the reference identity does not match.
 4. Trust-anchor rejection when root CA is untrusted in dedicated context.
 5. Strict non-bypass discipline: verify=False / check_hostname=False strictly forbidden.
 """
@@ -39,7 +39,9 @@ def run_tls_fixture_cases():
         raise FileNotFoundError("Course certificates not found. Run certs/generate_certs.py first.")
 
     # 1. Start Server on 127.0.0.1:0
-    server_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    server_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    server_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
+    server_ctx.maximum_version = ssl.TLSVersion.TLSv1_3
     server_ctx.load_cert_chain(certfile=paths["server_cert"], keyfile=paths["server_key"])
 
     raw_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,7 +82,7 @@ def run_tls_fixture_cases():
                     except Exception:
                         pass
 
-    srv_thread = threading.Thread(target=server_worker, daemon=True)
+    srv_thread = threading.Thread(target=server_worker, daemon=False)
     srv_thread.start()
 
     results = {
@@ -112,6 +114,8 @@ def run_tls_fixture_cases():
     try:
         # Case 1: Valid handshake
         c1_ctx = ssl.create_default_context(cafile=paths["ca_cert"])
+        c1_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
+        c1_ctx.maximum_version = ssl.TLSVersion.TLSv1_3
         # Invariant: verify_mode must be CERT_REQUIRED, check_hostname True
         assert c1_ctx.verify_mode == ssl.CERT_REQUIRED
         assert c1_ctx.check_hostname is True
@@ -131,6 +135,8 @@ def run_tls_fixture_cases():
 
         # Case 2: Mismatched hostname
         c2_ctx = ssl.create_default_context(cafile=paths["ca_cert"])
+        c2_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
+        c2_ctx.maximum_version = ssl.TLSVersion.TLSv1_3
         s2 = socket.socket()
         s2.settimeout(3.0)
         s2.connect((bound_host, bound_port))
@@ -138,9 +144,9 @@ def run_tls_fixture_cases():
             ss2 = c2_ctx.wrap_socket(s2, server_hostname="mismatch.invalid")
             results["case2_mismatched_identity"]["error"] = "UNEXPECTED SUCCESS: Mismatched hostname was accepted!"
             ss2.close()
-        except Exception as exc:
+        except ssl.SSLError as exc:
             results["case2_mismatched_identity"]["rejected_as_expected"] = True
-            results["case2_mismatched_identity"]["disposition"] = "SERVICE_IDENTITY_REJECTED"
+            results["case2_mismatched_identity"]["disposition"] = "SERVICE_IDENTITY_REJECTED_BY_TLS_CLIENT"
             results["case2_mismatched_identity"]["exception_type"] = type(exc).__name__
             results["case2_mismatched_identity"]["error"] = str(exc)
         finally:
@@ -151,6 +157,8 @@ def run_tls_fixture_cases():
 
         # Case 3: Untrusted root anchor
         c3_ctx = ssl.create_default_context(cafile=paths["untrusted_ca"])
+        c3_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
+        c3_ctx.maximum_version = ssl.TLSVersion.TLSv1_3
         s3 = socket.socket()
         s3.settimeout(3.0)
         s3.connect((bound_host, bound_port))
@@ -158,9 +166,9 @@ def run_tls_fixture_cases():
             ss3 = c3_ctx.wrap_socket(s3, server_hostname="localhost")
             results["case3_untrusted_anchor"]["error"] = "UNEXPECTED SUCCESS: Untrusted CA was accepted!"
             ss3.close()
-        except Exception as exc:
+        except ssl.SSLError as exc:
             results["case3_untrusted_anchor"]["rejected_as_expected"] = True
-            results["case3_untrusted_anchor"]["disposition"] = "UNTRUSTED_ROOT_REJECTED"
+            results["case3_untrusted_anchor"]["disposition"] = "UNTRUSTED_ROOT_REJECTED_BY_TLS_CLIENT"
             results["case3_untrusted_anchor"]["exception_type"] = type(exc).__name__
             results["case3_untrusted_anchor"]["error"] = str(exc)
         finally:
@@ -175,7 +183,11 @@ def run_tls_fixture_cases():
             raw_server.close()
         except Exception:
             pass
-        srv_thread.join(timeout=1.0)
+        srv_thread.join(timeout=2.0)
+        results["server_thread_reaped"] = not srv_thread.is_alive()
+        if not results["server_thread_reaped"]:
+            results["case1_valid_handshake"]["success"] = False
+            results["case1_valid_handshake"]["error"] = "TLS fixture server worker did not terminate cleanly"
 
     return results
 
@@ -230,7 +242,7 @@ def main():
     print(" [Normative Claim Invariants]")
     print("   No Bypass Flags:      verify=False and -k are strictly forbidden")
     print("   Identity vs Trust:    Path validation != business legitimacy")
-    print("   Forward Secrecy:      Ephemeral DHE keys protect past sessions; static PSK does not")
+    print("   Forward Secrecy:      DHE-based TLS 1.3 paths provide FS; PSK-only mode does not")
     print("=" * 60)
 
     return 0 if all_passed else 1
