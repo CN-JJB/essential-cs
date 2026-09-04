@@ -1,79 +1,127 @@
 # EXP-03 Evidence Template — Chromium Process Model & Site Isolation
 
-This document records the empirical source inspection evidence for Source Expedition EXP-03 under Module 12.
+Use this form for **one actual source inspection**. Do not copy another learner's
+revision, date, function details, platform mode, or findings. Chromium is a
+fast-changing implementation source.
 
----
+## 1 — Inspection identity
 
-## 1. Actual Inspection Date
+- Inspection date/time: `<actual>`
+- Official source host: `chromium.googlesource.com`
+- Branch/ref inspected: `<actual>`
+- Exact Chromium commit/revision: `<actual>`
+- Source-access disposition:
+  - `LIVE_CHROMIUM_SOURCE_ACCESSIBLE`, or
+  - `NO LIVE CHROMIUM SOURCE RECHECK / EXP-03 LIVE SOURCE OBSERVATION NOT RUN`
 
-- Inspection Date: `2026-09-04`
+If live source access is unavailable, stop the live-source claim here. Repository
+Research/Design may be used as **REFERENCE EVIDENCE ONLY**; never invent a commit
+hash or current source excerpt.
 
----
+## 2 — Exact bounded route
 
-## 2. Exact Chromium Revision / Commit
-
-- Branch: `refs/heads/main`
-- Commit Hash: `cd4ff71cd07504d87e90484d1bd0d66c2b6180dc`
-- Commit Author Date: `Fri Sep 04 12:53:14 2026`
-
----
-
-## 3. Exact Three Source Paths Inspected
+Record whether each target exists at the exact inspected revision:
 
 1. `docs/process_model_and_site_isolation.md`
+   - Exists: `<actual>`
+   - Exact revision link/reference: `<actual>`
 2. `content/browser/site_instance_impl.cc`
+   - Exists: `<actual>`
+   - Exact revision link/reference: `<actual>`
 3. `content/browser/security/cpsp/child_process_security_policy_impl.cc`
+   - Exists: `<actual>`
+   - Exact revision link/reference: `<actual>`
 
----
+A path/function move is evidence. Do not silently substitute a different source
+route if it materially changes the accepted expedition.
 
-## 4. One Bounded Finding Per Path
+## 3 — Architecture-document finding
 
-### Path 1: `docs/process_model_and_site_isolation.md`
-- **Bounded Finding**:
-  Record the current Chromium finding that compromised renderers and **Spectre-like speculative-execution threats** motivate stronger cross-site process/data isolation. Do not add Meltdown unless the exact inspected source says so, and do not claim process isolation eliminates all side channels.
+In the bounded process-model / Goals / Site Isolation material, record:
 
-### Path 2: `content/browser/site_instance_impl.cc`
-- **Bounded Finding**:
-  Record the exact process-selection/reuse entry observed around `SiteInstanceImpl::GetProcess()` / `GetOrCreateProcess()` at the inspected revision. Current code may expose SiteInstanceGroup, `ShouldUseProcessPerSite()`, `CanPutSiteInstanceInDefaultGroup()` or related policy state. Stable conclusion: allocation/reuse is policy-driven, not “one navigation = one new OS process”.
+- one current claim about compromised-renderer defense: `<actual paraphrase>`
+- one current claim about Spectre-like / same-process threat motivation:
+  `<actual paraphrase>`
+- current Site Isolation mode/platform nuance, if inspected within the bounded
+  current-practice lookup: `<actual>`
+- what the source **does not** establish: `<actual inference limit>`
 
-### Path 3: `content/browser/security/cpsp/child_process_security_policy_impl.cc`
-- **Bounded Finding**:
-  Record the exact parameters and browser-side policy checks visible in `CanAccessDataForOrigin()` (or its current directly corresponding entry). Scope the finding to this selected origin/data-access policy path; do not infer that all Cookie/file/network/IPC authorization is centralized in this one method.
+Guardrail: do not add Meltdown unless the exact inspected source passage says so,
+and do not claim process isolation eliminates all side channels.
 
----
+## 4 — Process-selection finding
 
-## 5. One Conceptual-vs-Implementation Nuance
+At `SiteInstanceImpl::GetProcess()` / `GetOrCreateProcess()` or the current
+directly corresponding entry, record:
 
-- **Nuance**:
-  Do **not** use “one site = one process” as the conceptual invariant. Record instead: Full Site Isolation imposes stronger cross-site process/site-lock separation, while a site can have multiple processes and process reuse can occur under current policies. Partial/No Site Isolation platform modes further change the topology.
+- exact symbol(s) found: `<actual>`
+- one current process-selection/reuse condition: `<actual>`
+- one implementation nuance that disproves “one navigation = one new process”:
+  `<actual>`
+- stopping point reached before broad `RenderProcessHost` / IPC traversal:
+  `YES / NO + note`
 
----
+Function/member names are **revision-specific Chromium implementation evidence**.
 
-## 6. Stop-Point Confirmation
+## 5 — Browser-side security-policy finding
 
-- [ ] Path 1 bounded-read stop confirmed at the designated process-model / Goals / Site Isolation material. Any separate platform-mode nuance used above must be cited as a bounded current-practice lookup, not broad platform-source traversal.
-- [x] Path 2: Stopped after inspecting `GetOrCreateProcess()` entry reuse checks. Did not trace Mojo IPC allocation or low-level `RenderProcessHost` initialization.
-- [x] Path 3: Stopped at the `CanAccessOrigin` origin lock verification. Did not trace legacy blob/file URL compatibility branches.
+At `CanAccessDataForOrigin()` or the current directly corresponding bounded
+origin/data-access path, record:
 
----
+- exact symbol/signature observed: `<actual>`
+- calling child/process identity input: `<actual>`
+- target origin/security-policy input: `<actual>`
+- one opaque-origin/process-lock/current-state behavior actually visible:
+  `<actual>`
+- inference limit: this selected method is not claimed to centralize every
+  Cookie/file/network/IPC permission: `<learner explanation>`
 
-## 7. Source Access Disposition
+## 6 — Conceptual vs implementation nuance
 
-- **Disposition**: `LIVE_CHROMIUM_SOURCE_ACCESSIBLE`
-- Verified via live HTTP query to `https://chromium.googlesource.com/chromium/src/+/refs/heads/main?format=JSON`.
+Explain why **Full Site Isolation does not mean “one site = one process”**:
 
----
+- what cross-site process/site-lock separation the current source supports:
+  `<actual>`
+- one way multiple processes for one site or process reuse can occur:
+  `<actual>`
+- one platform/resource/current-mode qualification:
+  `<actual>`
 
-## 8. Licensing & Provenance Disposition
+Do not convert current Chromium thresholds or modes into Web Platform invariants.
 
-- EXP-03 is link-and-inspection-first. Chromium contains BSD-style project code plus third-party components/notices with distinct provenance.
-- Essential CS does not vendor, mirror, or redistribute the source tree.
-- Prefer links + paraphrase. Any future excerpt requires review of the exact file/header/license/notice and applicable attribution; do not rely on a blanket fair-use statement.
+## 7 — Stop-rule audit
 
----
+- [ ] Did not clone/download the full Chromium repository.
+- [ ] Did not compile Chromium.
+- [ ] Did not follow broad callees beyond the three accepted anchors.
+- [ ] Did not inspect Blink/V8/GPU internals beyond the bounded M12 need.
+- [ ] Did not turn Android/platform-specific implementation into a Core
+      cross-platform requirement.
+- [ ] Recorded any separate platform-mode lookup explicitly instead of hiding it
+      inside the Path 1 bounded-read claim.
 
-## 9. No-Compile / No-Vendor Confirmation
+Notes: `<actual>`
 
-- [x] Zero Chromium source code files downloaded to the local course repository.
-- [x] Zero local compilation of Chromium.
-- [x] No third-party repository vendoring or binary redistribution.
+## 8 — Licensing / provenance
+
+- Link-and-inspection-first used: `<YES/NO>`
+- Chromium source vendored/mirrored into Essential CS: expected **NO**
+- Source excerpt copied into submission: `<NO / if YES, exact file + lines>`
+- If an excerpt was used, exact file/header/license/NOTICE/third-party provenance
+  reviewed: `<actual>`
+- Required attribution/notice retained: `<actual>`
+
+Prefer links + learner-authored paraphrase. Do not rely on a blanket “Chromium is
+BSD” or blanket fair-use statement for arbitrary files.
+
+## 9 — Reviewer synthesis
+
+Write one paragraph answering:
+
+1. What did the current Chromium source confirm?
+2. What did it make more conditional than the simple teaching model?
+3. Which statement is Web Platform/specification reasoning, and which is
+   Chromium implementation/current-practice evidence?
+4. What would need to be rechecked at a future release review?
+
+This evidence is not learner validation, VERIFIED, or RELEASED status.
