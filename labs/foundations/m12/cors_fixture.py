@@ -16,9 +16,7 @@ Invariants:
 
 import http.server
 import json
-import socket
 import socketserver
-import sys
 import threading
 import time
 import urllib.parse
@@ -187,15 +185,30 @@ class OriginBRequestHandler(http.server.BaseHTTPRequestHandler):
         origin_header = self.headers.get("Origin", "")
 
         if parsed.path == "/api/preflighted":
+            allowed_origin = getattr(self.server, "allowed_origin", "")
+            requested_method = self.headers.get("Access-Control-Request-Method", "")
+            requested_headers = {
+                item.strip().lower()
+                for item in self.headers.get("Access-Control-Request-Headers", "").split(",")
+                if item.strip()
+            }
+            allowed_headers = {"content-type", "x-course-custom"}
+            if (
+                origin_header != allowed_origin
+                or requested_method != "POST"
+                or not requested_headers.issubset(allowed_headers)
+            ):
+                self.send_response(403)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+
+            # Course policy: authorize exactly this run's Origin A.
             self.send_response(204)
-            # Authorize the requesting origin for preflight
-            if origin_header:
-                self.send_header("Access-Control-Allow-Origin", origin_header)
-            else:
-                self.send_header("Access-Control-Allow-Origin", "*")
-            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Origin", allowed_origin)
+            self.send_header("Access-Control-Allow-Methods", "POST")
             self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Course-Custom")
-            self.send_header("Access-Control-Max-Age", "86400")
+            self.send_header("Access-Control-Max-Age", "60")
             self.send_header("Vary", "Origin")
             self.end_headers()
         else:
@@ -224,8 +237,9 @@ class OriginBRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
 
             # CORS Policy Decision
-            if mode == "authorized" and origin_header:
-                self.send_header("Access-Control-Allow-Origin", origin_header)
+            allowed_origin = getattr(self.server, "allowed_origin", "")
+            if mode == "authorized" and origin_header == allowed_origin:
+                self.send_header("Access-Control-Allow-Origin", allowed_origin)
                 self.send_header("Vary", "Origin")
             elif mode == "wildcard":
                 self.send_header("Access-Control-Allow-Origin", "*")
@@ -268,8 +282,9 @@ class OriginBRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
-            if origin_header:
-                self.send_header("Access-Control-Allow-Origin", origin_header)
+            allowed_origin = getattr(self.server, "allowed_origin", "")
+            if origin_header == allowed_origin:
+                self.send_header("Access-Control-Allow-Origin", allowed_origin)
                 self.send_header("Vary", "Origin")
             self.end_headers()
             self.wfile.write(body)
@@ -281,6 +296,8 @@ class DualOriginCORSFixture:
     """Manages two independent HTTP servers on dynamic ports to test CORS boundaries."""
 
     def __init__(self, host="127.0.0.1"):
+        if host != "127.0.0.1":
+            raise ValueError("M12 CORS fixture is localhost-only and must bind 127.0.0.1")
         self.host = host
         self.server_a = None
         self.server_b = None
@@ -288,6 +305,7 @@ class DualOriginCORSFixture:
         self.thread_b = None
         self.port_a = None
         self.port_b = None
+        self.last_stop_record = None
 
     def start(self):
         # 1. Start Origin B (API Server)
@@ -300,7 +318,7 @@ class DualOriginCORSFixture:
         self.server_b.received_requests = []
         self.port_b = self.server_b.server_address[1]
 
-        self.thread_b = threading.Thread(target=self.server_b.serve_forever, daemon=True)
+        self.thread_b = threading.Thread(target=self.server_b.serve_forever, daemon=False)
         self.thread_b.start()
 
         # 2. Start Origin A (Client Web Page Server)
@@ -311,8 +329,9 @@ class DualOriginCORSFixture:
         self.server_a = OriginAServer((self.host, 0), OriginARequestHandler)
         self.server_a.origin_b_url = f"http://{self.host}:{self.port_b}"
         self.port_a = self.server_a.server_address[1]
+        self.server_b.allowed_origin = f"http://{self.host}:{self.port_a}"
 
-        self.thread_a = threading.Thread(target=self.server_a.serve_forever, daemon=True)
+        self.thread_a = threading.Thread(target=self.server_a.serve_forever, daemon=False)
         self.thread_a.start()
 
         return self.port_a, self.port_b
@@ -324,6 +343,7 @@ class DualOriginCORSFixture:
         return []
 
     def stop(self):
+        threads = [("origin_a", self.thread_a), ("origin_b", self.thread_b)]
         if self.server_a:
             self.server_a.shutdown()
             self.server_a.server_close()
@@ -332,12 +352,18 @@ class DualOriginCORSFixture:
             self.server_b.shutdown()
             self.server_b.server_close()
             self.server_b = None
-        if self.thread_a and self.thread_a.is_alive():
-            self.thread_a.join(timeout=2.0)
-            self.thread_a = None
-        if self.thread_b and self.thread_b.is_alive():
-            self.thread_b.join(timeout=2.0)
-            self.thread_b = None
+
+        record = {}
+        for name, thread in threads:
+            if thread:
+                thread.join(timeout=2.0)
+                record[name + "_thread_reaped"] = not thread.is_alive()
+                if thread.is_alive():
+                    raise RuntimeError(f"{name} server thread did not terminate cleanly")
+        self.thread_a = None
+        self.thread_b = None
+        self.last_stop_record = record
+        return record
 
     def __enter__(self):
         self.start()
