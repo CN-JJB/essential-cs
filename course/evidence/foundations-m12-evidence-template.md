@@ -165,7 +165,7 @@ Without a real browser:
 
 ## N — L12-04 Task/Microtask Relative Ordering Evidence
 
-If a real browser executes `labs/foundations/m12/event_loop_fixture.py`, record the actual relative log order for synchronous code, Promise/`queueMicrotask`, and the later timer task. Do not add milliseconds as acceptance criteria.
+If a real browser executes `labs/foundations/m12/event_loop_fixture.py`, record the actual relative log order. For the committed fixture, the expected relation is synchronous start/end → first Promise reaction → already-queued `queueMicrotask` callback → chained Promise reaction (enqueued only after the first reaction resolves) → later timer task. Record the browser's actual output; do not add milliseconds as acceptance criteria.
 
 If no real browser executes the JavaScript, record `NO LIVE BROWSER EVENT-LOOP OBSERVATION`; Python/static tests can verify that the fixture contains the intended code but cannot prove browser scheduling.
 
