@@ -142,6 +142,10 @@ class TestLabHarnessIntegration(unittest.TestCase):
             self.assertIn("-v", step["cmd_argv"])
             self.assertTrue(step["verbose_trace"].strip())
             self.assertEqual(step["returncode"], 0)
+
+        forwarded_trace = results["steps"]["step_2_proxy_forward"]["verbose_trace"]
+        self.assertEqual(forwarded_trace.count("< Server:"), 1)
+        self.assertEqual(forwarded_trace.count("< Date:"), 1)
         self.assertTrue(results["cleanup"]["all_owned_processes_reaped"])
         self.assertTrue(results["cleanup"]["old_endpoints_not_accepting"])
         self.assertFalse(results["origin_closed_probe"]["connection_established"])
