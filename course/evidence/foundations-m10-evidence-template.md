@@ -6,20 +6,23 @@ This evidence template records empirical host execution results, claim boundarie
 
 ## A — Actual Environment / Python / Capability Preflight
 
-- **Dispatch / Working Commit**: `63c382c0d6c4aa671d9492ec3fe18d2976fc5edc`
-- **Assigned Branch**: `implementation/issue-74-m10-networking-ip-dns-transport`
-- **Host Operating System (`platform.system()`, `release`, `version`)**: Windows 11 (10.0.26200)
-- **Hardware Architecture (`platform.machine()`)**: AMD64
-- **Python Implementation & Version (`platform.python_implementation()`, `python_version()`)**: CPython 3.13.1
-- **Socket Support (`import socket`)**: YES
-- **Loopback Bind Port 0 Capability (`can_bind_port_0`)**: YES (Empirically verified)
-- **Loopback Connect Capability (`can_connect_loopback`)**: YES (Empirically verified)
-- **Optional Linux `ss` Tool Disposition**: UNAVAILABLE (Non-Linux / Windows environment)
-- **Optional Linux `ip route` Tool Disposition**: UNAVAILABLE (Non-Linux / Windows environment)
-- **Traceroute Tool Disposition**: `tracert` available on Windows (`C:\WINDOWS\system32\tracert.EXE`); Linux `traceroute` UNAVAILABLE
-- **Packet Capture Tool (`tcpdump` / `tshark`) Disposition**: UNAVAILABLE (`TOOL_UNAVAILABLE`)
-- **Resolver Capability Disposition**: LIVE_DNS_FAILURE_OBSERVED (`gaierror` with Windows errno `11001`)
-- **Preflight Verification Script Output**: `tests/preflight_network_web.py` -> `READY_M10_CORE`
+- **Dispatch Base**: `63c382c0d6c4aa671d9492ec3fe18d2976fc5edc`
+- **Execution / Working Commit**: `<record the exact commit actually executed>`
+- **Execution Branch / Ref**: `<record the actual branch or detached ref>`
+- **Host Operating System (`platform.system()`, `release`, `version`)**: `<record actual>`
+- **Hardware Architecture (`platform.machine()`)**: `<record actual>`
+- **Python Implementation & Version (`platform.python_implementation()`, `python_version()`)**: `<record actual>`
+- **Socket Support (`import socket`)**: `<record actual PASS / BLOCKED + raw detail>`
+- **Loopback Bind Port 0 Capability (`can_bind_port_0`)**: `<record actual>`
+- **Loopback Connect Capability (`can_connect_loopback`)**: `<record actual>`
+- **Optional `ss` Tool Disposition**: `<record actual AVAILABLE / TOOL_UNAVAILABLE / restricted>`
+- **Optional `ip route` Tool Disposition**: `<record actual AVAILABLE / TOOL_UNAVAILABLE / restricted>`
+- **Traceroute / tracert Tool Disposition**: `<record actual availability; do not imply live Internet use>`
+- **Packet Capture Tool (`tcpdump` / `tshark`) Disposition**: `<record binary presence and capture capability separately>`
+- **Resolver Capability Disposition**: `<record actual LIVE_DNS_FAILURE_OBSERVED / NO_LIVE_DNS_FAILURE_OBSERVATION / other handled disposition + raw host evidence>`
+- **Preflight Verification Script Output**: `<paste or attach the actual current-run result; do not copy a reference transcript>`
+
+> This is a reusable evidence template. Author/Lead environment observations belong in the PR Completion Report or filled evidence instance, **not** as canonical pre-populated learner evidence.
 
 ---
 
@@ -168,7 +171,7 @@ This evidence template records empirical host execution results, claim boundarie
   - All 3 lessons (`L10-01`, `L10-02`, `L10-03`) implement the mandatory 5-step ladder:
     `Question -> Hint 1 -> Hint 2 -> Expected Observation -> Full Explanation`
   - Total `<details>` tags: 12 (4 per lesson: Hint 1, Hint 2, Expected Observation, Full Explanation).
-  - Total `<details open>` tags: **0** (Zero occurrences across all files).
+  - Progressive details configured open-by-default: **0**.
 
 ---
 
