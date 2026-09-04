@@ -125,13 +125,13 @@ class EventLoopHTTPHandler(http.server.BaseHTTPRequestHandler):
       }, 0);
 
       Promise.resolve().then(() => {
-        logs.push("3_microtask_promise_1");
+        logs.push("3a_microtask_promise_1");
       }).then(() => {
-        logs.push("3b_microtask_promise_chained");
+        logs.push("3c_microtask_promise_chained");
       });
 
       queueMicrotask(() => {
-        logs.push("3c_microtask_queueMicrotask");
+        logs.push("3b_microtask_queueMicrotask");
       });
 
       logs.push("2_sync_end");
@@ -198,7 +198,7 @@ class EventLoopHTTPHandler(http.server.BaseHTTPRequestHandler):
 
 
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
-    daemon_threads = True
+    daemon_threads = False
     allow_reuse_address = True
 
 
