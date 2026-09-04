@@ -9,7 +9,7 @@ Demonstrates:
 
 Invariants:
 - Dynamic port 0 binding on 127.0.0.1;
-- Strictly bounded long-task execution (capped below 2000ms, no infinite loops);
+- Strictly bounded long-task execution (course safety cap 1500ms, no infinite loops);
 - Zero external dependencies.
 """
 
