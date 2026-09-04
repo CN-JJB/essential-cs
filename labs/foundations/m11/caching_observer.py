@@ -16,7 +16,6 @@ import json
 import socket
 import sys
 import threading
-import time
 import urllib.request
 
 
@@ -67,7 +66,7 @@ def run_caching_observation():
     server = http.server.HTTPServer(("127.0.0.1", 0), CachingHTTPHandler)
     bound_host, bound_port = server.server_address
 
-    srv_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    srv_thread = threading.Thread(target=server.serve_forever, daemon=False)
     srv_thread.start()
 
     base_url = f"http://{bound_host}:{bound_port}"
@@ -78,10 +77,10 @@ def run_caching_observation():
         "step2_conditional_matching_etag": {},
         "step3_conditional_mismatched_etag": {},
         "transport_evolution_tradeoffs": {
-            "http1": "Serial requests per connection by default, or multiple connections. Application-level HOL blocking.",
-            "http2": "Multiplexes concurrent binary streams over one TCP connection. Packet drop on TCP causes transport-level HOL blocking across all streams.",
-            "http3": "Independent streams over QUIC / UDP. Eliminates transport-level HOL blocking between streams, but higher CPU overhead and UDP routing sensitivity.",
-            "winner_verdict": "NO UNIVERSAL PERFORMANCE WINNER; depends on RTT, loss rates, CPU capacity, and middlebox topologies.",
+            "http1": "HTTP/1.1 has no HTTP/2-style multiplexed streams; serial use or pipelining on one connection can create application-layer waiting, and clients may use multiple connections.",
+            "http2": "HTTP/2 multiplexes HTTP streams over one ordered TCP byte stream; loss/reordering in TCP can delay delivery needed by otherwise unrelated HTTP/2 streams.",
+            "http3": "HTTP/3 maps HTTP onto QUIC streams, avoiding TCP-style cross-stream byte-order blocking; congestion control, loss, CPU, path policy, and implementation still affect the connection.",
+            "winner_verdict": "NO UNIVERSAL PERFORMANCE WINNER; compare the named client/server/path/workload.",
         },
     }
 
@@ -129,7 +128,7 @@ def run_caching_observation():
             "status_code": 304,
             "wire_body_bytes_transferred": len(body_part.encode("utf-8")),
             "zero_body_verified": (len(body_part) == 0),
-            "bandwidth_saved_bytes": len(body1),
+            "representation_payload_bytes_avoided_in_fixture": len(body1),
             "rule_confirmation": "RFC 9111 specifies 304 transfers NO message content; Content-Length: 0 is NOT required",
         }
 
@@ -151,7 +150,8 @@ def run_caching_observation():
     finally:
         server.shutdown()
         server.server_close()
-        srv_thread.join(timeout=1.0)
+        srv_thread.join(timeout=2.0)
+        results["server_thread_reaped"] = not srv_thread.is_alive()
 
     return results
 
@@ -189,7 +189,7 @@ def main():
     print(f"   Status Line:     {s2['status_line']}")
     print(f"   Body Transferred:{s2['wire_body_bytes_transferred']} bytes")
     print(f"   Zero Body Verified: {'YES' if s2['zero_body_verified'] else 'NO'}")
-    print(f"   Bandwidth Saved: {s2['bandwidth_saved_bytes']} payload bytes")
+    print(f"   Fixture Payload Bytes Avoided: {s2['representation_payload_bytes_avoided_in_fixture']} bytes")
     print("-" * 60)
     print(" [Step 3: Conditional Request with Mismatched ETag]")
     s3 = results["step3_conditional_mismatched_etag"]
