@@ -27,8 +27,8 @@ This evidence template records empirical host execution results, claim boundarie
 
 - **Six-Entity Architecture Matrix**:
   1. **Domain Name**: Human-readable hierarchical identifier; mapped by DNS to one or more IP addresses (one-to-many / many-to-one). Not a permanent physical identity.
-  2. **IP Address**: Topological network-layer locator for interface; used by routers for hop-by-hop forwarding via longest prefix match. Not a fixed machine identity.
-  3. **Next-Hop Interface**: Physical adjacent link-layer gateway (MAC address) for current local subnet hop; rewritten at every router hop.
+  2. **IP Address**: Network-layer address used by routing/forwarding policy; not a permanent machine identity and not guaranteed one-to-one with a host.
+  3. **Route Result / Next Hop / Egress Interface**: Route lookup can yield a next-hop network-layer address plus an egress interface. If the link needs a neighbor address, IPv4 ARP or IPv6 Neighbor Discovery resolves it. A directly connected destination need not use a default gateway.
   4. **Transport Port**: 16-bit integer demultiplexing tag within host OS kernel; assigned to sockets. Not an executable program file.
   5. **Socket**: File descriptor / handle managed by kernel representing communication endpoint.
   6. **Process**: OS execution context (M06) holding socket file descriptors.
@@ -46,7 +46,7 @@ This evidence template records empirical host execution results, claim boundarie
 - **Payload Transmitted**: `CS-ESSENTIAL-M10` (16 bytes)
 - **Payload Received**: `CS-ESSENTIAL-M10` (16 bytes)
 - **Loopback Exchange Status**: `SUCCESS`
-- **Post-Execution Teardown**: Server and client sockets cleanly closed; endpoint verified dormant.
+- **Post-Execution Teardown**: Server/client sockets are closed by the owning activity; while the assigned port is still known, the test probes that a fresh connection is not established and records the raw result.
 
 ---
 
@@ -86,11 +86,11 @@ This evidence template records empirical host execution results, claim boundarie
 - **Command Run**: `python labs/foundations/m10/stream_framing.py` (UDP component)
 - **Datagrams Transmitted**: `[b"UDP_RECORD_ALPHA", b"UDP_RECORD_BRAVO", b"UDP_RECORD_CHARLIE"]` (3 datagrams)
 - **Datagrams Received**: 3 individual `recvfrom()` calls
-- **Boundary Preservation**: `YES` (Each `recvfrom()` returns exactly one sent datagram; datagram boundaries are preserved at transport interface).
+- **Boundary Observation**: In this bounded loopback run, each successful `recvfrom()` returned data from one datagram and all three small fixture datagrams were observed. This is **fixture evidence only**: UDP does not guarantee delivery or ordering; a too-small receive buffer can truncate a datagram.
 - **Buffer Truncation Behavior**: If `recvfrom()` buffer is smaller than datagram, unread bytes are discarded by OS.
 - **IPv4 vs IPv6 Checksum Normative Rule**:
   - **IPv4 (RFC 768 / RFC 791)**: UDP checksum is optional; a transmitted value of `0` indicates no checksum was computed.
-  - **IPv6 (RFC 8200)**: UDP checksum is **mandatory** for standard unicast traffic; IPv6 header omits header checksum, so transport checksum validation is strictly enforced.
+  - **IPv6 (RFC 8200)**: Ordinary IPv6 UDP use requires a non-zero checksum; narrowly scoped tunnel exceptions are defined by later standards. Do not turn “mandatory in the ordinary case” into “zero checksum is impossible in every IPv6 context.”
 
 ---
 
@@ -98,11 +98,9 @@ This evidence template records empirical host execution results, claim boundarie
 
 - **Command Run**: `python labs/foundations/m10/failure_fixture.py`
 - **Target Endpoint**: `127.0.0.1:<unbound_port>` (Preconditioned unbound ephemeral port)
-- **Disposition Observed**: `CONNECTION_REFUSED_OBSERVED`
-- **Exception Class**: `ConnectionRefusedError` (inheriting from `OSError`)
-- **Host Error Code (`errno`)**: `10061` on Windows (`WSAECONNREFUSED`); Linux hosts observe `111` (`ECONNREFUSED`).
-- **Raw Elapsed Sample**: ~`2030 ms` on Windows loopback (SYN retry timer on unbound loopback port); Linux typically observes `< 1 ms`.
-- **Inference Boundary**: Machine tests must never assert fixed errno `111`, fixed refusal time `< 5 ms`, or fixed refusal-to-timeout ratio.
+- **Disposition Contract**: `UNBOUND_LOOPBACK_CONNECT_FAILURE_OBSERVED` or, if the runtime raises instead of returning a connect result, `UNBOUND_LOOPBACK_CONNECT_EXCEPTION_OBSERVED`.
+- **Raw Host Evidence**: Record `connect_ex` result or exception type/errno/text (if any) plus elapsed sample from the actual run.
+- **Inference Boundary**: Machine tests assert only that no new connection was established to the verified-unbound course endpoint. They do not require `ConnectionRefusedError`, one errno, one RST trace, or any latency threshold/ratio.
 
 ---
 
@@ -114,8 +112,8 @@ This evidence template records empirical host execution results, claim boundarie
 - **Configured Client Read Deadline**: `0.25 s` (`250 ms`)
 - **Harness Outer Watchdog**: `3.0 s` (Configured strictly to prevent CI hangs; not a curriculum timing constant)
 - **Disposition Observed**: `READ_TIMEOUT_OBSERVED`
-- **Exception Class**: `TimeoutError` (Python `socket.timeout`)
-- **Raw Elapsed Sample**: ~`260 ms` (Elapsed time reflects client deadline expiration)
+- **Runtime Disposition**: Record the actual timeout exception/type/text produced by the named Python runtime.
+- **Raw Elapsed Sample**: Record the actual sample; do not require it to fall within a fixed percentage or millisecond threshold.
 - **Inference Boundary**: Timeout proves only that the client's local read deadline expired; it provides no evidence of remote progress.
 
 ---
@@ -123,9 +121,8 @@ This evidence template records empirical host execution results, claim boundarie
 ## I — DNS Capability and Live Observation or Truthful NO LIVE DNS FAILURE OBSERVATION
 
 - **Tested Domain**: `m10-lookup-test.invalid` (RFC 2606 reserved TLD)
-- **Resolver Disposition**: `LIVE_DNS_FAILURE_OBSERVED`
-- **Exception Class**: `socket.gaierror`
-- **Host Error Code (`errno`)**: `11001` on Windows (`WSAHOST_NOT_FOUND`); Linux hosts observe `EAI_NONAME` (`-2`).
+- **Resolver Disposition**: Record `LIVE_DNS_FAILURE_OBSERVED`, `NO_LIVE_DNS_FAILURE_OBSERVATION`, or another explicitly handled capability result from the actual host.
+- **Raw Host Error Evidence**: If present, record exception class/code/text as host evidence only; do not require `gaierror`, `11001`, or `EAI_NONAME` for acceptance.
 - **Truthfulness Invariant**: If offline or environment-restricted, harness truthfully reports `NO LIVE DNS FAILURE OBSERVATION`; no error strings or NXDOMAIN traces are fabricated.
 
 ---
@@ -135,10 +132,10 @@ This evidence template records empirical host execution results, claim boundarie
 - **The Partial Failure Dilemma**:
   - In a distributed system, a client timeout leaves remote execution state completely ambiguous.
   - Three indistinguishable scenarios: (1) Request lost before reaching server; (2) Request reached server and failed mid-execution; (3) Server processed request completely and response was lost in transit.
-- **Idempotency & Retry Safety Policy**:
-  - Natural idempotent operations (`GET`, `PUT`, `DELETE` per RFC 9110) are safe to retry.
-  - Non-idempotent mutations (e.g. `POST /checkout`) must never be retried blindly.
-  - Mitigation: Require client-generated Idempotency Keys (`UUID`) and server-side deduplication stores before enabling automatic retries.
+- **Retry / Outcome Contract**:
+  - A transport timeout never authorizes retry by itself.
+  - Retry safety depends on application semantics and may use naturally idempotent business operations, a stable operation identifier with deduplication, or an explicit query/reconciliation path.
+  - Idempotency-Key is one implementation pattern, not a universal requirement; HTTP method semantics are taught canonically in M11.
 
 ---
 
@@ -156,15 +153,15 @@ This evidence template records empirical host execution results, claim boundarie
   - Minimum Round-Trip Time: $\text{RTT}_{\text{min}} = 2 \times T_{\text{prop}} = 90\text{ ms}$
   - Bandwidth-Delay Product: $\text{BDP} = B \times \text{RTT}_{\text{min}} = 100\text{ Mbps} \times 0.09\text{ s} = 9\text{ Mbits} = 1{,}125{,}000\text{ bytes} \approx 1.07\text{ MiB}$
 - **Inference Limits**:
-  - Loopback measured RTT (~$0.05\text{ ms}$) is constrained by memory speed and internal kernel context switching.
-  - Loopback measurements cannot be generalized to wide-area Internet connections governed by fiber propagation physics and queueing delays.
+  - Record any loopback timing only as a host observation; do not embed one fixed loopback RTT in acceptance criteria.
+  - Loopback measurements cannot be generalized to wide-area Internet paths. BDP here is an illustrative `bandwidth × RTT` model, not a physical upper bound on “bytes in fiber” or a TCP window constant.
 
 ---
 
 ## L — Visual / Progressive-Support Audit
 
 - **Visual Diagrams Implemented**:
-  1. `L10-01`: Layered Network Indirection (Domain Name -> IP Address -> Next-Hop Gateway -> Transport Port -> Process) + 6-entity distinction table.
+  1. `L10-01`: Layered Network Indirection (Domain Name -> network-layer address -> route result / next hop + egress interface -> link neighbor as needed -> Transport Endpoint/Socket -> Process) + distinction table.
   2. `L10-02`: TCP 3-Way Handshake + Sequence/ACK Timeline + Stream buffering vs UDP datagram boundary diagram.
   3. `L10-03`: Network Failure Spectrum diagram illustrating client-visible failure stages and observation ambiguity.
 - **Progressive Support Audit**:
@@ -183,9 +180,9 @@ This evidence template records empirical host execution results, claim boundarie
   - Zero port scanning; zero raw packet injection; zero ARP/DNS poisoning.
   - Zero sudo/root privilege requirements.
 - **Cleanup & Reset Verification**:
-  - Script: `labs/foundations/m10/reset.py`
-  - Post-execution verification confirms course endpoints are dormant.
-  - Executed twice in automated tests to confirm idempotency.
+  - M10 activities own and close their sockets/threads in-process; they create no persistent daemon or learner artifact requiring deletion.
+  - Endpoint-specific tests probe the **known old port** after close and assert only that a new TCP connection is not established, while recording raw connect result.
+  - Standalone `reset.py` truthfully reports `CLEAN_NO_PERSISTENT_ARTIFACTS`; running it twice demonstrates idempotency without pretending to know unknown old endpoints.
   - Zero wildcard deletions of learner files.
 - **Optional Tools Disposition**:
   - `ss`: Truthfully reported as `TOOL UNAVAILABLE` on Windows/minimal environments.
@@ -199,9 +196,9 @@ This evidence template records empirical host execution results, claim boundarie
 - **Facts (Empirically Observed on Host)**:
   - Dynamic port 0 bound to non-zero ephemeral port.
   - TCP stream partitioned across multiple `recv()` calls and reconstructed via framing loop.
-  - Unbound port produced `ConnectionRefusedError`.
-  - Silent server produced `TimeoutError` after client read deadline.
-  - `.invalid` TLD produced `gaierror` with Windows errno 11001.
+  - Verified-unbound loopback endpoint produced a non-success connect disposition; raw host result is recorded.
+  - Accepted-but-silent server produced the runtime's timeout disposition after the configured local read deadline.
+  - `.invalid` resolver observation records the actual host disposition; exact exception/errno is host-specific.
 - **Inferences & Architectural Models**:
   - BDP calculation is an idealized model based on explicit propagation parameters.
   - Network failure taxonomy models client-visible stages across distributed links.
