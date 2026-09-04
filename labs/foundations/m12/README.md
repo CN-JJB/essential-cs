@@ -23,11 +23,11 @@ python tests/preflight_network_web.py --json
 
 ## L12-01 — Browser Systems Architecture & Process Topology
 
-- **Live Observation:** When a supported browser (Chromium/Chrome or Firefox) is available, launch it and open its internal Task Manager (`Shift+Esc` in Chrome) alongside the operating system process monitor (`Task Manager` on Windows, `ps aux` or `top` on Linux/macOS).
+- **Live Observation:** When a real desktop browser GUI is available, record the exact browser/version/platform and compare its internal task/process view with the OS process monitor.
 - **Inspection Focus:**
-  - Locate the Browser Coordinator process, GPU Process, Network Service, and Tab/Renderer processes;
-  - Verify that process count does not equal tab count (demonstrating why "one tab = one process" is false);
-  - Observe how Site Isolation groups browsing contexts by site rather than strictly per tab.
+  - Record the process/service labels actually shown; do **not** require every build/platform to expose Browser/GPU/Network Service as one fixed set of OS processes;
+  - compare observed process count/roles with tab/frame count without expecting a fixed ratio;
+  - use EXP-03 source/current-practice evidence to interpret SiteInstance/Site Isolation. A task-manager screenshot alone does not prove the exact process-assignment policy.
 - **Reference Mode:** If no GUI browser is available, record `NO LIVE BROWSER OBSERVATION` and proceed with EXP-03 source inspection.
 
 ---
@@ -42,8 +42,8 @@ python labs/foundations/m12/rendering_fixture.py
 
 - Binds to `http://127.0.0.1:<port>/`;
 - Serves an HTML page containing external stylesheet, parser-blocking script (`/blocking.js?delay=0.3`), deferred script (`/deferred.js`), and async script (`/async.js`);
-- Observe the parser pause at the classic script execution point, while the deferred script executes after HTML parsing is complete;
-- Open DevTools Network and Performance panels to record the conceptual pipeline stages.
+- In a **real browser**, use course event markers to observe parser-blocking classic-script vs classic `defer` relative ordering;
+- DevTools Network/Performance observations are capability-gated and browser-version-specific. If no real browser runs the page, Python tests verify only asset/server structure and you must record `NO LIVE BROWSER PARSER-ORDER OBSERVATION` / `NO LIVE DEVTOOLS OBSERVATION`.
 
 ---
 
@@ -58,11 +58,10 @@ python labs/foundations/m12/cors_fixture.py
 - Spawns two independent servers on OS-assigned ports:
   - **Origin A:** `http://127.0.0.1:<portA>/` (Client Web Page)
   - **Origin B:** `http://127.0.0.1:<portB>/` (Target API)
-- Demonstrates:
-  1. **Simple Cross-Origin Request Blocked:** Browser sends `fetch()` from Origin A to Origin B. The HTTP request arrives at Origin B (logged in server memory), but the browser user agent withholds the response from JavaScript because `Access-Control-Allow-Origin` is absent;
-  2. **Authorized Request Allowed:** When Origin B includes matching `Access-Control-Allow-Origin`, page script successfully reads the payload;
-  3. **Preflighted Request:** A request with custom headers triggers a browser `OPTIONS` preflight before the actual request;
-  4. **Non-Browser Contrast:** Command-line clients (`curl` or Python `urllib`) receive the response directly from Origin B. This proves CORS is enforced by browser user agents to protect client browsing sessions, not a server-side authorization barrier.
+- With a **real browser**, the page can demonstrate the simple-request / matching-ACAO / preflight paths. Record actual browser behavior; without one, use `NO LIVE BROWSER CORS OBSERVATION`.
+- Raw automated tests prove only the course server's HTTP arrival and CORS-header policy; they do not execute browser enforcement.
+- The authorized course response permits **only this run's dynamic Origin A**; the server does not reflect arbitrary Origin values.
+- Non-browser `curl`/Python may receive the public course endpoint response because they do not enforce browser CORS response filtering; this is not a bypass of server authentication/authorization.
 
 ---
 
@@ -75,9 +74,9 @@ python labs/foundations/m12/event_loop_fixture.py
 ```
 
 - Binds to `http://127.0.0.1:<port>/`;
-- **Ordering Test:** Verifies relative execution ordering: Synchronous code &rarr; Microtask queue (Promises, `queueMicrotask`) &rarr; Next Task (`setTimeout`);
-- **Long-Task & Jank:** Triggers a bounded CPU loop (strictly capped at 2000ms max). Observe that the main-thread counter freezes while the CSS `transform` spinner may continue smoothly on the compositor thread;
-- **Chunked Yielding:** Breaks heavy work into smaller slices yielding to the event loop, maintaining UI responsiveness.
+- **Ordering Test:** a real browser can record relative ordering: synchronous code &rarr; Promise/`queueMicrotask` reactions &rarr; later timer task. Static Python tests do not prove JS scheduling;
+- **Long-Task & Jank:** course CPU loop is capped at 1500ms. Record main-thread delay in the actual browser; the CSS `transform` spinner is only a compositor-friendly candidate and may continue, stutter, or stop depending on implementation/runtime;
+- **Chunked Yielding:** current fixture uses 20ms course work slices with `setTimeout` re-queueing. Compare observed responsiveness; do not treat 20ms as a universal smoothness threshold.
 
 ---
 
