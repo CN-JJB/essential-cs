@@ -9,14 +9,12 @@ Demonstrates:
 
 Invariants:
 - Dynamic port 0 binding on 127.0.0.1;
-- Strictly bounded long-task execution (capped at 2000ms, no infinite loops);
+- Strictly bounded long-task execution (capped below 2000ms, no infinite loops);
 - Zero external dependencies.
 """
 
 import http.server
-import socket
 import socketserver
-import sys
 import threading
 import time
 import urllib.parse
@@ -99,7 +97,7 @@ class EventLoopHTTPHandler(http.server.BaseHTTPRequestHandler):
 
     <div style="margin-top: 1.5rem;">
       <button class="btn btn-danger" onclick="triggerLongTask(500)">Block Main Thread (500ms Bounded Loop)</button>
-      <button class="btn btn-success" onclick="triggerChunkedTask(500)">Run Chunked Yielding (500ms Sliced)</button>
+      <button class="btn btn-success" onclick="triggerChunkedTask(500)">Run Chunked Yielding (500ms, 20ms Course Slices)</button>
       <div id="long-task-status" style="margin-top: 0.5rem; font-style: italic;">Status: Idle</div>
     </div>
   </div>
@@ -139,11 +137,11 @@ class EventLoopHTTPHandler(http.server.BaseHTTPRequestHandler):
       logs.push("2_sync_end");
     }
 
-    // Demonstration 2: Bounded Long Task (safety capped to max 2000ms)
+    // Demonstration 2: Bounded Long Task (course safety cap 1500ms)
     function triggerLongTask(targetMs) {
       const status = document.getElementById("long-task-status");
-      // Strict safety cap: never exceed 2000ms
-      const cappedMs = Math.min(Math.max(targetMs, 50), 2000);
+      // Strict course safety cap: never exceed 1500ms
+      const cappedMs = Math.min(Math.max(targetMs, 50), 1500);
       status.textContent = "Status: Executing " + cappedMs + "ms synchronous blocking loop on main thread...";
 
       // Give UI one tick to show status before locking main thread
@@ -162,12 +160,12 @@ class EventLoopHTTPHandler(http.server.BaseHTTPRequestHandler):
     // Demonstration 2b: Chunked yielding task
     function triggerChunkedTask(totalMs) {
       const status = document.getElementById("long-task-status");
-      const cappedTotal = Math.min(Math.max(totalMs, 50), 2000);
-      const chunkSizeMs = 50;
+      const cappedTotal = Math.min(Math.max(totalMs, 50), 1500);
+      const chunkSizeMs = 20;
       let remaining = cappedTotal;
       const startOverall = performance.now();
 
-      status.textContent = "Status: Starting chunked execution (" + cappedTotal + "ms in 50ms slices)...";
+      status.textContent = "Status: Starting chunked execution (" + cappedTotal + "ms in 20ms course slices)...";
 
       function doChunk() {
         const start = performance.now();
@@ -176,11 +174,11 @@ class EventLoopHTTPHandler(http.server.BaseHTTPRequestHandler):
         }
         remaining -= chunkSizeMs;
         if (remaining > 0) {
-          status.textContent = "Status: Running chunk... " + remaining + "ms remaining (UI stays responsive!)";
+          status.textContent = "Status: Running chunk... " + remaining + "ms nominal work remaining (event loop gets opportunities between slices).";
           setTimeout(doChunk, 0); // Yield control to event loop
         } else {
           const totalElapsed = (performance.now() - startOverall).toFixed(1);
-          status.textContent = "Status: Chunked execution finished in " + totalElapsed + "ms total without freezing UI counter!";
+          status.textContent = "Status: Chunked execution finished in " + totalElapsed + "ms observed wall time; compare responsiveness with the single long task.";
         }
       }
 
@@ -208,26 +206,36 @@ class EventLoopServerFixture:
     """Manages the lifecycle of a loopback event loop test server on port 0."""
 
     def __init__(self, host="127.0.0.1"):
+        if host != "127.0.0.1":
+            raise ValueError("M12 event-loop fixture is localhost-only and must bind 127.0.0.1")
         self.host = host
         self.server = None
         self.thread = None
         self.port = None
+        self.last_stop_record = None
 
     def start(self):
         self.server = ThreadedHTTPServer((self.host, 0), EventLoopHTTPHandler)
         self.port = self.server.server_address[1]
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=False)
         self.thread.start()
         return self.port
 
     def stop(self):
+        thread = self.thread
         if self.server:
             self.server.shutdown()
             self.server.server_close()
             self.server = None
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=2.0)
-            self.thread = None
+        reaped = True
+        if thread:
+            thread.join(timeout=2.0)
+            reaped = not thread.is_alive()
+            if not reaped:
+                raise RuntimeError("event-loop fixture server thread did not terminate cleanly")
+        self.thread = None
+        self.last_stop_record = {"server_thread_reaped": reaped}
+        return self.last_stop_record
 
     def __enter__(self):
         self.start()
