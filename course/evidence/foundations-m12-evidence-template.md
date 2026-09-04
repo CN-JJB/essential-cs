@@ -16,7 +16,9 @@ Record empirical preflight data from `python tests/preflight_network_web.py --js
 - GUI capability disposition: `NO LIVE BROWSER OBSERVATION` / `<actual>`
 - Browser CORS observation disposition: `NO LIVE BROWSER CORS OBSERVATION` / `<actual>`
 - DevTools observation disposition: `NO LIVE DEVTOOLS OBSERVATION` / `<actual>`
-- Chromium source access disposition: `LIVE_CHROMIUM_SOURCE_ACCESSIBLE` / `NO LIVE CHROMIUM SOURCE RECHECK`
+- Default local preflight Chromium-source disposition: `NO LIVE CHROMIUM SOURCE RECHECK` / reason `NOT_REQUESTED`
+- EXP-03 opt-in command: `python tests/preflight_network_web.py --json --check-chromium-source`
+- Opt-in Chromium source access disposition: `LIVE_CHROMIUM_SOURCE_ACCESSIBLE` / `NO LIVE CHROMIUM SOURCE RECHECK`
 - curl path / version: `<actual>`
 - OQ-BP-006 status: **OPEN**
 
