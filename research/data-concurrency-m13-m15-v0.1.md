@@ -863,15 +863,15 @@ Role: Explains shared buffer pool management, page pin/unpin semantics, buffer h
 
 | Tool / Capability | Classification | Current Version Checked | Primary Purpose | Implementation Smoke Required | Truthful Fallback / Skip Disposition |
 |---|---|---|---|---|---|
-| **Python 3 (`sqlite3`)** | Required for Core | Python 3.13.1 (SQLite 3.45.3) | LAB-REQ-04 and LAB-REQ-05 test runner, deterministic fixture generation | Yes: verify multi-connection locking & EQP execution | Universal across Linux, macOS, WSL, Dev Containers |
-| **`sqlite3` CLI** | Optional / Convenience | SQLite 3.53.4 (checked stable) | Interactive command-line query plan inspection | No: Python stdlib `sqlite3` provides 100% feature parity | Fallback to Python `sqlite3` script if CLI is missing |
-| **`gcc` / `clang`** | Required for Core | GCC 14.2.0 (x86_64) | LAB-REQ-03 compilation with `-std=c11 -pthread` | Yes: verify C11 atomics and POSIX threads compile cleanly | Standard in Linux/WSL; Dev Container baseline |
-| **POSIX Threads (`-pthread`)** | Required for Core | Glibc 2.39 / NPTL | LAB-REQ-03 thread execution, mutexes, condition variables | Yes: run atomic lost-update test | Native on POSIX; supported in MinGW/WSL |
-| **C11 Atomics (`<stdatomic.h>`)** | Required for Core | ISO/IEC 9899:2011 | Defined UB-free atomic load/store compound update in LAB-REQ-03 | Yes: verify compile and execution | Standard across all modern C compilers |
-| **Child Process Watchdog** | Required for Core | POSIX `fork`/`exec` or Python `subprocess` | Deadlock timeout guard for LAB-REQ-03 | Yes: verify child termination after 2s timeout | Python `subprocess.run(timeout=...)` provides cross-platform support |
-| **PostgreSQL Server / `psql`** | Optional | PostgreSQL 18.6 | LAB-OPT-03 optional plan and isolation comparison | No | Skip if PostgreSQL daemon/container is unavailable |
-| **Docker / Podman** | Optional | Docker Engine 27.x | Optional container runner for PostgreSQL | No | Never required for Core |
-| **Thread Sanitizer (`-fsanitize=thread`)** | Optional Enrichment | GCC/Clang Tsan | Advanced race detection demonstration | No | Skip in environments where Tsan runtime is unavailable |
+| **Python 3 + stdlib `sqlite3`** | Required for the planned original fixtures/tests | Agent host: Python 3.13.1 + SQLite 3.45.3; current upstream Python stable: 3.14.7 | Fixture generation, two-connection transaction harness, semantic EQP/result checks | Yes: record Python implementation/version and embedded SQLite version | Capability-gated on the actual canonical Linux image; do not assume parity across WSL/containers/other OSes |
+| **`sqlite3` CLI** | **Required baseline for LAB-REQ-04 per Blueprint selection** | Current upstream SQLite stable: 3.53.4 | Learner-facing interactive `EXPLAIN QUERY PLAN` / SQL observation | Yes: record CLI version and semantic plan evidence | If absent: `ENVIRONMENT-BLOCKED / NOT RUN` for the CLI-required path; Python is support/test evidence, not “100% feature parity” with CLI dot-commands/presentation |
+| **`gcc` or compatible C compiler** | Required for LAB-REQ-03 on canonical Linux | Agent host: GCC 14.2.0 x86-64 | Compile the C11-compatible atomic/pthread fixture with explicit `-std=c11 -pthread` | Yes | Record actual compiler and flag support; no cross-platform equivalence assumption |
+| **POSIX Threads** | Required for LAB-REQ-03 on canonical Linux | Agent host: glibc 2.39/NPTL; normative API: POSIX Issue 8 | Mutex/condition-variable/thread execution | Yes | WSL/container paths must be preflighted; MinGW is not accepted as equivalent NPTL/POSIX evidence |
+| **C atomics** | Required for the UB-free broken path | C11 API/semantics used by course; current C standard ISO/IEC 9899:2024 | Defined atomic accesses around a logically non-atomic compound update | Yes | Verify the chosen compiler/library exposes the required atomics; do not claim every “modern C compiler” is equivalent |
+| **Owned-child watchdog** | Required safety mechanism | Course implementation choice | Bound deadlock/interruption experiments and reap children | Yes | Timeout duration/termination mechanism is a test parameter recorded by the harness, not a universal two-second law |
+| **PostgreSQL Server / `psql`** | Optional | Current stable major/minor: PostgreSQL 18.6 | LAB-OPT-03 comparison only | Yes if Optional Lab is exercised/implemented | `SKIP / NOT RUN` if unavailable; never a Core dependency |
+| **Docker / Podman** | Optional convenience | Record actual capability if used | Optional PostgreSQL runner only | Yes if used | Never required for Core; native/local alternative or skip |
+| **ThreadSanitizer or race tooling** | Optional enrichment | Record actual compiler/runtime capability | Contrast language data-race detection with the course's defined logical-race path | Capability smoke if used | Absence is `TOOL UNAVAILABLE / SKIP`; it is not Required evidence |
 
 ### 18.2 OQ-BP-006 Alignment
 This matrix documents current, verified tool versions without closing OQ-BP-006. Permanent curriculum-wide environment pinning remains open for final curriculum consolidation.
@@ -894,9 +894,9 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
                                                         v
 +------------------------------------------------------------------------------------------------------------------+
 | SPECIFICATION (Normative Contracts & Platform Standards)                                                          |
-| - ANSI/ISO/IEC 9075:2023 Database Language SQL                                                                    |
-| - ISO/IEC 9899:2011 (C11) Programming Languages — C, §7.17 Atomics                                               |
-| - The Open Group Base Specifications Issue 8 / IEEE Std 1003.1-2024 (POSIX Threads: mutex, cond, yield)          |
+| - ISO/IEC 9075 SQL standard family — use exact edition/part only for claims actually sourced                    |
+| - ISO/IEC 9899:2024 (current C standard); C11 atomics remain the compatibility target for LAB-REQ-03             |
+| - The Open Group Base Specifications Issue 8 / IEEE Std 1003.1-2024 (POSIX pthread interfaces)                  |
 +------------------------------------------------------------------------------------------------------------------+
                                                         |
                                                         v
@@ -912,10 +912,10 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
                                                         v
 +------------------------------------------------------------------------------------------------------------------+
 | CURRENT PRACTICE (Present-Day Operational Baselines & Conventions)                                               |
-| - SQLite 3.53.4 / 3.45.3 Default Configuration (4KB page size, DELETE journal default)                            |
-| - Python 3.13.1 stdlib sqlite3 interface and PEP 703 experimental free-threaded CPython build                    |
-| - GCC 14.2 compiler default optimization flags and thread linking conventions                                     |
-| - PostgreSQL 18.6 current stable release documentation and source tree                                            |
+| - SQLite 3.53.4 current upstream release; Agent Python 3.13.1 embedded SQLite 3.45.3 as separate host evidence    |
+| - Python 3.14.7 current stable; free-threaded CPython is supported phase II under PEP 779, build/runtime-dependent |
+| - Agent GCC 14.2 toolchain observation; explicit `-std=c11 -pthread` capability must be preflighted              |
+| - PostgreSQL 18.6 current stable documentation; PostgreSQL `master` is a separate moving development source      |
 +------------------------------------------------------------------------------------------------------------------+
 ```
 
@@ -925,11 +925,11 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
 
 | Source / Entity | Owner / Maintainer | Exact URL / Route | Authority Class | Reuse / License Status | Curriculum Disposition |
 |---|---|---|---|---|---|
-| **SQLite Documentation & Code** | D. Richard Hipp / Hwaci | <https://sqlite.org/copyright.html> | IMPLEMENTATION / SPEC | **Public Domain** (dedicated via formal affidavits) | Permitted to reference, quote, and base original fixtures upon. All Essential CS text remains original. |
-| **The Open Group Base Specs Issue 8** | The IEEE and The Open Group | <https://pubs.opengroup.org/onlinepubs/9799919799/> | SPECIFICATION | Copyrighted standard; personal HTML browsing permitted | Reference normative interface specifications via stable URLs; do not mirror full standard text. |
-| **PostgreSQL Source & Docs** | PostgreSQL Global Development Group | <https://github.com/postgres/postgres> | IMPLEMENTATION / SPEC | **PostgreSQL License** (permissive BSD/MIT-style) | Permitted to inspect source files (EXP-02) and adapt documentation (LAB-OPT-03) with required copyright notice. Prefer links. |
-| **OSTEP Homework** | Remzi & Andrea Arpaci-Dusseau | <https://github.com/remzi-arpacidusseau/ostep-homework> | IMPLEMENTATION / CURRENT | **No License Declared** (Issue #71 open) | **Strictly link-only (LAB-OPT-05).** Zero vendoring, copying, or bundling of code/text. |
-| **Python Standard Library** | Python Software Foundation | <https://docs.python.org/3/> | SPEC / IMPLEMENTATION | **PSF License** (permissive open-source) | Permitted to use `sqlite3`, `threading`, and `asyncio` in original lab runner scripts. |
+| **SQLite official docs/source** | SQLite project / Hwaci | <https://sqlite.org/copyright.html> | OFFICIAL IMPLEMENTATION DOCUMENTATION / SOURCE | SQLite's official copyright page states project-authored code and documentation are dedicated to the public domain; later Design should still link/paraphrase and review any non-project/packaging artifact separately | Essential CS fixtures remain original; do not turn “public domain” into a reason to copy large manuals/figures |
+| **The Open Group Base Specs Issue 8** | IEEE / The Open Group | <https://pubs.opengroup.org/onlinepubs/9799919799/> | SPECIFICATION | Copyrighted standard | Cite/link bounded normative clauses; do not mirror standard text |
+| **PostgreSQL Source & Docs** | PostgreSQL Global Development Group | <https://github.com/postgres/postgres> | OFFICIAL DOCUMENTATION / IMPLEMENTATION | PostgreSQL License; exact notice obligations should be preserved for any actual excerpt/source reuse | EXP-02 is link/inspection-first; Optional Lab prose/scripts should remain Essential CS-authored |
+| **OSTEP Homework** | Remzi & Andrea Arpaci-Dusseau | <https://github.com/remzi-arpacidusseau/ostep-homework> | EXTERNAL TEACHING SOURCE | No repository license established in the checked route; upstream issue #71 remains open | **Strictly link-only (LAB-OPT-05)** unless rights are later established |
+| **Python docs / CPython** | Python Software Foundation | <https://docs.python.org/3/> | OFFICIAL CONTRACT / IMPLEMENTATION (claim-dependent) | PSF licensing applies to project material; examples have their documented terms | Use official docs for current runtime capability; distinguish Python language/stdlib contract from CPython implementation |
 
 ---
 
@@ -1039,13 +1039,13 @@ The subsequent Design pass (`meta/design/data-concurrency-m13-m15-design-v0.1.md
    - Both open questions remain **OPEN** and RFC-gated.
    - S5 does not require Core-scope expansion for AI or HCI. AI code verification (e.g., verifying AI-generated SQL queries or multi-threaded code against races) is treated as standard technical literacy practice without modifying Core architecture.
 2. **OQ-BP-006 (Environment and Version Pinning):**
-   - Remains **OPEN**. This dossier records verified current versions (Python 3.13.1, SQLite 3.45.3/3.53.4, GCC 14.2, POSIX Issue 8 / IEEE Std 1003.1-2024, PostgreSQL 18.6) as empirical evidence without turning them into permanent curriculum constants.
+   - Remains **OPEN**. Separate **Agent-host observations** (Python 3.13.1 / embedded SQLite 3.45.3 / GCC 14.2) from **2026-09-04 upstream currentness** (Python 3.14.7 / SQLite 3.53.4 / PostgreSQL 18.6 / POSIX Issue 8 / ISO C23). None is a permanent curriculum pin.
 3. **M03 GDB Debt & M06 Grader Debt:**
    - Historical debt (M03 GDB runtime debt, M06 MIT course-fork grader not run) remains explicit and non-blocking under D-027. S5 does not depend on M06's external grader.
-4. **Filesystem Locking Sensitivity:**
-   - SQLite multi-connection locking relies on underlying filesystem locking primitives (`fcntl` on POSIX, LockFile on Windows).
-   - In rare hosted container or network mount environments (e.g., NFS/SMB), file locking can fail.
-   - Mitigation: Design pass must specify that lab databases reside in local temporary directories (`/tmp` or container-local storage), never network shares.
+4. **Filesystem / VFS Locking Sensitivity:**
+   - SQLite concurrency semantics depend on the selected VFS and filesystem locking behavior.
+   - Remote/network filesystems have implementation- and configuration-specific locking semantics; Research does not classify all NFS/SMB mounts as broken.
+   - Design must use a course-owned local writable directory on the accepted environment and record the actual location/VFS capability. Do not require the literal path `/tmp` on every platform.
 
 ---
 
