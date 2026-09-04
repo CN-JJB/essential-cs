@@ -238,27 +238,112 @@ def probe_tools():
 
 
 def probe_browser():
-    """Record browser binary presence only; M10/M11 do not probe GUI/browser capability."""
-    candidates = ["google-chrome", "chrome", "chromium", "chromium-browser", "firefox"]
+    """Probe browser binary presence and record GUI/observation capability truthfully."""
+    candidates = ["google-chrome", "chrome", "chromium", "chromium-browser", "firefox", "msedge", "edge"]
     detected = {}
+
     for name in candidates:
         path = shutil.which(name)
         if path:
-            detected[name] = path
+            detected[name] = {"path": path, "version": None}
+
+    # On Windows, check standard installation directories if not already found in PATH
+    if platform.system() == "Windows":
+        win_candidates = [
+            ("chrome", os.path.join(os.environ.get("PROGRAMFILES", "C:\\Program Files"), "Google", "Chrome", "Application", "chrome.exe")),
+            ("chrome", os.path.join(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"), "Google", "Chrome", "Application", "chrome.exe")),
+            ("chrome", os.path.join(os.environ.get("LOCALAPPDATA", ""), "Google", "Chrome", "Application", "chrome.exe")),
+            ("msedge", os.path.join(os.environ.get("PROGRAMFILES", "C:\\Program Files"), "Microsoft", "Edge", "Application", "msedge.exe")),
+            ("msedge", os.path.join(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"), "Microsoft", "Edge", "Application", "msedge.exe")),
+        ]
+        for name, path in win_candidates:
+            if path and os.path.exists(path) and name not in detected:
+                detected[name] = {"path": path, "version": None}
+
+    # Extract version without blocking
+    for name, info in detected.items():
+        p = info["path"]
+        ver = None
+        try:
+            proc = subprocess.run([p, "--version"], capture_output=True, text=True, timeout=2)
+            out = proc.stdout.strip() or proc.stderr.strip()
+            if out:
+                ver = out.splitlines()[0]
+        except Exception:
+            pass
+
+        if not ver and platform.system() == "Windows":
+            try:
+                ps_cmd = f"(Get-Item '{p}').VersionInfo.ProductVersion"
+                proc = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, text=True, timeout=3)
+                out = proc.stdout.strip()
+                if out:
+                    ver = out
+            except Exception:
+                pass
+        info["version"] = ver
+
+    # Live GUI capability and observation disposition
+    # Do not declare browser live observation PASS without launching/observing a real browser context.
+    # Essential CS truthfulness: automated non-interactive runs record NO LIVE BROWSER OBSERVATION.
     return {
         "browser_binary_detected": bool(detected),
         "detected_binaries": detected,
-        "gui_capability": "NOT_PROBED_IN_M10_M11",
+        "gui_capability_disposition": "NO LIVE BROWSER OBSERVATION",
+        "cors_observation_disposition": "NO LIVE BROWSER CORS OBSERVATION",
+        "devtools_observation_disposition": "NO LIVE DEVTOOLS OBSERVATION",
     }
 
 
-def run_preflight():
+def probe_chromium_source(check_live=False):
+    """
+    Optionally probe official Chromium source access for EXP-03.
+
+    Default preflight remains local/offline-safe so M10/M11 are not made
+    dependent on public-network availability. EXP-03 currentness checks opt in
+    explicitly with --check-chromium-source.
+    """
+    url = "https://chromium.googlesource.com/chromium/src/+/refs/heads/main?format=JSON"
+    result = {
+        "available": False,
+        "disposition": "NO LIVE CHROMIUM SOURCE RECHECK",
+        "commit": None,
+        "date": None,
+        "error": None,
+        "reason": "NOT_REQUESTED",
+    }
+    if not check_live:
+        return result
+
+    import urllib.request
+    result["reason"] = None
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Essential-CS-Preflight/0.1"})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            raw = response.read().decode("utf-8")
+            # Gitiles prepends )]}' to JSON
+            if raw.startswith(")]}'"):
+                raw = raw[4:]
+            data = json.loads(raw)
+            result["available"] = True
+            result["disposition"] = "LIVE_CHROMIUM_SOURCE_ACCESSIBLE"
+            result["commit"] = data.get("commit")
+            committer = data.get("committer", {})
+            result["date"] = committer.get("time")
+    except Exception as exc:
+        result["error"] = f"{type(exc).__name__}: {exc}"
+
+    return result
+
+
+def run_preflight(check_chromium_source=False):
     os_info = probe_os()
     py_info = probe_python()
     loopback_info = probe_loopback_socket()
     resolver_info = probe_resolver()
     tools_info = probe_tools()
     browser_info = probe_browser()
+    source_info = probe_chromium_source(check_live=check_chromium_source)
 
     m10_core_ready = (
         py_info["has_socket"]
@@ -272,9 +357,17 @@ def run_preflight():
         and py_info["tls1_3_supported"]
     )
 
+    m12_core_ready = (
+        py_info["has_socket"]
+        and loopback_info["can_bind_port_0"]
+        and loopback_info["can_connect_loopback"]
+    )
+
     curl_ready = tools_info["curl"].get("usable_for_lab", False)
 
-    if m11_core_ready and curl_ready:
+    if m11_core_ready and curl_ready and m12_core_ready:
+        status = "READY_M10_M11_M12_CORE_AND_LAB_REQ_01"
+    elif m11_core_ready and curl_ready:
         status = "READY_M11_CORE_AND_LAB_REQ_01"
     elif m11_core_ready and not curl_ready:
         status = "READY_M11_CORE_LAB_REQ_01_BLOCKED"
@@ -288,6 +381,7 @@ def run_preflight():
         "preflight_status": status,
         "m10_status": "READY" if m10_core_ready else "BLOCKED",
         "m11_status": "READY" if m11_core_ready else "BLOCKED",
+        "m12_status": "READY" if m12_core_ready else "BLOCKED",
         "lab_req_01_status": (
             "READY"
             if curl_ready
@@ -299,15 +393,21 @@ def run_preflight():
         "resolver": resolver_info,
         "tools": tools_info,
         "browser": browser_info,
+        "chromium_source": source_info,
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description="Network & Web Environment Preflight")
     parser.add_argument("--json", action="store_true", help="Print preflight report in JSON format")
+    parser.add_argument(
+        "--check-chromium-source",
+        action="store_true",
+        help="Opt in to a live official Chromium-source reachability/current-revision check for EXP-03",
+    )
     args = parser.parse_args()
 
-    report = run_preflight()
+    report = run_preflight(check_chromium_source=args.check_chromium_source)
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
@@ -320,6 +420,7 @@ def main():
     print(f" Overall Status:     {report['preflight_status']}")
     print(f" M10 Core Status:    {report['m10_status']}")
     print(f" M11 Core Status:    {report['m11_status']}")
+    print(f" M12 Core Status:    {report['m12_status']}")
     print(f" LAB-REQ-01 Status:  {report['lab_req_01_status']}")
     print("-" * 60)
     print(" [Host Operating System]")
@@ -350,6 +451,26 @@ def main():
         print(f"   Usable:           NO ({curl_info['path']}; curl --version did not yield usable evidence)")
     else:
         print("   Usable:           NO (TOOL MISSING: curl is required for LAB-REQ-01)")
+    print("-" * 60)
+    print(" [Browser & GUI Observation Disposition]")
+    browser_info = report["browser"]
+    print(f"   Binary Detected:  {'YES' if browser_info['browser_binary_detected'] else 'NO'}")
+    for b_name, b_data in browser_info.get("detected_binaries", {}).items():
+        print(f"     - {b_name}: {b_data.get('path')} (Version: {b_data.get('version') or 'N/A'})")
+    print(f"   GUI Disposition:  {browser_info['gui_capability_disposition']}")
+    print(f"   CORS Disposition: {browser_info['cors_observation_disposition']}")
+    print(f"   DevTools Dispos:  {browser_info['devtools_observation_disposition']}")
+    print("-" * 60)
+    print(" [Chromium Source Reachability (EXP-03)]")
+    src_info = report["chromium_source"]
+    print(f"   Disposition:      {src_info['disposition']}")
+    if src_info.get("commit"):
+        print(f"   Current Commit:   {src_info['commit']}")
+        print(f"   Commit Date:      {src_info.get('date')}")
+    if src_info.get("reason"):
+        print(f"   Reason:           {src_info['reason']}")
+    if src_info.get("error"):
+        print(f"   Error:            {src_info['error']}")
     print("-" * 60)
     print(" [Resolver Observation Capability]")
     print(f"   Disposition:      {report['resolver']['disposition']}")
