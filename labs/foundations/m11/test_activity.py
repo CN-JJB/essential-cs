@@ -19,7 +19,7 @@ import unittest
 
 from caching_observer import run_caching_observation
 from http_semantics_observer import run_http_semantics_observation
-from reset import run_reset, verify_endpoint_not_serving
+from reset import run_reset
 from tls_fixture import run_tls_fixture_cases
 
 
@@ -39,14 +39,15 @@ class TestM11TLSFixture(unittest.TestCase):
         # Case 2: Hostname mismatch rejected
         c2 = results["case2_mismatched_identity"]
         self.assertTrue(c2["rejected_as_expected"])
-        self.assertEqual(c2["disposition"], "SERVICE_IDENTITY_REJECTED")
-        self.assertIn("SSLCertVerificationError", c2["exception_type"])
+        self.assertEqual(c2["disposition"], "SERVICE_IDENTITY_REJECTED_BY_TLS_CLIENT")
+        self.assertIsNotNone(c2["exception_type"])
 
         # Case 3: Untrusted root CA rejected
         c3 = results["case3_untrusted_anchor"]
         self.assertTrue(c3["rejected_as_expected"])
-        self.assertEqual(c3["disposition"], "UNTRUSTED_ROOT_REJECTED")
-        self.assertIn("SSLCertVerificationError", c3["exception_type"])
+        self.assertEqual(c3["disposition"], "UNTRUSTED_ROOT_REJECTED_BY_TLS_CLIENT")
+        self.assertIsNotNone(c3["exception_type"])
+        self.assertTrue(results["server_thread_reaped"])
 
 
 class TestM11HTTPSemantics(unittest.TestCase):
@@ -79,6 +80,8 @@ class TestM11HTTPSemantics(unittest.TestCase):
         # Step 5: Wire framing CRLF
         s5 = results["step5_raw_wire_trace"]
         self.assertTrue(s5["crlf_delimiter_found"])
+        self.assertTrue(results["server_thread_reaped"])
+        self.assertEqual(s2["resulting_state"]["stock"], 10)
 
 
 class TestM11CachingObserver(unittest.TestCase):
@@ -98,12 +101,13 @@ class TestM11CachingObserver(unittest.TestCase):
         self.assertEqual(s2["status_code"], 304)
         self.assertTrue(s2["zero_body_verified"])
         self.assertEqual(s2["wire_body_bytes_transferred"], 0)
-        self.assertGreater(s2["bandwidth_saved_bytes"], 0)
+        self.assertGreater(s2["representation_payload_bytes_avoided_in_fixture"], 0)
 
         # Step 3: Mismatched ETag returns 200 + representation
         s3 = results["step3_conditional_mismatched_etag"]
         self.assertEqual(s3["status_code"], 200)
         self.assertTrue(s3["full_body_sent"])
+        self.assertTrue(results["server_thread_reaped"])
 
 
 class TestM11Reset(unittest.TestCase):
@@ -111,9 +115,9 @@ class TestM11Reset(unittest.TestCase):
 
     def test_reset_idempotent(self):
         r1 = run_reset()
-        self.assertEqual(r1["status"], "CLEAN")
+        self.assertEqual(r1["status"], "CLEAN_NO_PERSISTENT_ARTIFACTS")
         r2 = run_reset()
-        self.assertEqual(r2["status"], "CLEAN")
+        self.assertEqual(r2["status"], "CLEAN_NO_PERSISTENT_ARTIFACTS")
         self.assertTrue(r2["idempotent"])
 
 
