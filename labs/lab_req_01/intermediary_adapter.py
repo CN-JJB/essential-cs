@@ -19,16 +19,17 @@ from email.message import Message
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Iterable
 
-# Known fields that must not be blindly forwarded by this bounded intermediary.
-# The dynamic Connection option set is handled separately below.
-KNOWN_CONNECTION_SPECIFIC = {
+# Fields this bounded intermediary always consumes rather than blindly forwarding.
+# This combines current/legacy connection-control fields with proxy-only
+# authentication fields that the course reverse-proxy fixture refuses to relay.
+# Fields named dynamically by Connection are handled separately below.
+COURSE_ALWAYS_REMOVE_FIELDS = {
     "connection",
     "proxy-connection",  # legacy/non-standard but common enough to reject here
     "keep-alive",
     "proxy-authenticate",
     "proxy-authorization",
     "te",
-    "trailer",
     "transfer-encoding",
     "upgrade",
 }
@@ -56,7 +57,7 @@ def _response_connection_tokens(headers: list[tuple[str, str]]) -> set[str]:
 
 def _remove_for_forwarding(name: str, connection_tokens: set[str]) -> bool:
     lower = name.lower()
-    return lower in KNOWN_CONNECTION_SPECIFIC or lower in connection_tokens
+    return lower in COURSE_ALWAYS_REMOVE_FIELDS or lower in connection_tokens
 
 
 def _http_version_token(version: str | int) -> str:
