@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""LAB-REQ-01 Idempotent Reset Script.
+"""LAB-REQ-01 idempotent standalone reset.
 
-Ensures no lingering processes or artifacts remain from LAB-REQ-01 runs.
-Returns status code 0 and reports CLEAN_NO_PERSISTENT_ARTIFACTS.
+The harness owns and verifies child-process/endpoint teardown while it still
+knows the process handles and dynamically assigned ports. This standalone
+reset only reports that LAB-REQ-01 creates no persistent course artifact that
+requires deletion; it does not pretend to rediscover or verify unknown old
+processes.
 """
 
 from __future__ import annotations
@@ -11,9 +14,7 @@ import sys
 
 
 def reset_lab_req_01() -> str:
-    """Perform idempotent cleanup of LAB-REQ-01 environment."""
-    # Sockets and subprocesses are managed and closed by harness/tests.
-    # No persistent disk artifacts or background daemons are left behind.
+    """Report the course-scoped no-persistent-artifact reset disposition."""
     return "CLEAN_NO_PERSISTENT_ARTIFACTS"
 
 
