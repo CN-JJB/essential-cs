@@ -86,7 +86,9 @@ class TestIntermediaryAdapter(unittest.TestCase):
         self.assertTrue(_remove_for_forwarding("X-Course-Hop", tokens))
         self.assertTrue(_remove_for_forwarding("Another-Hop", tokens))
         self.assertTrue(_remove_for_forwarding("Keep-Alive", tokens))
-        self.assertTrue(_remove_for_forwarding("Trailer", tokens))
+        self.assertFalse(_remove_for_forwarding("Trailer", tokens))
+        trailer_tokens = _connection_tokens_from_values(["Trailer"])
+        self.assertTrue(_remove_for_forwarding("Trailer", trailer_tokens))
         self.assertTrue(_remove_for_forwarding("Proxy-Connection", tokens))
         self.assertFalse(_remove_for_forwarding("If-None-Match", tokens))
 
