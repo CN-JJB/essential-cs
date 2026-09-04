@@ -42,7 +42,7 @@ Issue #9 performed the single Canonical modification pass on top of the merged i
 | Final Exit Audit | Issue #23 / PR #24 | **COMPLETE — PASS after Lead direct fixes; Blueprint v0.1 closed** |
 | OQ-BP-001 / OQ-BP-003: Open Question → research → RFC/Decision | Architecture process (RFC candidates ready) | **OPEN — non-blocking until an affected slice requires a Core-scope decision** |
 | OQ-BP-006 environment/version + hardware-dependent baseline pinning | First Module dossier + environment/Lab implementation | **OPEN — intentionally implementation-time** |
-| Build-first bounded course production | M00–M12 implementation complete after Lead review; M10–M12 Research #68/#69 and Design #71/#72 are fully consumed; LAB-REQ-01, LAB-REQ-02, and EXP-03 are merged; M03 GDB debt, M06 official course-fork grader NOT RUN, Issue #34 deferred learner validation, and OQ-BP-006 remain explicit | **ACTIVE — M13–M15 Data & Concurrency Research next** |
+| Build-first bounded course production | M00–M12 implementation complete after Lead review; S5 Research #83/#84 is Lead-accepted / READY FOR DESIGN; LAB-REQ-01, LAB-REQ-02, and EXP-03 are merged; M03 GDB debt, M06 official course-fork grader NOT RUN, Issue #34 deferred learner validation, and OQ-BP-006 remain explicit | **ACTIVE — M13–M15 Data & Concurrency Design next** |
 
 ## Final Blueprint gate — PASSED
 
