@@ -167,6 +167,9 @@ def probe_curl():
             "version": None,
             "tls_backend": None,
             "features": None,
+            "usable_for_lab": False,
+            "version_probe_succeeded": False,
+            "raw_version_output": [],
         }
 
     lines = base.get("details", [])
@@ -183,12 +186,16 @@ def probe_curl():
         if line.startswith("Features:"):
             features = line.replace("Features:", "").strip().split()
 
+    version_probe_succeeded = bool(v_line)
     return {
         "available": True,
+        "usable_for_lab": version_probe_succeeded,
         "path": base["path"],
-        "version": v_line,
-        "tls_backend": tls_backend,
+        "version": v_line or None,
+        "tls_backend": tls_backend if version_probe_succeeded else None,
         "features": features,
+        "version_probe_succeeded": version_probe_succeeded,
+        "raw_version_output": lines,
     }
 
 
@@ -265,7 +272,7 @@ def run_preflight():
         and py_info["tls1_3_supported"]
     )
 
-    curl_ready = tools_info["curl"].get("available", False)
+    curl_ready = tools_info["curl"].get("usable_for_lab", False)
 
     if m11_core_ready and curl_ready:
         status = "READY_M11_CORE_AND_LAB_REQ_01"
@@ -281,7 +288,11 @@ def run_preflight():
         "preflight_status": status,
         "m10_status": "READY" if m10_core_ready else "BLOCKED",
         "m11_status": "READY" if m11_core_ready else "BLOCKED",
-        "lab_req_01_status": "READY" if curl_ready else "TOOL_MISSING_CURL",
+        "lab_req_01_status": (
+            "READY"
+            if curl_ready
+            else "ENVIRONMENT_BLOCKED_NOT_RUN_CURL"
+        ),
         "os": os_info,
         "python": py_info,
         "loopback": loopback_info,
@@ -330,13 +341,15 @@ def main():
     print("-" * 60)
     print(" [curl Capability (Required for LAB-REQ-01)]")
     curl_info = report["tools"]["curl"]
-    if curl_info.get("available"):
-        print(f"   Available:        YES ({curl_info['path']})")
+    if curl_info.get("usable_for_lab"):
+        print(f"   Usable:           YES ({curl_info['path']})")
         print(f"   Version:          {curl_info['version']}")
         print(f"   TLS Backend:      {curl_info['tls_backend']}")
         print(f"   Features:         {', '.join(curl_info['features'])}")
+    elif curl_info.get("available"):
+        print(f"   Usable:           NO ({curl_info['path']}; curl --version did not yield usable evidence)")
     else:
-        print("   Available:        NO (TOOL MISSING: curl is required for LAB-REQ-01)")
+        print("   Usable:           NO (TOOL MISSING: curl is required for LAB-REQ-01)")
     print("-" * 60)
     print(" [Resolver Observation Capability]")
     print(f"   Disposition:      {report['resolver']['disposition']}")
