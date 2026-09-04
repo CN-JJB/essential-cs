@@ -427,38 +427,40 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 2. **Interleaving and Concurrency (EC-CON-015):**
    - The OS kernel preemptively schedules threads onto available CPU cores.
    - Instructions from different threads can interleave in arbitrary order. Even on a single-core system, time-slicing creates concurrency.
-3. **Logical Race Condition vs. C/C++ Data Race (Undefined Behavior):**
-   - **Logical Race Condition:** A program flaw where the correctness of output depends on the non-deterministic execution order or timing of concurrent threads.
-   - **Language Data Race:** In C11/C++11, two concurrent memory accesses to the same memory location, where at least one is a write, and neither access is an atomic operation or synchronized via a happens-before relationship.
-   - **Pedagogical Requirement:** A data race in C is **Undefined Behavior (UB)**! Compilers are permitted to optimize away unsynchronized loops or assume races never occur. Therefore, Essential CS teaching code **must not rely on UB** to demonstrate concurrency bugs.
-   - **The C11 Atomics Solution:** We construct a compound read-modify-write operation using defined relaxed atomic operations (`atomic_load_explicit` $\to$ `sched_yield()` $\to$ `atomic_store_explicit`). Each memory access is strictly legal and defined under ISO C11, but the multi-step transaction is non-atomic, deterministically exposing a real lost update!
+3. **Logical Race Condition vs. C Language Data Race (Undefined Behavior):**
+   - **Logical Race Condition:** a higher-level correctness failure whose outcome depends on permitted concurrent ordering/interleaving.
+   - **C data race:** a language-level condition involving conflicting accesses in different threads under the C memory model; a non-atomic conflicting access without the required ordering can make program behavior undefined.
+   - **Pedagogical Requirement:** the Required broken path must **not rely on C undefined behavior**. The selected C11-compatible teaching pattern uses atomic load/store operations for each access while deliberately leaving the multi-step read→compute→write transition non-atomic.
+   - `sched_yield()` is only an observation aid. It does not promise another thread will run or guarantee a lost update. The Design must distinguish the stable logical interleaving from scheduler-specific evidence.
 4. **Mutual Exclusion via POSIX Mutex (`pthread_mutex_t`):**
-   - Protects critical sections, ensuring at most one thread executes the section at any instant.
-   - Guarantees memory visibility: `pthread_mutex_unlock` synchronizes-with subsequent `pthread_mutex_lock` calls.
-   - Mutexes do *not* guarantee fair FIFO ordering among waiting threads.
+   - A correctly shared mutex can exclude conflicting critical-section execution according to POSIX mutex semantics.
+   - Lock/unlock operations are synchronization operations with memory-ordering consequences under POSIX/C integration; Design should avoid importing a C++-specific “synchronizes-with” sentence as if it were the POSIX wording.
+   - Default mutex use does not establish a FIFO/fairness curriculum guarantee.
 5. **Condition Synchronization via POSIX Condition Variables (`pthread_cond_t`):**
-   - Enables threads to sleep until a specific shared-state predicate becomes true.
-   - Atomically releases the associated mutex and blocks the thread in `pthread_cond_wait`. Upon wake, re-acquires the mutex.
-   - **Spurious Wakeups:** A waiting thread may wake up without any explicit signal.
-   - **The Mandatory Predicate Loop:** The predicate must always be checked in a `while` loop:
+   - A condition variable is a wait/notification mechanism used together with a mutex-protected predicate; the condition variable itself is not the truth value.
+   - `pthread_cond_wait` atomically releases the associated mutex as part of waiting and returns with that mutex reacquired.
+   - A return from the wait does not prove the predicate is currently true: spurious wakeups and competing threads are possible.
+   - **Course Required-Lab pattern:** re-evaluate the predicate in a loop:
      ```c
      pthread_mutex_lock(&mutex);
      while (!predicate_is_true) {
          pthread_cond_wait(&cond, &mutex);
      }
-     // Invariant guaranteed: predicate_is_true
+     /* predicate observed true while holding mutex */
      pthread_mutex_unlock(&mutex);
      ```
+     The loop is the accepted course pattern; equivalent correct predicate-recheck structures are a programming matter, not a claim that POSIX requires one literal syntax.
 6. **Deadlock & Progress Failures:**
    - Four Coffman conditions: Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait.
    - L15 addresses deadlock avoidance via strict lock acquisition hierarchies (e.g., always acquire Lock A before Lock B).
-7. **Thread vs. Asynchronous Event Loops:**
-   - Preemptive OS Threads: Managed by kernel; heavy stack allocation; blocking syscalls suspend thread; optimal for parallel CPU work.
-   - Cooperative Event Loops: Single-threaded; cooperative yielding (`async`/`await`); low memory overhead; non-blocking I/O; prevents low-level memory data races but does *not* prevent logical race conditions across `await` points.
-8. **CPython GIL Reality:**
-   - The Global Interpreter Lock (GIL) is a CPython implementation detail, not a Python language invariant.
-   - The GIL prevents multi-core native thread parallelism for Python bytecode, but does *not* make Python code thread-safe. Bytecode instructions interleave unpredictably (e.g., `counter += 1` executes multiple opcodes), causing lost updates in pure Python threads.
-   - PEP 703 introduces experimental free-threaded CPython (Python 3.13+), removing the GIL.
+7. **Thread vs. Asynchronous Event-Loop Models:**
+   - OS-thread models use kernel-scheduled execution contexts and may run in parallel when runtime/hardware permit; blocking, stack/resource cost and scheduling overhead are workload/runtime dependent.
+   - An async runtime can cooperatively interleave tasks around suspension points in an event loop, but the wider process may still use multiple threads or native services. Async does not inherently remove shared-state races, ordering bugs, blocking calls, or parallelism concerns.
+   - Design should compare mechanism/cost/constraints for a stated workload rather than declare “threads for CPU, async for I/O” as a universal rule.
+8. **CPython GIL / Free-Threading Reality:**
+   - The GIL is a CPython runtime implementation mechanism, not a Python-language invariant.
+   - In a conventional GIL-enabled CPython build, only a thread holding the GIL executes Python object/C-API work at a time, but thread switching and GIL release around blocking operations mean application synchronization is still required for shared invariants. Do **not** use a specific `counter += 1` lost-update result or opcode sequence as a Core invariant.
+   - CPython 3.13 introduced an optional free-threaded build. As of current stable Python 3.14, PEP 779 moved free-threaded CPython into an **officially supported phase**, but it is not the default phase-III runtime model; extensions can still cause the GIL to be enabled. Record build/runtime capability when observing it.
 
 ### 8.3 Explicit Non-Goals
 - Formal memory model operational semantics (Java Memory Model / C++11 Acquire-Release memory order proofs).
@@ -479,28 +481,28 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
   sched_yield();
   atomic_store_explicit(&counter, val + 1, memory_order_relaxed);
   ```
-- Run the program and observe that 20,000 intended increments yield ~10,000 to ~15,000 final count due to interleaved lost updates.
-- Wrap the update with `pthread_mutex_lock` and `pthread_mutex_unlock`, verifying the final count is exactly 20,000 across 100 consecutive runs.
-- Implement a condition-variable rendezvous where Worker 2 waits for Worker 1 to publish a payload, verifying the while-loop predicate guard.
-- Run a companion Python script demonstrating that `counter += 1` in two threads also produces lost updates despite the CPython GIL.
+- Run the broken atomic compound update under a **bounded attempt budget** and record whether a lost-update interleaving is actually observed; no fixed erroneous-count range or success percentage is a specification.
+- Repair the compound update with the course mutex and assert the intended final invariant on every completed repaired run.
+- Implement the condition-variable rendezvous and verify the predicate/order invariant.
+- For Python, record the actual CPython build/GIL capability and use documentation plus a controlled shared-state example if needed. Do not require `counter += 1` to lose updates on every/current CPython build.
 
 ### 8.6 Required Learner Evidence
 - Interleaving enumeration: Draw an execution trace showing how two threads reading value `42` both write back `43`, losing one increment.
 - Mutex verification: Prove that adding mutex locks guarantees mutual exclusion and restores invariant correctness.
-- Predicate explanation: Explain why an `if` statement around `pthread_cond_wait` is flawed and why a `while` loop is required by POSIX specifications.
-- GIL boundary analysis: Explain why Python's GIL does not prevent application-level race conditions.
+- Predicate explanation: Explain why a single pre-wait `if` is insufficient for the course predicate and why the predicate must be rechecked after `pthread_cond_wait` returns.
+- GIL boundary analysis: Explain why a named CPython GIL mode does not substitute for an application synchronization contract, and distinguish default GIL-enabled vs free-threaded builds.
 
 ### 8.7 Authority Classification
 - **PRINCIPLE:** Concurrency vs. parallelism, mutual exclusion, condition rendezvous, Coffman deadlock conditions, race conditions.
-- **SPECIFICATION:** The Open Group Base Specifications Issue 8 / IEEE Std 1003.1-2024 (`pthread_mutex_*`, `pthread_cond_*`); ISO/IEC 9899:2011 (C11) atomics (`<stdatomic.h>`).
-- **IMPLEMENTATION:** Linux NPTL (Native POSIX Thread Library), glibc thread scheduling, CPython GIL bytecode dispatch.
-- **CURRENT PRACTICE:** CPython 3.13 free-threaded build (`--disable-gil`), `gcc -pthread` compiler defaults.
+- **SPECIFICATION:** The Open Group Base Specifications Issue 8 / IEEE Std 1003.1-2024 for pthread interfaces; the Required Lab deliberately uses the C11 atomic API/semantics introduced in ISO/IEC 9899:2011, while **ISO/IEC 9899:2024 (C23) is the current C standard** and must be recorded as such.
+- **IMPLEMENTATION:** named Linux/glibc/NPTL behavior where observed; named CPython build/runtime behavior where observed.
+- **CURRENT PRACTICE:** Python 3.14.7 is current stable on the review date; PEP 779 describes supported free-threaded CPython phase II. `-pthread` is an explicit compiler/link-driver option on the canonical toolchain, not a universal compiler default.
 
 ### 8.8 Authoritative Sources
 - The Open Group Base Specifications Issue 8 / IEEE Std 1003.1-2024:
   - `pthread_mutex_lock`: <https://pubs.opengroup.org/onlinepubs/9799919799/functions/pthread_mutex_lock.html>
   - `pthread_cond_wait`: <https://pubs.opengroup.org/onlinepubs/9799919799/functions/pthread_cond_wait.html>
-- ISO/IEC 9899:2011 (C11 Standard), §7.17 *Atomics `<stdatomic.h>`*.
+- ISO/IEC 9899:2011 (C11), atomics introduced for the Required C11-compatible path; current-standard status must also cite ISO/IEC 9899:2024 (C23).
 - Python Software Foundation: PEP 703 – *Making the Global Interpreter Lock Optional in CPython*: <https://peps.python.org/pep-0703/>
 - Python Official Threading Documentation: <https://docs.python.org/3/library/threading.html>
 - OSTEP: Arpaci-Dusseau, R. & Arpaci-Dusseau, A. *Operating Systems: Three Easy Pieces*, Concurrency chapters (26–32).
@@ -511,16 +513,16 @@ The concurrency thread (M06 $\to$ M15) traces execution control from isolated op
 - *"A race condition is the same thing as a C/C++ data race."* (False: A data race is a specific language-level construct producing undefined behavior; a race condition is a general logical flaw in system state transitions).
 - *"Using atomic variables automatically makes compound multi-step operations correct."* (False: Individual reads and writes may be atomic, but the compound state transition across multiple variables or steps remains non-atomic).
 - *"A mutex guarantees fair FIFO turn-taking among waiting threads."* (False: Standard POSIX mutexes make no fairness guarantees; recently unblocked or running threads may re-acquire the lock ahead of long-waiting threads).
-- *"Python's GIL means multi-threaded Python programs do not need locks."* (False: Python threads can be interrupted between any bytecode instruction; compound operations like `x += 1` lose updates).
+- *"Python's GIL means multi-threaded Python programs do not need locks."* (False: application invariants still require synchronization. Exact opcode switching and whether one expression such as `x += 1` exhibits a lost update are version/build/implementation observations, not a Python-language guarantee.)
 
 ### 8.10 Environment & Tool Constraints
 - Compiler: `gcc` or `clang` with `-std=c11 -pthread`.
-- OS: Linux / POSIX systems with NPTL support. (Windows environments supported via MinGW-w64 or WSL).
+- OS: **canonical Linux** with actual pthread/toolchain capability recorded. WSL is a hosted Linux path that must be preflighted; MinGW is not treated as equivalent POSIX/NPTL evidence for the Required Core.
 - Execution Safety: Deadlock experiments must be wrapped in a watchdog process with a hard timeout to prevent hanging student terminals.
 
 ### 8.11 Implementation-Time Smoke Requirements
 - Verify that `gcc -std=c11 -pthread` compiles the atomic compound test cleanly without compiler errors or warnings.
-- Confirm that the C atomic lost-update demonstration produces an erroneous count in $\ge 95\%$ of runs without hanging.
+- Under a bounded attempt budget, require at least one **actually observed** lost-update trace on the accepted canonical implementation image before calling that smoke path PASS. If scheduler behavior makes the chosen yield-only fixture unreliable, Design must add a bounded course-controlled phase handoff or classify the observation as environment-sensitive; do not encode a ≥95% scheduler probability.
 
 ---
 
@@ -749,7 +751,7 @@ void* worker(void* arg) {
 
 - **Why this works:** Every memory access is an atomic operation complying with ISO C11. There are **zero data races** and **zero undefined behaviors**.
 - **The observed failure:** Because the two-step sequence (Read $\to$ Write) is not atomic as a compound operation, Thread 1 and Thread 2 both read `current = 42`, both compute `43`, and both store `43`. One update is completely lost.
-- **Empirical verification:** Running two threads for 10,000 iterations each yields a final count between ~10,000 and ~15,000 (instead of 20,000) in 100% of runs.
+- **Agent host observation:** one tested source/toolchain/run set produced lost updates. Preserve raw run counts if useful, but **do not promote a 10,000–15,000 range or 100% manifestation rate into the Lab contract**; `sched_yield()` is not an interleaving guarantee.
 
 ### 14.3 Mutex Repair & Condition Rendezvous
 1. **Mutex Repair:**
@@ -764,7 +766,7 @@ void* worker(void* arg) {
      consume(payload);
      pthread_mutex_unlock(&lock);
      ```
-   - Reinforces the POSIX Issue 8 rule: The predicate must be evaluated in a `while` loop to safeguard against spurious wakeups.
+   - Reinforces the course rule that the predicate is re-evaluated in a `while` loop after condition-wait returns, covering spurious wakeups and competing-thread predicate changes.
 3. **Deadlock Watchdog Architecture:**
    - To illustrate deadlock, a deliberately reversed lock acquisition scenario (Thread 1: Lock A $\to$ Lock B; Thread 2: Lock B $\to$ Lock A) is compiled into a separate binary.
    - The test runner wraps execution in a subprocess with a strict 2-second timeout (`alarm()` or `subprocess.run(timeout=2)`). When deadlock occurs, the runner terminates the child gracefully, logs the deadlock state, and exits with a structured diagnostic. The learner's shell never hangs.
@@ -823,7 +825,7 @@ void* worker(void* arg) {
 ### 16.3 Educational Disposition
 - Essential CS **will not redistribute, bundle, or vendor** any source code, skeletons, or solutions from `ostep-homework`.
 - LAB-OPT-05 is presented as a **link-only pointer** for independent study.
-- All Core concurrency learning outcomes are 100% satisfied by the self-contained original `LAB-REQ-03`.
+- The self-contained Required Core mechanism is `LAB-REQ-03`; OSTEP is not needed to satisfy the selected Core evidence contract.
 
 ---
 
@@ -961,7 +963,7 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
 - **Misconception:** *"A condition variable notification guarantees the predicate is true."*
   - **Inference Boundary:** Notifications only wake waiting threads; they do not guarantee the condition remains true when the awakened thread eventually re-acquires the mutex. Spurious wakeups and intervening thread execution mandate the use of a `while` loop around `pthread_cond_wait`.
 - **Misconception:** *"Python's GIL makes multi-threaded Python programs thread-safe."*
-  - **Inference Boundary:** The GIL protects internal CPython interpreter memory, not user application state. Python threads are preemptively switched between bytecode instructions, causing lost updates in compound operations like `count += 1`.
+  - **Inference Boundary:** A GIL-enabled CPython build serializes Python object/C-API execution under its runtime rules, but does not establish an application-level invariant. Thread switching, blocking-operation GIL release, extension behavior, and free-threaded builds all matter. Do not require a particular `count += 1` race outcome.
 
 ---
 
@@ -976,8 +978,8 @@ This matrix documents current, verified tool versions without closing OQ-BP-006.
    - Assert the **fixture-defined conflict contract** using SQLite result codes/transaction state and record the actual Python exception/message if one occurs; do not require a fixed `database is locked` string across versions/configurations.
    - Terminate child process mid-transaction; assert that post-crash state preserves original invariant: `balance_a + balance_b == 1000`.
 3. **Atomic Race & Mutex Repair Verification (M15):**
-   - Run broken atomic compound counter; assert that final count $< 20,000$ in $\ge 95\%$ of runs.
-   - Run mutex-protected counter; assert that final count $== 20,000$ across 100% of runs.
+   - Run the broken atomic compound counter under a bounded attempt budget; PASS requires preserving at least one actual lost-update trace on the accepted environment, not a fixed percentage or count range.
+   - Run the mutex-protected counter; every completed repaired run must satisfy the declared target-count invariant.
    - Execute condition-variable rendezvous; assert that consumer never executes before producer sets payload.
    - Execute deadlock test under watchdog; assert that child process is cleanly terminated by timeout within $\le 3$ seconds.
 
