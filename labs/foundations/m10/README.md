@@ -20,7 +20,7 @@
 | `endpoint_observer.py` | `L10-01` | 绑定动态端口 0；观察 `getsockname()` 结果；验证名称、地址、路由与端口/进程解耦；执行 16 字节回显交互。 |
 | `stream_framing.py` | `L10-02` | 观察 TCP 无结构有序字节流与分片/合并行为；运行定界/长度前缀解析循环；对比 UDP 报文边界与 IPv4/IPv6 校验和规则。 |
 | `failure_fixture.py` | `L10-03` | 观察受控本地拒绝（未绑定端口）、已接受但静默超时（服务端握手后不发数据）、及保留域名 `.invalid` 的 DNS 解析失败；阐释部分失败歧义与重试风险。 |
-| `reset.py` | 全部 | 幂等清理脚本；确保所有套接字安全关闭，检验端点不再服务。 |
+| `reset.py` | 全部 | 幂等课程范围 reset；M10 无持久 daemon/artifact。已知旧端点的“是否仍接受连接”由 owning activity/test 在端口仍已知时探测。 |
 | `test_activity.py` | 全部 | 自动化单元测试套件（`unittest`），验证全部机制不变式。 |
 
 ---
@@ -61,7 +61,7 @@ python labs/foundations/m10/stream_framing.py
 观察输出中：
 - 接收端实际观测到的 `recv()` 分片（Partitions）；
 - 应用层长度前缀定界循环如何跨越任意切片拼装出完整的消息；
-- UDP 如何每次 `recvfrom()` 单独保留独立的报文边界。
+- UDP 的成功 `recvfrom()` 如何返回至多一个数据报的数据；课程 loopback fixture 记录实际到达的数据报，但**不**把全部交付或顺序当成 UDP 保证。
 
 ### 3.4 观测网络故障谱系与部分失败 (L10-03)
 
@@ -70,8 +70,8 @@ python labs/foundations/m10/failure_fixture.py
 ```
 
 观察三种不同的故障场景：
-1. **未绑定端口连接拒绝**：如实记录宿主机抛出的 `ConnectionRefusedError`（或平台等价错误码）及瞬态耗时；
-2. **已建连但静默超时**：客户端等待超过指定的 Read Deadline 后触发 `TimeoutError`；
+1. **未绑定 loopback 端点连接失败**：如实记录 `connect_ex` 结果或运行时异常与 elapsed sample；不要求固定异常类、errno 或“瞬态”时延；
+2. **已建连但静默超时**：客户端设置有界 Read Deadline，记录实际 timeout disposition 与 elapsed sample；不把固定异常名或毫秒阈值作为验收条件；
 3. **保留域名解析失败**：针对 RFC 2606 的 `.invalid` 保留顶级域名发起查询，如实记录解析器失败信息。
 
 ### 3.5 运行全量自动化测试与重置
@@ -79,4 +79,6 @@ python labs/foundations/m10/failure_fixture.py
 ```bash
 python -m unittest discover -s labs/foundations/m10 -p "test_*.py" -v
 python labs/foundations/m10/reset.py
+# standalone reset 应报告 CLEAN_NO_PERSISTENT_ARTIFACTS；
+# 旧端点 close probe 在 activity/test 持有实际 port 时执行。
 ```
