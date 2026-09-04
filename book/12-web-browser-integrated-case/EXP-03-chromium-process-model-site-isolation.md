@@ -109,10 +109,15 @@ EXP-03 BOUNDED SOURCE ROUTE & STOPPING POINTS
 
 ### 任务 5（实证版本与元数据记录）：源头版本追踪
 
-- **检查时间**：2026-09-04
-- **考察分支**：`refs/heads/main`
-- **实际检查 Commit**：`cd4ff71cd07504d87e90484d1bd0d66c2b6180dc`
-- **源码访问状态**：`LIVE_CHROMIUM_SOURCE_ACCESSIBLE`（通过官方 Gitiles 接口实时确认）。
+作者在 **2026-09-04** 对这条三锚点路线做过 currentness recheck；该作者快照只证明“当时路线可用”，**不是 learner 应复制的 revision**。
+
+学习者每次考察都必须自行记录：
+- **实际检查时间**：`<your actual timestamp>`
+- **考察分支/ref**：例如 `refs/heads/main`
+- **实际检查 Commit**：`<your exact Chromium revision>`
+- **源码访问状态**：`LIVE_CHROMIUM_SOURCE_ACCESSIBLE` 或 `NO LIVE CHROMIUM SOURCE RECHECK`
+
+若无法访问官方 Gitiles，不得沿用作者旧 commit 冒充 live inspection；此时只能把仓库内 Research/Design 作为 **REFERENCE EVIDENCE ONLY**。
 
 ---
 
