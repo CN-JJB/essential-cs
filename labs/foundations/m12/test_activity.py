@@ -70,6 +70,13 @@ class TestM12RenderingFixture(unittest.TestCase):
                 body = resp.read().decode("utf-8")
                 self.assertIn("deferred_script_executed", body)
 
+            # Async asset exists, but Python HTTP tests do not assert browser
+            # execution order.
+            with urllib.request.urlopen(f"{base_url}/async.js", timeout=3.0) as resp:
+                self.assertEqual(resp.status, 200)
+                body = resp.read().decode("utf-8")
+                self.assertIn("async_script_executed", body)
+
         self.assertTrue(fixture.last_stop_record["server_thread_reaped"])
 
     def test_rendering_fixture_rejects_non_loopback_bind(self):
@@ -126,6 +133,43 @@ class TestM12DualOriginCORS(unittest.TestCase):
                 headers_lower = {k.lower(): v for k, v in resp.getheaders()}
                 self.assertIn("access-control-allow-origin", headers_lower)
                 self.assertEqual(headers_lower["access-control-allow-origin"], url_a)
+
+            # Arbitrary origins must not be reflected by the course server.
+            fake_origin = "http://127.0.0.1:1"
+            req_fake = urllib.request.Request(
+                f"{url_b}/api/data?mode=authorized",
+                headers={"Origin": fake_origin, "User-Agent": "CourseRawHTTPClient/1.0"},
+            )
+            with urllib.request.urlopen(req_fake, timeout=3.0) as resp:
+                headers_lower = {k.lower(): v for k, v in resp.getheaders()}
+                self.assertNotIn("access-control-allow-origin", headers_lower)
+
+            # Diagnostic request logs must not expose ambient credentials.
+            req_sensitive = urllib.request.Request(
+                f"{url_b}/api/data?mode=unauthorized&probe=sensitive",
+                headers={
+                    "Origin": url_a,
+                    "Cookie": "course-test=must-not-be-reflected",
+                    "Authorization": "Bearer must-not-be-reflected",
+                    "X-Course-Custom": "safe-course-marker",
+                    "User-Agent": "CourseRawHTTPClient/1.0",
+                },
+            )
+            with urllib.request.urlopen(req_sensitive, timeout=3.0) as resp:
+                self.assertEqual(resp.status, 200)
+                resp.read()
+
+            sensitive_record = next(
+                r for r in fixture.get_origin_b_requests()
+                if "probe=sensitive" in r["path"]
+            )
+            self.assertEqual(sensitive_record["headers"].get("Origin"), url_a)
+            self.assertEqual(
+                sensitive_record["headers"].get("X-Course-Custom"),
+                "safe-course-marker",
+            )
+            self.assertNotIn("Cookie", sensitive_record["headers"])
+            self.assertNotIn("Authorization", sensitive_record["headers"])
 
             # 4. Case 3: Preflighted request (OPTIONS check)
             opt_req = urllib.request.Request(
@@ -192,6 +236,11 @@ class TestM12EventLoopFixture(unittest.TestCase):
                 self.assertIn("spin", body)
                 self.assertIn("1500", body)
                 self.assertIn("chunkSizeMs = 20", body)
+                # Static fixture-contract checks only. They do not claim that
+                # Python executed JavaScript scheduling.
+                self.assertIn("3a_microtask_promise_1", body)
+                self.assertIn("3b_microtask_queueMicrotask", body)
+                self.assertIn("3c_microtask_promise_chained", body)
 
         self.assertTrue(fixture.last_stop_record["server_thread_reaped"])
 
