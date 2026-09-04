@@ -74,7 +74,7 @@ EXP-03 BOUNDED SOURCE ROUTE & STOPPING POINTS
 - **目标文件**：[`docs/process_model_and_site_isolation.md`](https://chromium.googlesource.com/chromium/src/+/main/docs/process_model_and_site_isolation.md)
 - **检索定位**：检索关键词 `Goals` 以及 `Site Isolation`。
 - **考察问题**：
-  Chromium 团队在文档中阐述了引入“站点隔离（Site Isolation）”的两大关键安全动机。除了一般的渲染器进程攻破（Compromised Renderers）之外，哪一类**现代微架构硬件漏洞**彻底改变了安全威胁模型，促使必须采用独立的操作系统进程来运行跨站 iframes？
+  Chromium 当前文档把 Site Isolation 与哪些安全威胁联系起来？除 compromised renderer 之外，哪一类**现代微架构攻击**显著改变了同进程跨站数据的威胁模型，并推动 Chromium 使用更强的跨站进程/数据隔离？
 - **实证记录**：
   当前 Chromium process-model 文档把**被攻破的 Renderer** 与 **Spectre-like speculative-execution threats** 作为 Site Isolation 的核心安全动机之一。其目标是尽量避免把其他 site 的敏感数据放进攻击者可执行代码所在的同一进程/可达数据面，并通过 process locks 与浏览器侧策略强化隔离。课程不把这扩展成“任何同进程脚本都能读全部数据”或“进程边界能彻底消灭所有侧信道”。
 - **停止确认**：已在 Goals / Motivation 部分停止，未进入平台定制与历史演进章节。
