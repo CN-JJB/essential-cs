@@ -295,12 +295,14 @@ def probe_browser():
     }
 
 
-def probe_chromium_source():
+def probe_chromium_source(check_live=False):
     """
-    Empirically probe official Chromium source access (chromium.googlesource.com) for EXP-03.
-    Does not fabricate commit hashes or source excerpts if unreachable.
+    Optionally probe official Chromium source access for EXP-03.
+
+    Default preflight remains local/offline-safe so M10/M11 are not made
+    dependent on public-network availability. EXP-03 currentness checks opt in
+    explicitly with --check-chromium-source.
     """
-    import urllib.request
     url = "https://chromium.googlesource.com/chromium/src/+/refs/heads/main?format=JSON"
     result = {
         "available": False,
@@ -308,7 +310,13 @@ def probe_chromium_source():
         "commit": None,
         "date": None,
         "error": None,
+        "reason": "NOT_REQUESTED",
     }
+    if not check_live:
+        return result
+
+    import urllib.request
+    result["reason"] = None
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Essential-CS-Preflight/0.1"})
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -328,14 +336,14 @@ def probe_chromium_source():
     return result
 
 
-def run_preflight():
+def run_preflight(check_chromium_source=False):
     os_info = probe_os()
     py_info = probe_python()
     loopback_info = probe_loopback_socket()
     resolver_info = probe_resolver()
     tools_info = probe_tools()
     browser_info = probe_browser()
-    source_info = probe_chromium_source()
+    source_info = probe_chromium_source(check_live=check_chromium_source)
 
     m10_core_ready = (
         py_info["has_socket"]
@@ -392,9 +400,14 @@ def run_preflight():
 def main():
     parser = argparse.ArgumentParser(description="Network & Web Environment Preflight")
     parser.add_argument("--json", action="store_true", help="Print preflight report in JSON format")
+    parser.add_argument(
+        "--check-chromium-source",
+        action="store_true",
+        help="Opt in to a live official Chromium-source reachability/current-revision check for EXP-03",
+    )
     args = parser.parse_args()
 
-    report = run_preflight()
+    report = run_preflight(check_chromium_source=args.check_chromium_source)
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
@@ -454,6 +467,8 @@ def main():
     if src_info.get("commit"):
         print(f"   Current Commit:   {src_info['commit']}")
         print(f"   Commit Date:      {src_info.get('date')}")
+    if src_info.get("reason"):
+        print(f"   Reason:           {src_info['reason']}")
     if src_info.get("error"):
         print(f"   Error:            {src_info['error']}")
     print("-" * 60)
