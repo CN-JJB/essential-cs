@@ -9,7 +9,7 @@ Demonstrates:
 4. Partial-failure ambiguity: client timeout vs remote execution uncertainty.
 
 Adheres strictly to Essential CS invariants:
-- No hardcoded errnos (no ECONNREFUSED == 111 assumption).
+- No hardcoded errno acceptance value or fixed refusal exception class.
 - No fixed latency or timeout ratio assertions.
 - No fabricated error strings.
 """
@@ -25,7 +25,7 @@ import time
 def observe_loopback_refusal():
     """
     Finds a verified unbound ephemeral port on 127.0.0.1 and attempts to connect.
-    Records actual runtime exception class, errno, error text, and elapsed time.
+    Records the actual connect_ex result or runtime exception, plus elapsed host evidence.
     """
     # Find an ephemeral port by binding to 0 and immediately closing
     probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,7 +75,7 @@ def observe_read_timeout(client_deadline_s=0.25, harness_watchdog_s=3.0):
     """
     Starts an accepted-but-silent server on loopback port 0.
     The server accepts the TCP handshake but sends zero application bytes.
-    The client sets a read deadline and observes a TimeoutError.
+    The client sets a read deadline and records the runtime's timeout disposition.
     An outer harness watchdog is configured strictly to prevent hangs.
     """
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
