@@ -163,7 +163,9 @@ def make_proxy_handler(origin_host: str, origin_port: int):
                 existing_response_via = ", ".join(response_via_values) or None
                 upstream_received_protocol = _http_version_token(resp.version)
 
-                self.send_response(resp.status)
+                # Forward the upstream status line without letting
+                # BaseHTTPRequestHandler inject a second Server/Date pair.
+                self.send_response_only(resp.status)
                 for name, value in response_headers:
                     lower = name.lower()
                     if lower == "via":
