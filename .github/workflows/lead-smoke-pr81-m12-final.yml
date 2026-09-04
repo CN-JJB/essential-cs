@@ -183,7 +183,9 @@ jobs:
                       assert not ({"playwright","selenium","puppeteer"} & set(names)), (p,names)
 
           cors=Path("labs/foundations/m12/cors_fixture.py").read_text(encoding="utf-8")
-          assert '"Cookie"' in cors and '"Authorization"' in cors
+          assert "safe_header_names" in cors
+          assert "dict(self.headers)" not in cors
+          assert "X-Course-Custom" in cors
           assert "allowed_origin" in cors
           event=Path("labs/foundations/m12/event_loop_fixture.py").read_text(encoding="utf-8")
           assert "chunkSizeMs = 20" in event
