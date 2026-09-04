@@ -108,10 +108,19 @@ class TestM10FailureFixture(unittest.TestCase):
     def test_loopback_refusal_observation(self):
         refusal = observe_loopback_refusal()
         self.assertTrue(refusal["success"], "Expected refusal observation to succeed")
-        self.assertEqual(refusal["disposition"], "CONNECTION_REFUSED_OBSERVED")
-        # Raw host exception/errno/timing are evidence only, never acceptance constants.
-        self.assertIsNotNone(refusal["exception_type"])
+        self.assertIn(
+            refusal["disposition"],
+            [
+                "UNBOUND_LOOPBACK_CONNECT_FAILURE_OBSERVED",
+                "UNBOUND_LOOPBACK_CONNECT_EXCEPTION_OBSERVED",
+            ],
+        )
+        # Raw connect result / exception / timing are evidence only.
         self.assertIsNotNone(refusal["elapsed_ms"])
+        if refusal["disposition"] == "UNBOUND_LOOPBACK_CONNECT_FAILURE_OBSERVED":
+            self.assertNotEqual(refusal["connect_ex_result"], 0)
+        else:
+            self.assertIsNotNone(refusal["exception_type"])
 
     def test_read_timeout_observation(self):
         # Configure a short deadline and bounded watchdog
