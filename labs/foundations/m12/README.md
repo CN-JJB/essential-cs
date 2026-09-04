@@ -17,6 +17,9 @@ Before starting activities, verify host capability:
 
 ```bash
 python tests/preflight_network_web.py --json
+
+# EXP-03 only: opt in to the public Chromium-source currentness probe
+python tests/preflight_network_web.py --json --check-chromium-source
 ```
 
 ---
