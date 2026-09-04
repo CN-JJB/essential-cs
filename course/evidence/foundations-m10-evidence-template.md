@@ -76,7 +76,7 @@ This evidence template records empirical host execution results, claim boundarie
   - Does NOT prove remote application invoked `recv()` to consume bytes;
   - Does NOT prove application validated message syntax/schema;
   - Does NOT prove application executed business logic (e.g., balance deduction);
-  - Does NOT prove state was synchronized to durable media (`fsync` / WAL, EC-CON-016).
+  - Does NOT prove state was synchronized to durable media (`fsync` / WAL; durability was taught in M09).
 - **Architectural Consequence**: End-to-end confirmation requires application-layer response protocols; transport ACK must never be used as business durability evidence.
 
 ---
