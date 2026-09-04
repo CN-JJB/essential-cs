@@ -135,8 +135,12 @@ def run_tcp_stream_reconstruction(messages=None, buffer_size=16):
 
 def run_udp_datagram_contrast(datagrams=None):
     """
-    Demonstrates UDP datagram boundary preservation.
-    Each sendto() produces exactly one datagram read by recvfrom().
+    Observe UDP datagram boundary semantics in a bounded loopback fixture.
+
+    sendto() forms one datagram. A successful recvfrom() returns data from at
+    most one datagram (subject to truncation if the receive buffer is too
+    small). UDP itself does not guarantee that every datagram is delivered or
+    delivered in order; this loopback fixture records what actually arrived.
     """
     if datagrams is None:
         datagrams = [
@@ -156,6 +160,8 @@ def run_udp_datagram_contrast(datagrams=None):
         "datagrams_received_count": 0,
         "datagrams_received": [],
         "boundaries_preserved": False,
+        "all_fixture_datagrams_observed": False,
+        "udp_delivery_order_guaranteed": False,
         "error": None,
     }
 
@@ -171,6 +177,7 @@ def run_udp_datagram_contrast(datagrams=None):
             record["datagrams_received"] = [d.decode("ascii", errors="replace") for d in received]
             if received == datagrams:
                 record["boundaries_preserved"] = True
+                record["all_fixture_datagrams_observed"] = True
             else:
                 record["error"] = "Received datagram contents do not match sent datagrams."
         except Exception as exc:
@@ -223,7 +230,7 @@ def main():
         "checksum_and_ack_rules": {
             "tcp_ack_boundary": "A TCP ACK confirms sequence-space delivery to the kernel receive buffer only; it does NOT prove application processing or durability.",
             "ipv4_udp_checksum": "Optional (RFC 768 / RFC 791). A checksum field of 0 indicates no checksum was computed.",
-            "ipv6_udp_checksum": "Mandatory (RFC 8200). A checksum of zero is disallowed for standard traffic; must be validated.",
+            "ipv6_udp_checksum": "RFC 8200 requires a non-zero UDP checksum in the ordinary IPv6 case; later standards define narrowly scoped tunnel exceptions.",
         },
     }
 
@@ -253,7 +260,7 @@ def main():
     print(" [Normative Boundaries]")
     print("   TCP ACK Invariant:       Delivery to OS buffer != application commit")
     print("   IPv4 UDP Checksum:       Optional (RFC 768)")
-    print("   IPv6 UDP Checksum:       Mandatory (RFC 8200)")
+    print("   IPv6 UDP Checksum:       Required in ordinary IPv6 use; narrow tunnel exceptions exist")
     print("=" * 60)
 
     return 0 if (tcp_res["reconstruction_matches"] and udp_res["boundaries_preserved"]) else 1
