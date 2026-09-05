@@ -194,14 +194,17 @@ def probe_writable_vfs(workspace_root=None):
 
 
 def probe_compiler():
-    cc_path = shutil.which("gcc") or shutil.which("clang")
-    cc_type = "gcc" if shutil.which("gcc") else ("clang" if shutil.which("clang") else None)
+    gcc_path = shutil.which("gcc")
+    clang_path = shutil.which("clang")
+    cc_path = gcc_path or clang_path
     if not cc_path:
         return {
             "available": False,
             "compiler": None,
             "path": None,
             "version": None,
+            "is_gcc": False,
+            "is_clang": False,
             "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
         }
 
@@ -215,9 +218,16 @@ def probe_compiler():
             check=False,
         )
         first_line = proc.stdout.splitlines()[0] if proc.stdout else ""
+        first_line_lower = first_line.lower()
+        is_clang = "clang" in first_line_lower
+        is_gcc = "gcc" in first_line_lower or ("free software foundation" in proc.stdout.lower() and not is_clang)
+        cc_type = "clang" if is_clang else ("gcc" if is_gcc else ("gcc" if gcc_path else "clang"))
+
         return {
             "available": True,
             "compiler": cc_type,
+            "is_gcc": (cc_type == "gcc"),
+            "is_clang": (cc_type == "clang"),
             "path": cc_path,
             "version": first_line,
             "disposition": "REQUIRED CAPABILITY PASS",
@@ -225,9 +235,11 @@ def probe_compiler():
     except Exception as exc:
         return {
             "available": False,
-            "compiler": cc_type,
+            "compiler": None,
             "path": cc_path,
             "version": None,
+            "is_gcc": False,
+            "is_clang": False,
             "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "error": str(exc),
         }
@@ -674,32 +686,74 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
     lab_req_05_status = "READY" if lab_req_05_ready else "ENVIRONMENT-BLOCKED / NOT RUN"
     m14_preview_status = m14_core_status
 
-    # M15 evaluation:
-    # Distinguish host compilation capability from canonical environment readiness (Linux is canonical for M15)
-    # Preserve OQ-BP-006 OPEN
+    # M15 / LAB-REQ-03 evaluation (S5-B3):
+    # Keep generic host compilation capability separate from canonical Required readiness.
     m15_compiler_capable = (
         pthread_info["disposition"] == "REQUIRED CAPABILITY PASS"
         and atomics_info["disposition"] == "REQUIRED CAPABILITY PASS"
+        and mutex_cond_info["disposition"] == "REQUIRED CAPABILITY PASS"
     )
+    m15_host_capability = "CAPABLE" if m15_compiler_capable else "NOT CAPABLE"
+
+    # Required canonical baseline:
+    # Linux + GCC + C11 pthread + C11 atomics + POSIX mutex/condition + owned-child watchdog.
     is_linux_canonical = (os_info["system"] == "Linux")
+    is_gcc_compiler = bool(compiler_info.get("is_gcc"))
+    m15_required_ready = (
+        is_linux_canonical
+        and is_gcc_compiler
+        and m15_compiler_capable
+        and child_info["disposition"] == "REQUIRED CAPABILITY PASS"
+    )
+    m15_core_status = "READY" if m15_required_ready else "ENVIRONMENT-BLOCKED / NOT RUN"
 
-    if is_linux_canonical and m15_compiler_capable:
-        m15_readiness_preview = "READY (Canonical Linux Host with C11 atomics & pthread)"
-    elif m15_compiler_capable:
-        m15_readiness_preview = f"CAPABLE HOST ({os_info['system']}), NON-CANONICAL (Compiler & atomics capable, but canonical Required environment is Linux; OQ-BP-006 remains OPEN)"
+    if m15_required_ready:
+        lab_req_03_status = "READY"
+        lab_req_03_reason = None
+        m15_readiness_summary = "READY (Canonical Linux Host with GCC, C11 atomics, POSIX pthread/sync & watchdog)"
     else:
-        m15_readiness_preview = "BLOCKED"
-
-    # Overall preflight status for S5 stage
-    if m14_core_ready and lab_req_05_ready:
-        if lab_req_04_status == "READY":
-            overall_status = "READY FOR M13-M14 + LAB-REQ-04 + LAB-REQ-05 EXECUTION (preflight capabilities satisfied)"
+        lab_req_03_status = "ENVIRONMENT-BLOCKED / NOT RUN"
+        if not is_linux_canonical:
+            lab_req_03_reason = (
+                f"Host operating system is {os_info['system']}; canonical Required baseline for LAB-REQ-03 requires Linux with GCC. "
+                f"Host compiler is capable ({compiler_info.get('compiler', 'unknown')}), but a non-Linux host cannot satisfy canonical Linux baseline. "
+                "(OQ-BP-006 remains OPEN)"
+            )
+            m15_readiness_summary = (
+                f"CAPABLE HOST ({os_info['system']}), NON-CANONICAL "
+                "(Compiler & atomics capable, but canonical Required environment is Linux with GCC; OQ-BP-006 remains OPEN)"
+            )
+        elif not is_gcc_compiler:
+            lab_req_03_reason = (
+                f"Host compiler is {compiler_info.get('compiler', 'unknown')}; Design-declared Required baseline requires GCC. "
+                "Clang capability cannot silently satisfy the GCC baseline."
+            )
+            m15_readiness_summary = "ENVIRONMENT-BLOCKED (Linux host, but compiler is not GCC)"
+        elif not m15_compiler_capable:
+            lab_req_03_reason = "Host compiler lacks required C11 pthread, atomic, or POSIX mutex/cond support."
+            m15_readiness_summary = "BLOCKED (Missing C11 atomics or POSIX synchronization capability)"
         else:
-            overall_status = "READY FOR M14 + LAB-REQ-05 (M13 Core READY; LAB-REQ-04 ENVIRONMENT-BLOCKED due to missing sqlite3 CLI)"
-    elif m13_core_ready and lab_req_04_status == "READY":
-        overall_status = "READY FOR M13 + LAB-REQ-04 EXECUTION (preflight capabilities satisfied)"
+            lab_req_03_reason = "Host environment lacks owned child watchdog and reaping capability."
+            m15_readiness_summary = "BLOCKED (Missing owned-child watchdog capability)"
+
+    # Overall S5 status emphasizes the current S5-B3 Required gate.
+    if m15_required_ready:
+        prior_lab_notes = []
+        if lab_req_04_status != "READY":
+            prior_lab_notes.append("LAB-REQ-04 ENVIRONMENT-BLOCKED")
+        if not lab_req_05_ready:
+            prior_lab_notes.append("LAB-REQ-05 ENVIRONMENT-BLOCKED")
+        suffix = f" ({'; '.join(prior_lab_notes)})" if prior_lab_notes else ""
+        overall_status = f"READY FOR M15 + LAB-REQ-03 EXECUTION (canonical Required capabilities satisfied){suffix}"
+    elif m15_compiler_capable:
+        overall_status = (
+            f"M15 HOST CAPABLE BUT REQUIRED EXECUTION ENVIRONMENT-BLOCKED / NOT RUN "
+            f"({os_info['system']}; canonical baseline is Linux + GCC)"
+        )
+    elif m14_core_ready and lab_req_05_ready:
+        overall_status = "READY FOR M14 + LAB-REQ-05; M15 REQUIRED ENVIRONMENT-BLOCKED / NOT RUN"
     elif m13_core_ready:
-        overall_status = "READY FOR M13 CORE (LAB-REQ-04 ENVIRONMENT-BLOCKED due to missing sqlite3 CLI)"
+        overall_status = "READY FOR M13 CORE; M15 REQUIRED ENVIRONMENT-BLOCKED / NOT RUN"
     else:
         overall_status = "BLOCKED"
 
@@ -710,11 +764,15 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         "lab_req_04_status": lab_req_04_status,
         "m14_core_status": m14_core_status,
         "lab_req_05_status": lab_req_05_status,
-        "m14_readiness_preview": m14_preview_status,
-        "m15_readiness_preview": m15_readiness_preview,
+        "m15_host_capability": m15_host_capability,
+        "m15_core_status": m15_core_status,
+        "lab_req_03_status": lab_req_03_status,
+        "lab_req_03_reason": lab_req_03_reason,
+        "m15_readiness_summary": m15_readiness_summary,
         "governance_invariants": {
             "oq_bp_006_host_baseline": "OPEN (No single host pinned as permanent universal baseline)",
             "m15_canonical_host": "Linux",
+            "m15_canonical_compiler": "gcc",
         },
         "dimensions": {
             "1_os": os_info,
@@ -750,7 +808,7 @@ def main():
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        return 0 if (report["m14_core_status"] == "READY" and report["lab_req_05_status"] == "READY") else 1
+        return 0 if (report["m15_core_status"] == "READY" and report["lab_req_03_status"] == "READY") else 1
 
     print("=" * 66)
     print(" Essential CS: Data & Concurrency Preflight Capability Report")
@@ -761,7 +819,12 @@ def main():
     print(f" LAB-REQ-04 Status:      {report['lab_req_04_status']}")
     print(f" M14 Core Status:        {report['m14_core_status']}")
     print(f" LAB-REQ-05 Status:      {report['lab_req_05_status']}")
-    print(f" M15 Readiness Preview:  {report['m15_readiness_preview']}")
+    print(f" M15 Host Capability:    {report['m15_host_capability']}")
+    print(f" M15 Core Status:        {report['m15_core_status']}")
+    print(f" LAB-REQ-03 Status:      {report['lab_req_03_status']}")
+    print(f" M15 Readiness Summary:  {report['m15_readiness_summary']}")
+    if report['lab_req_03_reason']:
+        print(f" LAB-REQ-03 Note:        {report['lab_req_03_reason']}")
     print("-" * 66)
     print(" [Host Operating System]")
     print(f"   System:               {report['dimensions']['1_os']['system']} {report['dimensions']['1_os']['release']} ({report['dimensions']['1_os']['architecture']})")
@@ -787,14 +850,14 @@ def main():
     print(f"   VFS Locking Probed:   {'YES' if vfs['vfs_locking_tested'] else 'NO'}")
     print(f"   VFS Locking Conflict: {'OBSERVED' if vfs['vfs_locking_functional'] else 'INCONCLUSIVE'}")
     print("-" * 66)
-    print(" [C Compiler & POSIX / C11 Concurrency (M15 Preview)]")
+    print(" [C Compiler & POSIX / C11 Concurrency (M15 / LAB-REQ-03)]")
     cc = report['dimensions']['6_compiler']
     print(f"   Compiler:             {'YES' if cc['available'] else 'NO'} ({cc.get('version') or cc['disposition']})")
     print(f"   -std=c11 -pthread:    {report['dimensions']['7_c11_pthread']['disposition']}")
     print(f"   C11 Atomics:          {report['dimensions']['8_c11_atomics']['disposition']}")
     print(f"   POSIX Mutex/Cond:     {report['dimensions']['9_posix_mutex_cond']['disposition']}")
     print("-" * 66)
-    print(" [Process Watchdog & Recovery (M14 / LAB-REQ-05)]")
+    print(" [Process Watchdog & Recovery (M14 / LAB-REQ-05 / LAB-REQ-03)]")
     print(f"   Child / Watchdog:     {report['dimensions']['10_child_watchdog']['disposition']}")
     print("-" * 66)
     print(" [Optional Tools & Source Recheck]")
@@ -807,7 +870,7 @@ def main():
     print(f"   Course Ref Revision:  {src['course_reference_revision'][:12]} ({src['course_inspection_date']})")
     print("=" * 66)
 
-    return 0 if (report["m14_core_status"] == "READY" and report["lab_req_05_status"] == "READY") else 1
+    return 0 if (report["m15_core_status"] == "READY" and report["lab_req_03_status"] == "READY") else 1
 
 
 if __name__ == "__main__":
