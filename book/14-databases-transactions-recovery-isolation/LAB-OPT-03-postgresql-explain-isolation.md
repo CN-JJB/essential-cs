@@ -1,7 +1,7 @@
 # LAB-OPT-03 — PostgreSQL EXPLAIN & Isolation Comparison (Strictly Optional Guide)
 
 > **Status: STRICTLY OPTIONAL GUIDE**
-> 
+>
 > - **Core Requirement Status**: Neither PostgreSQL nor Docker is a Required dependency for Module M14 or LAB-REQ-05.
 > - **Tool Availability Rule**: If PostgreSQL or Docker is not installed or available locally, this lab is classified as **`OPTIONAL TOOL UNAVAILABLE / SKIP`** without any penalty.
 > - **Safety Rule**: Any `EXPLAIN ANALYZE` statement that executes data mutation (`INSERT`, `UPDATE`, `DELETE`) **MUST be wrapped inside a transaction and explicitly rolled back** (`BEGIN; ... ROLLBACK;`) to prevent persistent side effects.
