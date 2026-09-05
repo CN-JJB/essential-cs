@@ -22,11 +22,12 @@ class TestM15Foundations(unittest.TestCase):
     def tearDown(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
         lab_dir = os.path.abspath(os.path.join(this_dir, "..", "..", "lab_req_03"))
-        import sys
-        if lab_dir not in sys.path:
-            sys.path.insert(0, lab_dir)
-        from reset import reset_lab_req_03
-        reset_lab_req_03(lab_dir=lab_dir, verbose=False)
+        import importlib.util
+        reset_path = os.path.join(lab_dir, "reset.py")
+        spec = importlib.util.spec_from_file_location("m15_lab_req_03_reset", reset_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.reset_lab_req_03(lab_dir=lab_dir, verbose=False)
 
     def test_activity_l15_01_concurrency_definition_and_lost_update(self):
         res = run_activity_l15_01(verbose=False)
@@ -71,11 +72,17 @@ class TestM15Foundations(unittest.TestCase):
     def test_activity_l15_03_execution_models_and_bytecode(self):
         res = run_activity_l15_03(verbose=False)
         rt = res["runtime_info"]
-        self.assertEqual(rt["implementation"].lower(), "cpython")
+        self.assertTrue(rt["implementation"])
 
         dis_info = res["disassembly"]
-        self.assertGreaterEqual(dis_info["opcode_count"], 3)
-        self.assertFalse(dis_info["is_single_instruction"])
+        if rt["implementation"].lower() == "cpython":
+            self.assertEqual(dis_info["disposition"], "OBSERVED (CPython implementation evidence)")
+            self.assertIsInstance(dis_info["opcode_count"], int)
+            self.assertGreater(dis_info["opcode_count"], 0)
+            self.assertTrue(dis_info["raw_disassembly"])
+        else:
+            self.assertTrue(dis_info["disposition"].startswith("NOT APPLICABLE"))
+            self.assertIsNone(dis_info["opcode_count"])
 
         async_info = res["async_demo"]
         self.assertTrue(async_info["cooperative_interleaving_observed"])

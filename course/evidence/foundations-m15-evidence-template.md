@@ -7,12 +7,12 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 ## A — Host OS, Compiler, POSIX Thread & C11 Atomic Capabilities
 
 - Execution commit / ref: `<actual HEAD commit SHA>`
-- Host Operating System: `<actual OS, e.g. Linux or Windows>`
+- Host Operating System: `<actual OS>`
 - Kernel / OS Release: `<actual release / kernel version>`
-- Architecture: `<actual CPU architecture, e.g. x86_64 or aarch64>`
+- Architecture: `<actual CPU architecture>`
 - Compiler Path: `<actual compiler binary path>`
 - Compiler Identity & Version: `<actual GCC/Clang version string>`
-- C11 Compilation Flag: `<actual flags used, e.g. -std=c11 -pthread>`
+- C11 Compilation Flag: `<actual compiler flags>`
 - C11 Atomics (`<stdatomic.h>`) Capability: `<PASS / FAIL / BLOCKED>`
 - POSIX Pthread Capability: `<PASS / FAIL / BLOCKED>`
 - POSIX Mutex & Condition Variable Capability: `<PASS / FAIL / BLOCKED>`
@@ -48,8 +48,8 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 ### 1. Deterministic Coordinated Path
 - Coordination Primitives: Course-controlled barrier coordination (Read Phase $\to$ Store Phase $\to$ Round End)
-- Rounds Executed: `<actual rounds, e.g. 5>`
-- Expected Serial Invariant: `<actual expected, e.g. 10>`
+- Rounds Executed: `<actual rounds>`
+- Expected Serial Invariant: `<actual expected serial value>`
 - Observed Counter Value: `<actual value observed>`
 - Missing / Lost Increments: `<actual lost count, e.g. 5>`
 - Interleaving Proven Deterministically: `<YES / NO>`
@@ -93,7 +93,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   pthread_mutex_unlock(&g_rendezvous_mutex);
   ```
 - Predicate Re-evaluation Count Observed: `<actual evaluation count>`
-- Spurious Wakeup Defense Explained: `<Learner notes why POSIX permits spurious wakeups and why while loop is mandatory>`
+- Spurious Wakeup Defense Explained: `<Learner notes that a wait return does not imply predicate truth; predicate re-evaluation is required, and the course uses a while-loop idiom>`
 - Rendezvous Success Verified: `<YES / NO>`
 
 ---
@@ -108,10 +108,10 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - Thread 2 First Lock Acquired: `<actual lock name, e.g. Lock B>`
   - Thread 1 Second Lock Attempted: `<actual lock name, e.g. Lock B>`
   - Thread 2 Second Lock Attempted: `<actual lock name, e.g. Lock A>`
-- Watchdog Timeout Parameter: `<actual configured duration, e.g. 2.0s>`
+- Watchdog Timeout Parameter: `<actual configured duration>`
 - Watchdog Triggered: `<YES / NO>`
 - Child Termination Action: `proc.terminate()` / `proc.kill()`
-- Child Reaped Returncode / Signal: `<actual exit code or signal, e.g. 1 on Windows or -15 on Linux>`
+- Child Reaped Returncode / Signal: `<actual exit code or signal>`
 - Inference Boundary: `<Learner confirms timeout alone does NOT prove deadlock; deadlock is proven because circular wait preconditions were verified before timeout>`
 
 ---
@@ -150,8 +150,8 @@ Use this template for **one actual learner observation**. Do not prefill or copy
     ```
     <actual output of dis.dis('x += 1') for current runtime>
     ```
-  - Total Opcode Count: `<actual count, e.g. 5>`
-  - Individual Opcode Names Observed: `<actual opcodes, e.g. RESUME, LOAD_NAME, LOAD_CONST, BINARY_OP, STORE_NAME, RETURN_CONST>`
+  - Total Opcode Count: `<actual opcode count>`
+  - Individual Opcode Names Observed: `<actual opcode names from this runtime>`
 - Multi-step Interpretation: `<Learner explains why the GIL does not make x += 1 atomic in application logic>`
 - Official Free-Threading Currentness Citation:
   - Source Authority: `https://docs.python.org/3.14/howto/free-threading-python.html & PEP 779`

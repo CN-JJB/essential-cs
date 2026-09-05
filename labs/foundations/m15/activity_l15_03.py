@@ -60,30 +60,41 @@ def probe_python_runtime():
 
 
 def capture_bytecode_disassembly():
-    """Disassembles x += 1 and captures actual opcodes for the current runtime."""
+    """Capture current-runtime disassembly without treating opcode shape as a stable contract."""
+    impl_name = getattr(getattr(sys, "implementation", None), "name", "unknown")
+    if impl_name.lower() != "cpython":
+        return {
+            "disposition": "NOT APPLICABLE (lesson disassembly evidence is CPython-specific)",
+            "raw_disassembly": "",
+            "opcodes": [],
+            "opcode_count": None,
+            "multi_step_observed": None,
+            "multi_step_inference": (
+                "No CPython bytecode inference is made for this runtime. "
+                "Thread-safety judgments must use the named runtime's own execution model."
+            ),
+        }
+
     code_obj = compile("x += 1", "<string>", "exec")
     out = io.StringIO()
     dis.dis(code_obj, file=out)
     raw_dis = out.getvalue().strip()
-
-    # Extract opcode names
-    opcodes = []
-    for instr in dis.get_instructions(code_obj):
-        opcodes.append({
-            "opname": instr.opname,
-            "argval": instr.argval,
-            "argrepr": instr.argrepr,
-        })
+    opcodes = [
+        {"opname": instr.opname, "argval": instr.argval, "argrepr": instr.argrepr}
+        for instr in dis.get_instructions(code_obj)
+    ]
 
     return {
+        "disposition": "OBSERVED (CPython implementation evidence)",
         "raw_disassembly": raw_dis,
         "opcodes": opcodes,
         "opcode_count": len(opcodes),
-        "is_single_instruction": len(opcodes) <= 2,  # Normally 5 opcodes: RESUME, LOAD_NAME, LOAD_CONST, BINARY_OP, STORE_NAME, RETURN_CONST
+        "multi_step_observed": len(opcodes) > 1,
         "multi_step_inference": (
-            "Even in GIL-enabled CPython, compound update 'x += 1' compiles to multiple distinct bytecode operations "
-            "(load, compute, store). Thread preemption can interleave between opcodes, proving that the GIL does NOT "
-            "make application-level multi-step operations thread-safe."
+            "This disassembly records the current CPython implementation shape only. "
+            "It does not identify guaranteed thread-switch boundaries and does not by itself "
+            "prove a lost-update manifestation. Application synchronization must be reasoned "
+            "from the named runtime and shared-state contract."
         ),
     }
 
@@ -133,18 +144,18 @@ def build_architectural_matrix():
         "label": EVALUATION_LABEL,
         "models": {
             "OS Preemptive Threads": {
-                "scheduling": "Kernel preemptive scheduler",
-                "memory_per_task": "High (~8MB stack default on Linux, ~1MB on Windows)",
-                "cpu_parallelism": "Yes, across multiple cores (native/C extensions, or free-threaded Python)",
-                "coordination_scope": "Explicit synchronization required (mutex, cond, atomics)",
-                "sweet_spot": "CPU-bound parallelism, blocking native libraries, multi-threaded pipelines",
+                "scheduling": "Kernel/runtime preemption; exact switch points are implementation-dependent",
+                "memory_per_task": "Per-thread stack and runtime state; actual size/commit policy is host/configuration dependent",
+                "cpu_parallelism": "Possible across cores when the named runtime/workload permits it",
+                "coordination_scope": "Shared-state access may require mutexes, condition variables, atomics, or other synchronization",
+                "sweet_spot": "Evaluate for blocking calls, synchronous libraries, CPU work, and runtime capabilities",
             },
             "Cooperative Async Event Loop": {
-                "scheduling": "User-space cooperative event loop (await points)",
-                "memory_per_task": "Very low (coroutine objects ~few KB)",
-                "cpu_parallelism": "No within loop; delegates CPU work to ProcessPoolExecutor / sub-interpreters",
-                "coordination_scope": "Cooperative between awaits; suspension points require logical coordination",
-                "sweet_spot": "High-connection network I/O, Web APIs, chat/gateway servers, streaming",
+                "scheduling": "One event loop cooperatively advances Tasks when awaitables actually suspend",
+                "memory_per_task": "No dedicated OS-thread stack per Task; actual object/captured-state cost must be measured",
+                "cpu_parallelism": "A single loop does not itself provide CPU parallelism; delegate using a named executor model",
+                "coordination_scope": "State spanning suspension points still needs logical coordination",
+                "sweet_spot": "Evaluate for many waiting I/O operations and libraries with non-blocking integration",
             },
             "CPython GIL-Enabled": {
                 "scheduling": "OS threads serialized on Python bytecode by GIL",
@@ -178,10 +189,10 @@ def run_activity_l15_03(verbose=True):
         "async_demo": async_info,
         "architectural_matrix": arch_matrix,
         "inference_limits": (
-            "Bytecode disassembly of x += 1 demonstrates that compound operations are multi-step in CPython, "
-            "but does not guarantee a specific lost-update manifestation rate. A single asyncio event loop "
-            "eliminates preemption between await points, but multi-step operations spanning await expressions "
-            "still require logical coordination."
+            "CPython disassembly is version-specific implementation evidence; it does not identify guaranteed "
+            "thread-switch boundaries or a lost-update rate. A single event loop advances one Task at a time, "
+            "but state transitions spanning actual suspension points can interleave with other Tasks and still "
+            "require logical coordination."
         ),
     }
 

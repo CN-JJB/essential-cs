@@ -27,9 +27,9 @@ Use this template for **one actual learner run of LAB-REQ-03**. Do not prefill o
 - Atomic Types Used: `atomic_int` from `<stdatomic.h>`
 - Read Access: `atomic_load_explicit(&g_shared_counter, memory_order_relaxed)`
 - Write Access: `atomic_store_explicit(&g_shared_counter, computed, memory_order_relaxed)`
-- C-Language Data Race Undefined Behavior (UB) Present: `NO`
+- C-Language Data-Race UB in the Required shared-counter path: `<YES / NO>`
 - Concurrency Bug Nature: **Logical race condition on compound state transition (Read $\to$ Compute $\to$ Store)**, NOT memory-level undefined access.
-- Audit Status: `<PASS — STRICTLY UB-FREE>`
+- Audit Status: `<CONFIRMED REQUIRED SHARED-COUNTER PATH USES DEFINED ATOMIC ACCESSES / REJECTED>`
 
 ---
 
@@ -38,14 +38,10 @@ Use this template for **one actual learner run of LAB-REQ-03**. Do not prefill o
 - Command: `python labs/lab_req_03/runner.py` (Checkpoint 1)
 - Rounds Executed: `<actual rounds>`
 - Phase Trace Summary:
-  - Round 0: Thread 1 observed `<val>`, Thread 2 observed `<val>` $\to$ both computed `<next>`
-  - Round 1: Thread 1 observed `<val>`, Thread 2 observed `<val>` $\to$ both computed `<next>`
-  - Round 2: Thread 1 observed `<val>`, Thread 2 observed `<val>` $\to$ both computed `<next>`
-  - Round 3: Thread 1 observed `<val>`, Thread 2 observed `<val>` $\to$ both computed `<next>`
-  - Round 4: Thread 1 observed `<val>`, Thread 2 observed `<val>` $\to$ both computed `<next>`
-- Expected Serial Total: `<actual expected, e.g. 10>`
-- Actual Final Counter: `<actual observed, e.g. 5>`
-- Lost Updates Count: `<actual lost count, e.g. 5>`
+  - `<one row per actual configured round: round id, each worker's observed value, computed value, and phase ordering>`
+- Expected Serial Total: `<actual expected serial value>`
+- Actual Final Counter: `<actual observed value>`
+- Lost Updates Count: `<actual lost count>`
 - Deterministic Interleaving Proven: `<YES / NO>`
 
 ---
@@ -53,8 +49,8 @@ Use this template for **one actual learner run of LAB-REQ-03**. Do not prefill o
 ## 4. Checkpoint 2: Supplemental Natural Scheduler Disposition
 
 - Command: `broken_counter --natural <iterations>`
-- Iterations per Thread: `<actual iterations, e.g. 10000>`
-- Expected Serial Total: `<actual expected, e.g. 20000>`
+- Iterations per Thread: `<actual iterations>`
+- Expected Serial Total: `<actual expected value>`
 - Observed Counter Value: `<actual value observed>`
 - Lost Updates Manifested: `<YES / NO>`
 - Actual Disparity: `<actual lost count>`
@@ -67,9 +63,9 @@ Use this template for **one actual learner run of LAB-REQ-03**. Do not prefill o
 
 - Command: `mutex_counter <iterations>`
 - Synchronization Primitive: `pthread_mutex_t`
-- Iterations per Thread: `<actual iterations, e.g. 10000>`
-- Expected Total: `<actual expected, e.g. 20000>`
-- Observed Total: `<actual value observed, e.g. 20000>`
+- Iterations per Thread: `<actual iterations>`
+- Expected Total: `<actual expected value>`
+- Observed Total: `<actual observed value>`
 - Invariant Preserved: `<YES / NO>`
 - State Transitions Protected: Read $\to$ Compute $\to$ Store serialized atomically under mutual exclusion.
 
@@ -100,10 +96,10 @@ Use this template for **one actual learner run of LAB-REQ-03**. Do not prefill o
   - Thread 2 acquired Lock B: `<CONFIRMED>`
   - Thread 1 attempting Lock B: `<CONFIRMED>`
   - Thread 2 attempting Lock A: `<CONFIRMED>`
-- Watchdog Timeout Parameter: `<actual timeout, e.g. 2.0s>`
+- Watchdog Timeout Parameter: `<actual configured timeout>`
 - Watchdog Triggered: `<YES / NO>`
 - Child Termination: Process terminated via `proc.terminate()` / `proc.kill()`
-- Child Reaped Returncode: `<actual returncode / signal, e.g. -15 or 1>`
+- Child Reaped Returncode: `<actual returncode / signal>`
 - Circular Deadlock Proven: `<YES / NO>` (proven because preconditions verified prior to timeout)
 
 ---
