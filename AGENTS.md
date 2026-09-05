@@ -68,7 +68,7 @@ An author agent may not self-promote work to `VERIFIED`.
 
 ## Completion
 
-Every formal local-agent task must report:
+Every formal local-agent task must report in the **PR body / Completion Report**:
 - deliverables;
 - files changed;
 - verification performed/not performed;
@@ -77,3 +77,19 @@ Every formal local-agent task must report:
 - prompt deviations;
 - out-of-scope necessary fixes;
 - recommended review focus.
+
+### Required PR Execution Trace / Work Log
+
+The PR body must also give the Web Lead an auditable account of what actually happened in the agent's local branch/worktree. A final chat message is only a handoff summary; it does not replace the PR record.
+
+At minimum record:
+
+- **Starting state:** assigned base SHA, starting HEAD, branch/worktree identity, and whether the worktree was clean. If pre-existing user/local changes were present, identify them and keep them distinct from agent-authored changes.
+- **Actions performed:** concise chronological or phase-based account of files created/edited/deleted, important source inspections, commands/tools used, migrations/generators run, and other material implementation steps.
+- **Verification run:** exact or reproducible commands/tests/checks actually executed and their outcomes. Distinguish PASS, FAIL, BLOCKED, and NOT RUN truthfully.
+- **Problems encountered:** each material error, failed test, environment/tool limitation, merge/conflict issue, unexpected behavior, or source/currentness problem encountered during execution.
+- **Resolution / disposition:** for each material problem, state the observed cause or bounded diagnosis, what was changed or worked around, and how the resolution was verified. If unresolved, say so explicitly.
+- **Ownership boundary:** distinguish changes authored by the agent from pre-existing user changes, prior commits, generated artifacts, or unrelated local state; never claim another actor's work as the agent's own.
+- **Residual risk / not-run work:** anything the Lead should know before review, including skipped verification and why.
+
+Report observable engineering facts, evidence, and concise rationale. Do not fabricate actions or results, and do not expose or rely on private chain-of-thought as project evidence.
