@@ -1,0 +1,17 @@
+# Binaries and object files
+*.o
+*.exe
+*.out
+broken_counter
+broken_counter.exe
+mutex_counter
+mutex_counter.exe
+cond_rendezvous
+cond_rendezvous.exe
+deadlock_preconditions
+deadlock_preconditions.exe
+
+# Python bytecode and temp
+__pycache__/
+*.pyc
+*.tmp

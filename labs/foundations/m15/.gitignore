@@ -1,0 +1,11 @@
+# Binaries and object files
+*.o
+*.exe
+*.out
+atomic_lost_update
+atomic_lost_update.exe
+
+# Python bytecode and temp
+__pycache__/
+*.pyc
+*.tmp
