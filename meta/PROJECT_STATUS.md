@@ -86,7 +86,7 @@ Learner Validation is deferred during authoring but remains mandatory before v1.
 
 ## Current priority
 
-1. **Issue #93 — S5-B2 M14 + LAB-REQ-05 (+ LAB-OPT-03 Optional) is OPEN / READY FOR EXECUTOR CLAIM.** Dispatch exactly one Executor against Issue #93 and canonical base `1cdd3a0b8c07a161c2afd55d6625f56ceff63a74`; do not start S5-B3 through the same Issue/branch/PR.
+1. **Issue #93 — S5-B2 M14 + LAB-REQ-05 (+ LAB-OPT-03 Optional) is OPEN / READY FOR EXECUTOR CLAIM.** Dispatch exactly one Executor against the canonical base recorded in Issue #93; do not start S5-B3 through the same Issue/branch/PR.
 2. Preserve M14's canonical DAG: hard prerequisites **M13 + M09**, with no silent architecture changes. Preserve **EC-CON-014 Consistency** first home at **M14 / L14-02** with its exact canonical definition and mandatory qualifier; do not collapse it into correctness, freshness, durability, ACID C, or generic distributed consistency.
 3. Implement LAB-REQ-05 against the accepted local SQLite rollback-journal contract with dual-connection visibility/writer-conflict evidence, explicit rollback, bounded child-process interruption/reopen recovery, truthful exception/result capture, and no power-loss inference from client kill. LAB-OPT-03 PostgreSQL remains Optional.
 4. Keep independent Verification/Lead Review on every bounded implementation batch even though learner validation is deferred; author smoke and Executor self-tests do not become independent Lead reproduction automatically.
