@@ -146,7 +146,7 @@ The canonical lesson set established in `meta/blueprint/core-stage-module-lesson
 ### 3.1 Adopted Research Findings
 1. **Deterministic Local Fault Injection:** M16 hands-on utilizes an in-process / localhost application-level delay and suppression shim. This cleanly creates caller-alive remote ambiguity without requiring raw packet sniffing or elevated network privileges.
 2. **Quorum Overlap Mathematics ($W + R > N$):** Taught strictly as a set-intersection principle via the Pigeonhole Principle. Overlap guarantees that at least one replica in the read quorum witnessed the write quorum; it **does not alone prove linearizability or latest-value read**.
-3. **Broker-Neutral Durable Handoff:** M18 utilizes the Transactional Outbox pattern implemented with a local SQLite table (`BEGIN IMMEDIATE`) and a worker deduplication table (`UNIQUE` constraint on `msg_id`). Proves delivery guarantees and duplicate mitigation without external message daemon overhead.
+3. **Broker-Neutral Durable Handoff:** M18 uses a course-owned SQLite Transactional Outbox plus a scoped worker dedup/business-effect transaction. It demonstrates the dual-write ambiguity, redelivery, and duplicate-safe local effect boundary without claiming to prove every broker delivery guarantee or requiring an external message daemon.
 4. **Safe Linux Mechanism Baseline:** M19 establishes `/proc/self/ns/*` reading and `/sys/fs/cgroup` controller detection as the mandatory Core baseline. Privileged actions are capability-gated.
 5. **Clock Semantics Distinction:** Resolves the DAG hidden-prerequisite flag in M20. Wall clock (`CLOCK_REALTIME`) is used for calendar timestamps; monotonic clock (`CLOCK_MONOTONIC` / `perf_counter()`) is mandatory for elapsed durations and timer calculations.
 6. **W3C Trace Context Level 1:** Formally adopted as the stable distributed context propagation specification (`traceparent`, `tracestate`). Level 2 draft status is explicitly noted.
@@ -596,7 +596,7 @@ Learners execute a step-by-step Raft election trace scenario. Given a 5-node clu
 - *Question:* Why does Raft require candidate logs to be at least as up to date as the voter's log before granting a vote?
 - *Hint 1:* Where do committed entries live?
 - *Hint 2:* If a leader could be elected without the latest committed entries, what would happen to those entries when the new leader overwrites follower logs?
-- *Expected Observation:* The up-to-date rule guarantees that any elected leader already contains all entries committed in prior terms.
+- *Expected Observation:* In the bounded Raft model, the election restriction together with Raft's commit/log rules yields the Leader Completeness property; the learner must not attribute that property to one quorum-overlap fact in isolation.
 
 ### 14. Required Visuals
 - Visual ID: `FIG-M17-02`
@@ -749,7 +749,7 @@ Recheck Herlihy & Wing (1990) and Gilbert & Lynch (2002) proofs.
 ## 17. Lesson L18-01 Design — “How do services delegate work?”
 
 ### 1. Purpose / Target Mental Model
-Master asynchronous work delegation. Understand the queue/broker abstraction (decoupling in time, space, and throughput). Deconstruct delivery guarantee claims: **At-Most-Once**, **At-Least-Once**, and the reality of **"Exactly-Once"** (which requires consumer deduplication within a bounded scope). Master the **Transactional Outbox Pattern** to solve the dual-write problem.
+Master asynchronous work delegation. Understand the queue/broker abstraction (decoupling in time, space, and throughput). Deconstruct **At-Most-Once**, **At-Least-Once**, and “Exactly-Once” claims by naming their transactional/idempotency/deduplication scope rather than assuming one consumer pattern is universally required. Master the **Transactional Outbox Pattern** as one bounded response to the dual-write problem.
 
 ### 2. Prerequisites
 - Module entry: **Hard** `M17`; **Soft** `M14`.
@@ -1257,7 +1257,7 @@ Master the foundations of system observability. Understand the three core teleme
 
 ### 3. Primary Competencies
 - `Observe`: Inspect structured logs, metric counters, and monotonic timer durations from a running service.
-- `Diagnose`: Identify system degradation using percentiles ($p50, p95, p99$) rather than deceptive averages.
+- `Diagnose`: Use distributions/percentiles when the diagnostic question concerns tail behavior, and explain what a mean alone can and cannot establish.
 - `Judge`: Formulate valid SLIs and achievable SLO targets with actionable error-budget burn policies.
 
 ### 4. Canonical Concept First-Home vs. Revisit
@@ -1273,8 +1273,9 @@ Master the foundations of system observability. Understand the three core teleme
   - Distributed Traces: Cross-service request call paths and latency attribution; instrumentation and sampling overhead.
 - Solve the DAG Clock Semantics Invariant: Explain that adjustable wall clocks can be stepped and may also be rate-adjusted, so subtracting them is not a correctness-safe elapsed timer. Use a monotonic clock for elapsed intervals; retain wall time for calendar/event timestamps.
 - Distinguish Mean from Tail Latency ($p95, p99, p99.9$) and explain why a small fraction of slow requests impacts user experience without significantly altering the mean.
-- Formulate an SLI as a ratio of good events over valid events:
+- Formulate one common **ratio-style** SLI as good events over valid events:
   $$\text{SLI} = \frac{\sum \text{Good Requests}}{\sum \text{Total Valid Requests}} \times 100\%$$
+  and state that an SLI is more generally a quantitative service-behavior measure, not always this exact ratio form.
 - Calculate Error Budgets in minutes per month for a given SLO.
 
 ### 6. Stable Principle
@@ -1359,7 +1360,7 @@ Master distributed incident diagnosis and blameless incident learning. Core uses
 - Explain why distributed tracing requires explicit **Context Propagation** across network boundaries.
 - Generate and propagate a **known-valid W3C Trace Context Level 1 version-00 `traceparent`** in the course-owned fixture. The implementation must respect required field lengths/nonzero identifiers and must not pretend a minimal teaching parser implements every future-version rule.
 - Formulate the bounded incident rule: during an active availability incident, prioritize a **safe, reversible mitigation** when evidence is sufficient, while preserving diagnostics; security/safety/data-integrity incidents may require containment/evidence steps before traffic restoration.
-- Distinguish Proximate Cause from Contributing Factors; explain why "human error" is the start of an investigation, never the conclusion.
+- Distinguish proximate actions from contributing factors; explain why “human error” by itself is not a sufficient incident conclusion and should lead to investigation of conditions, tools, incentives, and safeguards.
 - Author a structured, blameless postmortem document.
 
 ### 6. Stable Principle
@@ -1482,7 +1483,7 @@ Recheck W3C Trace Context Level 1 specification and OpenTelemetry Python `v1.44.
 
 | Dimension | Classification | Requirement for Core | Host Observation (2026-09-05) | Truthful Fallback / Disposition |
 |---|---|---|---|---|
-| **Host Operating System** | Operating System | Canonical Linux required for M19 mechanism evidence; Windows/macOS supported via WSL2/VM | Windows host executing pwsh; Linux via WSL/Docker | If native Linux mechanisms are unavailable, M19 capability-gated checks evaluate to `ENVIRONMENT-BLOCKED / NOT RUN`. |
+| **Host Operating System** | Operating System | Canonical Linux required for M19 mechanism evidence; Windows may enter a supported WSL2/VM path and macOS requires a supported Linux VM | Executor observed a Windows/pwsh host; no final Linux M19 runtime is claimed in this Design PR | Run Core M19 evidence inside the canonical Linux environment. Docker/Podman is Optional and is not treated as an equivalent fallback for required host-mechanism evidence; otherwise record `ENVIRONMENT-BLOCKED / NOT RUN`. |
 | **Python Runtime** | Runtime Environment | Candidate stdlib runtime; **exact floor OPEN under OQ-BP-006** | CPython 3.13.1 available | Python 3 stdlib preferred across all fixtures; exact minimum version remains unresolved under OQ-BP-006. |
 | **Linux Namespaces** | Kernel Mechanism | Read-only inspection is Core; mutation is capability-gated | Available on Linux / WSL2 | Read `/proc/self/ns/*`; if unprivileged `unshare` is blocked, record `ENVIRONMENT-BLOCKED / NOT RUN`. |
 | **Linux Cgroups** | Kernel Mechanism | Read-only hierarchy inspection is Core; mutation is capability-gated | Actual arrangement may be v2, v1, hybrid, delegated, or restricted | Detect from `/proc/self/cgroup` + mounts and available controller files. Missing/inaccessible required Core evidence on canonical Linux is `ENVIRONMENT-BLOCKED / NOT RUN`; do not assume one mount layout. |
@@ -1620,7 +1621,7 @@ Across all S6 activities, progressive support follows a strict 4-step pedagogica
 
 ## 34. Visual Design Specifications
 
-The following 14 required visuals are fully specified for authoring during the implementation phase:
+The following **12** required visuals are fully specified for authoring during the implementation phase:
 
 | Visual ID | Target Module / Lesson | Title | Diagram Type | Core Invariant & Visual Representation |
 |---|---|---|---|---|
@@ -1644,7 +1645,7 @@ The following 14 required visuals are fully specified for authoring during the i
 ### 35.1 Machine-Checkable Gates
 - **Zero New Concept IDs:** Automated verification that only the 18 canonical IDs in `meta/CONCEPT_REGISTRY.md` appear in concept metadata fields.
 - **DAG Invariance:** Automated graph validation that no hard dependencies exist between S4 and S5, and that M19 has zero hard dependencies on M17 or M18.
-- **Python Syntax & Clean Execution:** Automated compilation (`python -m py_compile`) and test execution of all M16, M18, and M20 fixture code.
+- **Python Syntax & Clean Execution:** At implementation time, compile/test every course-owned Python fixture or validation harness actually added for S6 (including M16/M17/M18/M19/M20 as applicable); Design itself contains no executable fixture code.
 - **Deterministic Cleanup Check:** Automated verification that all temporary files (`*.db`, `*.log`, `*.pid`) are purged and that test reset scripts run twice idempotently.
 - **Git Tree Cleanliness:** `git diff --check` passes with zero whitespace or formatting errors.
 
