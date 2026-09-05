@@ -71,7 +71,7 @@ python labs/lab_req_04/harness.py
 ### Checkpoint 4 — Write Cost & Storage Footprint
 1. Observe database file size before and after index creation (`os.path.getsize` or `ls -l`), recording the observed delta.
 2. Measure bulk insert latency into the unindexed table vs the indexed table (using a consistent batch size, e.g. 200 rows).
-3. Note that maintaining the secondary B-tree requires additional I/O and disk blocks on writes affecting the indexed columns.
+3. Note that maintaining the secondary index requires extra index-maintenance work when affected index entries change; record the observed write timing and file-size behavior on this host rather than asserting a fixed I/O count or guaranteed positive file-size delta.
 
 ### Checkpoint 5 — Changed Workload & Planner Choice on Relevant Index
 1. Create a relevant index matching the queried predicate column:
