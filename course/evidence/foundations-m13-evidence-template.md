@@ -43,7 +43,7 @@ Use this form for **one actual learner observation**. Do not copy another learne
 - Indexed Result Hash (SHA-256): `<actual>`
 - Row Count Delta ($\Delta$): `<actual row count delta>`
 - Cryptographic Hash Match: `<YES / NO>`
-- Principle Verified: Adding a secondary index changes execution strategy and latency, but preserves relational correctness.
+- Principle Verified: Adding a secondary index **may change** the chosen execution strategy and observed latency, while the query's relational result must remain equivalent.
 
 ---
 
@@ -97,7 +97,7 @@ Use this form for **one actual learner observation**. Do not copy another learne
   ```
   - EQP Access Path: `<actual: SCAN / TABLE_SCAN / other>`
 - Engine Mechanism Explanation:
-  Why wrapping a column in a function prevents standard B-tree index lookup in the absence of an expression index. `<learner explanation>`
+  For **this exact SQLite fixture + ordinary index + expression**, explain what the actual EQP showed and why the ordinary index does not directly store the computed expression key. Do not generalize the observed plan to every engine or every function. `<learner explanation>`
 
 ---
 
