@@ -221,7 +221,7 @@ To manage implementation complexity, isolate environment risk, and ensure rapid,
 
 ### 5.1 Module Purpose & Capability Transition
 - **Purpose:** Shift the learner's mental model from the deterministic single-machine execution world (where function calls return or crash the calling process) to the distributed world characterized by **independent failure**, **unbounded network latency**, and **caller-alive remote ambiguity**.
-- **Capability Gain:** Learners transition from naive network callers to engineers capable of designing resilient remote interfaces using timeouts, bounded retries with jitter, and idempotent operation contracts with deduplication boundaries.
+- **Capability Gain:** Learners transition from naive network callers to engineers who can choose and justify timeout/deadline behavior, decide whether a retry is appropriate, bound any retries/backoff policy, and protect ambiguous mutations with a named retry-safety/idempotency contract.
 
 ### 5.2 Module Constraints & Invariants
 - **Fault Injection Boundary:** The fault injection shim operates strictly at the **application layer** (simulated delays, dropping responses in memory). It must never be mislabeled as literal packet loss or physical network cable disconnection.
@@ -956,15 +956,15 @@ Recheck Gray (1978), Garcia-Molina (1987), and Kleppmann's distributed locking a
 ## 21. Lesson L19-01 Design — “What is a container?”
 
 ### 1. Purpose / Target Mental Model
-Deconstruct the container illusion. A container is not a virtual machine and has no guest kernel; in canonical Linux, a container is **an ordinary host process running with restricted namespace views and cgroup resource limits**. Master the differences between processes, containers, and VMs, and explore OCI image layers vs. runtime storage drivers (OverlayFS).
+Deconstruct the container illusion. In the **canonical Linux case**, a container executes as one or more host-kernel processes with configured namespace, resource, filesystem, and privilege boundaries; it is not a VM guest kernel. Master process/container/VM distinctions and separate OCI image-format concepts from a particular runtime storage implementation such as OverlayFS.
 
 ### 2. Prerequisites
-- Hard: `L06-01` (Processes, syscalls), `L07-01` (Virtual memory, address spaces), `L08-01` (Filesystems, mounts).
-- Soft: `M16` (Process boundaries).
+- Module entry: **Hard** `M16`, `M06`, `M07`, `M08`; no Soft module prerequisite.
+- Canonical lesson predecessors: `L06-01`, `L07-01`, `L08-01`.
 
 ### 3. Primary Competencies
 - `Explain`: Explain how Linux namespaces and cgroups combine to produce container isolation and resource boundaries.
-- `Observe`: Inspect process namespace links in `/proc` and cgroup controller files on Linux.
+- `Judge`: Judge what isolation/resource evidence the observed namespace/cgroup state actually supports, and what security claims remain unproven.
 - `Trace`: Trace how a container process interacts with the host kernel via system calls.
 
 ### 4. Canonical Concept First-Home vs. Revisit
@@ -974,19 +974,19 @@ Deconstruct the container illusion. A container is not a virtual machine and has
   - `EC-CON-002 Abstraction (抽象)`: Container image abstraction vs. layered filesystem reality.
 
 ### 5. Learning Outcomes
-- Enumerate the 7 core Linux namespaces (`pid`, `net`, `mnt`, `ipc`, `uts`, `user`, `cgroup`) and explain what each isolates.
+- Enumerate the namespace types exposed by the current canonical Linux documentation—`cgroup`, `ipc`, `net`, `mnt`, `pid`, `time`, `user`, and `uts` where supported/configured—and explain their distinct views. Do not freeze “7 namespaces” as a timeless count.
 - Contrast cgroups v2 resource limits (`memory.max`, `cpu.max`, `pids.max`) with namespace view restrictions.
 - Contrast the execution boundary of an ordinary Process, a Containerized Process, and a Virtual Machine (hypervisor + guest kernel).
 - Deconstruct an OCI Image (manifest, configuration JSON, content-addressed tarball layers) and contrast it with the runtime mount (OverlayFS `lowerdir`, `upperdir`, `merged`).
 - Explain why containers sharing a host kernel do not provide hardware-isolated security boundaries.
 
 ### 6. Stable Principle
-A container is a process. Namespaces govern what a process can *see*; control groups govern what a process can *use*. An OCI image is an artifact specification, not a running process.
+In the canonical Linux mechanism case, container execution is realized by host-kernel processes plus configured isolation/resource/filesystem/privilege boundaries. Namespaces virtualize selected views; cgroups account/control selected resources. An OCI image is an artifact format, not a running process or a complete security boundary.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
 - *PRINCIPLE:* Operating system virtualization; privilege boundaries; resource accounting and multiplexing.
-- *SPECIFICATION:* OCI Image Format Specification (v1.1.1); OCI Runtime Specification (v1.3.0); Linux `namespaces(7)` and `cgroup-v2` specifications.
-- *IMPLEMENTATION:* Linux kernel cgroups implementation; OverlayFS kernel filesystem; `runc` runtime.
+- *SPECIFICATION:* OCI Image Format Specification (v1.1.1) and OCI Runtime Specification (v1.3.0).
+- *IMPLEMENTATION / OS INTERFACE:* Linux `namespaces(7)`, time/cgroup namespace documentation, cgroup-v2 kernel documentation, OverlayFS, and `runc` are Linux/runtime-specific authorities or implementations—not cross-platform container specifications.
 - *CURRENT PRACTICE:* Docker CLI, Podman, containerd, Kubernetes CRI.
 
 ### 8. Required Distinctions / Misconceptions
@@ -996,10 +996,10 @@ A container is a process. Namespaces govern what a process can *see*; control gr
 - *Distinction:* Image (inert serialized artifact) vs. Container (running OS process context) vs. Virtual Machine (hypervisor-managed guest OS).
 
 ### 9. Worked Example
-A process running inside a PID namespace executes `getpid()` and receives `1` (it acts as the init process of its namespace). When an administrator on the host executes `ps -ef`, the exact same process is visible with host PID `14285`. Both PIDs refer to the exact same `task_struct` in the Linux kernel; the kernel simply maps the task ID according to the viewing process's PID namespace.
+A process in a PID namespace can be observed as PID 1 from that namespace while the host observes a different PID for the **same kernel task**. The worked example records the actual namespace/host PIDs from the named environment and explains that PID namespaces change the process-ID view; it does not require a fixed PID or teach internal `task_struct` layout as a learner invariant.
 
 ### 10. Bounded Hands-On / Observation
-- **Core Baseline (Read-Only):** Run a Python/bash inspector on canonical Linux that reads `/proc/self/ns/*` and identifies the active namespace inode numbers. The script then reads `/sys/fs/cgroup/` (detecting v2 unified hierarchy vs. v1) and prints available controllers (`memory`, `cpu`, `pids`).
+- **Core Baseline (Read-Only):** Run a Python/bash inspector on canonical Linux that reads `/proc/self/ns/*` and records the namespace handles actually present. Inspect `/proc/self/cgroup`, mount information, and `/sys/fs/cgroup` when available to classify the observed hierarchy and list the controllers actually exposed; do not assume `memory`, `cpu`, or `pids` are always enabled.
 - **Capability-Gated Extension:** If running as root or in an environment with unprivileged user namespaces enabled, execute `unshare --pid --fork --mount-proc` to observe a new PID namespace where the process sees itself as PID 1. If unavailable, record `ENVIRONMENT-BLOCKED / NOT RUN`.
 
 ### 11. Evidence to Record
@@ -1042,8 +1042,8 @@ Recheck OCI Image Spec v1.1.1, Runtime Spec v1.3.0, and Linux cgroup v2 document
 Deconstruct "the cloud" into physical infrastructure, virtualization layers (hypervisors, hardware slicing), and failure blast radiuses. Master cloud topology models: **Availability Zones (AZ)** vs. **Regions**, resource metering, and cost models.
 
 ### 2. Prerequisites
-- Hard: `L19-01` (Containers, virtualization), `M16` (Partial failure, network delay).
-- Soft: `M04` (Hardware resources, measurement).
+- Module entry: **Hard** `M16`, `M06`, `M07`, `M08`; no Soft module prerequisite.
+- Canonical lesson predecessor: `L19-01`.
 
 ### 3. Primary Competencies
 - `Explain`: Explain the physical and logical failure domain differences between an Availability Zone and a Region.
@@ -1057,15 +1057,15 @@ Deconstruct "the cloud" into physical infrastructure, virtualization layers (hyp
   - `EC-CON-017 Trust Boundary (信任边界)`: Shared cloud multi-tenant boundaries and provider management planes.
 
 ### 5. Learning Outcomes
-- Define an Availability Zone as one or more discrete data centers with independent power, cooling, and networking within a geographic region.
-- Define a Region as a separate geographic area containing multiple AZs connected via low-latency provider networks.
+- Define **zone/AZ** and **region** only through a named provider's current documentation: these are provider-defined deployment/failure-isolation scopes, not universal physical topologies.
+- Identify which independence/shared-dependency claims the named provider actually makes; do not assume every zone is one or more fully independent data centers or that every region contains the same number/type of zones.
 - Formulate the availability calculation for parallel redundant components:
   $$A = 1 - (1 - a_1)(1 - a_2)$$
-- Identify cross-AZ latency overheads (typically low milliseconds, environment-specific) and cross-AZ data egress financial costs.
+- Identify latency and data-transfer/billing effects only for the selected provider/service/current pricing model; no “typical low milliseconds” or universal cross-zone charge is a Core constant.
 - Explain why "multi-region" introduces significant data replication lag and consistency challenges (speed-of-light constraints across WAN).
 
 ### 6. Stable Principle
-"The cloud" is someone else's physical computer running behind a multi-tenant hypervisor and control plane. Independent failure domains must have independent physical utility infrastructure. Redundancy across failure domains incurs coordination latency and data transfer costs.
+"The cloud" is a provider-operated composition of physical resources, virtualization/isolation, networks, storage, control planes, and metering. Failure-domain independence is a **claim to verify** for the selected provider/architecture, including shared control-plane or network dependencies. Redundancy moves cost, latency, and coordination trade-offs; it does not create independence by label alone.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
 - *PRINCIPLE:* Physical failure domains; speed of light in optical fiber ($\approx 5\mu\text{s/km}$); shared fate avoidance.
@@ -1075,13 +1075,13 @@ Deconstruct "the cloud" into physical infrastructure, virtualization layers (hyp
 
 ### 8. Required Distinctions / Misconceptions
 - *Misconception:* "Deploying to two VMs in the same cloud region guarantees high availability." (False: if both VMs reside in the same AZ or share a rack/hypervisor, a single power or top-of-rack switch failure crashes both).
-- *Misconception:* "Cross-AZ network communication is free and instantaneous." (False: cross-AZ traffic adds measurable round-trip latency and is billed per gigabyte by major cloud providers).
+- *Misconception:* "Cross-zone communication is free and instantaneous." (False: it has measurable latency and may incur service/provider-specific transfer charges; both must be checked for the named case rather than generalized.)
 - *Distinction:* High Availability (surviving component failure within a region) vs. Disaster Recovery (surviving catastrophic regional destruction).
 
 ### 9. Worked Example
-An application requires 99.99% ("four nines") availability. A single cloud VM offers 99.9% availability ($A=0.999$, allowing $\approx 43.8$ minutes downtime/month). By deploying two identical instances across two independent Availability Zones with a health-checking load balancer, assuming failure independence:
-$$A_{\text{combined}} = 1 - (1 - 0.999)^2 = 1 - (0.001)^2 = 1 - 0.000001 = 99.9999\%$$
-However, cross-zone database replication introduces additional network round-trip time and cross-AZ data egress fees that must be budgeted.
+Use an **illustrative reliability model**, not a provider promise: assume two component instances each have modeled availability $a=0.999$, failures are independent for the scenario, and the load balancer/shared dependencies are explicitly outside the model. Then
+$A_{\text{modeled}} = 1 - (1-a)^2.$
+The learner must state why a provider SLA is not automatically an independent per-instance failure probability and list omitted shared dependencies before using the arithmetic to support an architecture claim.
 
 ### 10. Bounded Hands-On / Observation
 Learners complete an architectural estimation worksheet. Given a scenario with traffic volume, latency constraints, and reliability targets:
@@ -1098,10 +1098,10 @@ Learners complete an architectural estimation worksheet. Given a scenario with t
 - **NOT RUN:** Evaluation engine unavailable.
 
 ### 13. Progressive Support
-- *Question:* Why can't we synchronously replicate all database writes across North America and Europe?
-- *Hint 1:* What is the physical distance between London and New York?
-- *Hint 2:* What is the speed of light in optical fiber? How many milliseconds does a round trip take minimum?
-- *Expected Observation:* Speed of light imposes a hard physical latency floor (tens of milliseconds), making synchronous cross-region write replication unacceptable for interactive web requests.
+- *Question:* What latency and availability cost does synchronous cross-region acknowledgment introduce, and under what workload might that trade-off still be acceptable?
+- *Hint 1:* Estimate a lower-bound propagation delay from distance and a stated propagation-speed model.
+- *Hint 2:* Then add that real paths, queueing, processing, and failures make actual latency higher and variable.
+- *Expected Observation:* Physics creates a nonzero propagation floor, but “unacceptable” is workload/SLO dependent; some systems deliberately pay cross-region acknowledgment latency for stronger durability/consistency goals.
 
 ### 14. Required Visuals
 - Visual ID: `FIG-M19-02`
@@ -1128,8 +1128,9 @@ Recheck AWS/GCP region and zone whitepapers and SLA terms.
 Master production software delivery. Understand Continuous Integration and Continuous Delivery (CI/CD) pipelines, Infrastructure as Code (IaC), and modern deployment strategies: **Recreate**, **Rolling Update**, **Blue-Green**, and **Canary**. Master the reality of **Version Skew** and the necessity of backward-compatible database migrations.
 
 ### 2. Prerequisites
-- Hard: `L19-02` (Cloud infrastructure, failure domains), `M16` (Network retries, failure handling).
-- Soft: `M13` (Schema evolution, reader-writer compatibility).
+- Module entry: **Hard** `M16`, `M06`, `M07`, `M08`; no Soft module prerequisite.
+- Canonical lesson predecessors: `L19-02`, `M16`.
+- `M13` schema evolution is prior context/revisit material, **not** an added S6 prerequisite edge.
 
 ### 3. Primary Competencies
 - `Explain`: Explain the trade-offs between rolling, blue-green, and canary deployment strategies.
@@ -1139,21 +1140,21 @@ Master production software delivery. Understand Continuous Integration and Conti
 ### 4. Canonical Concept First-Home vs. Revisit
 - Canonical Revisits:
   - `EC-CON-010 Failure (故障)`: Deployment failure modes, rollbacks, and configuration drift.
-  - `EC-CON-007 Specification (规格)`: Reproducible environment specifications and deployment contracts.
+  - `EC-CON-005 Interface (接口)`: Deployment/configuration interfaces and compatibility boundaries across coexisting versions.
   - `EC-CON-017 Trust Boundary (信任边界)`: Supply chain integrity, content digests (`@sha256:...`) vs. mutable tags (`:latest`).
 
 ### 5. Learning Outcomes
 - Define Continuous Integration and Continuous Delivery automation invariants.
 - Compare deployment strategies:
   - Recreate (downtime, zero skew).
-  - Rolling Update (zero downtime, high version skew).
-  - Blue-Green (fast rollback, capacity overhead).
-  - Canary (bounded blast radius, signal monitoring).
-- Demonstrate why immutable artifacts must be referenced by cryptographic content digest rather than mutable tags.
+  - Rolling Update (can reduce user-visible downtime, may create a version-skew window).
+  - Blue-Green (keeps old/candidate environments available for a controlled traffic switch; rollback depends on shared-state compatibility).
+  - Canary (bounds initial exposure according to a chosen traffic/workload policy and measured signals).
+- Demonstrate that a content digest identifies specific image content while a mutable tag can be repointed; separately explain that **digest identity/integrity is not provenance or signature verification**.
 - Apply the **Expand-Contract (Parallel Run)** database migration pattern to prevent version-skew crashes during rolling deployments.
 
 ### 6. Stable Principle
-A rolling deployment is a distributed system in a state of intentional version skew. Code must remain backward-compatible with database schemas and peer services during the transition window. A digest guarantees artifact immutability; a tag does not.
+A rolling deployment can create intentional version overlap. Interfaces/state changes must tolerate the **actual** overlap window or the rollout must use another strategy. A content digest binds a reference to specific content; a mutable tag does not. A digest alone does not authenticate who produced that content.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
 - *PRINCIPLE:* Continuous delivery automation; version skew coexistence; expand-contract database migrations.
@@ -1163,7 +1164,7 @@ A rolling deployment is a distributed system in a state of intentional version s
 
 ### 8. Required Distinctions / Misconceptions
 - *Misconception:* "A zero-downtime rolling deployment guarantees no users experience errors." (False: if old and new versions cannot process each other's schema or data formats, users routed across instances experience crashes).
-- *Misconception:* "Using `image:v1.0` guarantees reproducible deployments." (False: image tags can be overwritten in registries; only cryptographic digests like `image@sha256:abc...` guarantee exact bit-for-bit immutability).
+- *Misconception:* "Using `image:v1.0` guarantees reproducible deployments." (False: mutable tags can be repointed. A digest such as `image@sha256:...` identifies exact content under the digest algorithm, but provenance/authenticity requires a separate signing/attestation trust decision.)
 - *Distinction:* Continuous Delivery (code is always deployable; release is a business decision) vs. Continuous Deployment (every passing commit automatically deploys to production).
 
 ### 9. Worked Example
@@ -1176,14 +1177,14 @@ An engineering team modifies an `orders` table by renaming `phone` to `contact_p
 Learners execute a Python-based deployment simulation:
 - Run a 3-node simulated service pool serving requests from a shared database.
 - Trigger a rolling update where Version 2 introduces a breaking schema change without backward compatibility. Observe request errors spike on Version 1 instances as the load balancer splits traffic.
-- Re-run using the Expand-Contract pattern. Observe zero request errors throughout the entire rolling update.
+- Re-run the **course-owned deterministic scenario** using the Expand-Contract pattern and record its request errors. The fixture may be designed so the expected result is zero for this scenario, but that does not establish a universal zero-downtime guarantee.
 
 ### 11. Evidence to Record
 - Traffic error rate chart comparing breaking rollout vs. Expand-Contract rollout.
 - Trace log showing Version 1 and Version 2 instances coexisting and successfully serving requests during the transition window.
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** Breaking rollout produces errors; Expand-Contract rollout produces zero errors across the rolling transition.
+- **PASS:** The scripted breaking rollout triggers the designed compatibility failure, while the scripted Expand-Contract case satisfies its scenario-specific request-success invariant. Report the observed error counts rather than treating “zero downtime” as a general deployment property.
 - **BLOCKED:** Simulation script failure.
 - **NOT RUN:** Python interpreter unavailable.
 
@@ -1191,7 +1192,7 @@ Learners execute a Python-based deployment simulation:
 - *Question:* If you deploy a bug to production, why is blue-green deployment faster to roll back than a rolling deployment?
 - *Hint 1:* Look at where the old version (blue) is while the new version (green) is serving traffic.
 - *Hint 2:* Blue-green rollback is a single load balancer routing switch back to the idle blue environment.
-- *Expected Observation:* Blue-green rollback avoids reinstalling software; it simply re-points the router to the already-running previous version.
+- *Expected Observation:* Keeping the previous environment available can make traffic rollback faster, **provided** shared state/schema/configuration remains compatible. A router switch alone does not guarantee safe rollback after irreversible state changes.
 
 ### 14. Required Visuals
 - Visual ID: `FIG-M19-03`
@@ -1219,10 +1220,10 @@ Recheck OCI Image digest immutability rules and modern database migration toolin
 - **Location:** `stage6/m19_infra/`
 - **Dependencies:** Python 3 standard library (`os`, `sys`, `pathlib`, `ctypes`).
 - **Architecture:**
-  - `OSPreflight`: Detects host operating system. If non-Linux, checks for WSL2 or isolated Linux VM.
+  - `OSPreflight`: Confirms execution **inside** the canonical Linux environment before running M19 Core evidence. A non-Linux host is not treated as equivalent; the learner may separately enter a supported WSL2/VM environment, otherwise M19 Core is `ENVIRONMENT-BLOCKED / NOT RUN`.
   - `NamespaceInspector`: Reads `/proc/self/ns/*`. Parses symlink targets (e.g., `net:[4026531992]`). Compares parent and child namespace IDs.
-  - `CgroupInspector`: Checks `/sys/fs/cgroup/cgroup.controllers` (cgroups v2) or `/sys/fs/cgroup/memory` (cgroups v1). Evaluates available controllers. Reads `/proc/self/cgroup` membership.
-  - `CapabilityGate`: Probes for `CAP_SYS_ADMIN` or unprivileged user namespace availability (`/proc/sys/kernel/unprivileged_userns_clone`). If enabled, optionally runs bounded `unshare` test; if disabled, marks extension as `ENVIRONMENT-BLOCKED / NOT RUN`.
+  - `CgroupInspector`: Uses `/proc/self/cgroup` plus mount information and `/sys/fs/cgroup/cgroup.controllers` when present to classify the observed cgroup arrangement (v2, v1, hybrid/other) and list actual controllers. Do not infer v1 solely from a hard-coded `/sys/fs/cgroup/memory` path.
+  - `CapabilityGate`: Treats distro-specific sysctls such as `/proc/sys/kernel/unprivileged_userns_clone` as **signals only**. The Optional extension performs a bounded capability probe/`unshare` attempt in an owned child process and classifies the actual result; absence of one sysctl is not proof that user namespaces are unsupported.
 
 ### 24.2 Execution Safety & Clean Reset
 - Fully read-only Core inspection. Zero writes to `/sys/fs/cgroup`.
@@ -1250,8 +1251,9 @@ Recheck OCI Image digest immutability rules and modern database migration toolin
 Master the foundations of system observability. Understand the three core telemetry signal families (Metrics, Logs, Traces) and map questions to the right signal. Master **Clock Semantics** (resolving the DAG hidden prerequisite): monotonic clocks for elapsed duration vs. wall-clock time for calendar timestamps. Define **SLIs**, **SLOs**, and **Error Budgets** quantitatively.
 
 ### 2. Prerequisites
-- Hard: `L19-02` (Cloud infrastructure), `M16` (Distributed calls, partial failure).
-- Soft: `M04` (Latency distributions, measurement discipline), `M11` (HTTP status codes).
+- Module entry: **Hard** `M19`, `M16`; **Soft** `M11`.
+- Canonical lesson predecessors: `L19-02`, `M16`.
+- `M04` measurement discipline is a canonical revisit source, **not** an added prerequisite edge.
 
 ### 3. Primary Competencies
 - `Observe`: Inspect structured logs, metric counters, and monotonic timer durations from a running service.
@@ -1260,64 +1262,64 @@ Master the foundations of system observability. Understand the three core teleme
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - Canonical Revisits:
-  - `EC-CON-009 Correctness (正确性)`: Observability as empirical verification of system specification conformance.
-  - `EC-CON-006 Trade-off (权衡)`: Telemetry detail vs. storage/cardinality/processing overhead.
-  - `EC-CON-010 Failure (故障)`: Error rate metrics, degradation detection, and alert triggers.
+  - `EC-CON-001 State (状态)`: Telemetry records partial observations of system/request/resource state; the signal is not the underlying state itself.
+  - `EC-CON-015 Concurrency (并发)`: Overlapping requests and asynchronous signal emission complicate ordering/correlation.
+  - `EC-CON-010 Failure (故障)`: Error/degradation signals are evidence about a named failure condition, not automatic root-cause proof.
 
 ### 5. Learning Outcomes
 - Contrast the Three Telemetry Signal Families:
-  - Metrics: Aggregate numeric series; low overhead, ideal for alerting; lacks execution path detail; high-cardinality vulnerability.
+  - Metrics: Aggregate numeric series that can be compact/effective for alerting and trends when label cardinality/retention are controlled; they usually lack one request's full execution path.
   - Structured Logs: Rich event context; high storage cost; difficult to trace across services without correlation IDs.
   - Distributed Traces: Cross-service request call paths and latency attribution; instrumentation and sampling overhead.
-- Solve the DAG Clock Semantics Invariant: Explain why wall-clock time (`time.time()` / `CLOCK_REALTIME`) can step backward or forward due to NTP adjustments and leap seconds, rendering it invalid for duration measurement; use monotonic time (`time.monotonic()` / `CLOCK_MONOTONIC`) for intervals.
+- Solve the DAG Clock Semantics Invariant: Explain that adjustable wall clocks can be stepped and may also be rate-adjusted, so subtracting them is not a correctness-safe elapsed timer. Use a monotonic clock for elapsed intervals; retain wall time for calendar/event timestamps.
 - Distinguish Mean from Tail Latency ($p95, p99, p99.9$) and explain why a small fraction of slow requests impacts user experience without significantly altering the mean.
 - Formulate an SLI as a ratio of good events over valid events:
   $$\text{SLI} = \frac{\sum \text{Good Requests}}{\sum \text{Total Valid Requests}} \times 100\%$$
 - Calculate Error Budgets in minutes per month for a given SLO.
 
 ### 6. Stable Principle
-You cannot manage what you cannot observe. Aggregate averages disguise tail misery. Durations require monotonic clocks; calendar timestamps require wall clocks. An alert should trigger on user pain (SLO burn rate), not arbitrary server CPU spikes.
+Observability is evidence design: choose signals for a stated question and record what they miss. A mean alone cannot characterize tail behavior. Durations require monotonic clocks; calendar timestamps use wall clocks. Prefer alerts tied to actionable service/user symptoms, while resource alerts remain valid when they represent an actionable saturation/failure condition.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
 - *PRINCIPLE:* Measurement uncertainty; queuing delay tail amplification; clock synchronization bounds (NTP jitter).
 - *SPECIFICATION:* POSIX `clock_gettime(2)` (`CLOCK_MONOTONIC` vs. `CLOCK_REALTIME`); W3C Trace Context Level 1.
-- *IMPLEMENTATION:* Python `time.monotonic()` vs. `time.time()`; Prometheus exposition format.
+- *IMPLEMENTATION:* Python `time.monotonic()` vs. `time.time()` and the course-owned in-memory/JSON signal fixture. Prometheus is at most an optional current-case format, not a Core backend.
 - *CURRENT PRACTICE:* Google Site Reliability Engineering (SRE) books; multi-window multi-burn-rate alerting.
 
 ### 8. Required Distinctions / Misconceptions
-- *Misconception:* "Average latency of 50ms means our users have a fast experience." (False: in a multi-request workflow, a $p99$ of 2000ms means 1 in 100 users experiences terrible performance; fan-out amplifies this impact).
-- *Misconception:* "We should measure request duration using `datetime.now()`." (False: an NTP slew or step can cause negative durations or false spikes; duration requires monotonic timers).
-- *Misconception:* "SLAs and SLOs are the same thing." (False: SLO is an internal engineering objective; SLA is an external legal/business contract with financial penalties).
+- *Misconception:* "One average latency number characterizes user experience." (False: a mean does not describe the tail. A `p99` is a request-distribution statistic under a named percentile definition/window; it does **not** automatically mean exactly 1 in 100 distinct users sees that latency.)
+- *Misconception:* "We should measure correctness-sensitive request duration by subtracting `datetime.now()` values." (False: wall clocks are adjustable; a backward step can create negative subtraction and rate adjustment can distort elapsed timing. Use a monotonic timer when available.)
+- *Misconception:* "SLAs and SLOs are the same thing." (False: an SLO is a target/objective; an SLA is an externally communicated or contractual commitment whose remedies/credits/terms are organization-specific—not universally “financial penalties.”)
 - *Distinction:* Metrics vs. Logs vs. Traces; Wall Clock vs. Monotonic Clock; Black-box vs. White-box monitoring.
 
 ### 9. Worked Example
-A payment service handles 10,000 requests per minute. The mean latency is 45ms. However, the $p99$ latency is 3,200ms. Out of 10,000 requests, 100 users wait over 3 seconds. An engineer calculates request duration using `time.time()`. During execution, an NTP daemon synchronizes the clock backward by 100ms. The calculated latency is $-55\text{ms}$. Switching to `time.monotonic()` prevents clock adjustment interference and correctly records an elapsed duration of $+45\text{ms}$.
+Use a clearly labeled toy latency distribution to compare mean and upper percentiles; report **requests**, not unique users, unless user identity is actually modeled. Separately, a course-owned `ClockAdapter` supplies a fake adjustable wall-clock source whose offset is stepped backward between two reads while the real monotonic source continues normally. The example demonstrates why wall-clock subtraction can be wrong without changing the host system clock or pretending to reproduce real NTP behavior.
 
 ### 10. Bounded Hands-On / Observation
 Learners instrument a Python web endpoint:
-- Record request start and end using both `time.time()` (wall clock) and `time.monotonic()` (monotonic clock).
-- Simulate an NTP clock step by shifting the wall clock. Observe that wall clock duration produces garbage/negative numbers while monotonic clock duration remains accurate.
-- Calculate $p50, p90,$ and $p99$ percentiles over a 1,000-request workload and contrast them with the mean.
+- Record elapsed time with `time.monotonic()` (or `perf_counter()`) and record wall time separately for calendar/event timestamps.
+- Use an **injected fake wall-clock adapter** to demonstrate a scripted backward adjustment; never require privilege to alter the host clock and never label the adapter as a real NTP reproduction.
+- Calculate percentiles over a deterministic course-owned sample dataset/workload whose size is configurable and recorded; contrast them with the mean under the chosen percentile convention.
 
 ### 11. Evidence to Record
 - Output table comparing wall clock duration vs. monotonic clock duration under simulated clock adjustment.
 - Percentile distribution table ($p50, p90, p95, p99$, Mean) demonstrating tail divergence.
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** Monotonic timer records positive elapsed duration regardless of wall clock manipulation; percentile calculation correctly identifies tail latency.
+- **PASS:** The scripted fake-wall-clock case demonstrates that wall-time subtraction can be invalid while the monotonic elapsed timer preserves the expected positive ordering, and the learner correctly computes/interprets the required distribution statistics.
 - **BLOCKED:** Python script execution failure.
 - **NOT RUN:** Python interpreter unavailable.
 
 ### 13. Progressive Support
-- *Question:* Why does adding user ID as a metric label in Prometheus cause the Prometheus server to crash with out-of-memory errors?
-- *Hint 1:* How does a time-series database store metrics with labels?
-- *Hint 2:* Every unique combination of key-value labels creates a completely new time series in memory.
-- *Expected Observation:* High-cardinality labels (like user IDs or UUIDs) cause time-series explosion, overwhelming database memory. User IDs belong in structured logs, not metrics.
+- *Question:* What happens to a label-indexed metric store as the number of distinct label combinations grows, and why might `user_id` be a risky metric label?
+- *Hint 1:* In the course-owned model, each distinct label set creates a distinct series key.
+- *Hint 2:* Estimate the number of series as cardinalities multiply, then name storage/query/privacy costs.
+- *Expected Observation:* High-cardinality labels can create many series and large overhead. Whether a user identifier belongs in logs, traces, or another store is a privacy/diagnostic design choice—not a universal Prometheus crash rule.
 
 ### 14. Required Visuals
 - Visual ID: `FIG-M20-01`
 - Title: "The Telemetry Triad & Clock Semantics Boundary"
-- Layout: Top panel: Triangle diagram showing Metrics, Logs, Traces with question mappings ("Is it broken?" $\to$ Metrics; "Why did it break?" $\to$ Logs; "Where is it slow?" $\to$ Traces). Bottom panel: Wall clock (NTP step backward anomaly) vs. Monotonic clock (steady forward progress).
+- Layout: Top panel shows overlapping example question-to-signal mappings for Metrics, Logs, and Traces, explicitly noting that no signal owns one question exclusively. Bottom panel contrasts an adjustable/fake wall-clock step with a monotonic elapsed timer.
 
 ### 15. Stopping Point
 Stop when the learner clearly demonstrates why duration timing must use monotonic clocks and derives an SLI/SLO error budget.
@@ -1336,33 +1338,32 @@ Recheck Python `time` module documentation and Google SRE handbook SLI/SLO chapt
 ## 27. Lesson L20-02 Design — “How do I debug a production incident?”
 
 ### 1. Purpose / Target Mental Model
-Master distributed incident diagnosis and blameless reliability engineering. Master **Context Propagation** and distributed tracing using **W3C Trace Context**. Master the production incident lifecycle: Detection $\to$ Triage $\to$ Mitigation $\to$ Resolution $\to$ Postmortem. Execute a **Blameless Postmortem** focused on systemic contributing factors rather than human error.
+Master distributed incident diagnosis and blameless incident learning. Core uses course-owned structured logs/timers plus propagated correlation/Trace Context; a full tracing backend remains Optional. Practice a bounded incident lifecycle: Detection $\to$ Triage $\to$ safe Mitigation $\to$ Resolution $\to$ Postmortem, while preserving evidence and considering safety/security context.
 
 ### 2. Prerequisites
-- Hard: `L20-01` (Observability signals, SLOs, monotonic timing), `M16` (Distributed calls, timeouts).
-- Soft: `M19` (Deployment strategies, rollback).
+- Module entry: **Hard** `M19`, `M16`; **Soft** `M11`.
+- Canonical lesson predecessor: `L20-01`.
 
 ### 3. Primary Competencies
 - `Diagnose`: Trace a distributed request across three service hops using propagated trace context to isolate a bottleneck.
 - `Observe`: Inspect correlated structured logs using a common `trace_id`.
-- `Explain`: Explain the priority of mitigation (stop the bleeding) over root-cause investigation during an active incident.
+- `Explain`: Explain why active incidents often prioritize safe mitigation over deep root-cause work, and name cases where containment/evidence/data-integrity concerns change that ordering.
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - Canonical Revisits:
   - `EC-CON-010 Failure (故障)`: Incident lifecycles, cascading failures, and contributing factors.
-  - `EC-CON-009 Correctness (正确性)`: Verification of post-mitigation service recovery.
+  - `EC-CON-001 State (状态)`: Correlated logs/timers expose partial observations of request and service state during the incident.
   - `EC-CON-015 Concurrency (并发)`: Request tracing across concurrently executing services.
 
 ### 5. Learning Outcomes
 - Explain why distributed tracing requires explicit **Context Propagation** across network boundaries.
-- Implement the W3C Trace Context Level 1 standard `traceparent` header format:
-  $$\text{version (2 hex)} - \text{trace\_id (32 hex)} - \text{parent\_id (16 hex)} - \text{trace\_flags (2 hex)}$$
-- Formulate the incident response rule: **Mitigate First, Diagnose Later** (roll back, shed load, or fail over before debugging root cause).
+- Generate and propagate a **known-valid W3C Trace Context Level 1 version-00 `traceparent`** in the course-owned fixture. The implementation must respect required field lengths/nonzero identifiers and must not pretend a minimal teaching parser implements every future-version rule.
+- Formulate the bounded incident rule: during an active availability incident, prioritize a **safe, reversible mitigation** when evidence is sufficient, while preserving diagnostics; security/safety/data-integrity incidents may require containment/evidence steps before traffic restoration.
 - Distinguish Proximate Cause from Contributing Factors; explain why "human error" is the start of an investigation, never the conclusion.
 - Author a structured, blameless postmortem document.
 
 ### 6. Stable Principle
-In a distributed system, an un-correlated log is a needle in a haystack. Context must flow with the request. During an incident, restoring user service outranks understanding why it failed. A postmortem that blames an individual guarantees future outages.
+Correlation improves cross-boundary diagnosis when the question concerns one request, but aggregate/un-correlated signals can still be useful. Propagate context only across the relevant boundaries and with privacy controls. During an active incident, safe mitigation is often prioritized over deep root-cause work; postmortems should analyze contributing conditions and safeguards rather than stop at personal blame.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
 - *PRINCIPLE:* Distributed request tracing; human factors and systems safety (Reason 1990; Dekker 2006).
@@ -1376,7 +1377,7 @@ In a distributed system, an un-correlated log is a needle in a haystack. Context
 - *Distinction:* Mitigation (restoring service health) vs. Resolution (permanently fixing underlying code) vs. Prevention (hardening system against recurrence).
 
 ### 9. Worked Example
-A user checkout request spans Service $A$ (Frontend) $\to$ Service $B$ (Orders) $\to$ Service $C$ (Inventory). The checkout fails with a 504 Gateway Timeout. Without correlation IDs, searching logs across three clusters with millions of entries yields disconnected lines. With `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01`, a single query retrieves the complete span tree: Service $A$ waited 3,000ms; Service $B$ waited 2,950ms; Service $C$ hung on a locked database query. The bottleneck is immediately localized to Service $C$.
+In a **course-owned localhost scenario**, request $A \to B \to C$ carries a known-valid `traceparent`/correlation context. A scripted delay in $C$ causes an upstream timeout-class symptom. Filtering the structured logs by the propagated trace ID reconstructs a request-hop timeline and shows where the injected delay occurred. The scenario records its chosen delay/deadline values; it does not require millions of logs, a tracing backend, or fixed latency constants.
 
 ### 10. Bounded Hands-On / Observation
 Learners participate in a simulated controlled incident:
@@ -1386,11 +1387,11 @@ Learners participate in a simulated controlled incident:
 - Step 3 (Postmortem): Draft a blameless postmortem using a provided Markdown template.
 
 ### 11. Evidence to Record
-- Correlated trace execution tree showing span durations across Services $A, B,$ and $C$.
+- Correlated request-hop timeline from the course-owned structured logs, including each service's recorded monotonic duration and propagated context. If Optional OpenTelemetry is used, span-tree evidence is recorded separately as Optional.
 - Completed blameless postmortem Markdown document containing timeline, impact, contributing factors, and action items.
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** Successful extraction of the correlated trace tree and completion of a compliant blameless postmortem document.
+- **PASS:** Successful reconstruction of the scripted request-hop timeline from Core structured logs/correlation context, correct localization of the injected symptom, and completion of the bounded postmortem/contributing-factor artifact.
 - **BLOCKED:** Pipeline execution script failure.
 - **NOT RUN:** Python interpreter unavailable.
 
@@ -1429,12 +1430,12 @@ Recheck W3C Trace Context Level 1 specification and OpenTelemetry Python `v1.44.
   - `ServiceA` (Frontend), `ServiceB` (Business Logic), `ServiceC` (Storage Mock).
   - All services run in-process on localhost across distinct ephemeral ports.
   - Context Propagation Engine: Injects and parses W3C-compliant `traceparent` headers.
-  - Logging Engine: Emits structured JSON to `stdout` containing `timestamp_iso`, `trace_id`, `span_id`, `duration_ms` (calculated via `time.monotonic()`), `service`, and `message`.
+  - Logging Engine: Emits structured JSON to `stdout` containing a calendar timestamp, propagated trace/correlation identifiers, `duration_ms` computed from a monotonic source, `service`, and `message`. Core may use course-owned hop/span identifiers but must not claim this is a full tracing backend.
   - Fault Injector: Configurable parameter to inject delay or HTTP 500 into `ServiceC`.
 
 ### 28.2 Execution Safety & Clean Reset
 - Fully self-contained localhost pipeline.
-- Automatic shutdown watchdog guarantees all server threads terminate within 10 seconds.
+- Services expose explicit shutdown/join paths. The fixture runs in an owned subprocess under a configurable safety watchdog; timeout cleanup may terminate/reap only that fixture process tree. A fixed watchdog duration is not a learner networking/SLO constant.
 - Zero leftover network sockets or background processes.
 
 ---
@@ -1453,10 +1454,10 @@ Recheck W3C Trace Context Level 1 specification and OpenTelemetry Python `v1.44.
    - Focus: Inspect the `Span` abstract base class and `SpanContext`. Observe how `trace_id` and `span_id` are defined as immutably packaged identifiers.
 2. **SDK Implementation Boundary:**
    - Path: `opentelemetry-sdk/src/opentelemetry/sdk/trace/__init__.py`
-   - Focus: Inspect the `_Span` implementation class. Locate where start time and end time are captured:
-     - Observe the use of both monotonic clock (`time.monotonic_ns()`) for duration calculation and wall clock (`time.time_ns()`) for the epoch start timestamp.
-     - Observe how span processors (`SpanProcessor.on_end`) are invoked upon span completion.
-- **Stopping Point:** Complete the reading card identifying the exact lines in the SDK where span duration is recorded and explain why the SDK captures both monotonic and wall clocks.
+   - Focus: Inspect the `_Span` implementation class. At tag `v1.44.0`, verify that default span `start_time` and `end_time` are captured with imported `time_ns()` and that processors are invoked during end-of-span lifecycle.
+     - **Important source finding:** this path does **not** use `time.monotonic_ns()` for the default span timestamps. Do not use EXP-04 as evidence for the Core monotonic-duration rule.
+     - Compare that implementation choice with the separate course rule: correctness-sensitive elapsed timers in the Core fixture use a monotonic clock, while telemetry span timestamps can be epoch-based according to their API/spec semantics.
+- **Stopping Point:** Complete the reading card mapping one API field to the SDK start/end lifecycle, cite the `time_ns()` source lines at the pinned tag, and state one claim the source confirms plus one claim it makes more conditional. Do not follow imports beyond the accepted route.
 
 ---
 
@@ -1484,7 +1485,7 @@ Recheck W3C Trace Context Level 1 specification and OpenTelemetry Python `v1.44.
 | **Host Operating System** | Operating System | Canonical Linux required for M19 mechanism evidence; Windows/macOS supported via WSL2/VM | Windows host executing pwsh; Linux via WSL/Docker | If native Linux mechanisms are unavailable, M19 capability-gated checks evaluate to `ENVIRONMENT-BLOCKED / NOT RUN`. |
 | **Python Runtime** | Runtime Environment | Candidate stdlib runtime; **exact floor OPEN under OQ-BP-006** | CPython 3.13.1 available | Python 3 stdlib preferred across all fixtures; exact minimum version remains unresolved under OQ-BP-006. |
 | **Linux Namespaces** | Kernel Mechanism | Read-only inspection is Core; mutation is capability-gated | Available on Linux / WSL2 | Read `/proc/self/ns/*`; if unprivileged `unshare` is blocked, record `ENVIRONMENT-BLOCKED / NOT RUN`. |
-| **Linux Cgroups** | Kernel Mechanism | Read-only hierarchy inspection is Core; mutation is capability-gated | Unified v2 or v1 available on Linux | Detect controller files; if `/sys/fs/cgroup` is missing, record `ENVIRONMENT-BLOCKED / NOT RUN`. |
+| **Linux Cgroups** | Kernel Mechanism | Read-only hierarchy inspection is Core; mutation is capability-gated | Actual arrangement may be v2, v1, hybrid, delegated, or restricted | Detect from `/proc/self/cgroup` + mounts and available controller files. Missing/inaccessible required Core evidence on canonical Linux is `ENVIRONMENT-BLOCKED / NOT RUN`; do not assume one mount layout. |
 | **SQLite 3** | Database Engine | Core requirement for M18 Outbox fixture | Python stdlib `sqlite3` available | Built-in standard library module; requires no external server. |
 | **Docker / Podman** | Container Engine | Strictly **OPTIONAL** | Not required for Core | Optional convenience comparison only; zero Core learners are blocked without it. |
 | **OpenTelemetry SDK** | Library Package | Strictly **OPTIONAL** (`LAB-OPT-04`) | PyPI package | Optional comparison; Core baseline uses standard Python `json` + `time.monotonic()`. |
@@ -1513,14 +1514,15 @@ In accordance with strict verification rules, evidence templates must specify re
 - Client Timeout Setting: `<configured-timeout-ms>` ms
 - Injected Server Delay: `<injected-delay-ms>` ms
 - Observed Client Error: `<recorded-client-error>`
-- Observed Server Execution State: `<recorded-server-status>` (CONFIRMED COMPLETED AFTER TIMEOUT)
+- Observed Server Execution State: `<recorded-server-status>`
 - Analysis: `<learner-explanation-of-remote-silence>`
 
 #### 3. Idempotency & Retry Amplification (L16-02)
 - Backoff Policy Used: `<EXPONENTIAL_FULL_JITTER | DETERMINISTIC>`
 - Retry Attempts Dispatched: `<recorded-attempt-count>`
 - Final Business State Value (Unsafe Path): `<recorded-value-greater-than-1>`
-- Final Business State Value (Safe Idempotent Path): `<recorded-value-exactly-1>`
+- Final Business State Value (Protected Path): `<recorded-value>`
+- Expected-vs-Observed Contract Check: `<learner-compares-recorded-value-to-scripted-one-intended-effect-invariant>`
 - Idempotency Key Retention Disposition: `<learner-analysis-of-retention-window-risk>`
 ```
 
@@ -1553,13 +1555,14 @@ In accordance with strict verification rules, evidence templates must specify re
 
 #### 1. Transactional Outbox vs. Dual-Write (L18-01)
 - Injected Failure Point: `<POST_DB_COMMIT_PRE_QUEUE_SEND>`
-- Dual-Write Divergence State: Orders Table = `<state>`, Queue = `<state>` (DIVERGED)
-- Outbox Convergence State: Orders Table = `<state>`, Outbox Table = `<state>` (CONVERGED)
-- Duplicate Injection Outcome: Injected Duplicates = `<count>`, Worker Executions = `1` (DEDUPLICATED)
+- Dual-Write Scenario State: Orders Table = `<state>`, Delivery Surface = `<state>`
+- Outbox Scenario State: Orders Table = `<state>`, Outbox Table = `<state>`, Consumer Effect = `<state>`
+- Duplicate Injection Outcome: Injected Duplicate Attempts = `<count>`, Recorded Consumer Effects = `<count>`
+- Contract Check: `<learner-explains-whether-observed-state-satisfies-the-scoped-dedup-invariant>`
 
 #### 2. Coordination & Distributed Leases (L18-02)
 - Saga Compensation Audit Log: `<ordered-compensating-steps>`
-- Fencing Token Validation Outcome: Stale Token Value = `<token>`, Storage Highest Token = `<token>`, Storage Action = `REJECTED`
+- Fencing Token Validation Outcome: Presented Token = `<token>`, Storage Highest Token = `<token>`, Storage Action = `<recorded-action>`
 ```
 
 ### 32.4 M19 Evidence Template (Linux Namespaces, Cgroups, Deployment)
@@ -1572,13 +1575,14 @@ In accordance with strict verification rules, evidence templates must specify re
   - `pid`: `<inode-id>`
   - `net`: `<inode-id>`
   - `mnt`: `<inode-id>`
-- Cgroup Hierarchy Version Detected: `<v2-unified | v1-hybrid>`
+- Cgroup Hierarchy / Arrangement Detected: `<v2-unified | v1 | hybrid | other/unknown>`
 - Available Cgroup Controllers: `<detected-controllers>`
 - Capability-Gated Mutation Disposition: `<PASS | ENVIRONMENT-BLOCKED / NOT RUN>`
 
 #### 2. Deployment Version-Skew & Rollout (L19-03)
 - Breaking Rollout Error Count: `<recorded-error-count>`
-- Expand-Contract Rollout Error Count: `0` (ZERO DOWNTIME / ZERO ERRORS)
+- Expand-Contract Rollout Error Count: `<recorded-error-count>`
+- Scenario Contract Check: `<learner-explains-whether-the-scripted-compatibility-invariant-held>`
 - Content Digest Verification: Image Tag = `<tag>`, Content Digest = `<sha256-hash>`
 ```
 
@@ -1587,14 +1591,14 @@ In accordance with strict verification rules, evidence templates must specify re
 ### M20 Learner Evidence Packet
 
 #### 1. Clock Semantics Invariant (L20-01)
-- Wall Clock Duration Across NTP Adjustment: `<recorded-value-can-be-negative>`
-- Monotonic Clock Duration Across NTP Adjustment: `<recorded-positive-elapsed-ms>`
+- Fake Adjustable-Wall-Clock Subtraction Across Scripted Step: `<recorded-value>`
+- Monotonic Elapsed Duration Across Same Scripted Case: `<recorded-value>`
 - Percentile Distribution: Mean = `<ms>`, $p50$ = `<ms>`, $p95$ = `<ms>`, $p99$ = `<ms>`
 
 #### 2. Correlated Incident Diagnosis (L20-02)
 - W3C Trace Context Extracted: `traceparent` = `<version-traceid-parentid-flags>`
 - Downstream Bottleneck Localized: `<service-identifier>` at `<latency-ms>`
-- Incident Response Priority Demonstrated: `<MITIGATION_BEFORE_ROOT_CAUSE>`
+- Incident Response Decision & Rationale: `<recorded-mitigation-containment-diagnosis-order-and-why>`
 - Attached Blameless Postmortem: `<postmortem-markdown-summary>`
 ```
 
@@ -1623,12 +1627,12 @@ The following 14 required visuals are fully specified for authoring during the i
 | `FIG-M16-01` | M16 / `L16-01` | The Four States of Remote Silence | Swimlane Timeline | Highlights the 4 indistinguishable states of remote silence across client, network, and server. |
 | `FIG-M16-02` | M16 / `L16-02` | Retry Amplification vs. Jittered Backoff & Idempotency | Sequence & Call Tree | Top: Multiplicative retry explosion ($k^3$). Bottom: Jittered exponential backoff and server deduplication table lookup. |
 | `FIG-M17-01` | M17 / `L17-01` | Quorum Overlap vs. Linearizability Boundary | Venn Diagram | Shows $W + R > N$ intersection. Prominently displays: **OVERLAP $\ne$ LINEARIZABILITY**. |
-| `FIG-M17-02` | M17 / `L17-02` | Consensus Safety vs. Liveness: Quorum Disjointness | Topology Partition Diagram | Shows 5 nodes partitioned $2 \mid 3$; minority blocked, majority electing leader; split-brain impossible. |
+| `FIG-M17-02` | M17 / `L17-02` | Consensus Safety vs. Liveness: Majority Overlap | Topology Partition Diagram | Shows a bounded 5-node $2 \mid 3$ Raft trace: minority cannot commit/elect a new-term majority; majority can progress under the stated log/vote rules. Explicitly warns: **majority overlap alone is not the whole Raft safety proof**. |
 | `FIG-M17-03` | M17 / `L17-03` | Linearizability vs. Eventual Consistency Trace Comparison | Horizontal Interval Timelines | Compares real-time invocation/response intervals; highlights stale read anomaly violating linearizability. |
 | `FIG-M18-01` | M18 / `L18-01` | Dual-Write Failure vs. The Transactional Outbox Pattern | Architectural Flow | Top: Crash between DB commit and queue send. Bottom: Atomic DB + Outbox transaction with independent relay. |
 | `FIG-M18-02` | M18 / `L18-02` | 2PC Blocking State vs. Saga Compensation & Fencing Tokens | Protocol State & Sequence | Shows 2PC participant blocked in `PREPARED`; Saga compensation sequence; Fencing token rejection of stale lease. |
 | `FIG-M19-01` | M19 / `L19-01` | Process vs. Container vs. Virtual Machine Boundary | Three-Column Architecture | Contrasts native host process, containerized process (namespaces + cgroups), and hypervisor VM. |
-| `FIG-M19-02` | M19 / `L19-02` | Cloud Failure Domains: Host $\to$ Rack $\to$ Zone $\to$ Region | Nested Box Blast Radius | Shows physical failure boundaries, independence assumptions, and latency/cost trade-off vectors. |
+| `FIG-M19-02` | M19 / `L19-02` | Cloud Failure Scopes: Host / Facility / Zone / Region | Nested/Linked Blast-Radius Model | Uses provider-defined scopes and explicitly marks independence/shared-dependency assumptions as claims to verify rather than a universal strict nesting. |
 | `FIG-M19-03` | M19 / `L19-03` | Rolling Deployment Version-Skew & The Expand-Contract Pattern | Transition Timelines | Top: Version skew window behind router. Bottom: Three-phase Expand-Contract database migration. |
 | `FIG-M20-01` | M20 / `L20-01` | The Telemetry Triad & Clock Semantics Boundary | Conceptual Triad & Clocks | Top: Metrics, Logs, Traces question mapping. Bottom: Wall clock (NTP step backward) vs. Monotonic clock (steady progress). |
 | `FIG-M20-02` | M20 / `L20-02` | W3C Trace Context Propagation & The Incident Lifecycle | Distributed Request & Lifecycle | Top: W3C `traceparent` propagation across 3 services. Bottom: Incident lifecycle phases (Mitigate $\to$ Diagnose). |
@@ -1657,13 +1661,13 @@ The following 14 required visuals are fully specified for authoring during the i
 To protect host hardware, prevent CPU/memory runaway, and maintain zero project data loss, all S6 fixtures implement the following safety contracts:
 
 1. **Hardware & Resource Protection:**
-   - **No High-Frequency Disk Thrashing:** All database writes (SQLite) utilize transactions (`BEGIN IMMEDIATE`) with debounced flush operations. Uncontrolled disk write loops are strictly forbidden.
-   - **Bounded Execution Watchdogs:** Every test process, server thread, or client loop is bounded by a hard execution watchdog (default 5 to 10 seconds). Threads are configured as daemons to prevent orphaned background processes.
+   - **Bounded Local I/O:** Fixtures use temporary directories, bounded row/message counts, and explicit transactions; uncontrolled disk-write loops are forbidden. `BEGIN IMMEDIATE` is used only where the fixture's locking/atomicity mechanism requires it, not as a universal SQLite rule.
+   - **Bounded Execution Watchdogs:** Long-running fixtures execute in owned subprocesses with configurable safety bounds. Normal cleanup uses explicit server shutdown and thread/process join; daemon-thread interpreter exit is not accepted as cleanup evidence.
    - **Ephemeral Localhost Sockets:** All network communication binds exclusively to `127.0.0.1` on ephemeral ports (`port=0`). No external network ports are opened.
 2. **Zero Project Data Loss:**
    - Fixtures operate strictly inside designated temporary directories or scratch locations. No production curriculum files, repository state, or author notes are ever overwritten or modified by fixture execution.
 3. **Deterministic Cleanup & Reset:**
-   - Every fixture provides an explicit `cleanup()` routine that closes database connections, shuts down sockets, removes temporary database files (`*.db`, `*.db-journal`), and purges temporary logs.
+   - Every fixture provides an explicit cleanup routine that closes database connections, shuts down/joins owned services, and removes course-owned temporary SQLite artifacts (`*.db`, rollback-journal files, and WAL/SHM files when created) plus temporary logs.
    - Reset routines are tested for idempotency: running `cleanup()` twice consecutively must exit with return code 0.
 
 ---
@@ -1686,14 +1690,14 @@ All primary authorities rechecked on **2026-09-05** against primary standards an
 | **S-M17-04** | MIT OCW 6.033 | *Spring 2018 Lecture Notes (L14, L15, L16)* | PRINCIPLE | CC BY-NC-SA 4.0 | Link-and-paraphrase only (`EXP-05`); zero vendored text |
 | **S-M18-01** | Garcia-Molina & Salem | *Sagas* (ACM SIGMOD, 1987) | PRINCIPLE | ACM Copyright | ESTABLISHED classic foundation |
 | **S-M18-02** | Jim Gray | *Notes on Data Base Operating Systems* (IBM, 1978) | PRINCIPLE | IBM / Springer | ESTABLISHED classic 2PC foundation |
-| **S-M18-03** | Martin Kleppmann | *How to do distributed locking* (Blog, 2016) | CURRENT PRACTICE | Public Engineering Blog | Authoritative current-practice analysis on leases/fencing |
+| **S-M18-03** | Martin Kleppmann | *How to do distributed locking* (Blog, 2016) | CURRENT PRACTICE / CONTESTED | Public Engineering Blog | Useful engineering argument on lease/fencing failure models; not a normative distributed-lock specification |
 | **S-M19-01** | Linux Man-Pages | `namespaces(7)`, `cgroup_namespaces(7)` | IMPLEMENTATION | Linux man-pages project | Rechecked 2026-09-05; Linux user-space interface authority |
 | **S-M19-02** | Linux Kernel Docs | `admin-guide/cgroup-v2` | IMPLEMENTATION | Linux Kernel Organization | Rechecked 2026-09-05; unified cgroups v2 authority |
 | **S-M19-03** | Open Containers Initiative | OCI Image Specification v1.1.1 | SPECIFICATION | Apache-2.0 | Checked release v1.1.1 (2025-03-03); verified current |
 | **S-M19-04** | Open Containers Initiative | OCI Runtime Specification v1.3.0 | SPECIFICATION | Apache-2.0 | Checked release v1.3.0 (2025-11-04); verified current |
 | **S-M20-01** | Google SRE Team | *Site Reliability Engineering* (Beyer et al., O'Reilly, 2016) | CURRENT PRACTICE | Free online edition | ESTABLISHED industry foundation |
 | **S-M20-02** | W3C Recommendation | *Trace Context Level 1* (23 Nov 2021) | SPECIFICATION | W3C Software & Document License | Level 1 is stable Recommendation; Level 2 is Candidate Draft |
-| **S-M20-03** | OpenTelemetry Project | `opentelemetry-python` release tag `v1.44.0` | IMPLEMENTATION | Apache-2.0 | Checked release v1.44.0 (2026-07-16); EXP-04 paths verified |
+| **S-M20-03** | OpenTelemetry Project | `opentelemetry-python` release tag `v1.44.0` | IMPLEMENTATION | Apache-2.0 | Checked release v1.44.0 (2026-07-16); EXP-04 paths verified; SDK `_Span` default start/end timestamps use `time_ns()` at this tag, not `monotonic_ns()` |
 | **S-LAB-02** | Stanford CS144 | Fall 2025 Checkpoint 2 (`check2.pdf`) | OPTIONAL LAB | Rights Unestablished | Strictly Optional / link-only (`LAB-OPT-02`); zero vendored code |
 
 ---
@@ -1705,16 +1709,16 @@ Zero new concept IDs are introduced. All references align with `meta/CONCEPT_REG
 
 - `EC-CON-001 State (状态)`: Replicated state machines in M17; event log state in M18.
 - `EC-CON-002 Abstraction (抽象)`: Leaky RPC abstraction in M16; container abstraction in M19.
-- `EC-CON-003 Representation (表示)`: Wire serialization formats in M16; OCI image layers in M19.
-- `EC-CON-004 Indirection (间接)`: Service discovery in M16; message queues in M18.
-- `EC-CON-005 Interface (接口)`: RPC interface contracts in M16; W3C Trace Context headers in M20.
+- `EC-CON-003 Representation (表示)`: Formal S6 revisit only in M16 wire serialization, matching the Registry. OCI image representation may be discussed as mechanism vocabulary in M19 without declaring a new formal `EC-CON-003` revisit.
+- `EC-CON-004 Indirection (间接)`: Formal S6 revisits only where Registry-authorized (M16 service indirection and M19 deployment/runtime indirection). M18 queue mechanics are not relabeled as a formal `EC-CON-004` revisit.
+- `EC-CON-005 Interface (接口)`: Formal S6 revisits in M16 RPC contracts and M19 deployment/configuration interfaces. W3C Trace Context remains an M20 specification/mechanism without inventing a formal Registry revisit.
 - `EC-CON-006 Trade-off (权衡)`: Sync vs. async replication in M17; 2PC vs. Sagas in M18; cloud failure domains in M19.
-- `EC-CON-007 Specification (规格)`: Delivery guarantees in M18; OCI specifications in M19.
-- `EC-CON-008 Invariant (不变量)`: Idempotency invariants in M16; Raft safety invariants in M17; deduplication invariants in M18.
-- `EC-CON-009 Correctness (正确性)`: Consensus agreement in M17; observability verification in M20.
+- `EC-CON-007 Specification (规格)`: Formal S6 revisit remains M16, per Registry. M18 delivery contracts and M19 OCI documents are still taught as specifications/mechanisms, but are not declared a formal `EC-CON-007` revisit.
+- `EC-CON-008 Invariant (不变量)`: Formal S6 revisits in M16 idempotency and M17 Raft safety, matching the Registry. M18 duplicate-safe behavior is mapped formally through Correctness/Consistency/Failure rather than adding an unauthorized Invariant revisit.
+- `EC-CON-009 Correctness (正确性)`: Formal S6 revisits in M16–M18 where authorized; M20 uses State/Concurrency/Failure rather than adding a new Correctness revisit.
 - `EC-CON-010 Failure (故障)`: Partial failure in M16; partitions in M17; deployment failures in M19; incidents in M20.
 - `EC-CON-011 Caching (缓存)`: Stale replica reads in M17; image layer caching in M19.
-- `EC-CON-012 Locality (局部性)`: Cloud region and zone data placement in M19.
+- `EC-CON-012 Locality (局部性)`: Formal S6 revisit remains M17 replica placement, matching the Registry; M19 cloud placement is not promoted to a new formal Locality revisit.
 - `EC-CON-013 Isolation (隔离)`: Transaction vs. replica consistency in M17; Linux namespaces/cgroups in M19.
 - `EC-CON-014 Consistency (一致性)`: Preserved first home in M14; revisited in M17 (linearizability vs. eventual) and M18 (ordering).
 - `EC-CON-015 Concurrency (并发)`: Preserved first home in M15; revisited in M16–M18 and M20 across network boundaries.
@@ -1728,9 +1732,9 @@ All outcomes map strictly to the eight canonical competencies (`meta/COMPETENCY_
 - `Explain`: M16 partial failure, M17 consensus limits, M18 delivery semantics, M19 container mechanisms, M20 incident response.
 - `Observe`: M19 `/proc/self/ns` and cgroups, M20 structured logs and metric percentiles.
 - `Diagnose`: M16 timeouts, M17 consistency anomalies, M18 duplicate execution, M19 deployment skew, M20 incident root causes.
-- `Correctness`: M16 idempotency invariants, M17 consensus invariants, M18 deduplication constraints.
+- `Correctness`: Practiced where the canonical competency architecture allows it, but it is not substituted for the Blueprint primary competency labels of `L16-02`, `L18-02`, or M20.
 - `Judge`: M16 timeout/retry policies, M17 consistency models, M18 coordination strategies, M19 deployment strategies, M20 SLO targets.
-- `Estimate`: M16 availability math, M17 quorum requirements, M19 cloud latency and costs, M20 error budgets.
+- `Estimate`: Practiced in Stage evidence where appropriate; canonical **primary** lesson labels remain unchanged (for example, L17-01 is Judge/Explain, while M19-02 carries Explain/Judge/Estimate).
 - `Learn-New-Tech`: M19 OCI specifications, M20 OpenTelemetry SDK and W3C Trace Context standards.
 
 ---
