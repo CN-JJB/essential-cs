@@ -97,9 +97,9 @@ Learner Validation is deferred during authoring but remains mandatory before v1.
 6. Keep **OQ-BP-006 OPEN** until affected implementation contracts truthfully pin and verify exact learner environment/tool versions; dated Research observations are not permanent environment decisions.
 7. Keep independent Verification/Lead Review on every bounded batch; author/Executor self-tests do not become independent Lead reproduction automatically.
 8. Keep **Issue #34 OPEN / DEFERRED / NON-BLOCKING** until real learning begins; never fabricate learner evidence.
-8. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
-9. Preserve the M03 GDB verification limitation and M06 official course-fork grader **NOT RUN** as explicit technical debt; do not silently convert blocked/not-run paths into PASS.
-10. Complete real learner validation and disposition material findings before v1.0 / `RELEASED`.
+9. Preserve OQ-BP-001 and OQ-BP-003 as RFC-gated/non-blocking and OQ-BP-006 as OPEN; Noble/Python 3.12 remains unverified.
+10. Preserve the M03 GDB verification limitation and M06 official course-fork grader **NOT RUN** as explicit technical debt; do not silently convert blocked/not-run paths into PASS.
+11. Complete real learner validation and disposition material findings before v1.0 / `RELEASED`.
 
 ## Current architecture attention points
 
