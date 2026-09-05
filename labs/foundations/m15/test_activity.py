@@ -44,7 +44,7 @@ class TestM15Foundations(unittest.TestCase):
         self.assertEqual(dr["expected_serial"], 10)
         self.assertEqual(dr["actual_value"], 5)
         self.assertEqual(dr["lost_updates"], 5)
-        self.assertFalse(dr["ub_present"])
+        self.assertFalse(dr["shared_counter_data_race_ub"])
 
     def test_activity_l15_02_mutex_and_cond_rendezvous(self):
         res = run_activity_l15_02(verbose=False)

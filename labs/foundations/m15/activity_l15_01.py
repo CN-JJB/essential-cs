@@ -79,7 +79,7 @@ def run_activity_l15_01(verbose=True):
             "expected_serial": cp1.get("expected_serial"),
             "actual_value": cp1.get("actual_value"),
             "lost_updates": cp1.get("lost_updates"),
-            "ub_present": cp1.get("ub_present"),
+            "shared_counter_data_race_ub": cp1.get("shared_counter_data_race_ub"),
         }
 
     result = {
@@ -87,7 +87,11 @@ def run_activity_l15_01(verbose=True):
         "execution_disposition": "PASS" if cp1.get("passed") else "FAIL",
         "deterministic_result": deterministic_result,
         "phase_trace": cp1.get("phase_trace", []),
-        "ub_free_audit_passed": (not cp1.get("ub_present", True)) if cp1.get("passed") else False,
+        "ub_free_audit_passed": bool(
+            cp1.get("passed")
+            and cp1.get("source_audit", {}).get("passed")
+            and not cp1.get("shared_counter_data_race_ub", True)
+        ),
         "checkpoint": cp1,
     }
 
