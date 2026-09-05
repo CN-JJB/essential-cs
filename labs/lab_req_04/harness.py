@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 import shutil
 import sqlite3
 import statistics
@@ -64,6 +65,15 @@ def run_lab_req_04(db_path=None, trials=10, row_count=DEFAULT_ROW_COUNT):
     target_db = db_path or get_default_lab_db_path()
     generate_lab_dataset(db_path=target_db, row_count=row_count, seed=42)
     initial_db_size = os.path.getsize(target_db)
+
+    cli_version_proc = subprocess.run(
+        [cli_path, "--version"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=3.0,
+    )
+    cli_version = cli_version_proc.stdout.strip() if cli_version_proc.returncode == 0 else "UNKNOWN"
 
     test_query = "SELECT id, user_id, amount, status FROM orders WHERE user_id = 42 ORDER BY id;"
     test_eqp = f"EXPLAIN QUERY PLAN {test_query}"
@@ -156,10 +166,27 @@ def run_lab_req_04(db_path=None, trials=10, row_count=DEFAULT_ROW_COUNT):
     low_sel_parsed = parse_eqp_output(low_sel_eqp_raw)
     low_sel_summary = summarize_eqp_paths(low_sel_parsed)
 
+    recognized_categories = {"SCAN", "SEARCH_INDEX", "COVERING_INDEX", "SEARCH_OTHER"}
+    semantic_parse_ok = all(
+        any(category in recognized_categories for category in summary["categories"])
+        for summary in (unindexed_summary, indexed_summary, low_sel_summary)
+    )
+    lab_pass = results_match and semantic_parse_ok
+
     return {
-        "disposition": "PASS",
+        "disposition": "PASS" if lab_pass else "FAIL",
         "cli_path": cli_path,
         "database_file": target_db,
+        "environment": {
+            "platform": platform.platform(),
+            "python_version": sys.version.split()[0],
+            "embedded_sqlite_version": sqlite3.sqlite_version,
+            "sqlite3_cli_version": cli_version,
+        },
+        "verification": {
+            "result_equivalence_pass": results_match,
+            "semantic_eqp_parse_pass": semantic_parse_ok,
+        },
         "checkpoints": {
             "1_unindexed_plan": {
                 "raw_eqp": unindexed_eqp_raw,
@@ -179,13 +206,16 @@ def run_lab_req_04(db_path=None, trials=10, row_count=DEFAULT_ROW_COUNT):
                 },
             },
             "3_read_timing": {
+                "workload": test_query,
                 "trials": trials,
                 "unindexed_median_ms": unindexed_median_ms,
                 "indexed_median_ms": indexed_median_ms,
                 "unindexed_samples_ns": unindexed_times_ns,
                 "indexed_samples_ns": indexed_times_ns,
                 "warmup_symmetric": True,
-                "inference_limit_note": "Timing is hardware- and cache-specific; no universal ratio asserted.",
+                "warmup_protocol": "One untimed CLI execution immediately before each condition's timed trials.",
+                "cache_state_assumption": "No host cache drop is performed. OS/SQLite cache state is not controlled; both conditions receive the same application-level warmup only.",
+                "inference_limit_note": "Timing is hardware-, process-launch-, scheduler-, and cache-specific; no universal ratio asserted.",
             },
             "4_write_and_storage_cost": {
                 "batch_size_rows": WRITE_BATCH_SIZE,
@@ -231,7 +261,9 @@ def main():
         return 0
 
     print(f" CLI Used:    {report['cli_path']}")
+    print(f" CLI Version: {report['environment']['sqlite3_cli_version']}")
     print(f" Database:    {report['database_file']}")
+    print(f" Verification: result_equivalence={report['verification']['result_equivalence_pass']}, semantic_eqp={report['verification']['semantic_eqp_parse_pass']}")
     print("-" * 66)
     cp1 = report["checkpoints"]["1_unindexed_plan"]
     print(" [Checkpoint 1: Unindexed Plan]")
@@ -264,7 +296,7 @@ def main():
     print(f"   Raw EQP:        {cp5['raw_eqp']}")
     print(f"   Observed Path:  {cp5['observed_categories']}")
     print("=" * 66)
-    return 0
+    return 0 if report["disposition"] == "PASS" else 1
 
 
 if __name__ == "__main__":
