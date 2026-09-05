@@ -631,11 +631,22 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         else "ENVIRONMENT-BLOCKED / NOT RUN"
     )
 
-    # M14 preview
-    m14_preview_status = (
-        "READY" if (m13_core_ready and child_info["disposition"] == "REQUIRED CAPABILITY PASS")
-        else "BLOCKED"
+    # M14 Core & LAB-REQ-05 evaluation (S5-B2):
+    # M14 Core requires Embedded SQLite + Writable VFS
+    m14_core_ready = (
+        sqlite_embed["has_memory_db"]
+        and vfs_info["writable_filesystem"]
     )
+    m14_core_status = "READY" if m14_core_ready else "BLOCKED"
+
+    # LAB-REQ-05 requires embedded SQLite, writable VFS, and owned child watchdog capability
+    # Notice: LAB-REQ-04's standalone CLI requirement is NOT inherited by LAB-REQ-05
+    lab_req_05_ready = (
+        m14_core_ready
+        and child_info["disposition"] == "REQUIRED CAPABILITY PASS"
+    )
+    lab_req_05_status = "READY" if lab_req_05_ready else "BLOCKED"
+    m14_preview_status = m14_core_status
 
     # M15 evaluation:
     # Distinguish host compilation capability from canonical environment readiness (Linux is canonical for M15)
@@ -653,8 +664,13 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
     else:
         m15_readiness_preview = "BLOCKED"
 
-    # Overall preflight status for M13 stage
-    if m13_core_ready and lab_req_04_status == "READY":
+    # Overall preflight status for S5 stage
+    if m14_core_ready and lab_req_05_ready:
+        if lab_req_04_status == "READY":
+            overall_status = "READY FOR M13-M14 + LAB-REQ-04 + LAB-REQ-05 EXECUTION (preflight capabilities satisfied)"
+        else:
+            overall_status = "READY FOR M14 + LAB-REQ-05 (M13 Core READY; LAB-REQ-04 ENVIRONMENT-BLOCKED due to missing sqlite3 CLI)"
+    elif m13_core_ready and lab_req_04_status == "READY":
         overall_status = "READY FOR M13 + LAB-REQ-04 EXECUTION (preflight capabilities satisfied)"
     elif m13_core_ready:
         overall_status = "READY FOR M13 CORE (LAB-REQ-04 ENVIRONMENT-BLOCKED due to missing sqlite3 CLI)"
@@ -666,6 +682,8 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         "overall_status": overall_status,
         "m13_core_status": m13_core_status,
         "lab_req_04_status": lab_req_04_status,
+        "m14_core_status": m14_core_status,
+        "lab_req_05_status": lab_req_05_status,
         "m14_readiness_preview": m14_preview_status,
         "m15_readiness_preview": m15_readiness_preview,
         "governance_invariants": {
@@ -706,7 +724,7 @@ def main():
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        return 0 if report["m13_core_status"] == "READY" else 1
+        return 0 if (report["m13_core_status"] == "READY" and report["m14_core_status"] == "READY") else 1
 
     print("=" * 66)
     print(" Essential CS: Data & Concurrency Preflight Capability Report")
@@ -715,7 +733,8 @@ def main():
     print(f" Overall Status:         {report['overall_status']}")
     print(f" M13 Core Status:        {report['m13_core_status']}")
     print(f" LAB-REQ-04 Status:      {report['lab_req_04_status']}")
-    print(f" M14 Readiness Preview:  {report['m14_readiness_preview']}")
+    print(f" M14 Core Status:        {report['m14_core_status']}")
+    print(f" LAB-REQ-05 Status:      {report['lab_req_05_status']}")
     print(f" M15 Readiness Preview:  {report['m15_readiness_preview']}")
     print("-" * 66)
     print(" [Host Operating System]")
