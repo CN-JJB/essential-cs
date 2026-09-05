@@ -180,7 +180,8 @@ def probe_writable_vfs(workspace_root=None):
             result["disposition"] = "REQUIRED CAPABILITY PASS"
         elif result["writable_filesystem"]:
             result["vfs_locking_disposition"] = "NOT VERIFIED"
-            result["disposition"] = "WRITABLE FILESYSTEM PASS / VFS LOCKING NOT VERIFIED"
+            result["disposition"] = result["writable_filesystem_disposition"]
+            result["dimension_summary"] = "Writable filesystem PASS; VFS multi-connection locking NOT VERIFIED."
         else:
             result["disposition"] = "ENVIRONMENT-BLOCKED / NOT RUN"
     except Exception as exc:
@@ -552,7 +553,9 @@ def probe_postgres_source(check_live=False):
             "live_checked": False,
             "reachability": "NOT PROBED",
             "live_revision": "NOT RECORDED",
-            "notes": "Live check omitted; use --check-postgres-source to probe live repository reachability.",
+            "reachability_disposition": "NOT RUN",
+            "revision_disposition": "NO LIVE SOURCE RECHECK",
+            "notes": "Live check omitted; use --check-postgres-source to probe reachability. Reachability alone does not establish a current revision.",
         }
 
     url = f"{COURSE_EXP02_BENCHMARK['official_host']};a=summary"
@@ -563,11 +566,14 @@ def probe_postgres_source(check_live=False):
             if status == 200:
                 return {
                     **base_info,
-                    "disposition": "LIVE_POSTGRESQL_SOURCE_ACCESSIBLE",
+                    "disposition": "NO LIVE SOURCE RECHECK",
                     "live_checked": True,
                     "url": url,
                     "reachability": f"REACHABLE (HTTP {status})",
-                    "live_revision": "NOT RECORDED (Reachability verified; commit retrieval requires git CLI or authenticated API)",
+                    "reachability_disposition": "REQUIRED CAPABILITY PASS",
+                    "live_revision": "NOT RECORDED (Reachability verified; current revision was not verified by this probe)",
+                    "revision_disposition": "NO LIVE SOURCE RECHECK",
+                    "notes": "HTTP reachability is confirmed, but current source revision is not; do not promote reachability to a currentness PASS.",
                 }
             else:
                 return {
@@ -576,7 +582,9 @@ def probe_postgres_source(check_live=False):
                     "live_checked": True,
                     "url": url,
                     "reachability": f"UNEXPECTED STATUS (HTTP {status})",
+                    "reachability_disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
                     "live_revision": "NOT RECORDED",
+                    "revision_disposition": "NO LIVE SOURCE RECHECK",
                     "reason": f"HTTP status {status}",
                 }
     except Exception as exc:
@@ -586,7 +594,9 @@ def probe_postgres_source(check_live=False):
             "live_checked": True,
             "url": url,
             "reachability": "UNREACHABLE",
+            "reachability_disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "live_revision": "NOT RECORDED",
+            "revision_disposition": "NO LIVE SOURCE RECHECK",
             "reason": f"Network access failed: {type(exc).__name__}: {exc}",
         }
 
@@ -617,7 +627,7 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
 
     # LAB-REQ-04 requires the real sqlite3 CLI
     lab_req_04_status = (
-        "PASS" if sqlite_cli["disposition"] == "REQUIRED CAPABILITY PASS"
+        "READY" if sqlite_cli["disposition"] == "REQUIRED CAPABILITY PASS"
         else "ENVIRONMENT-BLOCKED / NOT RUN"
     )
 
@@ -644,8 +654,8 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         m15_readiness_preview = "BLOCKED"
 
     # Overall preflight status for M13 stage
-    if m13_core_ready and lab_req_04_status == "PASS":
-        overall_status = "READY (All M13 and LAB-REQ-04 requirements satisfied)"
+    if m13_core_ready and lab_req_04_status == "READY":
+        overall_status = "READY FOR M13 + LAB-REQ-04 EXECUTION (preflight capabilities satisfied)"
     elif m13_core_ready:
         overall_status = "READY FOR M13 CORE (LAB-REQ-04 ENVIRONMENT-BLOCKED due to missing sqlite3 CLI)"
     else:

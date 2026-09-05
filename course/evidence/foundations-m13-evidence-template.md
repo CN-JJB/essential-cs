@@ -133,7 +133,7 @@ Use this form for **one actual learner observation**. Do not copy another learne
 ## J — EXP-02 Source Route & Currentness Record
 
 - Course Reference Benchmark:
-  - Revision: `7344937cbe640cd8c5304cefe7d6b726187ad4ab` (2026-09-04 Lead recheck)
+  - Revision: `7344937cbe640cd8c5304cefe7d6b726187ad4ab` (course inspection baseline: 2026-09-04)
   - Branch: `master`
 - Learner Inspection Record:
   - Host Inspected: `<git.postgresql.org / GitHub>`
