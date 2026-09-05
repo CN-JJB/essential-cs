@@ -264,7 +264,7 @@ flowchart TD
 
 #### Lesson Alignment in Blueprint
 - `L16-01`: "What is different about many machines?"
-  - Mental model: Single machine failure vs. independent partial failure; the three-state ambiguity; network latency ladder revisit.
+  - Mental model: Local/in-process failure vs. distributed partial failure; the no-response ambiguity; network-latency evidence as a named-environment revisit.
   - Hands-on: Local two-process socket communication with simulated packet delay and loss.
 - `L16-02`: "How do I call a remote function safely?"
   - Mental model: RPC boundary; serialization; timeouts; retries; exponential backoff with full jitter; idempotency keys.
@@ -570,7 +570,7 @@ In accordance with Blueprint restraint, Essential CS does not burden learners wi
 ### 5.4 M16–M18 Original Core Hands-On Mechanisms
 - **M16 RPC & Idempotency Fixture:**
   - *Mechanism:* Simple localhost client/server boundary with a course-owned shim that deterministically delays or suppresses a selected request/response at the application boundary. Do not call this literal network packet loss unless a packet-level mechanism is actually used and observed.
-  - *Evidence:* Client observes timeout, triggers retries with exponential backoff and jitter. Non-idempotent endpoint increments a balance repeatedly; idempotent endpoint with an `Idempotency-Key` header and local SQLite cache returns the identical result without re-executing.
+  - *Evidence:* Client observes a bounded timeout and retry path. A non-idempotent endpoint can repeat a side effect; the protected path atomically records request-key state and returns the stored application result (or another contract-defined duplicate response) without re-executing that protected side effect.
   - *Determinism:* Use a scripted/seeded fault schedule and record runtime/OS. Loopback removes external-network dependence but does not justify a universal "100% reproducible" timing claim.
 - **M17 Replication / Quorum Worked Trace:**
   - *Mechanism:* A bounded state/message table with logical replicas $A,B,C$; no required runnable replica service. Record which replicas acknowledge a completed write and which replicas answer a later read.
