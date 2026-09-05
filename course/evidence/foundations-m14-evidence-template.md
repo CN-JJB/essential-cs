@@ -150,12 +150,12 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Script: `labs/foundations/m14/activity_l14_03.py`
 - Lock-Upgrade Hazard Observation:
   - Collision Observed with `BEGIN DEFERRED`: `<YES / NO>`
-  - Mechanism: `<Explain why reading under shared lock then upgrading to reserved lock collides when multiple connections interleave>`
+  - Mechanism: `<Explain the actual order: both connections establish read transactions; one connection becomes the writer first; the other connection's later read-to-write upgrade fails because a writer already exists. Do not claim both upgrades fail symmetrically.>`
 - Upfront Write-Intent Serialization:
   - Statement Used: `BEGIN IMMEDIATE;`
   - Upgrade Collision Prevented: `<YES / NO>`
 - Boundary Retry Protocol:
-  - Action upon `SQLITE_BUSY`: `ROLLBACK` $\to$ exponential backoff sleep $\to$ retry from `BEGIN IMMEDIATE` boundary.
+  - Action upon busy/locked result: if a transaction is active, `ROLLBACK`; then bounded exponential backoff and retry from `BEGIN IMMEDIATE`. If `BEGIN IMMEDIATE` itself failed before a transaction began, record that no rollback was required.
 - Idempotency Token Verification:
   - Token Key Used: `<actual token string>`
   - First Execution Disposition: `<actual: COMMITTED>`

@@ -81,8 +81,9 @@ Use this form for **one actual execution**. Do not copy example outputs, timing,
 - Journal Side-File Observation:
   - Journal file present during active uncommitted mutation: `<YES / NO>`
   - Fresh connection opened post-kill: `<YES / NO>`
-  - Hot journal automatic recovery executed: `<YES / NO>`
-  - Journal file present post-recovery: `<NO / CLEANED_UP>`
+  - Hot-journal recovery directly observable from this harness: `<YES / NO / NOT DIRECTLY OBSERVABLE>`
+  - Evidence basis: `<record journal presence/absence, process termination point, reopen result, and recovered committed state; do not infer internal recovery steps that were not directly instrumented>`
+  - Journal file present post-recovery: `<YES / NO>`
 - Recovered Database Balances:
   - Account A: `<actual>`
   - Account B: `<actual>`
@@ -94,7 +95,7 @@ Use this form for **one actual execution**. Do not copy example outputs, timing,
 > **Question**: Why does surviving child process termination (`kill()`) verify client crash recovery, but **NOT** physical power-loss durability?
 
 - Learner Explanation:
-  `<Explain why client process termination leaves the operating system kernel, page cache, file descriptors, and disk controller fully operational to ensure log/journal records exist, whereas operating system crashes or physical power loss can cause unwritten RAM buffers and volatile drive caches to be lost. Mention PRAGMA synchronous and write barriers.>`
+  `<Explain why client process termination leaves the operating system kernel, page cache, file descriptors, and disk controller fully operational to ensure log/journal records exist, whereas operating system crashes or physical power loss may lose volatile state depending on the named filesystem/storage stack. Mention the actual PRAGMA synchronous setting and storage flush/barrier assumptions without claiming they guarantee a particular device.>`
 
 ---
 

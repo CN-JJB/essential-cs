@@ -15,7 +15,7 @@
 
 本可选实验（LAB-OPT-03）面向希望拓展视野的学习者，通过客户端/服务端架构的代表性开源企业级数据库 **PostgreSQL**，对比观察：
 1. **多版本并发控制 (MVCC)** 架构下的查询执行与物理缓冲池交互 (`EXPLAIN (ANALYZE, BUFFERS)`)；
-2. **PostgreSQL 隔离级别对比**：观察在 Read Committed 与 Repeatable Read 模式下，并发冲突是如何表现为序列化失败（`could not serialize access due to concurrent update`）并触发重试要求的。
+2. **PostgreSQL 隔离级别对比**：观察同一并发更新在 Read Committed 与 Repeatable Read 下的不同处理：Read Committed 等待当前 updater 后会基于更新后的行版本重新检查并继续；Repeatable Read 若发现目标行在本事务快照之后已被并发事务实际更新并提交，则会终止当前事务并要求从事务边界重试。
 
 ---
 
@@ -52,19 +52,18 @@ UPDATE accounts SET balance = balance - 100 WHERE id = 'A';
 ROLLBACK;
 ```
 
-### 典型输出指标解读（实测参考）：
+### 输出结构解读（占位形状，不是课程固定实测值）：
 ```text
-Update on accounts  (cost=0.15..8.17 rows=1 width=40) (actual time=0.045..0.046 rows=0 loops=1)
-  Buffers: shared hit=3 dirtied=1
-  ->  Index Scan using accounts_pkey on accounts  (cost=0.15..8.17 rows=1 width=40) (actual time=0.012..0.013 rows=1 loops=1)
-        Index Cond: (id = 'A'::text)
-        Buffers: shared hit=2
-Planning Time: 0.082 ms
-Execution Time: 0.071 ms
+Update on accounts  (...actual planner estimates...) (...actual execution statistics...)
+  Buffers: shared hit=<actual> read=<actual> dirtied=<actual> written=<actual>
+  ->  <actual child plan node>
+Planning Time: <actual>
+Execution Time: <actual>
 ```
-- **Buffers: shared hit=3**: 所需数据页已经在 PostgreSQL 内存共享缓冲池中，未发生物理磁盘读取；
-- **dirtied=1**: 修改操作使得缓冲池中的 1 个页面变脏（Dirty Page），稍后将由后台写进程（bgwriter/checkpointer）刷入介质；
-- **Planning vs. Execution Time**: 清晰分离查询规划耗时与物理执行耗时。
+- **shared hit**：该次 PostgreSQL shared-buffer 访问在需要该 block 时已命中缓存，因此避免了为该 block 发起一次 shared-buffer read；不要把它扩大成“整条语句绝无任何物理 I/O”的证明；
+- **dirtied**：表示这条查询把此前未修改的 shared block 标为 dirty；它之后可能由 backend、background writer 或 checkpoint 等路径写出，单凭 `dirtied` 不能断言具体写出者与时刻；
+- **written**：表示当前 backend 在该查询处理期间写出了此前已 dirty 的 block；
+- **Planning / Execution Time**：必须记录本机实际值；具体数字与计划形状会随数据、版本与环境变化。
 
 ---
 
@@ -124,7 +123,7 @@ Execution Time: 0.071 ms
 | 维度 | SQLite (Rollback Journal Baseline) | PostgreSQL (MVCC Baseline) |
 | :--- | :--- | :--- |
 | **并发读者与写者** | 读者可并发读旧页；写者必须独占文件互斥锁 | 读不阻塞写，写不阻塞读；基于元组多版本维护快照 |
-| **写冲突时机** | 第二写者在获取文件保留锁时立即冲突 (`SQLITE_BUSY`) | 冲突在行级互斥锁上阻塞等待；若隔离级别为 Repeatable Read 则在提交后抛出序列化失败 |
+| **写冲突时机** | rollback-journal 下只允许一个 writer；竞争可能在写事务启动或 read-to-write 升级时以 busy 类结果暴露，具体等待取决于 busy handler/timeout | 并发更新会等待当前 updater；Read Committed 可在其提交后基于新版本继续，Repeatable Read 则在目标行已被并发更新并提交时中止当前事务并报告 serialization failure |
 | **物理 I/O 观察** | EQP 仅报告逻辑 `SCAN` / `SEARCH` 路径 | `EXPLAIN (ANALYZE, BUFFERS)` 报告真实缓冲池命中有脏页数 |
 | **核心启示** | 锁与冲突是具名引擎的机制产物，不可把某一种引擎的并发报错外推为所有数据库的通用标准 |
 
