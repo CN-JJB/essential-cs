@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
         int expected_serial = DETERMINISTIC_ROUNDS * 2;
         int lost = expected_serial - final_val;
 
-        printf("{\"event\": \"DETERMINISTIC_RESULT\", \"rounds\": %d, \"expected_serial\": %d, \"actual_value\": %d, \"lost_updates\": %d, \"ub_present\": false}\n",
+        printf("{\"event\": \"DETERMINISTIC_RESULT\", \"rounds\": %d, \"expected_serial\": %d, \"actual_value\": %d, \"lost_updates\": %d, \"shared_counter_data_race_ub\": false}\n",
                DETERMINISTIC_ROUNDS, expected_serial, final_val, lost);
         fflush(stdout);
 

@@ -39,8 +39,10 @@ class TestLabReq03(unittest.TestCase):
         self.assertEqual(res["expected_serial"], 10)
         self.assertEqual(res["actual_value"], 5)
         self.assertEqual(res["lost_updates"], 5)
-        self.assertFalse(res["ub_present"])
-        self.assertIn("PASSED", res["safety_audit"])
+        self.assertFalse(res["shared_counter_data_race_ub"])
+        self.assertTrue(res["source_audit"]["passed"])
+        self.assertFalse(res["source_audit"]["plain_shared_counter_declaration_present"])
+        self.assertIn("does not rely on a plain shared counter data race", res["safety_audit"])
 
     def test_checkpoint_2_supplemental_scheduler_observation(self):
         res = self.harness.run_checkpoint_2_supplemental_scheduler_observation(iterations=2000)

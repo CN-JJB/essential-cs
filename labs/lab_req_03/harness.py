@@ -98,6 +98,45 @@ class ConcurrencyLabHarness:
             "reason": reason,
         }
 
+    def audit_broken_source(self):
+        """Machine-check the Required shared-counter path for its C data-race boundary."""
+        try:
+            with open(self.broken_src, "r", encoding="utf-8") as f:
+                source = f.read()
+        except OSError as exc:
+            return {
+                "passed": False,
+                "disposition": "FAIL",
+                "reason": f"Could not read broken-counter source: {exc}",
+            }
+
+        required_tokens = [
+            "static atomic_int g_shared_counter",
+            "atomic_load_explicit(&g_shared_counter, memory_order_relaxed)",
+            "atomic_store_explicit(&g_shared_counter, computed, memory_order_relaxed)",
+        ]
+        forbidden_plain_declarations = [
+            "static int g_shared_counter",
+            "static volatile int g_shared_counter",
+        ]
+        missing = [token for token in required_tokens if token not in source]
+        forbidden = [token for token in forbidden_plain_declarations if token in source]
+        passed = not missing and not forbidden
+
+        return {
+            "passed": passed,
+            "disposition": "PASS" if passed else "FAIL",
+            "required_atomic_tokens_present": not missing,
+            "plain_shared_counter_declaration_present": bool(forbidden),
+            "missing_tokens": missing,
+            "forbidden_tokens": forbidden,
+            "inference_limit": (
+                "This audit establishes that the Required shared-counter demonstration uses "
+                "the named C11 atomic storage/access path and does not rely on a plain shared "
+                "counter data race. It is not a proof that arbitrary C code contains no other UB."
+            ),
+        }
+
     def compile_all(self):
         """Compiles all C sources with -std=c11 -pthread."""
         if not self.compiler:
@@ -189,13 +228,15 @@ class ConcurrencyLabHarness:
         expected = result_event.get("expected_serial", 0)
         actual = result_event.get("actual_value", 0)
         lost = result_event.get("lost_updates", 0)
-        ub_present = result_event.get("ub_present", True)
+        shared_counter_data_race_ub = result_event.get("shared_counter_data_race_ub", True)
+        source_audit = self.audit_broken_source()
 
         passed = (
             proc.returncode == 0
+            and source_audit["passed"]
             and lost > 0
             and actual < expected
-            and not ub_present
+            and not shared_counter_data_race_ub
             and len(phase_events) >= rounds * 2
         )
 
@@ -205,14 +246,11 @@ class ConcurrencyLabHarness:
             "expected_serial": expected,
             "actual_value": actual,
             "lost_updates": lost,
-            "ub_present": ub_present,
+            "shared_counter_data_race_ub": shared_counter_data_race_ub,
             "phase_read_count": len(phase_events),
             "phase_trace": phase_events,
-            "safety_audit": (
-                "Shared-counter audit: concurrent counter accesses use "
-                "atomic_load_explicit / atomic_store_explicit with memory_order_relaxed; "
-                "the demonstrated broken path does not rely on a C data race."
-            ),
+            "source_audit": source_audit,
+            "safety_audit": source_audit["inference_limit"],
         }
 
     def run_checkpoint_2_supplemental_scheduler_observation(self, iterations=10000):
@@ -626,7 +664,7 @@ class ConcurrencyLabHarness:
         cp1 = report["checkpoints"]["checkpoint_1_deterministic_lost_update"]
         print(f" [CP1] Deterministic UB-Free Lost Update: {'PASS' if cp1['passed'] else 'FAIL'}")
         print(f"       Rounds: {cp1.get('rounds')}, Expected: {cp1.get('expected_serial')}, Actual: {cp1.get('actual_value')}")
-        print(f"       Lost Updates: {cp1.get('lost_updates')} (UB Present: {cp1.get('ub_present')})")
+        print(f"       Lost Updates: {cp1.get('lost_updates')} (Shared-counter data-race UB: {cp1.get('shared_counter_data_race_ub')})")
 
         cp2 = report["checkpoints"]["checkpoint_2_supplemental_scheduler_observation"]
         print(f" [CP2] Supplemental Scheduler Observation: {'PASS' if cp2['passed'] else 'FAIL'}")

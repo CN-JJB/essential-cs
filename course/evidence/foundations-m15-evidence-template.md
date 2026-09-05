@@ -171,7 +171,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - `EC-CON-008 Invariant`: Mutex-protected critical section invariant
   - `EC-CON-009 Correctness`: Verification of deterministic state transitions
   - `EC-CON-013 Isolation`: Synchronization scope in thread vs async architectures
-  - `EC-CON-018 Process`: Checked — NOT claimed as an authorized Concept Revisit in M15
+- Concept-boundary audit: `EC-CON-018 Process` is **not** mapped as an M15 Concept Revisit; process/thread comparison remains pedagogical context only.
 - Visuals Verified:
   - L15-01: Concurrency vs Parallelism & Interleaving (with verbatim EC-CON-015 definition)
   - L15-02: Mutex Invariant & Condition Rendezvous (with mandatory predicate recheck guard)
