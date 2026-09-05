@@ -120,8 +120,10 @@ def probe_writable_vfs(workspace_root=None):
     test_dir = os.path.join(base_dir, ".preflight_tmp_probe")
     result = {
         "writable_filesystem": False,
+        "writable_filesystem_disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
         "vfs_locking_tested": False,
         "vfs_locking_functional": False,
+        "vfs_locking_disposition": "NOT VERIFIED",
         "path": test_dir,
         "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
         "error": None,
@@ -142,6 +144,7 @@ def probe_writable_vfs(workspace_root=None):
         row = cur1.fetchone()
         if row and row[0] == "test":
             result["writable_filesystem"] = True
+            result["writable_filesystem_disposition"] = "REQUIRED CAPABILITY PASS"
 
         # 2. Test bounded multi-connection VFS locking behavior
         # Hold an EXCLUSIVE lock on conn1, verify that conn2 observes a lock conflict/busy
@@ -155,8 +158,16 @@ def probe_writable_vfs(workspace_root=None):
         try:
             cur2.execute("INSERT INTO probe (val) VALUES ('concurrent_write');")
             conn2.commit()
-        except sqlite3.OperationalError:
-            lock_conflict_observed = True
+        except sqlite3.OperationalError as exc:
+            sqlite_code = getattr(exc, "sqlite_errorcode", None)
+            locked_codes = {
+                getattr(sqlite3, "SQLITE_BUSY", 5),
+                getattr(sqlite3, "SQLITE_LOCKED", 6),
+            }
+            if sqlite_code in locked_codes or "locked" in str(exc).lower() or "busy" in str(exc).lower():
+                lock_conflict_observed = True
+            else:
+                raise
         finally:
             conn2.close()
 
@@ -165,9 +176,11 @@ def probe_writable_vfs(workspace_root=None):
 
         if lock_conflict_observed and result["writable_filesystem"]:
             result["vfs_locking_functional"] = True
+            result["vfs_locking_disposition"] = "REQUIRED CAPABILITY PASS"
             result["disposition"] = "REQUIRED CAPABILITY PASS"
         elif result["writable_filesystem"]:
-            result["disposition"] = "REQUIRED CAPABILITY PASS (Writable FS Pass, VFS Multi-Connection Locking Inconclusive)"
+            result["vfs_locking_disposition"] = "NOT VERIFIED"
+            result["disposition"] = "WRITABLE FILESYSTEM PASS / VFS LOCKING NOT VERIFIED"
         else:
             result["disposition"] = "ENVIRONMENT-BLOCKED / NOT RUN"
     except Exception as exc:
