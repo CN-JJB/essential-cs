@@ -10,9 +10,22 @@ Essential CS is a rigorous, self-study-first computer science curriculum for non
 2. `meta/PROJECT_STATUS.md`
 3. `meta/DECISIONS.md`
 4. `meta/OPEN_QUESTIONS.md`
-5. Relevant blueprint, research dossier, concept registry entry, and the assigned GitHub Issue.
+5. **Identify your current repository role and read the matching mandatory role guide:**
+   - Web Lead / Reviewer → `meta/agents/WEB_LEAD.md`
+   - Local Executor → `meta/agents/EXECUTOR.md`
+6. Relevant blueprint, research dossier, concept registry entry, and the assigned GitHub Issue / PR.
 
 GitHub is the source of truth. Do not treat chat history or AI memory as project state.
+
+### Role gate
+
+Repository work uses separated roles. Do not silently combine them.
+
+- A session that owns dispatch, architecture stewardship, Lead Review, Direct Fix routing, acceptance, and merge acts as **Web Lead**.
+- An AI assigned a bounded GitHub Issue to research/design/implement and return a PR acts as **Local Executor**.
+- A Local Executor does not become Lead merely because it can inspect GitHub or review its own output.
+- A Web Lead performing a Direct Fix remains Lead; Direct Fix does not turn the Lead into the original Executor.
+- If the task context does not establish a role, do not make architecture/merge decisions until the role is resolved from GitHub task state.
 
 ## Instruction precedence
 
