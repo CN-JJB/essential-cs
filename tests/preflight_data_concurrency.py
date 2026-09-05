@@ -686,26 +686,28 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
     lab_req_05_status = "READY" if lab_req_05_ready else "ENVIRONMENT-BLOCKED / NOT RUN"
     m14_preview_status = m14_core_status
 
-    # M15 Core & LAB-REQ-03 evaluation (S5-B3):
-    # M15 Core requires capable C11 compiler with pthread, atomics, and mutex/cond
+    # M15 / LAB-REQ-03 evaluation (S5-B3):
+    # Keep generic host compilation capability separate from canonical Required readiness.
     m15_compiler_capable = (
         pthread_info["disposition"] == "REQUIRED CAPABILITY PASS"
         and atomics_info["disposition"] == "REQUIRED CAPABILITY PASS"
         and mutex_cond_info["disposition"] == "REQUIRED CAPABILITY PASS"
     )
-    m15_core_status = "READY" if m15_compiler_capable else "BLOCKED"
+    m15_host_capability = "CAPABLE" if m15_compiler_capable else "NOT CAPABLE"
 
-    # LAB-REQ-03 Required canonical baseline:
-    # Requires canonical Linux + GCC + C11 pthread + C11 atomics + POSIX mutex/condition + child watchdog
+    # Required canonical baseline:
+    # Linux + GCC + C11 pthread + C11 atomics + POSIX mutex/condition + owned-child watchdog.
     is_linux_canonical = (os_info["system"] == "Linux")
     is_gcc_compiler = bool(compiler_info.get("is_gcc"))
-
-    if (
+    m15_required_ready = (
         is_linux_canonical
         and is_gcc_compiler
         and m15_compiler_capable
         and child_info["disposition"] == "REQUIRED CAPABILITY PASS"
-    ):
+    )
+    m15_core_status = "READY" if m15_required_ready else "ENVIRONMENT-BLOCKED / NOT RUN"
+
+    if m15_required_ready:
         lab_req_03_status = "READY"
         lab_req_03_reason = None
         m15_readiness_summary = "READY (Canonical Linux Host with GCC, C11 atomics, POSIX pthread/sync & watchdog)"
@@ -734,24 +736,24 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
             lab_req_03_reason = "Host environment lacks owned child watchdog and reaping capability."
             m15_readiness_summary = "BLOCKED (Missing owned-child watchdog capability)"
 
-    # Overall preflight status for S5 stage
-    if m13_core_ready and m14_core_ready and m15_compiler_capable:
-        if lab_req_03_status == "READY" and lab_req_05_ready and lab_req_04_status == "READY":
-            overall_status = "READY FOR M13-M15 + LAB-REQ-03 + LAB-REQ-04 + LAB-REQ-05 EXECUTION (preflight capabilities satisfied)"
-        elif lab_req_03_status == "READY" and lab_req_05_ready:
-            overall_status = "READY FOR M13-M15 + LAB-REQ-03 + LAB-REQ-05 (M13-M15 Core READY; LAB-REQ-04 ENVIRONMENT-BLOCKED due to missing sqlite3 CLI)"
-        elif lab_req_05_ready:
-            overall_status = (
-                f"READY FOR M13-M15 CORE + LAB-REQ-05 "
-                f"(LAB-REQ-03 ENVIRONMENT-BLOCKED: non-canonical host {os_info['system']}; "
-                f"LAB-REQ-04 {'READY' if lab_req_04_status == 'READY' else 'ENVIRONMENT-BLOCKED'})"
-            )
-        else:
-            overall_status = "READY FOR M13-M15 CORE ONLY"
+    # Overall S5 status emphasizes the current S5-B3 Required gate.
+    if m15_required_ready:
+        prior_lab_notes = []
+        if lab_req_04_status != "READY":
+            prior_lab_notes.append("LAB-REQ-04 ENVIRONMENT-BLOCKED")
+        if not lab_req_05_ready:
+            prior_lab_notes.append("LAB-REQ-05 ENVIRONMENT-BLOCKED")
+        suffix = f" ({'; '.join(prior_lab_notes)})" if prior_lab_notes else ""
+        overall_status = f"READY FOR M15 + LAB-REQ-03 EXECUTION (canonical Required capabilities satisfied){suffix}"
+    elif m15_compiler_capable:
+        overall_status = (
+            f"M15 HOST CAPABLE BUT REQUIRED EXECUTION ENVIRONMENT-BLOCKED / NOT RUN "
+            f"({os_info['system']}; canonical baseline is Linux + GCC)"
+        )
     elif m14_core_ready and lab_req_05_ready:
-        overall_status = "READY FOR M14 + LAB-REQ-05"
+        overall_status = "READY FOR M14 + LAB-REQ-05; M15 REQUIRED ENVIRONMENT-BLOCKED / NOT RUN"
     elif m13_core_ready:
-        overall_status = "READY FOR M13 CORE"
+        overall_status = "READY FOR M13 CORE; M15 REQUIRED ENVIRONMENT-BLOCKED / NOT RUN"
     else:
         overall_status = "BLOCKED"
 
@@ -762,6 +764,7 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         "lab_req_04_status": lab_req_04_status,
         "m14_core_status": m14_core_status,
         "lab_req_05_status": lab_req_05_status,
+        "m15_host_capability": m15_host_capability,
         "m15_core_status": m15_core_status,
         "lab_req_03_status": lab_req_03_status,
         "lab_req_03_reason": lab_req_03_reason,
@@ -805,7 +808,7 @@ def main():
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        return 0 if (report["m13_core_status"] == "READY" and report["m14_core_status"] == "READY" and report["m15_core_status"] == "READY") else 1
+        return 0 if (report["m15_core_status"] == "READY" and report["lab_req_03_status"] == "READY") else 1
 
     print("=" * 66)
     print(" Essential CS: Data & Concurrency Preflight Capability Report")
@@ -816,6 +819,7 @@ def main():
     print(f" LAB-REQ-04 Status:      {report['lab_req_04_status']}")
     print(f" M14 Core Status:        {report['m14_core_status']}")
     print(f" LAB-REQ-05 Status:      {report['lab_req_05_status']}")
+    print(f" M15 Host Capability:    {report['m15_host_capability']}")
     print(f" M15 Core Status:        {report['m15_core_status']}")
     print(f" LAB-REQ-03 Status:      {report['lab_req_03_status']}")
     print(f" M15 Readiness Summary:  {report['m15_readiness_summary']}")
@@ -866,7 +870,7 @@ def main():
     print(f"   Course Ref Revision:  {src['course_reference_revision'][:12]} ({src['course_inspection_date']})")
     print("=" * 66)
 
-    return 0 if (report["m13_core_status"] == "READY" and report["m14_core_status"] == "READY" and report["m15_core_status"] == "READY") else 1
+    return 0 if (report["m15_core_status"] == "READY" and report["lab_req_03_status"] == "READY") else 1
 
 
 if __name__ == "__main__":
