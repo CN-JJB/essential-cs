@@ -38,9 +38,9 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Read Primitive: `atomic_load_explicit(&g_shared_counter, memory_order_relaxed)`
 - Write Primitive: `atomic_store_explicit(&g_shared_counter, next, memory_order_relaxed)`
 - Unsynchronized Plain Shared Non-Atomic Counter Present: `NO`
-- Language-Level Undefined Behavior (UB) Present: `NO`
-- Audit Disposition: `<CONFIRMED UB-FREE / REJECTED>`
-- Audit Notes: `<Learner confirms that all concurrent memory accesses are defined atomic operations>`
+- C-Language Data-Race UB in the Required shared-counter path: `<YES / NO>`
+- Audit Disposition: `<CONFIRMED REQUIRED SHARED-COUNTER PATH USES DEFINED ATOMIC ACCESSES / REJECTED>`
+- Audit Notes: `<Record the actual source-audit result: atomic storage/access evidence, any missing token, and the inference limit that this does not prove arbitrary C code is globally UB-free>`
 
 ---
 
