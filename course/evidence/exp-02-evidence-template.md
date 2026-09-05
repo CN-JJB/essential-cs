@@ -4,17 +4,30 @@ Use this form for **one actual source inspection**. Do not copy another learner'
 
 ---
 
-## 1 — Inspection Identity & Source Reachability
+## 0 — Course Reference Benchmark (Implementation Baseline)
+
+- Reference Inspection Date: `2026-09-04`
+- Reference Commit: `7344937cbe640cd8c5304cefe7d6b726187ad4ab`
+- Reference Branch: `master` (development branch; PostgreSQL 18.6 is separate current stable release/doc line)
+- Official Host: `https://git.postgresql.org/gitweb/?p=postgresql.git`
+- Canonical Route (3 Paths):
+  1. `src/backend/optimizer/plan/README`
+  2. `src/backend/optimizer/path/costsize.c`
+  3. `src/backend/storage/buffer/README`
+
+---
+
+## 1 — Learner Inspection Identity & Source Reachability
 
 - Inspection date / time: `<actual>`
-- Official source host: `git.postgresql.org` (or GitHub mirror)
+- Official source host: `<git.postgresql.org or GitHub mirror>`
 - Branch / ref inspected: `<actual e.g. master>`
-- Exact PostgreSQL commit / revision: `<actual>`
+- Exact PostgreSQL commit / revision inspected: `<actual commit hash>`
 - Source access disposition:
   - `LIVE_POSTGRESQL_SOURCE_ACCESSIBLE`, or
   - `NO LIVE SOURCE RECHECK / EXP-02 LIVE SOURCE OBSERVATION NOT RUN`
 
-> **Guardrail:** If live source access is unavailable, stop the live-source claim. Course Design / Research may be used as **REFERENCE EVIDENCE ONLY**; never fabricate a commit hash or source excerpt.
+> **Guardrail:** If live source access is unavailable, record `NO LIVE SOURCE RECHECK`. The Course Reference Benchmark above may be used as **REFERENCE EVIDENCE ONLY**; never fabricate a commit hash or source excerpt.
 
 ---
 

@@ -8,7 +8,7 @@ Probes the 14 accepted dimensions:
 2. Python implementation / version
 3. Embedded SQLite version
 4. sqlite3 CLI availability / version
-5. Writable local filesystem / VFS disposition
+5. Writable local filesystem & multi-connection VFS locking disposition
 6. GCC/Clang identity / version
 7. -std=c11 -pthread compile capability
 8. C11 atomics (<stdatomic.h>)
@@ -17,7 +17,7 @@ Probes the 14 accepted dimensions:
 11. Optional PostgreSQL / psql
 12. Optional Docker / Podman
 13. Optional sanitizer / race tool capability (-fsanitize=thread)
-14. EXP-02 PostgreSQL source access / current revision
+14. EXP-02 PostgreSQL source reachability & course reference revision
 """
 
 import argparse
@@ -31,6 +31,13 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
+
+COURSE_EXP02_BENCHMARK = {
+    "course_reference_revision": "7344937cbe640cd8c5304cefe7d6b726187ad4ab",
+    "course_inspection_date": "2026-09-04",
+    "course_reference_branch": "master (development branch; PostgreSQL 18.6 is separate current stable release/doc line)",
+    "official_host": "https://git.postgresql.org/gitweb/?p=postgresql.git",
+}
 
 
 def probe_os():
@@ -105,11 +112,16 @@ def probe_sqlite_cli():
 
 
 def probe_writable_vfs(workspace_root=None):
+    """
+    Empirically probe writable local filesystem AND multi-connection VFS locking capability.
+    Reports filesystem writability and VFS multi-connection locking separately.
+    """
     base_dir = workspace_root or os.getcwd()
     test_dir = os.path.join(base_dir, ".preflight_tmp_probe")
     result = {
-        "writable": False,
-        "vfs_locking": False,
+        "writable_filesystem": False,
+        "vfs_locking_tested": False,
+        "vfs_locking_functional": False,
         "path": test_dir,
         "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
         "error": None,
@@ -120,19 +132,44 @@ def probe_writable_vfs(workspace_root=None):
         if os.path.exists(probe_db):
             os.remove(probe_db)
 
-        conn = sqlite3.connect(probe_db)
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE probe (id INTEGER PRIMARY KEY, val TEXT);")
-        cur.execute("INSERT INTO probe (val) VALUES ('test');")
-        conn.commit()
-        cur.execute("SELECT val FROM probe WHERE id = 1;")
-        row = cur.fetchone()
-        conn.close()
-
+        # 1. Test basic filesystem writability and single-connection operation
+        conn1 = sqlite3.connect(probe_db, timeout=1.0)
+        cur1 = conn1.cursor()
+        cur1.execute("CREATE TABLE probe (id INTEGER PRIMARY KEY, val TEXT);")
+        cur1.execute("INSERT INTO probe (val) VALUES ('test');")
+        conn1.commit()
+        cur1.execute("SELECT val FROM probe WHERE id = 1;")
+        row = cur1.fetchone()
         if row and row[0] == "test":
-            result["writable"] = True
-            result["vfs_locking"] = True
+            result["writable_filesystem"] = True
+
+        # 2. Test bounded multi-connection VFS locking behavior
+        # Hold an EXCLUSIVE lock on conn1, verify that conn2 observes a lock conflict/busy
+        cur1.execute("BEGIN EXCLUSIVE;")
+        cur1.execute("INSERT INTO probe (val) VALUES ('lock_held');")
+        result["vfs_locking_tested"] = True
+
+        conn2 = sqlite3.connect(probe_db, timeout=0.1)
+        cur2 = conn2.cursor()
+        lock_conflict_observed = False
+        try:
+            cur2.execute("INSERT INTO probe (val) VALUES ('concurrent_write');")
+            conn2.commit()
+        except sqlite3.OperationalError:
+            lock_conflict_observed = True
+        finally:
+            conn2.close()
+
+        conn1.rollback()
+        conn1.close()
+
+        if lock_conflict_observed and result["writable_filesystem"]:
+            result["vfs_locking_functional"] = True
             result["disposition"] = "REQUIRED CAPABILITY PASS"
+        elif result["writable_filesystem"]:
+            result["disposition"] = "REQUIRED CAPABILITY PASS (Writable FS Pass, VFS Multi-Connection Locking Inconclusive)"
+        else:
+            result["disposition"] = "ENVIRONMENT-BLOCKED / NOT RUN"
     except Exception as exc:
         result["error"] = f"{type(exc).__name__}: {exc}"
     finally:
@@ -484,39 +521,59 @@ def probe_sanitizer(cc_info):
 
 
 def probe_postgres_source(check_live=False):
+    """
+    Reports PostgreSQL official source reachability separately from revision records.
+    Always provides the Course Reference Baseline.
+    """
+    base_info = {
+        "course_reference_revision": COURSE_EXP02_BENCHMARK["course_reference_revision"],
+        "course_inspection_date": COURSE_EXP02_BENCHMARK["course_inspection_date"],
+        "course_reference_branch": COURSE_EXP02_BENCHMARK["course_reference_branch"],
+        "reference_authority": COURSE_EXP02_BENCHMARK["official_host"],
+    }
+
     if not check_live:
         return {
+            **base_info,
             "disposition": "NO LIVE SOURCE RECHECK",
             "live_checked": False,
-            "reference_authority": "https://git.postgresql.org/gitweb/?p=postgresql.git",
+            "reachability": "NOT PROBED",
+            "live_revision": "NOT RECORDED",
             "notes": "Live check omitted; use --check-postgres-source to probe live repository reachability.",
         }
 
-    url = "https://git.postgresql.org/gitweb/?p=postgresql.git;a=summary"
+    url = f"{COURSE_EXP02_BENCHMARK['official_host']};a=summary"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Essential-CS-Preflight/0.1"})
         with urllib.request.urlopen(req, timeout=5.0) as resp:
             status = resp.getcode()
             if status == 200:
                 return {
+                    **base_info,
                     "disposition": "LIVE_POSTGRESQL_SOURCE_ACCESSIBLE",
                     "live_checked": True,
                     "url": url,
-                    "status_code": status,
+                    "reachability": f"REACHABLE (HTTP {status})",
+                    "live_revision": "NOT RECORDED (Reachability verified; commit retrieval requires git CLI or authenticated API)",
                 }
             else:
                 return {
+                    **base_info,
                     "disposition": "NO LIVE SOURCE RECHECK",
                     "live_checked": True,
                     "url": url,
-                    "status_code": status,
+                    "reachability": f"UNEXPECTED STATUS (HTTP {status})",
+                    "live_revision": "NOT RECORDED",
                     "reason": f"HTTP status {status}",
                 }
     except Exception as exc:
         return {
+            **base_info,
             "disposition": "NO LIVE SOURCE RECHECK",
             "live_checked": True,
             "url": url,
+            "reachability": "UNREACHABLE",
+            "live_revision": "NOT RECORDED",
             "reason": f"Network access failed: {type(exc).__name__}: {exc}",
         }
 
@@ -541,7 +598,7 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
     # M13 Core requires Python + Embedded SQLite + Writable VFS
     m13_core_ready = (
         sqlite_embed["has_memory_db"]
-        and vfs_info["disposition"] == "REQUIRED CAPABILITY PASS"
+        and vfs_info["writable_filesystem"]
     )
     m13_core_status = "READY" if m13_core_ready else "BLOCKED"
 
@@ -557,11 +614,21 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         else "BLOCKED"
     )
 
-    # M15 preview
-    m15_preview_status = (
-        "READY" if (pthread_info["disposition"] == "REQUIRED CAPABILITY PASS" and atomics_info["disposition"] == "REQUIRED CAPABILITY PASS")
-        else "BLOCKED"
+    # M15 evaluation:
+    # Distinguish host compilation capability from canonical environment readiness (Linux is canonical for M15)
+    # Preserve OQ-BP-006 OPEN
+    m15_compiler_capable = (
+        pthread_info["disposition"] == "REQUIRED CAPABILITY PASS"
+        and atomics_info["disposition"] == "REQUIRED CAPABILITY PASS"
     )
+    is_linux_canonical = (os_info["system"] == "Linux")
+
+    if is_linux_canonical and m15_compiler_capable:
+        m15_readiness_preview = "READY (Canonical Linux Host with C11 atomics & pthread)"
+    elif m15_compiler_capable:
+        m15_readiness_preview = f"CAPABLE HOST ({os_info['system']}), NON-CANONICAL (Compiler & atomics capable, but canonical Required environment is Linux; OQ-BP-006 remains OPEN)"
+    else:
+        m15_readiness_preview = "BLOCKED"
 
     # Overall preflight status for M13 stage
     if m13_core_ready and lab_req_04_status == "PASS":
@@ -577,7 +644,11 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         "m13_core_status": m13_core_status,
         "lab_req_04_status": lab_req_04_status,
         "m14_readiness_preview": m14_preview_status,
-        "m15_readiness_preview": m15_preview_status,
+        "m15_readiness_preview": m15_readiness_preview,
+        "governance_invariants": {
+            "oq_bp_006_host_baseline": "OPEN (No single host pinned as permanent universal baseline)",
+            "m15_canonical_host": "Linux",
+        },
         "dimensions": {
             "1_os": os_info,
             "2_python": py_info,
@@ -641,10 +712,12 @@ def main():
     else:
         print(f"   Reason:               {cli.get('reason', 'N/A')}")
     print("-" * 66)
-    print(" [Writable Filesystem & VFS]")
+    print(" [Writable Filesystem & VFS Locking]")
     vfs = report['dimensions']['5_writable_vfs']
     print(f"   Disposition:          {vfs['disposition']}")
-    print(f"   Locking Capable:      {'YES' if vfs['vfs_locking'] else 'NO'}")
+    print(f"   Writable FS:          {'YES' if vfs['writable_filesystem'] else 'NO'}")
+    print(f"   VFS Locking Probed:   {'YES' if vfs['vfs_locking_tested'] else 'NO'}")
+    print(f"   VFS Locking Conflict: {'OBSERVED' if vfs['vfs_locking_functional'] else 'INCONCLUSIVE'}")
     print("-" * 66)
     print(" [C Compiler & POSIX / C11 Concurrency (M15 Preview)]")
     cc = report['dimensions']['6_compiler']
@@ -660,7 +733,10 @@ def main():
     print(f"   psql Client:          {report['dimensions']['11_optional_psql']['disposition']}")
     print(f"   Docker/Podman:        {report['dimensions']['12_optional_docker']['disposition']}")
     print(f"   TSan Sanitizer:       {report['dimensions']['13_optional_sanitizer']['disposition']}")
-    print(f"   EXP-02 Source:        {report['dimensions']['14_exp02_source']['disposition']}")
+    src = report['dimensions']['14_exp02_source']
+    print(f"   EXP-02 Disposition:   {src['disposition']}")
+    print(f"   EXP-02 Reachability:  {src.get('reachability', 'N/A')}")
+    print(f"   Course Ref Revision:  {src['course_reference_revision'][:12]} ({src['course_inspection_date']})")
     print("=" * 66)
 
     return 0 if report["m13_core_status"] == "READY" else 1

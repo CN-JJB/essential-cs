@@ -2,6 +2,7 @@
 """
 Unit and integration tests for LAB-REQ-04.
 Verifies generator, semantic EQP parser, result equivalence logic,
+independent semantic verification of both planner outcomes without exact-string coupling,
 harness missing-CLI disposition handling, and reset idempotence.
 """
 
@@ -80,6 +81,39 @@ class TestLabReq04(unittest.TestCase):
         self.assertTrue(summary["has_search_index"])
         self.assertFalse(summary["has_covering_index"])
 
+    def test_semantic_plan_outcomes_independent_exercise(self):
+        """
+        Independently exercise both planner outcomes (SCAN vs SEARCH) semantically
+        without exact-string coupling. Validates that both outcomes are accepted truthfully.
+        """
+        # Outcome A: Planner reports SCAN
+        plan_scan_cases = [
+            "SCAN orders",
+            "0|0|0|SCAN orders",
+            "|--SCAN TABLE orders",
+            "`--SCAN orders",
+        ]
+        for p in plan_scan_cases:
+            records = parse_eqp_output(p)
+            summary = summarize_eqp_paths(records)
+            self.assertTrue(summary["has_scan"], f"Failed to identify SCAN semantically in: {p}")
+            self.assertIn("SCAN", summary["categories"])
+
+        # Outcome B: Planner reports SEARCH
+        plan_search_cases = [
+            "SEARCH orders USING INDEX idx_amount (amount>?)",
+            "0|0|0|SEARCH TABLE orders USING INDEX idx_amount (amount=?)",
+            "`--SEARCH orders USING INDEX idx_orders_user (user_id=?)",
+            "|--SEARCH orders USING COVERING INDEX idx_cov (user_id=?)",
+        ]
+        for p in plan_search_cases:
+            records = parse_eqp_output(p)
+            summary = summarize_eqp_paths(records)
+            self.assertTrue(
+                summary["has_search_index"] or summary["has_covering_index"],
+                f"Failed to identify SEARCH semantically in: {p}",
+            )
+
     def test_result_equivalence_check(self):
         db_path = os.path.join(self.tmp_dir.name, "equiv.db")
         generate_lab_dataset(db_path=db_path, row_count=50, seed=1)
@@ -99,7 +133,7 @@ class TestLabReq04(unittest.TestCase):
         self.assertEqual(len(res_before), len(res_after))
 
     def test_harness_missing_cli_behavior(self):
-        # On this Windows host, sqlite3 CLI is absent; verify harness returns truthful ENVIRONMENT-BLOCKED
+        # On hosts without sqlite3 CLI binary, verify harness returns truthful ENVIRONMENT-BLOCKED
         cli_available, _ = check_sqlite_cli()
         if not cli_available:
             report = run_lab_req_04()

@@ -2,11 +2,13 @@
 """
 Automated Test & Evidence Harness for LAB-REQ-04.
 Orchestrates real sqlite3 CLI execution, plan inspection, result-set equivalence,
-timing distribution, write cost, file-size observation, and scan acceptance.
+symmetric timing distribution, write cost, file-size observation, and planner access-path observation.
 
 Adheres strictly to the Task Contract:
 - If sqlite3 CLI is absent, truthfully reports ENVIRONMENT-BLOCKED / NOT RUN.
 - Python stdlib sqlite3 is used ONLY for verification and generator support, NOT as a CLI replacement.
+- No fixed planner outcome, selectivity threshold, timing ratio, or file size delta is hardcoded.
+- Fixture sizes are bounded implementation-smoke defaults, not curriculum thresholds.
 """
 
 import argparse
@@ -15,12 +17,17 @@ import json
 import os
 import shutil
 import sqlite3
+import statistics
 import subprocess
 import sys
 import time
 
 from eqp_parser import parse_eqp_output, summarize_eqp_paths
 from generator import generate_lab_dataset, get_default_lab_db_path
+
+# Bounded implementation-smoke defaults (not curriculum thresholds)
+DEFAULT_ROW_COUNT = 5000
+WRITE_BATCH_SIZE = 200
 
 
 def check_sqlite_cli():
@@ -45,7 +52,7 @@ def run_cli_query(cli_path, db_path, sql_command):
     return proc.stdout.strip()
 
 
-def run_lab_req_04(db_path=None, trials=10):
+def run_lab_req_04(db_path=None, trials=10, row_count=DEFAULT_ROW_COUNT):
     cli_usable, cli_path = check_sqlite_cli()
     if not cli_usable:
         return {
@@ -55,7 +62,7 @@ def run_lab_req_04(db_path=None, trials=10):
         }
 
     target_db = db_path or get_default_lab_db_path()
-    generate_lab_dataset(db_path=target_db, row_count=5000, seed=42)
+    generate_lab_dataset(db_path=target_db, row_count=row_count, seed=42)
     initial_db_size = os.path.getsize(target_db)
 
     test_query = "SELECT id, user_id, amount, status FROM orders WHERE user_id = 42 ORDER BY id;"
@@ -71,9 +78,9 @@ def run_lab_req_04(db_path=None, trials=10):
     unindexed_hash = hashlib.sha256(unindexed_result_raw.encode("utf-8")).hexdigest()
     unindexed_row_count = len(unindexed_result_raw.splitlines()) if unindexed_result_raw else 0
 
-    # Create index via CLI
-    create_idx_sql = "CREATE INDEX idx_orders_user ON orders(user_id);"
-    run_cli_query(cli_path, target_db, create_idx_sql)
+    # Create secondary index on user_id via CLI
+    create_idx_user_sql = "CREATE INDEX idx_orders_user ON orders(user_id);"
+    run_cli_query(cli_path, target_db, create_idx_user_sql)
 
     indexed_db_size = os.path.getsize(target_db)
     file_size_delta = indexed_db_size - initial_db_size
@@ -88,24 +95,22 @@ def run_lab_req_04(db_path=None, trials=10):
 
     results_match = (unindexed_hash == indexed_hash) and (unindexed_row_count == indexed_row_count)
 
-    # Checkpoint 3: Repeated Read Timing
-    # Warmup
-    run_cli_query(cli_path, target_db, test_query)
-
-    unindexed_times_ns = []
-    # Drop index temporarily to measure unindexed reads cleanly
+    # Checkpoint 3: Repeated Read Timing with Symmetric Warmup Protocol
+    # Step A: Measure unindexed read condition
     run_cli_query(cli_path, target_db, "DROP INDEX idx_orders_user;")
+    # Warmup unindexed condition
+    run_cli_query(cli_path, target_db, test_query)
+    unindexed_times_ns = []
     for _ in range(trials):
         t0 = time.perf_counter_ns()
         run_cli_query(cli_path, target_db, test_query)
         t1 = time.perf_counter_ns()
         unindexed_times_ns.append(t1 - t0)
 
-    # Re-create index
-    run_cli_query(cli_path, target_db, create_idx_sql)
-    # Warmup
+    # Step B: Measure indexed read condition with symmetric protocol
+    run_cli_query(cli_path, target_db, create_idx_user_sql)
+    # Warmup indexed condition
     run_cli_query(cli_path, target_db, test_query)
-
     indexed_times_ns = []
     for _ in range(trials):
         t0 = time.perf_counter_ns()
@@ -113,11 +118,14 @@ def run_lab_req_04(db_path=None, trials=10):
         t1 = time.perf_counter_ns()
         indexed_times_ns.append(t1 - t0)
 
-    # Checkpoint 4: Write Cost Observation
-    # Measure inserting 500 rows with index vs without index
+    unindexed_median_ms = statistics.median(unindexed_times_ns) / 1_000_000.0
+    indexed_median_ms = statistics.median(indexed_times_ns) / 1_000_000.0
+
+    # Checkpoint 4: Write Cost & Storage Footprint Observation
+    # Measure inserting WRITE_BATCH_SIZE (200) rows with index vs without index
     write_rows_sql = "\n".join([
         f"INSERT INTO orders (user_id, amount, status, region, created_at) VALUES (999, 10.0, 'NEW', 'US_EAST', '2026-03-01T00:00:00Z');"
-        for _ in range(200)
+        for _ in range(WRITE_BATCH_SIZE)
     ])
 
     t0_write_indexed = time.perf_counter_ns()
@@ -135,13 +143,16 @@ def run_lab_req_04(db_path=None, trials=10):
     write_time_unindexed_ms = (t1_write_unindexed - t0_write_unindexed) / 1_000_000.0
 
     run_cli_query(cli_path, target_db, "DELETE FROM orders WHERE user_id = 999;")
-    # Restore index for scan acceptance test
-    run_cli_query(cli_path, target_db, create_idx_sql)
 
-    # Checkpoint 5: Truthful Changed Workload / Scan Acceptance
-    # Query with low selectivity or non-sargable predicate
-    low_sel_query = "EXPLAIN QUERY PLAN SELECT * FROM orders WHERE amount > 0.0;"
-    low_sel_eqp_raw = run_cli_query(cli_path, target_db, low_sel_query)
+    # Checkpoint 5: Truthful Changed Workload / Planner Choice on Relevant Index
+    # Tie the query predicate directly to a genuinely relevant available index on `amount`
+    create_idx_amount_sql = "CREATE INDEX idx_orders_amount ON orders(amount);"
+    run_cli_query(cli_path, target_db, create_idx_amount_sql)
+
+    # Low-selectivity query on `amount` where virtually all orders have amount > 0.0
+    low_sel_query = "SELECT * FROM orders WHERE amount > 0.0;"
+    low_sel_eqp_sql = f"EXPLAIN QUERY PLAN {low_sel_query}"
+    low_sel_eqp_raw = run_cli_query(cli_path, target_db, low_sel_eqp_sql)
     low_sel_parsed = parse_eqp_output(low_sel_eqp_raw)
     low_sel_summary = summarize_eqp_paths(low_sel_parsed)
 
@@ -169,24 +180,30 @@ def run_lab_req_04(db_path=None, trials=10):
             },
             "3_read_timing": {
                 "trials": trials,
-                "unindexed_median_ms": sorted(unindexed_times_ns)[trials // 2] / 1_000_000.0,
-                "indexed_median_ms": sorted(indexed_times_ns)[trials // 2] / 1_000_000.0,
+                "unindexed_median_ms": unindexed_median_ms,
+                "indexed_median_ms": indexed_median_ms,
                 "unindexed_samples_ns": unindexed_times_ns,
                 "indexed_samples_ns": indexed_times_ns,
+                "warmup_symmetric": True,
                 "inference_limit_note": "Timing is hardware- and cache-specific; no universal ratio asserted.",
             },
             "4_write_and_storage_cost": {
+                "batch_size_rows": WRITE_BATCH_SIZE,
                 "initial_db_size_bytes": initial_db_size,
                 "indexed_db_size_bytes": indexed_db_size,
                 "size_delta_bytes": file_size_delta,
                 "bulk_insert_unindexed_ms": write_time_unindexed_ms,
                 "bulk_insert_indexed_ms": write_time_indexed_ms,
             },
-            "5_scan_acceptance": {
-                "query": "SELECT * FROM orders WHERE amount > 0.0;",
+            "5_changed_workload_planner_choice": {
+                "query": low_sel_query,
+                "relevant_index": "idx_orders_amount ON orders(amount)",
                 "raw_eqp": low_sel_eqp_raw,
                 "summary": low_sel_summary,
-                "index_bypassed_as_expected": low_sel_summary["has_scan"],
+                "observed_categories": low_sel_summary["categories"],
+                "has_scan": low_sel_summary["has_scan"],
+                "has_search": low_sel_summary["has_search_index"],
+                "note": "Records actual SQLite planner choice on low-selectivity predicate with relevant index present; both SCAN and SEARCH are accepted truthfully without hardcoding.",
             },
         },
     }
@@ -229,22 +246,23 @@ def main():
     print(f"   Results Matched: {eq['matched']} (rows={eq['indexed_rows']}, hash={eq['indexed_sha256'][:12]}...)")
     print("-" * 66)
     cp3 = report["checkpoints"]["3_read_timing"]
-    print(" [Checkpoint 3: Repeated Read Timing]")
+    print(" [Checkpoint 3: Repeated Read Timing (Symmetric Protocol)]")
     print(f"   Unindexed Median: {cp3['unindexed_median_ms']:.3f} ms")
     print(f"   Indexed Median:   {cp3['indexed_median_ms']:.3f} ms")
     print("-" * 66)
     cp4 = report["checkpoints"]["4_write_and_storage_cost"]
-    print(" [Checkpoint 4: Write & Storage Cost]")
+    print(f" [Checkpoint 4: Write & Storage Cost ({cp4['batch_size_rows']} rows)]")
     print(f"   DB Size Before Index: {cp4['initial_db_size_bytes']} bytes")
-    print(f"   DB Size After Index:  {cp4['indexed_db_size_bytes']} bytes (Delta: +{cp4['size_delta_bytes']} bytes)")
+    print(f"   DB Size After Index:  {cp4['indexed_db_size_bytes']} bytes (Delta: {cp4['size_delta_bytes']} bytes)")
     print(f"   Bulk Insert Unindexed: {cp4['bulk_insert_unindexed_ms']:.2f} ms")
     print(f"   Bulk Insert Indexed:   {cp4['bulk_insert_indexed_ms']:.2f} ms")
     print("-" * 66)
-    cp5 = report["checkpoints"]["5_scan_acceptance"]
-    print(" [Checkpoint 5: Scan Acceptance on Low Selectivity Query]")
-    print(f"   Query:     {cp5['query']}")
-    print(f"   Raw EQP:   {cp5['raw_eqp']}")
-    print(f"   Bypassed:  {cp5['index_bypassed_as_expected']}")
+    cp5 = report["checkpoints"]["5_changed_workload_planner_choice"]
+    print(" [Checkpoint 5: Changed Workload Planner Choice]")
+    print(f"   Query:          {cp5['query']}")
+    print(f"   Relevant Index: {cp5['relevant_index']}")
+    print(f"   Raw EQP:        {cp5['raw_eqp']}")
+    print(f"   Observed Path:  {cp5['observed_categories']}")
     print("=" * 66)
     return 0
 

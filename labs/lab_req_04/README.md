@@ -5,7 +5,7 @@ LAB-REQ-04 is the required Module 13 laboratory. It investigates the physical ac
 ## Safety and Scope
 
 - **Local Files Only:** All databases are created in `labs/lab_req_04/` (or temporary directories).
-- **Bounded Scale:** Datasets are deterministically generated with bounded size (~5,000 rows), ensuring instant smoke tests without disk or memory pressure.
+- **Bounded Scale:** Datasets are deterministically generated with bounded size (~5,000 rows by default), serving as an implementation-smoke default rather than a curriculum threshold.
 - **Zero Elevated Privileges:** No root/administrator access, network ports, external database servers, credentials, or cloud resources required.
 - **Idempotent Cleanup:** `reset.py` completely removes all database and journal files.
 
@@ -47,10 +47,10 @@ python labs/lab_req_04/harness.py
    ```bash
    sqlite3 labs/lab_req_04/lab_orders.db "EXPLAIN QUERY PLAN SELECT id, user_id, amount, status FROM orders WHERE user_id = 42 ORDER BY id;"
    ```
-3. Observe and classify the reported access path (`SCAN orders`).
+3. Observe and classify the reported access path (e.g., `SCAN orders`).
 
 ### Checkpoint 2 — Index Creation & Result Equivalence
-1. Create a secondary B-tree index:
+1. Create a secondary B-tree index on `user_id`:
    ```sql
    CREATE INDEX idx_orders_user ON orders(user_id);
    ```
@@ -58,26 +58,31 @@ python labs/lab_req_04/harness.py
    ```bash
    sqlite3 labs/lab_req_04/lab_orders.db "EXPLAIN QUERY PLAN SELECT id, user_id, amount, status FROM orders WHERE user_id = 42 ORDER BY id;"
    ```
-3. Observe the change to `SEARCH orders USING INDEX idx_orders_user`.
+3. Observe the change in access path (e.g., `SEARCH orders USING INDEX idx_orders_user`).
 4. **Machine-Checkable Invariant:** Execute the query both before and after indexing. Verify that the result sets match exactly ($\Delta = 0$ rows, identical cryptographic hash). Adding an index changes performance, never declarative correctness.
 
-### Checkpoint 3 — Repeated Read Timing & Inference Limits
-1. Perform a warmup execution to populate buffer cache.
-2. Run repeated trials (e.g., 10 trials) measuring execution latency.
-3. Record raw samples, min, max, and median.
-4. **Inference Limit:** Timing results are hardware- and environment-specific. Essential CS strictly forbids asserting universal speedup factors or fixed ratios.
+### Checkpoint 3 — Repeated Read Timing & Symmetric Warmup Protocol
+1. Follow a symmetric warmup protocol for both unindexed and indexed conditions:
+   - For unindexed: drop index, run warmup query, execute timed iterations.
+   - For indexed: create index, run warmup query, execute timed iterations.
+2. Record raw samples, min, max, and median (calculated using standard median rules).
+3. **Inference Limit:** Timing results are hardware- and environment-specific. Essential CS strictly forbids asserting universal speedup factors or fixed ratios.
 
 ### Checkpoint 4 — Write Cost & Storage Footprint
-1. Observe database file size before and after index creation (`os.path.getsize` or `ls -l`).
-2. Measure bulk insert latency into the unindexed table vs the indexed table.
-3. Note that maintaining the secondary B-tree requires additional I/O and disk blocks on every write.
+1. Observe database file size before and after index creation (`os.path.getsize` or `ls -l`), recording the observed delta.
+2. Measure bulk insert latency into the unindexed table vs the indexed table (using a consistent batch size, e.g. 200 rows).
+3. Note that maintaining the secondary B-tree requires additional I/O and disk blocks on writes affecting the indexed columns.
 
-### Checkpoint 5 — Scan Acceptance on Changed Workload
-1. Execute a query with low selectivity or an un-sargable predicate:
+### Checkpoint 5 — Changed Workload & Planner Choice on Relevant Index
+1. Create a relevant index matching the queried predicate column:
+   ```sql
+   CREATE INDEX idx_orders_amount ON orders(amount);
+   ```
+2. Execute a query with low selectivity on that indexed column:
    ```sql
    EXPLAIN QUERY PLAN SELECT * FROM orders WHERE amount > 0.0;
    ```
-2. Observe that the query planner chooses a full table scan (`SCAN`) despite the existence of `idx_orders_user`, demonstrating that index availability does not guarantee index selection.
+3. Observe and record what SQLite's planner actually chose. Both `SCAN` and `SEARCH` are accepted truthfully based on SQLite's cost model and statistics; no single planner outcome is machine-hardcoded. Learner evidence records the observed choice and explains the planner's reasoning and inference limits.
 
 ---
 

@@ -13,9 +13,9 @@ Use this form for **one actual learner observation**. Do not copy another learne
 - `sqlite3` CLI Availability & Path: `<actual>`
 - Preflight Command: `python tests/preflight_data_concurrency.py --json`
 - Preflight Summary Disposition:
-  - M13 Core Status: `READY`
-  - LAB-REQ-04 Status: `PASS` or `ENVIRONMENT-BLOCKED / NOT RUN`
-  - Writable VFS / Locking: `REQUIRED CAPABILITY PASS`
+  - M13 Core Status: `<actual: READY / BLOCKED>`
+  - LAB-REQ-04 Status: `<actual: PASS / ENVIRONMENT-BLOCKED / NOT RUN>`
+  - Writable VFS / Locking: `<actual: REQUIRED CAPABILITY PASS / OTHER>`
 
 ---
 
@@ -41,8 +41,8 @@ Use this form for **one actual learner observation**. Do not copy another learne
 - Indexed Result Row Count: `<actual>`
 - Unindexed Result Hash (SHA-256): `<actual>`
 - Indexed Result Hash (SHA-256): `<actual>`
-- Row Count Delta ($\Delta$): **0**
-- Cryptographic Hash Match: `YES / NO`
+- Row Count Delta ($\Delta$): `<actual row count delta>`
+- Cryptographic Hash Match: `<YES / NO>`
 - Principle Verified: Adding a secondary index changes execution strategy and latency, but preserves relational correctness.
 
 ---
@@ -51,7 +51,7 @@ Use this form for **one actual learner observation**. Do not copy another learne
 
 - Workload: `<query string>`
 - Trials: `<e.g. 10>`
-- Warmup Run Completed: `YES`
+- Warmup Run Completed: `<YES / NO>`
 - Cache-State Assumptions: `<e.g. in-memory page cache warm vs cold disk>`
 - Raw Unindexed Latency Samples (ns or ms): `<actual raw array>`
 - Raw Indexed Latency Samples (ns or ms): `<actual raw array>`
@@ -67,7 +67,7 @@ Use this form for **one actual learner observation**. Do not copy another learne
 - File Size Delta: `<actual delta bytes>`
 - Bulk Insert Duration (Unindexed, e.g. 200 rows): `<actual ms>`
 - Bulk Insert Duration (Indexed, e.g. 200 rows): `<actual ms>`
-- Trade-off Analysis: Why does every secondary index add write amplification and storage cost?
+- Trade-off Analysis: Why does maintaining a secondary index add write cost when indexed columns are modified? `<learner explanation>`
 
 ---
 
@@ -86,18 +86,18 @@ Use this form for **one actual learner observation**. Do not copy another learne
 ## G — SQL Relational Intent vs Named Engine Reality (L13-02)
 
 - Named Engine Evaluated: SQLite (VDBE) / PostgreSQL
-- Sargable Predicate Tested:
+- Ordinary Predicate Tested:
   ```sql
   SELECT * FROM users WHERE username = 'user_42';
   ```
-  - EQP Access Path: `<SEARCH / INDEX>`
-- Non-Sargable Predicate Tested:
+  - EQP Access Path: `<actual: SEARCH / INDEX / other>`
+- Function-Wrapped Predicate Tested:
   ```sql
   SELECT * FROM users WHERE UPPER(username) = 'USER_42';
   ```
-  - EQP Access Path: `<SCAN / TABLE_SCAN>`
+  - EQP Access Path: `<actual: SCAN / TABLE_SCAN / other>`
 - Engine Mechanism Explanation:
-  Why wrapping a column in a function breaks standard B-tree index lookup in the absence of an expression index.
+  Why wrapping a column in a function prevents standard B-tree index lookup in the absence of an expression index. `<learner explanation>`
 
 ---
 
@@ -121,23 +121,29 @@ Use this form for **one actual learner observation**. Do not copy another learne
 
 - Controlled Break (L13-03):
   - Attempted Statement: `ALTER TABLE users ADD COLUMN phone_number TEXT NOT NULL;`
-  - Error Observed: `<actual SQLite OperationalError>`
-- Scan Acceptance on Changed Workload (L13-01 / LAB-REQ-04):
+  - Actual Driver Error / Exception Observed: `<actual exception type and message>`
+- Planner Choice on Changed Workload (L13-01 / LAB-REQ-04):
   - Low Selectivity Query: `SELECT * FROM orders WHERE amount > 0.0;`
-  - Observed EQP: `<SCAN>`
-  - Why Planner Rejected Index: `<selectivity / cost explanation>`
+  - Available Relevant Index: `idx_orders_amount ON orders(amount)`
+  - Observed EQP: `<actual observed EQP output: SCAN / SEARCH / other>`
+  - Planner Decision Analysis: `<explanation of cost model evaluation and observed choice>`
 
 ---
 
 ## J — EXP-02 Source Route & Currentness Record
 
-- Host Inspected: `git.postgresql.org` / GitHub
-- Inspected Branch / Commit: `<actual>`
-- Live Source Reachability: `LIVE_POSTGRESQL_SOURCE_ACCESSIBLE` or `NO LIVE SOURCE RECHECK`
+- Course Reference Benchmark:
+  - Revision: `7344937cbe640cd8c5304cefe7d6b726187ad4ab` (2026-09-04 Lead recheck)
+  - Branch: `master`
+- Learner Inspection Record:
+  - Host Inspected: `<git.postgresql.org / GitHub>`
+  - Inspected Branch / Commit: `<actual>`
+  - Inspection Date: `<actual date>`
+  - Source Reachability: `<LIVE_POSTGRESQL_SOURCE_ACCESSIBLE / NO LIVE SOURCE RECHECK>`
 - Target 1 Caveat Acknowledged: `src/backend/optimizer/plan/README` documents historical subselect planning, not universal Path->Plan architecture.
 - Target 2 Finding: `cost_seqscan` vs `cost_index` formulas in `costsize.c`.
 - Target 3 Finding: Buffer descriptors, Pinning (`refcount`), and Clock Sweep (`usage_count`) in `buffer/README`.
-- Stop Rule Compliance: `YES` (no repo clone, no compile, no deep traversal).
+- Stop Rule Compliance: `<YES / NO>` (no repo clone, no compile, no deep traversal).
 
 ---
 
