@@ -20,9 +20,17 @@ def main():
     parser.add_argument("--timeout", type=float, default=2.0, help="Deadlock watchdog timeout parameter in seconds")
     parser.add_argument("--iterations", type=int, default=10000, help="Iteration count for mutex and natural scheduler tests")
     args = parser.parse_args()
+    if args.timeout <= 0:
+        parser.error("--timeout must be greater than zero")
+    if args.iterations <= 0:
+        parser.error("--iterations must be greater than zero")
 
     harness = ConcurrencyLabHarness()
-    report = harness.run_all(verbose=not args.json)
+    report = harness.run_all(
+        verbose=not args.json,
+        timeout_sec=args.timeout,
+        iterations=args.iterations,
+    )
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))

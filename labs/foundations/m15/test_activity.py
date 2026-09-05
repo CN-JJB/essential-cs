@@ -19,10 +19,25 @@ except ImportError:
 
 
 class TestM15Foundations(unittest.TestCase):
+    def tearDown(self):
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        lab_dir = os.path.abspath(os.path.join(this_dir, "..", "..", "lab_req_03"))
+        import sys
+        if lab_dir not in sys.path:
+            sys.path.insert(0, lab_dir)
+        from reset import reset_lab_req_03
+        reset_lab_req_03(lab_dir=lab_dir, verbose=False)
+
     def test_activity_l15_01_concurrency_definition_and_lost_update(self):
         res = run_activity_l15_01(verbose=False)
         self.assertIn("Overlapping progress or interleaving of operations", res["ec_con_015_definition"])
         self.assertEqual(res["ec_con_015_definition"], EC_CON_015_DEFINITION)
+        if res["execution_disposition"] == "ENVIRONMENT-BLOCKED / NOT RUN":
+            self.assertIsNone(res["deterministic_result"])
+            self.assertEqual(res["phase_trace"], [])
+            self.assertIsNone(res["ub_free_audit_passed"])
+            return
+        self.assertEqual(res["execution_disposition"], "PASS")
         self.assertTrue(res["ub_free_audit_passed"])
         dr = res["deterministic_result"]
         self.assertEqual(dr["expected_serial"], 10)
@@ -32,6 +47,12 @@ class TestM15Foundations(unittest.TestCase):
 
     def test_activity_l15_02_mutex_and_cond_rendezvous(self):
         res = run_activity_l15_02(verbose=False)
+        if res["execution_disposition"] == "ENVIRONMENT-BLOCKED / NOT RUN":
+            self.assertIsNone(res["mutex_repair"])
+            self.assertIsNone(res["cond_rendezvous"])
+            self.assertIsNone(res["controlled_deadlock"])
+            return
+        self.assertEqual(res["execution_disposition"], "PASS")
         mr = res["mutex_repair"]
         self.assertTrue(mr["passed"])
         self.assertTrue(mr["invariant_preserved"])

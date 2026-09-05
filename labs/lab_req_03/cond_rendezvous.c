@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include <time.h>
-#include <unistd.h>
 #include <stdbool.h>
 
 /*
@@ -19,9 +17,11 @@
 
 static pthread_mutex_t g_rendezvous_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t g_rendezvous_cond = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t g_consumer_ready_cond = PTHREAD_COND_INITIALIZER;
 
 static int g_data_buffer = 0;
 static bool g_buffer_ready = false;
+static bool g_consumer_waiting = false;
 static int g_predicate_eval_count = 0;
 
 static void* consumer_thread(void* arg) {
@@ -29,14 +29,17 @@ static void* consumer_thread(void* arg) {
 
     pthread_mutex_lock(&g_rendezvous_mutex);
 
-    /* Mandatory predicate recheck guard loop */
+    /* Course idiom: re-evaluate the predicate after every wait return. */
     while (!g_buffer_ready) {
         g_predicate_eval_count++;
+        g_consumer_waiting = true;
         printf("{\"event\": \"COND_WAIT_ENTER\", \"predicate_ready\": false, \"eval_count\": %d}\n",
                g_predicate_eval_count);
         fflush(stdout);
 
-        /* Atomically releases associated mutex and suspends thread */
+        pthread_cond_signal(&g_consumer_ready_cond);
+
+        /* Atomically releases associated mutex and suspends thread. */
         pthread_cond_wait(&g_rendezvous_cond, &g_rendezvous_mutex);
 
         printf("{\"event\": \"COND_WAIT_RETURN\", \"predicate_ready\": %s}\n",
@@ -57,11 +60,15 @@ static void* consumer_thread(void* arg) {
 static void* producer_thread(void* arg) {
     (void)arg;
 
-    /* Bounded delay to guarantee consumer enters wait before production */
-    struct timespec req = {.tv_sec = 0, .tv_nsec = 20000000L}; /* 20ms */
-    nanosleep(&req, NULL);
-
     pthread_mutex_lock(&g_rendezvous_mutex);
+
+    /* Explicit predicate handoff; no sleep is treated as a scheduling guarantee. */
+    while (!g_consumer_waiting) {
+        pthread_cond_wait(&g_consumer_ready_cond, &g_rendezvous_mutex);
+    }
+
+    printf("{\"event\": \"PRODUCER_OBSERVED_CONSUMER_WAITING\"}\n");
+    fflush(stdout);
 
     g_data_buffer = 42;
     g_buffer_ready = true;
@@ -93,6 +100,7 @@ int main(void) {
 
     pthread_mutex_destroy(&g_rendezvous_mutex);
     pthread_cond_destroy(&g_rendezvous_cond);
+    pthread_cond_destroy(&g_consumer_ready_cond);
 
     return success ? 0 : 1;
 }

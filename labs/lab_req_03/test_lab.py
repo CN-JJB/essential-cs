@@ -19,8 +19,13 @@ class TestLabReq03(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.harness = ConcurrencyLabHarness()
+        cls.environment_gate = cls.harness.canonical_environment_status()
         compile_res = cls.harness.compile_all()
         assert compile_res["passed"], f"Compilation failed: {compile_res.get('error')}"
+
+    @classmethod
+    def tearDownClass(cls):
+        reset_lab_req_03(verbose=False)
 
     def test_compilation(self):
         res = self.harness.compile_all()
@@ -68,8 +73,14 @@ class TestLabReq03(unittest.TestCase):
 
     def test_run_all(self):
         report = self.harness.run_all(verbose=False)
-        self.assertTrue(report["overall_passed"])
-        self.assertEqual(len(report["checkpoints"]), 5)
+        if self.environment_gate["ready"]:
+            self.assertTrue(report["overall_passed"])
+            self.assertEqual(report["disposition"], "PASS")
+            self.assertEqual(len(report["checkpoints"]), 5)
+        else:
+            self.assertFalse(report["overall_passed"])
+            self.assertEqual(report["disposition"], "ENVIRONMENT-BLOCKED / NOT RUN")
+            self.assertEqual(report["checkpoints"], {})
 
     def test_reset_idempotence(self):
         # Recompile
@@ -80,9 +91,6 @@ class TestLabReq03(unittest.TestCase):
         self.assertGreater(count1, 0)
         count2 = reset_lab_req_03(verbose=False)
         self.assertEqual(count2, 0)
-
-        # Restore compiled binaries for clean state
-        self.harness.compile_all()
 
 
 if __name__ == "__main__":

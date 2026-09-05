@@ -12,9 +12,11 @@ Coordinates compilation and machine-checked verification of:
 import json
 import os
 import platform
+import queue
 import shutil
 import subprocess
 import sys
+import threading
 import time
 
 
@@ -34,6 +36,67 @@ class ConcurrencyLabHarness:
         self.mutex_bin = os.path.join(self.lab_dir, f"mutex_counter{self.bin_ext}")
         self.cond_bin = os.path.join(self.lab_dir, f"cond_rendezvous{self.bin_ext}")
         self.deadlock_bin = os.path.join(self.lab_dir, f"deadlock_preconditions{self.bin_ext}")
+
+    def canonical_environment_status(self):
+        """Classify the Design-declared Required LAB-REQ-03 environment."""
+        system = platform.system()
+        if not self.compiler:
+            return {
+                "ready": False,
+                "system": system,
+                "compiler": None,
+                "compiler_version": None,
+                "is_gcc": False,
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "reason": "No C compiler found; canonical Required baseline is Linux with GCC.",
+            }
+
+        try:
+            proc = subprocess.run(
+                [self.compiler, "--version"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=3.0,
+                check=False,
+            )
+            version_text = (proc.stdout or proc.stderr).strip()
+            first_line = version_text.splitlines()[0] if version_text else "NOT RECORDED"
+        except Exception as exc:
+            return {
+                "ready": False,
+                "system": system,
+                "compiler": self.compiler,
+                "compiler_version": None,
+                "is_gcc": False,
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "reason": f"Compiler identity probe failed: {type(exc).__name__}: {exc}",
+            }
+
+        lower = version_text.lower()
+        is_clang = "clang" in lower
+        is_gcc = ("gcc" in lower or "free software foundation" in lower) and not is_clang
+        ready = (system == "Linux" and is_gcc)
+
+        if ready:
+            reason = None
+            disposition = "REQUIRED CAPABILITY PASS"
+        elif system != "Linux":
+            reason = f"Host OS is {system}; canonical Required baseline is Linux with GCC."
+            disposition = "ENVIRONMENT-BLOCKED / NOT RUN"
+        else:
+            reason = f"Linux host compiler is not confirmed GCC ({first_line})."
+            disposition = "ENVIRONMENT-BLOCKED / NOT RUN"
+
+        return {
+            "ready": ready,
+            "system": system,
+            "compiler": self.compiler,
+            "compiler_version": first_line,
+            "is_gcc": is_gcc,
+            "disposition": disposition,
+            "reason": reason,
+        }
 
     def compile_all(self):
         """Compiles all C sources with -std=c11 -pthread."""
@@ -144,7 +207,12 @@ class ConcurrencyLabHarness:
             "lost_updates": lost,
             "ub_present": ub_present,
             "phase_read_count": len(phase_events),
-            "safety_audit": "PASSED: All accesses executed via atomic_load_explicit / atomic_store_explicit with memory_order_relaxed. Zero language-level UB.",
+            "phase_trace": phase_events,
+            "safety_audit": (
+                "Shared-counter audit: concurrent counter accesses use "
+                "atomic_load_explicit / atomic_store_explicit with memory_order_relaxed; "
+                "the demonstrated broken path does not rely on a C data race."
+            ),
         }
 
     def run_checkpoint_2_supplemental_scheduler_observation(self, iterations=10000):
@@ -188,7 +256,7 @@ class ConcurrencyLabHarness:
             }
 
         return {
-            "passed": True,  # Supplemental observation: truthful disposition without artificial failure
+            "passed": (proc.returncode == 0),  # No manifestation is acceptable; execution failure is not.
             "iterations_per_thread": result_event.get("iterations_per_thread", iterations),
             "expected_serial": result_event.get("expected_serial", iterations * 2),
             "actual_value": result_event.get("actual_value", 0),
@@ -290,21 +358,37 @@ class ConcurrencyLabHarness:
             }
 
         event_names = [e.get("event") for e in events]
+        required_order = [
+            "COND_WAIT_ENTER",
+            "PRODUCER_OBSERVED_CONSUMER_WAITING",
+            "PRODUCER_READY",
+            "COND_WAIT_RETURN",
+            "COND_CONSUMED",
+        ]
+        try:
+            positions = [event_names.index(name) for name in required_order]
+            ordered = positions == sorted(positions)
+        except ValueError:
+            ordered = False
+
+        predicate_eval_count = result_event.get("predicate_eval_count")
+        predicate_recheck_verified = (
+            isinstance(predicate_eval_count, int)
+            and predicate_eval_count >= 2
+            and ordered
+        )
         passed = (
             proc.returncode == 0
             and result_event.get("success", False)
-            and "COND_WAIT_ENTER" in event_names
-            and "PRODUCER_READY" in event_names
-            and "COND_WAIT_RETURN" in event_names
-            and "COND_CONSUMED" in event_names
+            and predicate_recheck_verified
         )
 
         return {
             "passed": passed,
             "final_data": result_event.get("final_data"),
-            "predicate_eval_count": result_event.get("predicate_eval_count"),
+            "predicate_eval_count": predicate_eval_count,
             "event_sequence": event_names,
-            "predicate_recheck_verified": True,
+            "predicate_recheck_verified": predicate_recheck_verified,
         }
 
     def run_checkpoint_5_deadlock_preconditions(self, timeout_sec=2.0):
@@ -331,47 +415,69 @@ class ConcurrencyLabHarness:
         collected_events = []
         first_locks = set()
         attempting_seconds = set()
+        line_queue = queue.Queue()
+
+        def _stdout_reader():
+            try:
+                if proc.stdout:
+                    for raw_line in proc.stdout:
+                        line_queue.put(raw_line)
+            finally:
+                line_queue.put(None)
+
+        reader = threading.Thread(target=_stdout_reader, daemon=True)
+        reader.start()
 
         start_time = time.time()
         deadline = start_time + timeout_sec
         watchdog_triggered = False
 
         while time.time() < deadline:
-            line = proc.stdout.readline()
-            if line:
-                line = line.strip()
-                if line.startswith("{"):
-                    try:
-                        ev = json.loads(line)
-                        collected_events.append(ev)
-                        if ev.get("event") == "FIRST_LOCK_ACQUIRED":
-                            first_locks.add(ev.get("lock"))
-                        elif ev.get("event") == "ATTEMPTING_SECOND_LOCK":
-                            attempting_seconds.add(ev.get("lock"))
-                    except json.JSONDecodeError:
-                        pass
-            if len(first_locks) == 2 and len(attempting_seconds) == 2:
-                # Both preconditions proven; break into watchdog wait
+            remaining = max(0.0, deadline - time.time())
+            try:
+                line = line_queue.get(timeout=min(0.05, remaining))
+            except queue.Empty:
+                if proc.poll() is not None:
+                    break
+                continue
+
+            if line is None:
                 break
-            time.sleep(0.02)
 
-        # Confirm child is stalled until timeout expires
-        remaining = deadline - time.time()
-        if remaining > 0:
-            time.sleep(remaining)
+            line = line.strip()
+            if line.startswith("{"):
+                try:
+                    ev = json.loads(line)
+                    collected_events.append(ev)
+                    if ev.get("event") == "FIRST_LOCK_ACQUIRED":
+                        first_locks.add(ev.get("lock"))
+                    elif ev.get("event") == "ATTEMPTING_SECOND_LOCK":
+                        attempting_seconds.add(ev.get("lock"))
+                except json.JSONDecodeError:
+                    pass
 
-        poll_res = proc.poll()
-        if poll_res is None:
+            if len(first_locks) == 2 and len(attempting_seconds) == 2:
+                break
+
+        remaining = max(0.0, deadline - time.time())
+        if proc.poll() is None and remaining > 0:
+            try:
+                proc.wait(timeout=remaining)
+            except subprocess.TimeoutExpired:
+                watchdog_triggered = True
+        elif proc.poll() is None:
             watchdog_triggered = True
+
+        if watchdog_triggered and proc.poll() is None:
             proc.terminate()
             try:
                 proc.wait(timeout=1.0)
             except subprocess.TimeoutExpired:
                 proc.kill()
                 proc.wait(timeout=1.0)
-            reaped_returncode = proc.returncode
-        else:
-            reaped_returncode = poll_res
+
+        reaped_returncode = proc.poll()
+        reader.join(timeout=0.5)
 
         if proc.stdout:
             try:
@@ -412,21 +518,58 @@ class ConcurrencyLabHarness:
             "inference_limit": "Timeout alone proves stall, NOT deadlock. Deadlock is proven because circular wait preconditions (both workers holding first lock and attempting the other's lock) were verified before timeout occurred.",
         }
 
-    def run_all(self, verbose=False):
-        """Runs all 5 checkpoints and returns structured report."""
-        compile_report = self.compile_all()
-        if not compile_report["passed"]:
-            return {
+    def run_all(self, verbose=False, timeout_sec=2.0, iterations=10000):
+        """Runs all Required checkpoints only on the canonical Linux + GCC baseline."""
+        environment_gate = self.canonical_environment_status()
+        if not environment_gate["ready"]:
+            report = {
                 "overall_passed": False,
-                "error": compile_report["error"],
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "environment_gate": environment_gate,
+                "meta": {
+                    "os": platform.system(),
+                    "kernel": platform.release(),
+                    "arch": platform.machine(),
+                    "compiler": self.compiler,
+                    "flags": "-std=c11 -pthread",
+                },
+                "compilation": {
+                    "passed": False,
+                    "disposition": "NOT RUN",
+                    "reason": environment_gate["reason"],
+                },
                 "checkpoints": {},
             }
+            if verbose:
+                self._print_human_report(report)
+            return report
+
+        compile_report = self.compile_all()
+        if not compile_report["passed"]:
+            report = {
+                "overall_passed": False,
+                "disposition": "FAIL",
+                "environment_gate": environment_gate,
+                "error": compile_report["error"],
+                "meta": {
+                    "os": platform.system(),
+                    "kernel": platform.release(),
+                    "arch": platform.machine(),
+                    "compiler": self.compiler,
+                    "flags": "-std=c11 -pthread",
+                },
+                "compilation": compile_report,
+                "checkpoints": {},
+            }
+            if verbose:
+                self._print_human_report(report)
+            return report
 
         cp1 = self.run_checkpoint_1_deterministic_lost_update()
-        cp2 = self.run_checkpoint_2_supplemental_scheduler_observation()
-        cp3 = self.run_checkpoint_3_mutex_repair()
+        cp2 = self.run_checkpoint_2_supplemental_scheduler_observation(iterations=iterations)
+        cp3 = self.run_checkpoint_3_mutex_repair(iterations=iterations)
         cp4 = self.run_checkpoint_4_cond_rendezvous()
-        cp5 = self.run_checkpoint_5_deadlock_preconditions()
+        cp5 = self.run_checkpoint_5_deadlock_preconditions(timeout_sec=timeout_sec)
 
         overall_passed = (
             compile_report["passed"]
@@ -439,6 +582,8 @@ class ConcurrencyLabHarness:
 
         report = {
             "overall_passed": overall_passed,
+            "disposition": "PASS" if overall_passed else "FAIL",
+            "environment_gate": environment_gate,
             "meta": {
                 "os": platform.system(),
                 "kernel": platform.release(),
@@ -465,9 +610,17 @@ class ConcurrencyLabHarness:
         print("=" * 70)
         print(" LAB-REQ-03: POSIX Threads Race, Rendezvous & Progress Boundaries")
         print("=" * 70)
-        print(f" Status: {'PASS' if report['overall_passed'] else 'FAIL'}")
+        print(f" Status: {report.get('disposition', 'PASS' if report['overall_passed'] else 'FAIL')}")
         print(f" Environment: {report['meta']['os']} ({report['meta']['arch']})")
         print(f" Compiler:    {report['meta']['compiler']} ({report['meta']['flags']})")
+        if report.get("disposition") == "ENVIRONMENT-BLOCKED / NOT RUN":
+            print(f" Reason:      {report.get('environment_gate', {}).get('reason')}")
+            print("=" * 70)
+            return
+        if not report.get("checkpoints"):
+            print(f" Error:       {report.get('error', 'Required checkpoints were not executed.')}")
+            print("=" * 70)
+            return
         print("-" * 70)
 
         cp1 = report["checkpoints"]["checkpoint_1_deterministic_lost_update"]
