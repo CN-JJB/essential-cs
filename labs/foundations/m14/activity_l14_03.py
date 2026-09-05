@@ -21,6 +21,21 @@ from typing import Any, Dict, List, Optional
 DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "l14_03_atomic_write.db")
 
 
+def _is_busy_conflict(exc: sqlite3.Error) -> bool:
+    """Classify SQLite BUSY/LOCKED structurally, without matching driver message text."""
+    code = getattr(exc, "sqlite_errorcode", None)
+    name = getattr(exc, "sqlite_errorname", None)
+    primary_codes = {
+        getattr(sqlite3, "SQLITE_BUSY", 5),
+        getattr(sqlite3, "SQLITE_LOCKED", 6),
+    }
+    if isinstance(code, int) and (code & 0xFF) in primary_codes:
+        return True
+    if isinstance(name, str) and (name.startswith("SQLITE_BUSY") or name.startswith("SQLITE_LOCKED")):
+        return True
+    return False
+
+
 def init_database(db_path: str = DEFAULT_DB_PATH) -> Dict[str, str]:
     if os.path.exists(db_path):
         os.remove(db_path)
@@ -55,10 +70,10 @@ def init_database(db_path: str = DEFAULT_DB_PATH) -> Dict[str, str]:
 
 def demonstrate_upgrade_collision(db_path: str, verbose: bool = True) -> Dict[str, Any]:
     """
-    Demonstrates lock-upgrade collision under SQLite rollback journal mode:
-    Both connections start reading with BEGIN DEFERRED (acquiring SHARED locks).
-    Both then attempt an UPDATE (attempting to acquire RESERVED/EXCLUSIVE locks).
-    Because both hold shared locks, neither can upgrade, resulting in SQLITE_BUSY.
+    Demonstrates a read-to-write upgrade conflict under SQLite rollback-journal mode:
+    both connections establish read transactions; connection 1 then becomes the writer,
+    and connection 2's later upgrade fails with a BUSY/LOCKED-class result because
+    another writer already exists.
     """
     conn1 = sqlite3.connect(db_path, timeout=0.0, isolation_level=None)
     conn2 = sqlite3.connect(db_path, timeout=0.0, isolation_level=None)
@@ -91,16 +106,17 @@ def demonstrate_upgrade_collision(db_path: str, verbose: bool = True) -> Dict[st
         try:
             cur2.execute("UPDATE accounts SET balance = balance - 10 WHERE id = 'A';")
         except sqlite3.OperationalError as e:
-            collision_info["collision_observed"] = True
             collision_info["error_type"] = type(e).__name__
             collision_info["error_message"] = str(e)
-            if hasattr(e, "sqlite_errorcode"):
-                collision_info["sqlite_errorcode"] = e.sqlite_errorcode
-            if hasattr(e, "sqlite_errorname"):
-                collision_info["sqlite_errorname"] = e.sqlite_errorname
-            if verbose:
-                print(f" [Upgrade Collision] Conn 2 failed to upgrade read lock to write lock:")
-                print(f"                     {type(e).__name__}: {e}")
+            collision_info["sqlite_errorcode"] = getattr(e, "sqlite_errorcode", None)
+            collision_info["sqlite_errorname"] = getattr(e, "sqlite_errorname", None)
+            if _is_busy_conflict(e):
+                collision_info["collision_observed"] = True
+                if verbose:
+                    print(" [Upgrade Collision] Conn 2 could not upgrade while Conn 1 is the writer:")
+                    print(f"                     {type(e).__name__}: {e}")
+            else:
+                raise
 
         # Cleanup active transactions
         try:
@@ -188,30 +204,27 @@ def execute_with_boundary_retry(
                 }
 
             except sqlite3.OperationalError as e:
-                # Transient conflict: rollback before retrying
-                try:
-                    cursor.execute("ROLLBACK;")
-                except sqlite3.Error:
-                    pass
+                # BEGIN IMMEDIATE itself can fail before a transaction begins.
+                if conn.in_transaction:
+                    try:
+                        cursor.execute("ROLLBACK;")
+                    except sqlite3.Error:
+                        pass
 
-                # Check if it's a busy / lock conflict
-                is_busy = "busy" in str(e).lower() or "locked" in str(e).lower()
-                if hasattr(e, "sqlite_errorname") and e.sqlite_errorname in ("SQLITE_BUSY", "SQLITE_LOCKED"):
-                    is_busy = True
-
-                if is_busy and attempts < max_retries:
+                if _is_busy_conflict(e) and attempts < max_retries:
                     backoff = base_backoff_sec * (2 ** (attempts - 1))
                     if verbose:
-                        print(f" [Conflict] Attempt {attempts} failed with busy conflict. Backing off {backoff:.3f}s...")
+                        print(f" [Conflict] Attempt {attempts} failed with busy/locked result. Backing off {backoff:.3f}s...")
                     time.sleep(backoff)
                     continue
-                else:
-                    # Non-transient operational error or max retries exceeded
-                    raise
+
+                # Unknown operational errors and exhausted retry budgets remain failures.
+                raise
 
             except sqlite3.IntegrityError:
-                # Non-transient constraint error: rollback and fail fast, DO NOT RETRY
-                cursor.execute("ROLLBACK;")
+                # Non-transient constraint error: rollback an active transaction and fail fast.
+                if conn.in_transaction:
+                    cursor.execute("ROLLBACK;")
                 raise
 
         return {"status": "MAX_RETRIES_EXCEEDED", "attempts": attempts, "token": idempotency_token}

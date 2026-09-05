@@ -18,6 +18,21 @@ from typing import Any, Dict, Tuple
 
 DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "l14_02_concurrency.db")
 
+def _is_busy_conflict(exc: sqlite3.Error) -> bool:
+    """Classify SQLite BUSY/LOCKED structurally, without matching driver message text."""
+    code = getattr(exc, "sqlite_errorcode", None)
+    name = getattr(exc, "sqlite_errorname", None)
+    primary_codes = {
+        getattr(sqlite3, "SQLITE_BUSY", 5),
+        getattr(sqlite3, "SQLITE_LOCKED", 6),
+    }
+    if isinstance(code, int) and (code & 0xFF) in primary_codes:
+        return True
+    if isinstance(name, str) and (name.startswith("SQLITE_BUSY") or name.startswith("SQLITE_LOCKED")):
+        return True
+    return False
+
+
 EC_CON_014_DEFINITION = (
     "The relationship between allowed state transitions and what observers may see, "
     "according to a named ordering/visibility guarantee."
@@ -111,7 +126,7 @@ def run_activity_l14_02(db_path: str = DEFAULT_DB_PATH, verbose: bool = True) ->
             print(" [Check] Dirty Read prevented: Conn 2 observes only committed state (600).")
 
         # Step 3: Connection 2 attempts a competing write transaction
-        # Conn 1 holds a RESERVED/EXCLUSIVE write lock under rollback-journal baseline.
+        # Conn 1 owns the active write transaction; exact lock-state progression is engine-internal evidence.
         # Conn 2 should encounter a busy conflict.
         conflict_detected = False
         error_info: Dict[str, Any] = {
@@ -126,23 +141,22 @@ def run_activity_l14_02(db_path: str = DEFAULT_DB_PATH, verbose: bool = True) ->
             cur2.execute("BEGIN IMMEDIATE;")
             cur2.execute("UPDATE accounts SET balance = 999 WHERE id = 'B';")
         except sqlite3.OperationalError as e:
-            conflict_detected = True
             error_info["error_type"] = type(e).__name__
             error_info["error_message"] = str(e)
-            if hasattr(e, "sqlite_errorcode"):
-                error_info["sqlite_errorcode"] = e.sqlite_errorcode
-            if hasattr(e, "sqlite_errorname"):
-                error_info["sqlite_errorname"] = e.sqlite_errorname
-            error_info["disposition"] = "BUSY_CONFLICT_CAPTURED"
-            if verbose:
-                print(f" [Conn 2 Write Conflict] Caught expected conflict: {type(e).__name__}: {e}")
-                if error_info["sqlite_errorname"]:
-                    print(f"          SQLite Error: {error_info['sqlite_errorname']} (code {error_info['sqlite_errorcode']})")
-        except sqlite3.Error as e:
-            conflict_detected = True
-            error_info["error_type"] = type(e).__name__
-            error_info["error_message"] = str(e)
-            error_info["disposition"] = "GENERIC_SQLITE_ERROR_CAPTURED"
+            error_info["sqlite_errorcode"] = getattr(e, "sqlite_errorcode", None)
+            error_info["sqlite_errorname"] = getattr(e, "sqlite_errorname", None)
+            if _is_busy_conflict(e):
+                conflict_detected = True
+                error_info["disposition"] = "BUSY_CONFLICT_CAPTURED"
+                if verbose:
+                    print(f" [Conn 2 Write Conflict] Busy/locked result recorded: {type(e).__name__}: {e}")
+                    if error_info["sqlite_errorname"]:
+                        print(f"          SQLite Error: {error_info['sqlite_errorname']} (code {error_info['sqlite_errorcode']})")
+            else:
+                error_info["disposition"] = "UNEXPECTED_OPERATIONAL_ERROR"
+                raise
+        except sqlite3.Error:
+            raise
 
         results["writer_conflict"] = {
             "conflict_detected": conflict_detected,

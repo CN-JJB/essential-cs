@@ -12,10 +12,12 @@ Implements the five canonical checkpoints:
 
 import os
 import platform
+import queue
 import shutil
 import sqlite3
 import subprocess
 import sys
+import threading
 import time
 from typing import Any, Dict, Optional, Tuple
 
@@ -23,6 +25,21 @@ LAB_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_DB_PATH = os.path.join(LAB_DIR, "lab_req_05.db")
 DEFAULT_BACKUP_PATH = os.path.join(LAB_DIR, "lab_req_05_backup.db")
 CHILD_WORKER_PATH = os.path.join(LAB_DIR, "child_worker.py")
+
+
+def _is_busy_conflict(exc: sqlite3.Error) -> bool:
+    """Classify SQLite BUSY/LOCKED structurally, without matching driver message text."""
+    code = getattr(exc, "sqlite_errorcode", None)
+    name = getattr(exc, "sqlite_errorname", None)
+    primary_codes = {
+        getattr(sqlite3, "SQLITE_BUSY", 5),
+        getattr(sqlite3, "SQLITE_LOCKED", 6),
+    }
+    if isinstance(code, int) and (code & 0xFF) in primary_codes:
+        return True
+    if isinstance(name, str) and (name.startswith("SQLITE_BUSY") or name.startswith("SQLITE_LOCKED")):
+        return True
+    return False
 
 
 class TransactionLabHarness:
@@ -139,17 +156,16 @@ class TransactionLabHarness:
                 cur2.execute("BEGIN IMMEDIATE;")
                 cur2.execute("UPDATE accounts SET balance = 999 WHERE id = 'B';")
             except sqlite3.OperationalError as e:
-                conflict_caught = True
                 error_details["error_type"] = type(e).__name__
                 error_details["error_message"] = str(e)
-                if hasattr(e, "sqlite_errorcode"):
-                    error_details["sqlite_errorcode"] = e.sqlite_errorcode
-                if hasattr(e, "sqlite_errorname"):
-                    error_details["sqlite_errorname"] = e.sqlite_errorname
-            except sqlite3.Error as e:
-                conflict_caught = True
-                error_details["error_type"] = type(e).__name__
-                error_details["error_message"] = str(e)
+                error_details["sqlite_errorcode"] = getattr(e, "sqlite_errorcode", None)
+                error_details["sqlite_errorname"] = getattr(e, "sqlite_errorname", None)
+                if _is_busy_conflict(e):
+                    conflict_caught = True
+                else:
+                    raise
+            except sqlite3.Error:
+                raise
 
             # Rollback conn 1 to restore clean state
             cur1.execute("ROLLBACK;")
@@ -226,22 +242,33 @@ class TransactionLabHarness:
         )
 
         child_pid = proc.pid
-        child_ready = False
-        start_time = time.time()
+        line_queue = queue.Queue(maxsize=1)
+
+        def _read_handshake_line() -> None:
+            try:
+                line_queue.put(proc.stdout.readline() if proc.stdout else "")
+            except BaseException as exc:
+                line_queue.put(exc)
+
+        reader = threading.Thread(target=_read_handshake_line, daemon=True)
+        reader.start()
 
         try:
-            # Watchdog loop: wait for child to mutate
-            while time.time() - start_time < timeout_sec:
-                line = proc.stdout.readline().strip() if proc.stdout else ""
-                if line == "CHILD_MUTATED":
-                    child_ready = True
-                    break
-                time.sleep(0.05)
-
-            if not child_ready:
+            # Keep the watchdog deadline on the parent thread. A silent child can block
+            # readline() on the helper thread without defeating this timeout.
+            try:
+                handshake = line_queue.get(timeout=timeout_sec)
+            except queue.Empty:
                 proc.kill()
                 proc.wait(timeout=2.0)
-                raise RuntimeError("Child process failed to report CHILD_MUTATED within watchdog timeout.")
+                raise RuntimeError("Child process failed to report readiness within watchdog timeout.")
+
+            if isinstance(handshake, BaseException):
+                raise RuntimeError(f"Child handshake reader failed: {type(handshake).__name__}: {handshake}")
+            if str(handshake).strip() != "CHILD_MUTATED":
+                proc.kill()
+                proc.wait(timeout=2.0)
+                raise RuntimeError(f"Unexpected child handshake: {str(handshake).strip()!r}")
 
             # Record journal status during uncommitted child write
             journal_exists_during_write = os.path.exists(self.journal_path)

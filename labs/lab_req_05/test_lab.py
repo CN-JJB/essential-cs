@@ -5,6 +5,7 @@ Tests all five checkpoints, process watchdog and reaping, and idempotent reset.
 """
 
 import os
+import sqlite3
 import tempfile
 import unittest
 
@@ -41,6 +42,19 @@ class TestLabReq05(unittest.TestCase):
         res = self.harness.run_checkpoint_2_bounded_writer_conflict()
         self.assertTrue(res["passed"])
         self.assertTrue(res["conflict_caught"])
+        code = res["error_details"]["sqlite_errorcode"]
+        name = res["error_details"]["sqlite_errorname"]
+        structurally_busy = (
+            (isinstance(code, int) and (code & 0xFF) in {
+                getattr(sqlite3, "SQLITE_BUSY", 5),
+                getattr(sqlite3, "SQLITE_LOCKED", 6),
+            })
+            or (
+                isinstance(name, str)
+                and (name.startswith("SQLITE_BUSY") or name.startswith("SQLITE_LOCKED"))
+            )
+        )
+        self.assertTrue(structurally_busy)
         self.assertTrue(res["no_corruption"])
         self.assertEqual(res["post_conflict_balances"], {"A": 600, "B": 400})
 
