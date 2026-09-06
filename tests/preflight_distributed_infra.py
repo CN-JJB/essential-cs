@@ -481,6 +481,113 @@ def probe_m19_linux_capabilities() -> Dict[str, Any]:
     }
 
 
+def probe_m20_observability_capabilities() -> Dict[str, Any]:
+    """
+    Probes M20 Core zero-SaaS capabilities:
+    1. Python standard library modules required by s6_m20_observability_pipeline.py
+    2. Monotonic clock and perf_counter availability and resolution
+    3. Ephemeral bind and scratch readiness are validated in shared dimensions.
+    """
+    stdlib_modules = ["http.server", "urllib.request", "json", "time", "threading", "uuid", "socket"]
+    missing_modules = []
+    for mod in stdlib_modules:
+        try:
+            __import__(mod)
+        except ImportError:
+            missing_modules.append(mod)
+
+    monotonic_info: Dict[str, Any] = {}
+    monotonic_usable = False
+    try:
+        clk_info = time.get_clock_info("monotonic")
+        monotonic_info = {
+            "implementation": clk_info.implementation,
+            "monotonic": clk_info.monotonic,
+            "resolution_s": clk_info.resolution,
+            "adjustable": clk_info.adjustable,
+        }
+        t0 = time.monotonic()
+        time.sleep(0.001)
+        t1 = time.monotonic()
+        monotonic_usable = (t1 >= t0) and bool(clk_info.monotonic)
+    except Exception as e:
+        monotonic_info["error"] = str(e)
+        monotonic_usable = False
+
+    perf_info: Dict[str, Any] = {}
+    try:
+        p_info = time.get_clock_info("perf_counter")
+        perf_info = {
+            "implementation": p_info.implementation,
+            "monotonic": p_info.monotonic,
+            "resolution_s": p_info.resolution,
+        }
+    except Exception as e:
+        perf_info["error"] = str(e)
+
+    available = (len(missing_modules) == 0) and monotonic_usable
+
+    return {
+        "available": available,
+        "stdlib_modules_checked": stdlib_modules,
+        "missing_modules": missing_modules,
+        "monotonic_clock": monotonic_info,
+        "perf_counter_clock": perf_info,
+        "monotonic_usable": monotonic_usable,
+        "disposition": (
+            "REQUIRED CAPABILITY PASS"
+            if available
+            else "ENVIRONMENT-BLOCKED / NOT RUN"
+        ),
+        "reason": (
+            "Standard library modules and monotonic timing capability available."
+            if available
+            else f"Missing capability: modules={missing_modules}, monotonic_usable={monotonic_usable}"
+        ),
+    }
+
+
+def probe_optional_opentelemetry_package() -> Dict[str, Any]:
+    """
+    Probes whether optional OpenTelemetry packages (LAB-OPT-04 / EXP-04) are installed.
+    Strictly Optional: package absence never blocks Core M20 readiness.
+    """
+    otel_installed = False
+    otel_version = None
+    sdk_installed = False
+    sdk_version = None
+    try:
+        import opentelemetry
+        otel_installed = True
+        otel_version = getattr(opentelemetry, "__version__", "unknown")
+    except ImportError:
+        pass
+
+    try:
+        import opentelemetry.sdk
+        sdk_installed = True
+        import opentelemetry.sdk.version
+        sdk_version = getattr(opentelemetry.sdk.version, "__version__", "unknown")
+    except Exception:
+        pass
+
+    available = otel_installed and sdk_installed
+    return {
+        "available": available,
+        "opentelemetry_api_installed": otel_installed,
+        "opentelemetry_api_version": otel_version,
+        "opentelemetry_sdk_installed": sdk_installed,
+        "opentelemetry_sdk_version": sdk_version,
+        "accepted_pinned_version": "v1.44.0",
+        "disposition": (
+            "OPTIONAL PACKAGE AVAILABLE"
+            if available
+            else "OPTIONAL PACKAGE NOT INSTALLED / FALLBACK TO ZERO-SAAS CORE (NO CURRICULUM LOSS)"
+        ),
+        "role": "STRICTLY OPTIONAL / LAB-OPT-04 & EXP-04",
+    }
+
+
 def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[str, Any]:
     os_info = probe_os()
     py_info = probe_python()
@@ -494,6 +601,8 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
     mit_info = probe_optional_mit_6033_source(live_probe=check_mit)
     m18_coord_info = probe_m18_coordination_capabilities()
     m19_linux_info = probe_m19_linux_capabilities()
+    m20_obs_info = probe_m20_observability_capabilities()
+    otel_info = probe_optional_opentelemetry_package()
 
     m16_core_ready = (
         sock_info["available"]
@@ -516,6 +625,12 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
         and temp_info["writable"]
     )
 
+    m20_core_ready = (
+        m20_obs_info["available"]
+        and bind_info["bound"]
+        and temp_info["writable"]
+    )
+
     return {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "oq_bp_006_status": "OPEN / UNRESOLVED",
@@ -523,6 +638,7 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
         "m17_core_status": "READY" if m17_core_ready else "BLOCKED",
         "m18_core_status": "READY" if m18_core_ready else "BLOCKED",
         "m19_core_status": "READY" if m19_core_ready else "BLOCKED",
+        "m20_core_status": "READY" if m20_core_ready else "BLOCKED",
         "dimensions": {
             "1_os": os_info,
             "2_python": py_info,
@@ -536,10 +652,12 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
             "10_optional_mit_6033_source": mit_info,
             "11_m18_coordination_capabilities": m18_coord_info,
             "12_m19_linux_capabilities": m19_linux_info,
+            "13_m20_observability_capabilities": m20_obs_info,
+            "14_optional_opentelemetry_package": otel_info,
         },
         "notes": (
             "Readiness is not lesson/lab PASS. "
-            "M16, M17, and M18 use standard Python stdlib capabilities which are cross-platform. "
+            "M16, M17, M18, and M20 use standard Python stdlib capabilities which are cross-platform. "
             "M19 requires canonical Linux read-only observation (/proc/self/ns and /proc/self/cgroup). "
             "OQ-BP-006 remains open for the wider course curriculum."
         ),
@@ -646,6 +764,38 @@ class TestPreflightDistributedInfra(unittest.TestCase):
         else:
             self.assertEqual(report["m19_core_status"], "BLOCKED")
 
+    def test_m20_core_capabilities_report_truthfully(self):
+        report = run_preflight()
+        dims = report["dimensions"]
+        m20_info = dims["13_m20_observability_capabilities"]
+        bind_info = dims["4_localhost_ephemeral_bind"]
+        temp_info = dims["6_writable_temp"]
+
+        expected_status = (
+            "READY"
+            if (m20_info["available"] and bind_info["bound"] and temp_info["writable"])
+            else "BLOCKED"
+        )
+        self.assertEqual(report["m20_core_status"], expected_status)
+        self.assertIn(
+            m20_info["disposition"],
+            {"REQUIRED CAPABILITY PASS", "ENVIRONMENT-BLOCKED / NOT RUN"},
+        )
+        if m20_info["available"]:
+            self.assertTrue(m20_info["monotonic_usable"])
+            self.assertEqual(len(m20_info["missing_modules"]), 0)
+
+        # Optional OpenTelemetry probe does not block Core readiness
+        otel_info = dims["14_optional_opentelemetry_package"]
+        self.assertEqual(otel_info["accepted_pinned_version"], "v1.44.0")
+        self.assertIn(
+            otel_info["disposition"],
+            {
+                "OPTIONAL PACKAGE AVAILABLE",
+                "OPTIONAL PACKAGE NOT INSTALLED / FALLBACK TO ZERO-SAAS CORE (NO CURRICULUM LOSS)",
+            },
+        )
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Preflight verification for Stage 6 Distributed Infra")
@@ -654,7 +804,7 @@ def main() -> int:
     parser.add_argument("--check-mit-source", action="store_true", help="Probe MIT 6.033 reachability")
     parser.add_argument(
         "--module",
-        choices=("m16", "m17", "m18", "m19", "all"),
+        choices=("m16", "m17", "m18", "m19", "m20", "all"),
         default="m16",
         help=(
             "Select which Core readiness status controls the exit code. "
@@ -670,11 +820,13 @@ def main() -> int:
         "m17": report["m17_core_status"] == "READY",
         "m18": report["m18_core_status"] == "READY",
         "m19": report["m19_core_status"] == "READY",
+        "m20": report["m20_core_status"] == "READY",
         "all": (
             report["m16_core_status"] == "READY"
             and report["m17_core_status"] == "READY"
             and report["m18_core_status"] == "READY"
             and report["m19_core_status"] == "READY"
+            and report["m20_core_status"] == "READY"
         ),
     }[args.module]
 
@@ -692,6 +844,7 @@ def main() -> int:
     print(f" M17 Core Status:           {report['m17_core_status']}")
     print(f" M18 Core Status:           {report['m18_core_status']}")
     print(f" M19 Core Status:           {report['m19_core_status']}")
+    print(f" M20 Core Status:           {report['m20_core_status']}")
     print("-" * 70)
     print(f" [Host OS]:                 {report['dimensions']['1_os']['system']} {report['dimensions']['1_os']['release']} ({report['dimensions']['1_os']['architecture']})")
     print(f" [Python Runtime]:          {report['dimensions']['2_python']['implementation']} {report['dimensions']['2_python']['version']}")
@@ -709,6 +862,8 @@ def main() -> int:
     print(f" [M19 Linux Read-Only]:     {report['dimensions']['12_m19_linux_capabilities']['disposition']}")
     if not report['dimensions']['12_m19_linux_capabilities']['available']:
         print(f"   Reason:                  {report['dimensions']['12_m19_linux_capabilities']['reason']}")
+    print(f" [M20 Observability]:       {report['dimensions']['13_m20_observability_capabilities']['disposition']}")
+    print(f" [Optional OpenTelemetry]:  {report['dimensions']['14_optional_opentelemetry_package']['disposition']}")
     print("=" * 70)
 
     return 0 if selected_ready else 1
