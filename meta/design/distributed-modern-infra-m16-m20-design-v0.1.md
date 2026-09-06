@@ -659,7 +659,7 @@ Navigate the landscape of consistency models. Disambiguate database transaction 
 - *Distinction:* Serializability (a property of concurrent multi-operation transactions) vs. Linearizability (a real-time recency property of single operations on single objects).
 
 ### 9. Worked Example
-On a **single worksheet timeline** (not separate machine wall clocks), Client $A
+On a **single worksheet timeline** (not separate machine wall clocks), Client $A$ completes a write of a newer value before Client $B$ invokes a later read, yet $B$ returns the older value. A linearizable history cannot place that later read before the already-completed write. An eventually consistent system without a stronger session guarantee may permit the stale read while its stated convergence assumptions are still progressing. The worksheet reasons from invocation/response precedence, not from comparing unsynchronized machine timestamps.
 
 ### 10. Bounded Hands-On / Observation
 Learners analyze 3 execution traces containing multi-client reads and writes:
