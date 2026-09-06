@@ -98,7 +98,7 @@ class TwoPhaseCommitParticipant:
                     "voted NO, coordinator decided ABORT; if all voted YES, coordinator "
                     "decided COMMIT. Unilateral commit violates Consistency if decision "
                     "was ABORT; unilateral abort violates Consistency if decision was COMMIT. "
-                    "Participant MUST BLOCK until decision is recovered."
+                    "In this classic PREPARED/decision-unknown trace, the participant cannot choose COMMIT or ABORT from silence alone."
                 ),
                 "recovery_requirement": (
                     "Requires coordinator recovery log or cooperative termination protocol "
@@ -150,7 +150,7 @@ class TwoPhaseCommitCoordinator:
         Executes 2PC across participants.
         Phase 1: Send Prepare, collect votes.
         Decision: Commit if all YES, else Abort. Recorded durably.
-        Phase 2: Deliver decision, with scripted crash / drop before delivery to selected participants.
+        Phase 2: Deliver the decision, with scripted decision unavailability for selected participants. This models a participant missing the decision; it is not a literal ordered simulation of one coordinator process continuing after it has physically crashed.
         """
         if crash_before_delivery_to is None:
             crash_before_delivery_to = []
@@ -177,7 +177,7 @@ class TwoPhaseCommitCoordinator:
         delivered: Dict[str, bool] = {}
         for name, p in self.participants.items():
             if name in crash_before_delivery_to:
-                # Coordinator crashed or message dropped before reaching this participant
+                # Scripted: this participant does not receive the coordinator decision.
                 delivered[name] = False
             else:
                 p.on_decision(self.durable_log)
@@ -245,7 +245,7 @@ class CourseSagaScenario:
     Features:
     - Injected failure at Step 3 (Process Payment).
     - Compensating chain in configured reverse order (Step 2 -> Step 1).
-    - Concurrent observer hook exposing intermediate state visibility (dirty read / lack of isolation).
+    - Concurrent observer hook exposing already-applied intermediate Saga state / lack of workflow-wide isolation.
     """
 
     def __init__(self, initial_stock: int = 10) -> None:
@@ -382,9 +382,11 @@ class FencedStorageEngine:
 
     def write(self, key: str, value: Any, presented_token: int, client_id: str) -> Dict[str, Any]:
         """
-        Validates fencing token invariant:
-        If presented_token < highest_token => REJECT (stale lease holder).
+        Validates the course fencing-order rule:
+        If presented_token < highest_token => REJECT as superseded.
         Else => ACCEPT, update highest_token = presented_token, store value.
+
+        This checker validates ordering only. It does not authenticate token issuance and it does not know that a lease expired unless a higher token has already reached the resource.
         """
         if presented_token < self.highest_token:
             record = {
