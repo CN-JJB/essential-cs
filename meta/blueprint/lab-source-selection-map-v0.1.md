@@ -1310,18 +1310,29 @@ the repository” is not an acceptable instruction.
      <https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/df1526408e3ec6f7e43aadfa1ce5f944_MIT6_033S18lec15.pdf>;
   3. Lecture 16, *Atomicity via Logging*:
      <https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/76fa216e8e5a4c4722c315a84b8e09a8c_MIT6_033S18lec16.pdf>.
+  4. **Lead provenance correction (2026-09-05), only for the already-required
+     Primary/Backup + View Server comparison:** Lecture 19, *Availability via
+     Replication*:
+     <https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/resources/mit6_033s18lec19/>;
+     official outline:
+     <https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/pages/week-11/lecture-19-outline/>.
+     Lecture 14 remains the reliability-via-replication foundation and must not
+     be cited as the View Server source.
 - **What implementation reality becomes visible:** Replication, transaction
   coordination, and logging solve different failure problems and move
   complexity to coordinators, backups, logs, and recovery; a diagram can
   preserve an invariant while still exposing availability and operational
   costs.
-- **What the learner should ignore:** All other lectures, Bitcoin/Tor, full
-  design-project requirements, unrelated assignments, and any attempt to
-  reproduce the original course assessment.
-- **Explicit stopping point:** Stop after annotating one coordinator/
-  primary/backup or logging diagram with state, message, failure, recovery,
-  and invariant labels, then compare one simpler single-node alternative. Do
-  not read the complete course packet.
+- **What the learner should ignore:** Lectures outside L14/L15/L16 plus the
+  narrow L19 provenance-correction slice, Bitcoin/Tor, full design-project
+  requirements, unrelated assignments, and any attempt to reproduce the
+  original course assessment.
+- **Explicit stopping point:** Use L14 for replication/reliability foundations;
+  if doing the Primary/Backup + View Server comparison, use the official L19
+  source. Stop after annotating one learner-original coordinator/primary/backup
+  or logging diagram with state, message, failure, recovery, and invariant
+  labels, then compare one simpler single-node alternative. Do not read the
+  complete course packet.
 - **Cognitive load:** High conceptual, low runtime; use only after M16/M17 and
   transaction/recovery principles are established.
 - **Maturity/maintenance status:** Mature historical university course source,
