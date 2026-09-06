@@ -100,7 +100,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Can Unilaterally Commit: `<actual trace result>`
 - Can Unilaterally Abort: `<actual trace result>`
 - Disposition & Blocking Reason:
-  `<Learner explains why a prepared participant cannot guess the outcome and must block>`
+  `<Learner explains why this PREPARED/decision-unknown trace cannot choose COMMIT or ABORT from silence alone, and records what recovery/termination information is needed>`
 - Contrast Case (Vote NO):
   `<Learner records whether a participant that voted NO can abort unilaterally, proving not every coordinator crash blocks everyone forever>`
 - Recovery Information Needed to Terminate:
