@@ -718,19 +718,21 @@ Recheck Herlihy & Wing (1990) and Gilbert & Lynch (2002) proofs.
 
 ### 15.1 Provenance & License Discipline
 - **Status:** **ADOPT — LINK AND PARAPHRASE ONLY**.
-- **Source:** MIT OpenCourseWare 6.033 (Computer System Design), Spring 2018.
+- **Source:** MIT OpenCourseWare 6.033 (*Computer System Engineering*), Spring 2018.
 - **Lectures:**
   - Lecture 14: *Fault Tolerance: Reliability via Replication*
   - Lecture 15: *Fault Tolerance: Introduction to Transactions*
   - Lecture 16: *Atomicity via Logging*
+  - **Lead provenance correction (2026-09-05):** Lecture 19, *Availability via Replication*, is the official source for Primary/Backup, View Server, partition, centralization, and the bridge to distributed consensus/Raft. L14 remains the replication-reliability foundation.
 - **License Gate:** CC BY-NC-SA 4.0. Essential CS vendors **zero** MIT slide images, diagrams, or verbatim text.
 
 ### 15.2 Learner Reading Card & Stopping Point
-- **Reading Assignment:** Read MIT 6.033 2018 Lecture 14 notes on Primary-Backup replication and view-change protocols.
+- **Reading Assignment:** Use Lecture 14 for reliability/replication foundations. For the already-required Primary/Backup + View Server comparison, inspect the official Lecture 19 *Availability via Replication* resource/outline; do not attribute View Server rules to Lecture 14.
 - **Guiding Questions:**
-  1. How does the Primary-Backup coordinator detect backup failure vs. network partition?
-  2. How does the view server prevent both old primary and new primary from executing client requests simultaneously?
-- **Stopping Point:** Complete the reading card comparing MIT 6.033's view-server model with Raft's majority election model. No external code compilation.
+  1. What replication/reliability claim is actually supported by Lecture 14, and what failure domain does it assume?
+  2. In Lecture 19, what can ping-based failure detection not distinguish, what role does the View Server play under partition, and why is its centralization called out as a dependency?
+  3. How does that centralized authority model differ from the course's bounded Raft trace, where majority-set overlap is only one ingredient alongside vote/log/commit rules?
+- **Stopping Point:** Complete the bounded reading card using L14/L15/L16 plus the narrow L19 View Server provenance correction. No external code compilation or full-course reading.
 
 ---
 
