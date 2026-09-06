@@ -13,8 +13,9 @@
 ## 1. 外部官方源与基准指向 (Canonical External Pointer)
 
 - **课程机构**：Stanford University — CS144: *Introduction to Computer Networking* (Fall 2025)
-- **官方主页**：[https://cs144.github.io/](https://cs144.github.io/)
-- **实验目标**：Checkpoint 2 — *The TCP Receiver* (`check2.pdf`)
+- **官方课程主页**：[https://cs144.github.io/](https://cs144.github.io/)
+- **精确外部作业指针**：[Fall 2025 Checkpoint 2 — The TCP Receiver](https://cs144.github.io/assignments/check2.pdf)
+- **现时性记录**：该 PDF 仍标注 Fall 2025；Essential CS 于 2026-09-05 重新核对链接。
 - **外部代码框架**：Minnow TCP implementation (学习者如需参与，需依照斯坦福课程公开指引独立获取上游 Git 仓库)
 
 ---
@@ -53,6 +54,6 @@ TCP 作为可靠的面向字节流协议，必须在不可靠、会发生丢包�
 ## 4. 受限停止点 (Bounded Stopping Point)
 
 若学习者独立获取了上游授权材料并开展实践：
-- **严格停止边界**：仅限完成 Checkpoint 2 中 `TCPReceiver` 的接收逻辑并通过其公开单元测试（`ctest -R "^recv_"`）；
+- **严格停止边界**：仅在学习者独立取得授权 starter/test route 后，停在 Checkpoint 2 的 TCP receiver slice；测试命令、starter 获取步骤与作业正文以学习者获得的上游材料为准，Essential CS 不复制这些说明。
 - **禁止前向扩展**：不需要实现后续的 Checkpoint 3（TCP Sender）或路由器逻辑；
 - **记录规范**：在个人证据记录中仅标注完成状态与思维答卷，严禁向公开仓库提交上游作业代码。
