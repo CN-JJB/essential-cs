@@ -30,6 +30,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
 import urllib.request
 from typing import Any, Dict, List
 
@@ -486,7 +487,8 @@ def probe_m20_observability_capabilities() -> Dict[str, Any]:
     Probes M20 Core zero-SaaS capabilities:
     1. Python standard library modules required by s6_m20_observability_pipeline.py
     2. Monotonic clock and perf_counter availability and resolution
-    3. Ephemeral bind and scratch readiness are validated in shared dimensions.
+    3. Dedicated M20 scratch directory readiness (labs/foundations/m20/.scratch/):
+       tests creation, writing, reading, and cleaning up a probe file.
     """
     stdlib_modules = ["http.server", "urllib.request", "json", "time", "threading", "uuid", "socket"]
     missing_modules = []
@@ -525,7 +527,42 @@ def probe_m20_observability_capabilities() -> Dict[str, Any]:
     except Exception as e:
         perf_info["error"] = str(e)
 
-    available = (len(missing_modules) == 0) and monotonic_usable
+    # Dedicated M20 scratch capability check (labs/foundations/m20/.scratch)
+    m20_scratch_dir = os.path.normpath(
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "labs", "foundations", "m20", ".scratch")
+    )
+    m20_scratch_ready = False
+    scratch_error = None
+    probe_content = f"m20_scratch_probe_{os.getpid()}_{time.time()}"
+    probe_path = os.path.join(m20_scratch_dir, f".preflight_probe_{os.getpid()}.tmp")
+    try:
+        os.makedirs(m20_scratch_dir, exist_ok=True)
+        with open(probe_path, "w", encoding="utf-8") as f:
+            f.write(probe_content)
+        with open(probe_path, "r", encoding="utf-8") as f:
+            read_back = f.read()
+        if read_back == probe_content:
+            m20_scratch_ready = True
+        else:
+            scratch_error = "Read-back content mismatch"
+    except Exception as e:
+        scratch_error = str(e)
+    finally:
+        if os.path.exists(probe_path):
+            try:
+                os.remove(probe_path)
+            except Exception:
+                pass
+
+    available = (len(missing_modules) == 0) and monotonic_usable and m20_scratch_ready
+
+    reasons = []
+    if missing_modules:
+        reasons.append(f"Missing modules: {missing_modules}")
+    if not monotonic_usable:
+        reasons.append("Monotonic clock not usable")
+    if not m20_scratch_ready:
+        reasons.append(f"M20 scratch directory unready ({scratch_error})")
 
     return {
         "available": available,
@@ -534,15 +571,18 @@ def probe_m20_observability_capabilities() -> Dict[str, Any]:
         "monotonic_clock": monotonic_info,
         "perf_counter_clock": perf_info,
         "monotonic_usable": monotonic_usable,
+        "m20_scratch_dir": m20_scratch_dir,
+        "m20_scratch_ready": m20_scratch_ready,
+        "m20_scratch_error": scratch_error,
         "disposition": (
             "REQUIRED CAPABILITY PASS"
             if available
             else "ENVIRONMENT-BLOCKED / NOT RUN"
         ),
         "reason": (
-            "Standard library modules and monotonic timing capability available."
+            "Standard library modules, monotonic timing capability, and M20 scratch directory available."
             if available
-            else f"Missing capability: modules={missing_modules}, monotonic_usable={monotonic_usable}"
+            else "; ".join(reasons)
         ),
     }
 
@@ -628,7 +668,7 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
     m20_core_ready = (
         m20_obs_info["available"]
         and bind_info["bound"]
-        and temp_info["writable"]
+        and m20_obs_info.get("m20_scratch_ready", False)
     )
 
     return {
@@ -769,11 +809,10 @@ class TestPreflightDistributedInfra(unittest.TestCase):
         dims = report["dimensions"]
         m20_info = dims["13_m20_observability_capabilities"]
         bind_info = dims["4_localhost_ephemeral_bind"]
-        temp_info = dims["6_writable_temp"]
 
         expected_status = (
             "READY"
-            if (m20_info["available"] and bind_info["bound"] and temp_info["writable"])
+            if (m20_info["available"] and bind_info["bound"] and m20_info["m20_scratch_ready"])
             else "BLOCKED"
         )
         self.assertEqual(report["m20_core_status"], expected_status)
@@ -783,6 +822,7 @@ class TestPreflightDistributedInfra(unittest.TestCase):
         )
         if m20_info["available"]:
             self.assertTrue(m20_info["monotonic_usable"])
+            self.assertTrue(m20_info["m20_scratch_ready"])
             self.assertEqual(len(m20_info["missing_modules"]), 0)
 
         # Optional OpenTelemetry probe does not block Core readiness
@@ -795,6 +835,14 @@ class TestPreflightDistributedInfra(unittest.TestCase):
                 "OPTIONAL PACKAGE NOT INSTALLED / FALLBACK TO ZERO-SAAS CORE (NO CURRICULUM LOSS)",
             },
         )
+
+    def test_m20_scratch_failure_reports_truthful_blocked(self):
+        with mock.patch("builtins.open", side_effect=OSError("Simulated scratch permission denied")):
+            probe = probe_m20_observability_capabilities()
+            self.assertFalse(probe["available"])
+            self.assertFalse(probe["m20_scratch_ready"])
+            self.assertEqual(probe["disposition"], "ENVIRONMENT-BLOCKED / NOT RUN")
+            self.assertIn("M20 scratch directory unready", probe["reason"])
 
 
 def main() -> int:

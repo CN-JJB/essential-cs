@@ -70,22 +70,41 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 ## E — SLI / SLO & Error Budget Worksheet (EC-CON-010 Failure)
 
 - Named Service & Scenario Behavior: `[Record service boundary and evaluated user journey]`
-- SLI Definition & Denominator:
-  - Good Events ($G$): `[Record actual good requests]`
-  - Total Valid Events ($V$): `[Record actual total valid requests]`
-  - SLI Formula: `(Good Requests / Total Valid Requests) * 100%`
-  - Actual SLI Observed: `[Record computed SLI percentage]`
-- SLO Objective Target: `[Record scenario SLO target, e.g. 99.9%]`
-- Window Identity: `[Record window duration, e.g. 30 days / 2,592,000s]`
-- Error Budget Calculation:
-  - Allowed Bad Requests: `[Record calculated budget in requests]`
-  - Actual Bad Requests Observed: `[Record actual bad requests]`
-  - Remaining Error Budget: `[Record remaining budget in requests]`
-  - Budget Consumed Percentage: `[Record percentage of error budget spent]`
-  - Allowed Downtime Minutes: `[Record allowed downtime in window]`
-- Universal Definition & SLA Boundaries:
-  - Universal SLI Limit: `[Learner explains why good/valid ratio is one common SLI form, not the definition of every SLI]`
-  - SLA Distinction: `[Learner explains why an external contractual SLA with remedies differs from an internal SLO target, and why an SLA percentage is not an independent failure probability]`
+
+### Scenario A: Request-Based Event SLI / SLO (Event / Request Error Budget)
+- Request SLI Definition & Denominator:
+  - Good Requests ($G$): `[Record actual good requests count]`
+  - Total Valid Requests ($V$): `[Record actual total valid requests count]`
+  - Request SLI Formula: `(Good Requests / Total Valid Requests) * 100%`
+  - Actual Request SLI Observed: `[Record computed SLI percentage]`
+- Request SLO Target: `[Record scenario SLO target, e.g. 99.0% or 99.9%]`
+- Request Error Budget Calculation:
+  - Allowed Bad Requests Budget: `[Record calculated budget: Total Valid * (1 - SLO Target)]`
+  - Actual Bad Requests Observed: `[Record actual bad requests: Total Valid - Good Requests]`
+  - Remaining Request Error Budget: `[Record remaining budget in requests]`
+  - Budget Consumed Percentage: `[Record percentage of request budget spent]`
+  - Budget Status: `[Record mathematical status: EXHAUSTED or REMAINING]`
+  - Policy Note on Budget Depletion:
+    `[Learner distinguishes mathematical budget exhaustion from organizational policy response (e.g. release freeze vs sprint prioritization)]`
+
+### Scenario B: Time-Based Availability SLI / SLO (Time / Downtime Error Budget)
+- Time Availability SLI Definition:
+  - Total Measurement Window: `[Record window duration, e.g. 30 days = 43,200 minutes]`
+  - Measured Uptime Duration: `[Record actual uptime in minutes]`
+  - Time SLI Formula: `(Uptime Minutes / Total Window Minutes) * 100%`
+  - Actual Time Availability Observed: `[Record computed availability percentage]`
+- Time Availability SLO Target: `[Record scenario SLO target, e.g. 99.9%]`
+- Downtime Budget Calculation:
+  - Allowed Downtime Minutes Budget: `[Record calculated budget: Window * (1 - SLO Target), e.g. 43.2 minutes]`
+  - Actual Downtime Minutes Observed: `[Record actual downtime minutes in window]`
+  - Remaining Downtime Budget: `[Record remaining downtime minutes]`
+  - Downtime Budget Consumed Percentage: `[Record percentage of downtime budget spent]`
+
+### Universal Definition & SLA Boundaries:
+- Universal SLI Limit: `[Learner explains why good/valid ratio is one common SLI form, not the definition of every SLI]`
+- Prohibition on Ratio-to-Downtime Conversion:
+  `[Learner articulates why request-based SLI ratios must NEVER be converted directly into allowed downtime minutes]`
+- SLA Distinction: `[Learner explains why an external contractual SLA with remedies differs from an internal SLO target, and why an SLA percentage is not an independent failure probability]`
 
 ---
 
@@ -142,14 +161,19 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - Total Request Duration: `[Record elevated duration in ms]`
 - Correlated Timeline Reconstruction:
   - Hop Durations Identified: `[Record duration_ms for ServiceA, ServiceB, ServiceC]`
-  - Localized Fault Component: `[Record localized component, e.g. ServiceC]`
+  - Localized Bottleneck Component: `[Record localized component, e.g. ServiceC]`
 - Safe Scenario Mitigation:
   - Mitigation Action Taken: `[Record mitigation, e.g. ServiceB local cache fallback enabled]`
   - Service Restoration Verification:
     - Mitigated Status Code: `[Record status code, e.g. 200]`
     - Mitigated Latency: `[Record normalized duration in ms]`
+    - Recovery Verification Status: `[Record actual verified status: PASS / BLOCKED / NOT RUN]`
+    - Recovery Verification Evidence: `[Record observed latency reduction and HTTP 200 verification]`
+- Long-Term Resolution Tracking:
+  - Resolution Action Status: `NOT PERFORMED / PROPOSED FOLLOW-UP`
+  - Proposed Follow-Up Issue / Scope: `[Record proposed permanent architectural fix or investigation item]`
 - Exact Inference Limits:
-  `[Learner explains why ground-truth localization in this controlled scenario does not imply real-world incidents always have a single root cause, and notes security/data-integrity exceptions where containment precedes traffic restoration]`
+  `[Learner explains why ground-truth localization in this controlled scenario does not imply real-world socio-technical incidents always have a single root cause, and notes security/data-integrity exceptions where containment precedes traffic restoration]`
 
 ---
 
@@ -158,15 +182,18 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Incident Reference ID: `[Record incident ID, e.g. INC-2026-M20-001]`
 - Summary of Customer Impact: `[Record observed latency and error impact]`
 - Timeline of Phases:
-  - Detection: `[Record detection timestamp and alert trigger]`
+  - Detection: `[Record detection timestamp and observed latency symptom (no fabricated alerts)]`
   - Triage: `[Record triage timestamp and trace correlation findings]`
   - Mitigation: `[Record mitigation timestamp and action]`
-  - Resolution: `[Record resolution timestamp and permanent fix plan]`
-- Proximate Mechanism (Injected Symptom): `[Record proximate technical mechanism]`
+  - Resolution: `[Record resolution status: NOT PERFORMED / PROPOSED FOLLOW-UP, and proposed permanent fix plan]`
+- Proximate Mechanism (Injected Symptom): `[Record proximate technical mechanism observed in fixture]`
 - Contributing Systemic Conditions:
   `[Record at least 3 contributing conditions analyzing interfaces, tools, and safeguards without personal blame]`
+- Recovery Verification:
+  - Recovery Status: `[Record actual verified status: PASS / BLOCKED / NOT RUN]`
+  - Recovery Evidence: `[Record observed latency normalization following mitigation]`
 - Mitigation vs. Resolution vs. Prevention Distinction:
-  `[Learner distinguishes temporary traffic restoration from permanent code defect resolution and preventative hardening]`
+  `[Learner distinguishes temporary traffic restoration from permanent code defect resolution (unexecuted) and preventative hardening]`
 - Action Items & Defensive Safeguards: `[Record concrete preventative engineering action items]`
 - Unresolved Questions: `[Record open technical questions regarding boundaries or scaling]`
 
@@ -201,10 +228,10 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - L20-01: `Observe`, `Diagnose`, `Judge`
   - L20-02: `Diagnose`, `Observe`, `Explain`
 - Required Visuals Checked:
-  - `FIG-M20-01`: The Telemetry Triad & Clock Semantics Boundary `[CONFIRMED]`
-  - `FIG-M20-02`: W3C Trace Context Propagation & The Incident Lifecycle `[CONFIRMED]`
+  - `FIG-M20-01`: The Telemetry Triad & Clock Semantics Boundary: `[Learner confirms visual inspected and understood]`
+  - `FIG-M20-02`: W3C Trace Context Propagation & The Incident Lifecycle: `[Learner confirms visual inspected and understood]`
 - Authoritative Source Currentness Recheck:
-  - Python `time` module documentation (`time.monotonic`, `time.time`) `[RECHECKED]`
-  - W3C Trace Context Level 1 Recommendation (2021) `[RECHECKED]`
-  - Google SRE Workbook (SLI/SLO & Postmortems) `[RECHECKED]`
-  - OpenTelemetry Python `v1.44.0` release `[RECHECKED]`
+  - Python `time` module documentation (`time.monotonic`, `time.time`): `[Learner notes latest audited standard status]`
+  - W3C Trace Context Level 1 Recommendation (2021): `[Learner notes standard recommendation status]`
+  - Google SRE Workbook (SLI/SLO & Postmortems): `[Learner notes methodology reference]`
+  - OpenTelemetry Python release status: `[Learner notes pinned release audit status]`

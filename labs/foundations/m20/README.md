@@ -23,13 +23,13 @@ This directory contains executable, course-owned fixtures and worked activities 
    - Central Core fixture implementing:
      - `ClockAdapter`: Monotonic duration vs. simulated adjustable wall clock.
      - `compute_distribution_statistics`: Deterministic mean and percentiles ($p50, p90, p95, p99$) under `nearest_rank` convention.
-     - `evaluate_sli_slo`: Explicit scenario-based SLI, SLO target, and Error Budget consumption calculation.
-     - `generate_traceparent` & `parse_traceparent`: W3C Level 1 version-00 compliance, format validation, and all-zero identifier rejection.
-     - `StructuredLogger`: Valid JSON event logging with monotonic durations and secret redaction.
+     - `evaluate_request_sli_slo` & `evaluate_time_availability_sli_slo`: Decoupled request-event error budget vs. independent time-availability downtime budget, with clear policy note on budget exhaustion.
+     - `generate_traceparent` & `parse_traceparent`: Strict W3C Level 1 version-00 validation (rejecting non-`00` versions, all-zero identifiers, and malformed lengths).
+     - `StructuredLogger` & `sanitize_privacy_fields`: File and stream JSON logging with monotonic durations and recursive secret/token redaction across nested objects.
      - `ServiceA`, `ServiceB`, `ServiceC`: In-process three-service pipeline on localhost ephemeral ports.
-     - `ObservabilityPipelineManager`: Explicit lifecycle management (start, dispatch, fault injection, mitigation, shutdown).
+     - `ObservabilityPipelineManager`: Bounded watchdog timer, fail-closed teardown, socket closure, and thread joins.
      - `reconstruct_correlated_timeline`: Hop-by-hop latency and status breakdown filtered by `trace_id`.
-     - `generate_blameless_postmortem`: Markdown postmortem generator focusing on systemic conditions and safeguards.
+     - `generate_blameless_postmortem`: Evidence-driven postmortem generator with verified recovery status and unexecuted resolution tracking.
 
 2. **`activity_l20_01.py`**
    - Runs Lesson L20-01 hands-on activity:

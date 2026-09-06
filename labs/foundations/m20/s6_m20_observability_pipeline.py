@@ -4,29 +4,37 @@ s6_m20_observability_pipeline.py — Zero-SaaS Observability & Reliability Pipel
 ========================================================================================
 
 Canonical Stage 6 / Module 20 (M20) Observability & Reliability Engineering Fixture.
-Contract authority: GitHub Issue #110 and Stage 6 Design Dossier v0.1.
+Contract authority: GitHub Issue #110, S6 Design Dossier v0.1, and Lead Review Rework.
 
 Architectural Commitments:
 1. Zero-SaaS and stdlib-first: No Prometheus, Grafana, Datadog, Jaeger, Docker, or Cloud dependencies.
 2. Clock Semantics Invariant: Correctness-sensitive elapsed duration is computed ONLY from
    monotonic clock sources (time.monotonic() or time.perf_counter()). Wall-clock timestamps
    (time.time()) are preserved strictly as calendar/event labels and NEVER subtracted for duration.
+   Python monotonic clock abstraction: cannot go backwards, unaffected by system clock updates;
+   reference point of the returned value is undefined.
 3. Fake Adjustable Wall Clock: Teaching adapter injects simulated backward wall steps without
    mutating the host system clock or claiming real NTP reproduction.
 4. Deterministic Distribution Statistics: Stated dataset/window, sample count, and exact
    percentile convention (nearest_rank). Request percentiles are never equated to fixed user fractions.
-5. SLI/SLO/Error Budget: Bounded worksheet with explicit scenario/policy inputs (not universal constants).
-   SLIs are not reduced to a single ratio definition; SLAs are kept distinct from SLOs.
-6. W3C Trace Context Level 1 version-00: Strict generator, parser, and validator per W3C Rec 2021.
-   Validates version=00, 32-hex trace_id, 16-hex parent_id, 2-hex flags; rejects all-zero IDs.
-   Trace context is a correlation mechanism, NEVER authentication or identity.
-7. Structured Logging Engine: Valid JSON logs distinguishing wall timestamp from monotonic duration.
-   Strict redaction of secrets, Authorization headers, and Cookie values.
+5. SLI/SLO/Error Budget Dimensional Discipline:
+   - Request-based SLIs evaluate event ratios and yield event/request budgets.
+   - Time-based availability SLIs evaluate uptime/downtime durations over an explicit time window.
+   - These are decoupled into independent scenarios; request percentiles are never converted into downtime minutes.
+   - Budget exhaustion is a mathematical status; team response is governed by team policy.
+   - SLAs are kept distinct from SLOs.
+6. W3C Trace Context Level 1 version-00 STRICT: Validates version==00, 32-hex trace_id, 16-hex parent_id,
+   2-hex flags; rejects all-zero IDs, version!=00 (including 01 and ff), wrong lengths, non-hex chars.
+   Trace context is a correlation mechanism, NEVER authentication, secrecy, or identity.
+7. Structured Logging Engine: Valid JSON output with recursive privacy sanitization redacting
+   passwords, authorization headers, cookies, tokens, and secrets across nested dicts and lists.
+   Distinguishes wall timestamp from monotonic duration.
 8. Local Three-Service Pipeline: ServiceA (Frontend) -> ServiceB (Business) -> ServiceC (Storage Mock).
    All bind strictly to 127.0.0.1 on OS-selected ephemeral ports (port=0).
-9. Incident Lifecycle & Blameless Postmortem: Injected fault in ServiceC, upstream symptom in ServiceA,
-   correlated timeline reconstruction, safe mitigation, recovery verification, and blameless analysis.
-10. Explicit Lifecycle & Safety: Explicit shutdown, socket close, thread join, and watchdog protection.
+9. Incident Lifecycle & Blameless Postmortem: Evidence-driven postmortem recording actual observations,
+   actual mitigation, explicit recovery status, and unexecuted resolution marked NOT PERFORMED / PROPOSED FOLLOW-UP.
+10. Lifecycle Safety & Fail-Closed Shutdown: Explicit shutdown, socket close, thread join verification,
+    and bounded watchdog protection.
 """
 
 import argparse
@@ -44,7 +52,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 
 # ============================================================================
@@ -57,6 +65,8 @@ class ClockAdapter:
 
     Curriculum Invariant:
     - Elapsed duration for correctness-sensitive logic MUST derive from monotonic clocks.
+    - Python monotonic clock abstraction: cannot go backwards, unaffected by system clock updates;
+      the reference point of the returned value is undefined.
     - Wall clock (CLOCK_REALTIME / time.time()) is for calendar/event timestamps only.
     - Stepping or adjusting the wall clock must NEVER distort monotonic interval measurement.
     """
@@ -77,8 +87,8 @@ class ClockAdapter:
 
     def monotonic_time(self) -> float:
         """
-        Returns true monotonic time in seconds.
-        Unaffected by system clock steps, NTP adjustments, or fake offsets.
+        Returns monotonic time in seconds using Python's time.monotonic().
+        Guaranteed non-decreasing and unaffected by system clock adjustments.
         """
         return time.monotonic()
 
@@ -91,7 +101,9 @@ class ClockAdapter:
         Simulates an adjustable wall-clock step backward (e.g. -5.0s).
         Teaching adapter only: DOES NOT mutate real host clock or NTP daemon.
         """
-        self._simulated_wall_offset_seconds -= abs(step_seconds)
+        if step_seconds < 0:
+            raise ValueError("step_seconds must be non-negative.")
+        self._simulated_wall_offset_seconds -= step_seconds
 
     def reset_offset(self) -> None:
         """Resets simulated wall clock offset to zero."""
@@ -101,7 +113,7 @@ class ClockAdapter:
 def compute_elapsed_duration_ms(start_mono: float, end_mono: float) -> float:
     """
     Computes elapsed duration in milliseconds from monotonic readings.
-    Guaranteed non-negative unless host hardware clock severely malfunctions.
+    Guaranteed non-negative under the Python monotonic clock invariant.
     """
     return max(0.0, (end_mono - start_mono) * 1000.0)
 
@@ -167,32 +179,30 @@ def compute_distribution_statistics(
             if convention == "nearest_rank"
             else "linear_interpolation"
         ),
-        "percentile_vs_user_note": (
+        "percentile_vs_user_boundary": (
             "Request percentiles characterize the latency distribution of requests in this window. "
             "They do NOT imply that exactly (100 - P)% of distinct users experienced that latency, "
-            "as user-to-request mappings vary widely in production."
+            "as request frequency per user is generally non-uniform."
         ),
     }
 
 
 # ============================================================================
-# 3. SLI / SLO / Error Budget Evaluator
+# 3. Decoupled SLI / SLO / Error Budget Evaluator
 # ============================================================================
 
-def evaluate_sli_slo(
+def evaluate_request_sli_slo(
     total_valid_requests: int,
     good_requests: int,
     slo_target_percent: float,
-    window_seconds: float = 2592000.0,  # default 30 days
 ) -> Dict[str, Any]:
     """
-    Evaluates a ratio-style SLI, SLO target, and Error Budget consumption.
+    Evaluates a request-based event ratio SLI, SLO target, and Request Error Budget.
 
-    Curriculum Invariants:
-    - SLI is a quantitative service-behavior measure; good/valid ratio is one common form,
-      not the universal definition of all SLIs.
-    - SLO/Error Budget inputs are explicit scenario/policy inputs, not industry constants.
-    - SLA is kept distinct from SLO and not used as per-instance failure probability.
+    Dimensional Rule:
+    - Request-based SLIs evaluate event counts and derive an event error budget.
+    - They CANNOT be converted into downtime minutes without a separate time-based availability model.
+    - Budget exhaustion is a mathematical status; team response is governed by team policy.
     """
     if total_valid_requests <= 0:
         raise ValueError("total_valid_requests must be greater than 0.")
@@ -204,24 +214,19 @@ def evaluate_sli_slo(
     bad_requests = total_valid_requests - good_requests
     actual_sli_percent = (good_requests / total_valid_requests) * 100.0
 
-    # Error budget allowed failure rate = 100.0 - slo_target_percent
     allowed_failure_rate = (100.0 - slo_target_percent) / 100.0
     allowed_bad_requests = total_valid_requests * allowed_failure_rate
     remaining_budget_requests = allowed_bad_requests - bad_requests
 
-    # Budget consumed percentage: fraction of the allowed bad requests already spent
     if allowed_bad_requests > 0:
         budget_consumed_percent = (bad_requests / allowed_bad_requests) * 100.0
     else:
         budget_consumed_percent = 0.0 if bad_requests == 0 else float("inf")
 
-    # Time-based budget representation (minutes of downtime in window)
-    window_minutes = window_seconds / 60.0
-    allowed_downtime_minutes = window_minutes * allowed_failure_rate
-
     slo_met = actual_sli_percent >= slo_target_percent
 
     return {
+        "sli_dimension": "request_event",
         "total_valid_requests": total_valid_requests,
         "good_requests": good_requests,
         "bad_requests": bad_requests,
@@ -231,11 +236,13 @@ def evaluate_sli_slo(
         "allowed_bad_requests": round(allowed_bad_requests, 2),
         "remaining_budget_requests": round(remaining_budget_requests, 2),
         "budget_consumed_percent": round(budget_consumed_percent, 2),
-        "window_seconds": window_seconds,
-        "allowed_downtime_minutes_in_window": round(allowed_downtime_minutes, 2),
-        "universal_definition_note": (
-            "The ratio (good_requests / total_valid_requests) is one common ratio SLI form. "
-            "SLIs may also measure latency thresholds, throughput, saturation, or freshness."
+        "dimensional_boundary": (
+            "Request-based SLIs evaluate event counts and yield an event error budget in requests. "
+            "They do not define or translate to downtime minutes."
+        ),
+        "policy_note": (
+            "Budget exhaustion is a mathematical calculation. Any operational action (such as release gates, "
+            "review policies, or reliability sprints) depends on the service/team's error-budget policy."
         ),
         "sla_distinction": (
             "An SLA is an external contractual or business commitment with specified remedies and exclusions. "
@@ -245,13 +252,98 @@ def evaluate_sli_slo(
     }
 
 
+def evaluate_time_availability_sli_slo(
+    total_window_seconds: float,
+    uptime_seconds: float,
+    slo_target_percent: float,
+) -> Dict[str, Any]:
+    """
+    Evaluates an independent time-based availability SLI, SLO target, and Downtime Budget.
+
+    Dimensional Rule:
+    - Time-based availability SLIs evaluate uptime/downtime durations over an explicit time window.
+    - This is an independent SLI scenario from request-event counting.
+    """
+    if total_window_seconds <= 0.0:
+        raise ValueError("total_window_seconds must be greater than 0.")
+    if uptime_seconds < 0.0 or uptime_seconds > total_window_seconds:
+        raise ValueError("uptime_seconds must be between 0 and total_window_seconds.")
+    if slo_target_percent <= 0.0 or slo_target_percent >= 100.0:
+        raise ValueError("slo_target_percent must be strictly between 0 and 100.")
+
+    downtime_seconds = total_window_seconds - uptime_seconds
+    actual_availability_percent = (uptime_seconds / total_window_seconds) * 100.0
+
+    allowed_downtime_rate = (100.0 - slo_target_percent) / 100.0
+    allowed_downtime_seconds = total_window_seconds * allowed_downtime_rate
+    remaining_downtime_seconds = allowed_downtime_seconds - downtime_seconds
+
+    if allowed_downtime_seconds > 0:
+        budget_consumed_percent = (downtime_seconds / allowed_downtime_seconds) * 100.0
+    else:
+        budget_consumed_percent = 0.0 if downtime_seconds == 0.0 else float("inf")
+
+    slo_met = actual_availability_percent >= slo_target_percent
+
+    return {
+        "sli_dimension": "time_duration",
+        "total_window_seconds": total_window_seconds,
+        "total_window_minutes": round(total_window_seconds / 60.0, 2),
+        "uptime_seconds": uptime_seconds,
+        "downtime_seconds": round(downtime_seconds, 2),
+        "downtime_minutes": round(downtime_seconds / 60.0, 2),
+        "actual_availability_percent": round(actual_availability_percent, 4),
+        "slo_target_percent": round(slo_target_percent, 4),
+        "slo_met": slo_met,
+        "allowed_downtime_minutes": round(allowed_downtime_seconds / 60.0, 2),
+        "remaining_downtime_minutes": round(remaining_downtime_seconds / 60.0, 2),
+        "budget_consumed_percent": round(budget_consumed_percent, 2),
+        "dimensional_boundary": (
+            "Time-based availability SLIs evaluate duration (seconds/minutes) of availability. "
+            "This is independent of request volume or request error rates."
+        ),
+    }
+
+
+def evaluate_sli_slo(
+    total_valid_requests: int,
+    good_requests: int,
+    slo_target_percent: float,
+) -> Dict[str, Any]:
+    """
+    Convenience backward-compatible wrapper for request-based SLI evaluation.
+    Enforces that request SLIs do not output downtime minutes.
+    """
+    return evaluate_request_sli_slo(
+        total_valid_requests=total_valid_requests,
+        good_requests=good_requests,
+        slo_target_percent=slo_target_percent,
+    )
+
+
 # ============================================================================
-# 4. W3C Trace Context Level 1 version-00 Generator & Parser
+# 4. W3C Trace Context Level 1 version-00 STRICT Generator & Parser
 # ============================================================================
 
 HEX_32_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 HEX_16_PATTERN = re.compile(r"^[0-9a-f]{16}$")
 HEX_2_PATTERN = re.compile(r"^[0-9a-f]{2}$")
+
+
+def generate_trace_id() -> str:
+    """Generates a valid, non-all-zero 32-hex lowercase W3C trace ID."""
+    while True:
+        tid = secrets.token_hex(16).lower()
+        if tid != "00000000000000000000000000000000":
+            return tid
+
+
+def generate_span_id() -> str:
+    """Generates a valid, non-all-zero 16-hex lowercase W3C span/parent ID."""
+    while True:
+        sid = secrets.token_hex(8).lower()
+        if sid != "0000000000000000":
+            return sid
 
 
 def generate_traceparent(
@@ -265,27 +357,18 @@ def generate_traceparent(
     """
     version = "00"
     if not trace_id:
-        # Generate 16 random bytes -> 32 hex chars, ensuring not all-zero
-        while True:
-            tid = secrets.token_hex(16).lower()
-            if tid != "00000000000000000000000000000000":
-                trace_id = tid
-                break
+        trace_id = generate_trace_id()
     else:
         trace_id = trace_id.lower()
         if not HEX_32_PATTERN.match(trace_id) or trace_id == "00000000000000000000000000000000":
-            raise ValueError(f"Invalid trace_id for W3C traceparent: {trace_id}")
+            raise ValueError(f"Invalid trace_id for W3C traceparent: '{trace_id}'. Must be 32 non-zero hex chars.")
 
     if not parent_id:
-        while True:
-            pid = secrets.token_hex(8).lower()
-            if pid != "0000000000000000":
-                parent_id = pid
-                break
+        parent_id = generate_span_id()
     else:
         parent_id = parent_id.lower()
         if not HEX_16_PATTERN.match(parent_id) or parent_id == "0000000000000000":
-            raise ValueError(f"Invalid parent_id for W3C traceparent: {parent_id}")
+            raise ValueError(f"Invalid parent_id for W3C traceparent: '{parent_id}'. Must be 16 non-zero hex chars.")
 
     trace_flags = "01" if sampled else "00"
     return f"{version}-{trace_id}-{parent_id}-{trace_flags}"
@@ -295,10 +378,10 @@ def parse_traceparent(header_value: str) -> Dict[str, Any]:
     """
     Parses and strictly validates a W3C Trace Context Level 1 version-00 traceparent header.
 
-    W3C Recommendation 2021 Validation Rules for version 00:
+    W3C Recommendation 2021 Strict version-00 Validation Rules:
     1. Must contain exactly 4 dash-separated fields.
-    2. Version 00 requires total length of exactly 55 characters.
-    3. Version must be '00'. Version 'ff' is forbidden.
+    2. Version MUST be exactly '00'. Any other version (including '01' and 'ff') MUST BE REJECTED.
+    3. Version 00 requires total header length of EXACTLY 55 characters.
     4. trace_id must be 32 lowercase hex characters and NOT all zeros.
     5. parent_id must be 16 lowercase hex characters and NOT all zeros.
     6. trace_flags must be 2 lowercase hex characters.
@@ -316,18 +399,19 @@ def parse_traceparent(header_value: str) -> Dict[str, Any]:
 
     version, trace_id, parent_id, trace_flags = parts
 
-    # Check version format
-    if not HEX_2_PATTERN.match(version):
-        raise ValueError(f"Invalid traceparent version format: '{version}'")
-    if version == "ff":
-        raise ValueError("Invalid traceparent version: 'ff' is forbidden by W3C specification.")
+    # Strict version-00 check: reject anything other than "00"
+    if version != "00":
+        raise ValueError(
+            f"Unsupported or invalid traceparent version: '{version}'. "
+            "This parser strictly implements W3C Level 1 version-00 only. "
+            "Future versions (e.g. '01') or invalid versions (e.g. 'ff') are rejected."
+        )
 
-    # Strict Level 1 version-00 checks
-    if version == "00":
-        if len(header_clean) != 55:
-            raise ValueError(
-                f"Invalid version-00 traceparent length: expected 55 characters, got {len(header_clean)}."
-            )
+    # Version 00 requires exact 55 characters
+    if len(header_clean) != 55:
+        raise ValueError(
+            f"Invalid version-00 traceparent length: expected exactly 55 characters, got {len(header_clean)}."
+        )
 
     # Validate trace_id
     if not HEX_32_PATTERN.match(trace_id):
@@ -366,41 +450,79 @@ def parse_traceparent(header_value: str) -> Dict[str, Any]:
             "authentication, authorization, secrecy, integrity, or user identity."
         ),
         "version_scope_note": (
-            "This parser validates W3C Level 1 version-00 traceparent per W3C Recommendation (2021). "
+            "This parser strictly validates W3C Level 1 version-00 traceparent per W3C Recommendation (2021). "
             "It does not implement future W3C versions (e.g. Level 2) or proprietary vendor extensions."
         ),
     }
 
 
 # ============================================================================
-# 5. Structured Logging Engine & Privacy Filter
+# 5. Structured Logging Engine & Recursive Privacy Sanitizer
 # ============================================================================
 
 SENSITIVE_KEY_PATTERN = re.compile(
-    r"(?i)(auth|token|secret|password|passwd|cookie|key|credential|bearer)"
+    r"(?i)(authorization|auth|token|secret|password|passwd|cookie|credential|bearer|api_key|secret_key|private_key)"
 )
+
+
+def sanitize_privacy_fields(val: Any) -> Any:
+    """
+    Recursively sanitizes data structures to redact sensitive information.
+    Operates on nested dicts, lists, tuples, and detects Bearer tokens in strings.
+    """
+    if isinstance(val, dict):
+        sanitized_dict: Dict[str, Any] = {}
+        for k, v in val.items():
+            k_str = str(k)
+            if SENSITIVE_KEY_PATTERN.search(k_str):
+                sanitized_dict[k_str] = "[REDACTED]"
+            else:
+                sanitized_dict[k_str] = sanitize_privacy_fields(v)
+        return sanitized_dict
+    elif isinstance(val, (list, tuple)):
+        return [sanitize_privacy_fields(item) for item in val]
+    elif isinstance(val, str):
+        if val.strip().lower().startswith("bearer "):
+            return "Bearer [REDACTED]"
+        return val
+    else:
+        return val
 
 
 class StructuredLogger:
     """
-    Course-owned structured logger emitting valid JSON records.
+    Course-owned structured logger emitting valid, parsable JSON records.
 
     Curriculum Invariants:
+    - Emits valid JSON to memory AND to an actual JSON sink (file / stream).
     - Distinguishes calendar/event timestamp (wall clock) from monotonic duration (monotonic timer).
-    - Excludes passwords, authorization headers, cookies, and secret tokens.
+    - Recursively redacts passwords, authorization headers, cookies, and secret tokens.
     - Preserves correlation context (trace_id, parent_id, span_id, service, event).
     - Logs can suffer from omission, buffering, or sampling; shared timestamps do not imply causality.
     """
 
-    def __init__(self, clock_adapter: Optional[ClockAdapter] = None) -> None:
+    def __init__(
+        self,
+        clock_adapter: Optional[ClockAdapter] = None,
+        jsonl_path: Optional[str] = None,
+        sink_stream: Optional[Any] = None,
+        service_name: Optional[str] = None,
+    ) -> None:
         self.clock = clock_adapter or ClockAdapter()
+        self.jsonl_path = jsonl_path
+        self.sink_stream = sink_stream
+        self.default_service_name = service_name
         self._records: List[Dict[str, Any]] = []
+        self._emitted_json_lines: List[str] = []
         self._lock = threading.Lock()
+
+        if self.jsonl_path:
+            os.makedirs(os.path.dirname(os.path.abspath(self.jsonl_path)), exist_ok=True)
 
     def log(
         self,
-        service: str,
-        event: str,
+        service: str = "",
+        event: str = "",
         trace_id: Optional[str] = None,
         parent_id: Optional[str] = None,
         span_id: Optional[str] = None,
@@ -409,20 +531,14 @@ class StructuredLogger:
         details: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Emits and records a sanitized structured JSON log entry."""
-        # Sanitize details for security and privacy
-        safe_details: Dict[str, Any] = {}
-        if details:
-            for k, v in details.items():
-                if SENSITIVE_KEY_PATTERN.search(k):
-                    safe_details[k] = "[REDACTED]"
-                else:
-                    safe_details[k] = v
+        svc = service or self.default_service_name or "unknown_service"
+        safe_details = sanitize_privacy_fields(details) if details is not None else {}
 
         record = {
             "timestamp_utc": self.clock.wall_time_iso(),
             "timestamp_wall_epoch_s": round(self.clock.wall_time(), 6),
             "duration_ms": round(duration_ms, 3) if duration_ms is not None else None,
-            "service": service,
+            "service": svc,
             "event": event,
             "status": status,
             "trace_id": trace_id,
@@ -431,8 +547,27 @@ class StructuredLogger:
             "details": safe_details,
         }
 
+        # Real JSON serialization validation
+        json_line = json.dumps(record, ensure_ascii=False)
+
         with self._lock:
             self._records.append(record)
+            self._emitted_json_lines.append(json_line)
+
+            if self.sink_stream:
+                try:
+                    self.sink_stream.write(json_line + "\n")
+                    if hasattr(self.sink_stream, "flush"):
+                        self.sink_stream.flush()
+                except Exception:
+                    pass
+
+            if self.jsonl_path:
+                try:
+                    with open(self.jsonl_path, "a", encoding="utf-8") as f:
+                        f.write(json_line + "\n")
+                except Exception:
+                    pass
 
         return record
 
@@ -440,9 +575,14 @@ class StructuredLogger:
         with self._lock:
             return list(self._records)
 
+    def get_emitted_json_lines(self) -> List[str]:
+        with self._lock:
+            return list(self._emitted_json_lines)
+
     def clear(self) -> None:
         with self._lock:
             self._records.clear()
+            self._emitted_json_lines.clear()
 
     def filter_by_trace_id(self, trace_id: str) -> List[Dict[str, Any]]:
         with self._lock:
@@ -460,7 +600,7 @@ class ServiceCHandler(http.server.BaseHTTPRequestHandler):
     """
 
     def log_message(self, format: str, *args: Any) -> None:
-        pass  # Suppress default noisy stderr logging
+        pass  # Suppress default stderr noise
 
     def do_GET(self) -> None:
         server: "ObservableServer" = self.server  # type: ignore
@@ -468,9 +608,8 @@ class ServiceCHandler(http.server.BaseHTTPRequestHandler):
         logger = server.logger
 
         t_start_mono = clock.monotonic_time()
-        span_id = secrets.token_hex(8).lower()
+        span_id = generate_span_id()
 
-        # Parse traceparent
         traceparent_raw = self.headers.get("traceparent")
         trace_id = None
         parent_id = None
@@ -501,7 +640,6 @@ class ServiceCHandler(http.server.BaseHTTPRequestHandler):
             details={"path": self.path},
         )
 
-        # Injected fault evaluation
         fault_mode = server.fixture_state.get("fault_mode", "NONE")
         delay_s = server.fixture_state.get("injected_delay_s", 0.0)
 
@@ -580,7 +718,7 @@ class ServiceBHandler(http.server.BaseHTTPRequestHandler):
         logger = server.logger
 
         t_start_mono = clock.monotonic_time()
-        span_id = secrets.token_hex(8).lower()
+        span_id = generate_span_id()
 
         traceparent_raw = self.headers.get("traceparent")
         trace_id = None
@@ -719,7 +857,7 @@ class ServiceBHandler(http.server.BaseHTTPRequestHandler):
 class ServiceAHandler(http.server.BaseHTTPRequestHandler):
     """
     Frontend / Gateway Service (ServiceA).
-    Initiates requests, creates root traceparent, calls ServiceB.
+    Initiates requests, creates validated root traceparent, calls ServiceB.
     """
 
     def log_message(self, format: str, *args: Any) -> None:
@@ -731,7 +869,7 @@ class ServiceAHandler(http.server.BaseHTTPRequestHandler):
         logger = server.logger
 
         t_start_mono = clock.monotonic_time()
-        span_id = secrets.token_hex(8).lower()
+        span_id = generate_span_id()
 
         traceparent_raw = self.headers.get("traceparent")
         if traceparent_raw:
@@ -751,8 +889,8 @@ class ServiceAHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(b'{"error": "invalid traceparent"}')
                 return
         else:
-            # Generate new root trace_id
-            trace_id = secrets.token_hex(16).lower()
+            # Unified validated root trace ID generation
+            trace_id = generate_trace_id()
             parent_id = None
 
         logger.log(
@@ -765,7 +903,6 @@ class ServiceAHandler(http.server.BaseHTTPRequestHandler):
             details={"path": self.path},
         )
 
-        # Call ServiceB
         target_b_url = server.fixture_state["service_b_url"]
         out_traceparent = generate_traceparent(trace_id=trace_id, parent_id=span_id)
 
@@ -857,7 +994,7 @@ class ObservableServer(http.server.ThreadingHTTPServer):
         self.logger = logger
         self.clock = clock
         self.fixture_state = fixture_state
-        self.daemon_threads = False  # Explicit thread joining
+        self.daemon_threads = False  # Explicit thread joining required
         super().__init__(server_address, RequestHandlerClass)
 
 
@@ -867,13 +1004,21 @@ class ObservabilityPipelineManager:
 
     Curriculum Invariants:
     - Binds strictly to 127.0.0.1 on ephemeral ports (port=0).
-    - Explicit server shutdown, socket close, and thread join.
+    - Explicit server shutdown, socket close, and verified thread join.
+    - Shutdown fails closed: collects errors and verifies threads are terminated.
     - No unowned process killing or daemon thread exit shortcuts.
     """
 
-    def __init__(self, clock: Optional[ClockAdapter] = None) -> None:
+    def __init__(
+        self,
+        clock: Optional[ClockAdapter] = None,
+        jsonl_path: Optional[str] = None,
+        watchdog_timeout_s: float = 30.0,
+    ) -> None:
         self.clock = clock or ClockAdapter()
-        self.logger = StructuredLogger(clock_adapter=self.clock)
+        self.logger = StructuredLogger(clock_adapter=self.clock, jsonl_path=jsonl_path)
+        self.watchdog_timeout_s = watchdog_timeout_s
+        self._watchdog_timer: Optional[threading.Timer] = None
         self.fixture_state: Dict[str, Any] = {
             "fault_mode": "NONE",
             "injected_delay_s": 0.0,
@@ -943,6 +1088,20 @@ class ObservabilityPipelineManager:
 
         self._is_running = True
 
+        # Bounded watchdog protection on owned in-process server threads
+        if self.watchdog_timeout_s > 0:
+            def _watchdog_trigger() -> None:
+                if self._is_running:
+                    try:
+                        self.shutdown()
+                    except Exception:
+                        pass
+
+            self._watchdog_timer = threading.Timer(self.watchdog_timeout_s, _watchdog_trigger)
+            self._watchdog_timer.daemon = True
+            self._watchdog_timer.name = "m20-pipeline-watchdog"
+            self._watchdog_timer.start()
+
     def get_urls(self) -> Dict[str, str]:
         return {
             "ServiceA": self.fixture_state["service_a_url"],
@@ -951,13 +1110,28 @@ class ObservabilityPipelineManager:
         }
 
     def set_fault(self, fault_mode: str = "NONE", delay_s: float = 0.0) -> None:
-        """Configures controlled fault on ServiceC."""
+        """
+        Configures controlled fault on ServiceC with strict input validation.
+        Supported modes: 'NONE', 'DELAY', 'HTTP_500'.
+        """
+        valid_modes = {"NONE", "DELAY", "HTTP_500"}
+        if fault_mode not in valid_modes:
+            raise ValueError(
+                f"Unsupported fault_mode '{fault_mode}'. Must be one of {sorted(valid_modes)}."
+            )
+        if not isinstance(delay_s, (int, float)):
+            raise ValueError("delay_s must be a numeric value.")
+        if delay_s < 0.0:
+            raise ValueError(f"delay_s cannot be negative, got {delay_s}.")
+        if delay_s > 5.0:
+            raise ValueError(f"delay_s {delay_s} exceeds maximum safety bound of 5.0 seconds.")
+
         self.fixture_state["fault_mode"] = fault_mode
-        self.fixture_state["injected_delay_s"] = delay_s
+        self.fixture_state["injected_delay_s"] = float(delay_s)
 
     def set_mitigation(self, enabled: bool = True) -> None:
         """Enables or disables ServiceB safe mitigation (fallback cache)."""
-        self.fixture_state["mitigation_enabled"] = enabled
+        self.fixture_state["mitigation_enabled"] = bool(enabled)
 
     def dispatch_request(
         self,
@@ -1005,21 +1179,47 @@ class ObservabilityPipelineManager:
         }
 
     def shutdown(self) -> None:
-        """Explicitly terminates servers, closes sockets, and joins threads."""
+        """
+        Explicitly terminates servers, closes sockets, and verifies thread termination.
+        Fails closed: collects any errors and verifies threads are not hanging.
+        """
         if not self._is_running:
             return
 
-        for s in (self.server_a, self.server_b, self.server_c):
+        if self._watchdog_timer:
+            self._watchdog_timer.cancel()
+            self._watchdog_timer = None
+
+        shutdown_errors: List[str] = []
+
+        # 1. Shutdown and close sockets for each server
+        servers = [
+            ("ServiceA", self.server_a),
+            ("ServiceB", self.server_b),
+            ("ServiceC", self.server_c),
+        ]
+        for name, s in servers:
             if s:
                 try:
                     s.shutdown()
                     s.server_close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    shutdown_errors.append(f"{name} server close error: {e}")
 
-        for th in (self.thread_a, self.thread_b, self.thread_c):
+        # 2. Join server threads and verify they are terminated
+        threads = [
+            ("ServiceA", self.thread_a),
+            ("ServiceB", self.thread_b),
+            ("ServiceC", self.thread_c),
+        ]
+        for name, th in threads:
             if th and th.is_alive():
-                th.join(timeout=2.0)
+                th.join(timeout=3.0)
+                if th.is_alive():
+                    shutdown_errors.append(f"{name} thread {th.name} failed to terminate within timeout")
+
+        if shutdown_errors:
+            raise RuntimeError(f"Pipeline shutdown failed: {'; '.join(shutdown_errors)}")
 
         self._is_running = False
         self.server_a = None
@@ -1037,10 +1237,18 @@ class ObservabilityPipelineManager:
 def reconstruct_correlated_timeline(
     records: List[Dict[str, Any]],
     trace_id: str,
+    fault_metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Filters structured logs by trace_id and reconstructs the cross-service request timeline.
-    Isolates which service hop contributed to latency or error.
+
+    Diagnostic Rule:
+    - Does NOT use a fixed arbitrary latency threshold (like 200ms) to judge fault.
+    - Localizes based on:
+      1) Services emitting error or DEGRADED status events;
+      2) Relative duration concentration (hop accounting for dominant share of total duration);
+      3) Fixture ground truth cross-reference.
+    - Distinguishes fixture ground truth from production diagnostic inference.
     """
     matched = [r for r in records if r.get("trace_id") == trace_id]
     if not matched:
@@ -1050,10 +1258,11 @@ def reconstruct_correlated_timeline(
             "records": [],
             "hop_breakdown": {},
             "fault_localized": None,
+            "diagnostic_inference": "No records matched trace ID",
         }
 
-    # Extract durations per service
     service_durations: Dict[str, float] = {}
+    degraded_services: List[str] = []
     errors: List[Dict[str, Any]] = []
 
     for r in matched:
@@ -1062,27 +1271,44 @@ def reconstruct_correlated_timeline(
         if dur is not None:
             service_durations[svc] = max(service_durations.get(svc, 0.0), dur)
         if r.get("status") in ("ERROR", "BAD_REQUEST", "DEGRADED"):
+            degraded_services.append(svc)
             errors.append(r)
 
-    # Localize fault
+    # Calculate total duration from gateway (ServiceA) or maximum observed hop
+    total_dur = service_durations.get("ServiceA", max(service_durations.values()) if service_durations else 0.0)
+
+    # Localize bottleneck through relative duration concentration and status events
     fault_localized = None
-    if "ServiceC" in service_durations and service_durations["ServiceC"] > 200.0:
-        fault_localized = "ServiceC (Storage Mock High Latency)"
-    elif any(e.get("service") == "ServiceC" for e in errors):
-        fault_localized = "ServiceC (Storage Mock Error)"
+    inference_detail = None
+
+    if "ServiceC" in degraded_services:
+        fault_localized = "ServiceC"
+        inference_detail = "ServiceC emitted DEGRADED / ERROR events during storage execution"
+    elif total_dur > 0 and "ServiceC" in service_durations and (service_durations["ServiceC"] / total_dur) >= 0.70:
+        fault_localized = "ServiceC"
+        share_pct = (service_durations["ServiceC"] / total_dur) * 100.0
+        inference_detail = f"ServiceC accounted for {share_pct:.1f}% of total request duration"
+    elif errors:
+        fault_localized = errors[0].get("service", "unknown")
+        inference_detail = f"First error observed at {fault_localized}"
 
     return {
         "trace_id": trace_id,
         "record_count": len(matched),
         "records": matched,
         "service_durations_ms": service_durations,
+        "total_request_duration_ms": total_dur,
         "errors_detected": errors,
         "fault_localized": fault_localized,
-        "inference_boundary_note": (
-            "Localization in this course scenario is verified because the fixture script controls "
-            "the ground truth. In complex distributed production systems, multiple interacting "
-            "contributing conditions (queues, network, gc, dependencies) often interact, "
-            "and incidents rarely have a single isolated 'root cause'."
+        "diagnostic_inference": inference_detail,
+        "fixture_ground_truth": fault_metadata or {
+            "injected_target": "ServiceC",
+            "note": "Fixture owns ground truth of injected fault",
+        },
+        "production_inference_boundary": (
+            "In real production incidents, correlation evidence indicates where duration or errors "
+            "concentrated, but multiple interacting conditions (queues, network, GC, dependencies) "
+            "often coexist; do not assume a universal single root cause."
         ),
     }
 
@@ -1094,21 +1320,43 @@ def generate_blameless_postmortem(
     proximate_mechanism: str,
     contributing_conditions: List[str],
     mitigation_applied: str,
-    permanent_safeguards: List[str],
-    unresolved_questions: List[str],
+    recovery_status: str,
+    recovery_evidence: str,
+    resolution_status: str = "NOT PERFORMED / PROPOSED FOLLOW-UP",
+    resolution_plan: str = "",
+    permanent_safeguards: Optional[List[str]] = None,
+    unresolved_questions: Optional[List[str]] = None,
 ) -> str:
     """
-    Generates a structured blameless postmortem document.
+    Generates a structured, evidence-driven blameless postmortem document.
 
-    Curriculum Invariant:
-    - Rejects 'human error' or individual blame as a final cause.
-    - Analyzes systemic conditions, interfaces, automation, and safeguards.
-    - Preserves distinction: Mitigation != Resolution != Prevention.
+    Curriculum Invariants:
+    - Output is strictly evidence-driven: recovery status and evidence are passed explicitly.
+    - Output recovery_status is strictly validated against {'PASS', 'BLOCKED', 'NOT RUN'}.
+    - Does NOT fabricate unobserved facts (e.g. fake p99 alerts or unexecuted code fixes).
+    - Distinguishes Mitigation from Resolution; unexecuted resolution is explicitly marked
+      NOT PERFORMED / PROPOSED FOLLOW-UP.
+    - Rejects 'human error' or personal fault as a final cause; investigates tools and safeguards.
     """
+    valid_recovery_statuses = {"PASS", "BLOCKED", "NOT RUN"}
+    if recovery_status not in valid_recovery_statuses:
+        raise ValueError(
+            f"Invalid recovery_status '{recovery_status}'. Must be one of {sorted(valid_recovery_statuses)}."
+        )
+
     timeline_md = "\n".join([f"- **{t}**: {desc}" for t, desc in timeline_entries])
     conditions_md = "\n".join([f"- {c}" for c in contributing_conditions])
-    safeguards_md = "\n".join([f"- [ ] {s}" for s in permanent_safeguards])
-    unresolved_md = "\n".join([f"- {q}" for q in unresolved_questions])
+    safeguards_list = permanent_safeguards or [
+        "Implement non-blocking timeout circuit breaker in ServiceB for storage calls",
+        "Add automated canary verification for backend storage configuration updates",
+        "Enforce W3C traceparent propagation across all internal RPC boundaries",
+    ]
+    safeguards_md = "\n".join([f"- [ ] {s}" for s in safeguards_list])
+    unresolved_list = unresolved_questions or [
+        "What is the maximum acceptable cache staleness during extended downstream degradation?",
+        "How do network packet loss and partial partitions alter timeout detection thresholds?",
+    ]
+    unresolved_md = "\n".join([f"- {q}" for q in unresolved_list])
 
     return f"""# Incident Postmortem: {incident_id}
 
@@ -1122,7 +1370,7 @@ def generate_blameless_postmortem(
 - **Customer & Service Impact**: {impact_summary}
 - **Mitigation vs. Resolution Distinction**:
   - *Mitigation*: Service restored via reversible control actions.
-  - *Resolution*: Underlying code/architecture defects addressed.
+  - *Resolution*: Underlying code/architecture defects permanently addressed.
   - *Prevention*: Structural safeguards implemented to prevent recurrence.
 
 ---
@@ -1145,11 +1393,15 @@ def generate_blameless_postmortem(
 
 ## 5. Mitigation & Recovery Verification
 - **Mitigation Action**: {mitigation_applied}
-- **Verification of Recovery**: Verified via structured telemetry and end-to-end request success.
+- **Recovery Verification Status**: {recovery_status}
+- **Recovery Observable Evidence**: {recovery_evidence}
 
 ---
 
-## 6. Action Items & Defensive Safeguards
+## 6. Resolution Status & Defensive Safeguards
+- **Resolution Status**: `{resolution_status}`
+- **Proposed Resolution Plan**: {resolution_plan or "Engineering follow-up to address underlying dependency contention."}
+- **Defensive Safeguards (Proposed)**:
 {safeguards_md}
 
 ---
@@ -1167,7 +1419,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="M20 Observability & Reliability Pipeline Fixture")
     parser.add_argument("--demo-clock", action="store_true", help="Demonstrate wall vs. monotonic clock semantics")
     parser.add_argument("--demo-stats", action="store_true", help="Demonstrate tail vs. mean distribution stats")
-    parser.add_argument("--demo-sli-slo", action="store_true", help="Demonstrate SLI/SLO/Error Budget calculations")
+    parser.add_argument("--demo-sli-slo", action="store_true", help="Demonstrate decoupled SLI/SLO calculations")
     parser.add_argument("--demo-incident", action="store_true", help="Run three-service pipeline with fault injection")
     args = parser.parse_args()
 
@@ -1178,7 +1430,6 @@ def main() -> int:
         w0 = adapter.wall_time()
         m0 = adapter.monotonic_time()
         time.sleep(0.05)
-        # Inject fake backward step
         adapter.inject_wall_step_backward(10.0)
         w1 = adapter.wall_time()
         m1 = adapter.monotonic_time()
@@ -1191,7 +1442,6 @@ def main() -> int:
 
     if args.demo_stats:
         print("=== Deterministic Distribution Statistics Demonstration ===")
-        # Synthetic bimodal sample: 95 fast requests (5ms) and 5 slow tail requests (500ms)
         sample_dataset = [5.0] * 95 + [500.0] * 5
         stats = compute_distribution_statistics(sample_dataset, convention="nearest_rank")
         print(f"Sample count: {stats['sample_count']}")
@@ -1204,20 +1454,32 @@ def main() -> int:
         return 0
 
     if args.demo_sli_slo:
-        print("=== SLI / SLO / Error Budget Demonstration ===")
-        eval_result = evaluate_sli_slo(
+        print("=== SLI / SLO / Error Budget Decoupled Demonstration ===")
+        req_eval = evaluate_request_sli_slo(
             total_valid_requests=10000,
             good_requests=9985,
             slo_target_percent=99.9,
-            window_seconds=2592000.0,
         )
-        print(f"Actual SLI:            {eval_result['actual_sli_percent']}%")
-        print(f"SLO Target:            {eval_result['slo_target_percent']}%")
-        print(f"SLO Met:               {eval_result['slo_met']}")
-        print(f"Allowed Bad Requests:  {eval_result['allowed_bad_requests']}")
-        print(f"Actual Bad Requests:   {eval_result['bad_requests']}")
-        print(f"Remaining Budget:      {eval_result['remaining_budget_requests']}")
-        print(f"Budget Consumed:       {eval_result['budget_consumed_percent']}%")
+        print("[1. Request-Based SLI]:")
+        print(f"  Actual SLI:            {req_eval['actual_sli_percent']}%")
+        print(f"  SLO Target:            {req_eval['slo_target_percent']}%")
+        print(f"  SLO Met:               {req_eval['slo_met']}")
+        print(f"  Allowed Bad Requests:  {req_eval['allowed_bad_requests']}")
+        print(f"  Actual Bad Requests:   {req_eval['bad_requests']}")
+        print(f"  Remaining Budget:      {req_eval['remaining_budget_requests']}")
+        print(f"  Budget Consumed:       {req_eval['budget_consumed_percent']}%")
+
+        time_eval = evaluate_time_availability_sli_slo(
+            total_window_seconds=2592000.0,  # 30 days
+            uptime_seconds=2591000.0,
+            slo_target_percent=99.9,
+        )
+        print("\n[2. Time-Based Availability SLI (Independent Scenario)]:")
+        print(f"  Actual Availability:   {time_eval['actual_availability_percent']}%")
+        print(f"  SLO Target:            {time_eval['slo_target_percent']}%")
+        print(f"  Allowed Downtime:      {time_eval['allowed_downtime_minutes']} minutes")
+        print(f"  Actual Downtime:       {time_eval['downtime_minutes']} minutes")
+        print(f"  Remaining Downtime:    {time_eval['remaining_downtime_minutes']} minutes")
         return 0
 
     if args.demo_incident:
@@ -1227,25 +1489,22 @@ def main() -> int:
             manager.start()
             print(f"Pipeline running: {manager.get_urls()}")
 
-            # 1. Normal baseline request
             res1 = manager.dispatch_request()
             print(f"[Normal] Status: {res1['status_code']}, Elapsed: {res1['elapsed_ms']:.1f}ms")
 
-            # 2. Injected delay fault in ServiceC
             manager.set_fault(fault_mode="DELAY", delay_s=0.4)
             res2 = manager.dispatch_request()
             print(f"[Fault Injected] Status: {res2['status_code']}, Elapsed: {res2['elapsed_ms']:.1f}ms")
 
-            # 3. Mitigated request (fallback cache)
             manager.set_mitigation(enabled=True)
             res3 = manager.dispatch_request()
             print(f"[Mitigated] Status: {res3['status_code']}, Elapsed: {res3['elapsed_ms']:.1f}ms")
 
-            # 4. Timeline reconstruction
             trace_id = res2["response"].get("trace_id")
             if trace_id:
                 timeline = reconstruct_correlated_timeline(manager.logger.get_records(), trace_id)
                 print(f"[Timeline] Trace {trace_id}: localized fault = {timeline['fault_localized']}")
+                print(f"           Diagnostic inference: {timeline['diagnostic_inference']}")
         finally:
             manager.shutdown()
             print("Pipeline cleanly shut down.")

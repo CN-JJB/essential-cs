@@ -35,13 +35,14 @@ def run_activity_l20_02() -> int:
     os.makedirs(scratch_dir, exist_ok=True)
     out_json = os.path.join(scratch_dir, "l20_02_observation.json")
     out_postmortem = os.path.join(scratch_dir, "l20_02_postmortem_draft.md")
+    jsonl_log_path = os.path.join(scratch_dir, "l20_02_events.jsonl")
 
     print("=" * 70)
     print(" Essential CS -- Activity L20-02: Distributed Incident & Trace Context")
     print("=" * 70)
 
     clock = ClockAdapter()
-    manager = ObservabilityPipelineManager(clock=clock)
+    manager = ObservabilityPipelineManager(clock=clock, jsonl_path=jsonl_log_path)
 
     try:
         # --------------------------------------------------------------------
@@ -104,7 +105,11 @@ def run_activity_l20_02() -> int:
 
         print(f"\n - Hop Durations:     {timeline['service_durations_ms']}")
         print(f" - Localized Root:    {timeline['fault_localized']}")
-        assert timeline["fault_localized"] is not None, "Expected fault to be localized to ServiceC."
+        print(f" - Diagnostic Detail: {timeline['diagnostic_inference']}")
+
+        # Explicit validation (no assert)
+        if timeline.get("fault_localized") is None:
+            raise RuntimeError("Fault localization failed: expected fault localized to ServiceC.")
 
         # --------------------------------------------------------------------
         # Step 5: Safe Scenario Mitigation (Fallback Bypass)
@@ -116,39 +121,57 @@ def run_activity_l20_02() -> int:
 
         mitigated_req = manager.dispatch_request()
         print(f" - Mitigated Request: status={mitigated_req['status_code']}, duration={mitigated_req['elapsed_ms']:.2f}ms")
-        print(f" - Mitigation Verified: Latency dropped back to normal (< 20ms) and status 200 OK.")
-        assert mitigated_req["status_code"] == 200, "Expected mitigated request to return 200 OK."
-        assert mitigated_req["elapsed_ms"] < 100.0, "Expected mitigated latency to be well below the 350ms injected delay."
+        print(f" - Mitigation Verified: Latency dropped back to baseline and status 200 OK.")
+
+        # Explicit validation (no assert, relative latency check)
+        if mitigated_req["status_code"] != 200:
+            raise RuntimeError(f"Mitigated request failed: expected status 200, got {mitigated_req['status_code']}")
+        if mitigated_req["elapsed_ms"] >= incident_req["elapsed_ms"]:
+            raise RuntimeError(
+                f"Mitigation latency anomaly: mitigated duration ({mitigated_req['elapsed_ms']:.1f}ms) "
+                f"was not less than degraded incident duration ({incident_req['elapsed_ms']:.1f}ms)."
+            )
+
+        recovery_status = "PASS"
+        recovery_evidence = (
+            f"Mitigated request returned HTTP {mitigated_req['status_code']} in {mitigated_req['elapsed_ms']:.2f}ms "
+            f"(relative reduction from degraded latency {incident_req['elapsed_ms']:.2f}ms). "
+            "ServiceB served request from local cache, bypassing degraded ServiceC storage mock."
+        )
 
         # --------------------------------------------------------------------
-        # Step 6: Generate Blameless Postmortem
+        # Step 6: Generate Blameless Postmortem (Evidence-Driven)
         # --------------------------------------------------------------------
-        print("\n[STEP 6: Authoring Blameless Postmortem Artifact]")
+        print("\n[STEP 6: Authoring Blameless Postmortem Artifact (Evidence-Driven)]")
         postmortem_content = generate_blameless_postmortem(
             incident_id="INC-2026-M20-001",
-            impact_summary="Frontend Gateway experienced p99 latency spike exceeding 350ms due to downstream storage stall.",
+            impact_summary=f"Frontend Gateway experienced elevated request latency ({incident_req['elapsed_ms']:.1f}ms) due to downstream storage mock delay.",
             timeline_entries=[
-                ("T0 (Detection)", "Automated latency alert triggered on ServiceA p99 > 200ms."),
-                ("T1 (Triage)", f"Correlated logs filtered on trace_id {incident_trace_id}; localized delay to ServiceC storage read."),
-                ("T2 (Mitigation)", "Enabled ServiceB local fallback cache bypass flag; traffic latency normalized."),
-                ("T3 (Resolution)", "ServiceC storage connection pool tuned; root lock contention resolved."),
-                ("T4 (Postmortem)", "Systemic review of service degradation safeguards conducted."),
+                ("T0 (Fault Injection)", f"Fixture injected controlled fault DELAY {injected_delay * 1000:.0f}ms into ServiceC; ServiceA request duration elevated to {incident_req['elapsed_ms']:.1f}ms."),
+                ("T1 (Triage via Correlation)", f"Correlated structured logs filtered on trace_id '{incident_trace_id}'; relative hop duration localized to ServiceC storage mock ({timeline['service_durations_ms'].get('ServiceC', 0.0):.1f}ms)."),
+                ("T2 (Safe Mitigation Applied)", f"Enabled ServiceB fallback cache bypass; verified request duration recovered to {mitigated_req['elapsed_ms']:.1f}ms (HTTP {mitigated_req['status_code']})."),
+                ("T3 (Resolution Status)", "NOT PERFORMED / PROPOSED FOLLOW-UP: Underlying storage mock delay remains active in fixture; code/infrastructure defect resolution was not executed in this scenario."),
+                ("T4 (Defensive Safeguards)", "Systemic review of service degradation safeguards, non-blocking timeout circuit breakers, and canary checks proposed."),
             ],
-            proximate_mechanism="Downstream ServiceC storage mock injected with 350ms processing delay; upstream ServiceB blocked synchronously waiting for response.",
+            proximate_mechanism=f"Downstream ServiceC storage mock injected with {injected_delay * 1000:.0f}ms delay; upstream ServiceB synchronously awaited storage response.",
             contributing_conditions=[
                 "ServiceB lacked asynchronous non-blocking timeout circuit breaking against ServiceC.",
                 "Frontend gateway had no fallback degradation path configured before incident.",
-                "Monitoring alerted on upstream symptom without automated correlation dashboard link.",
+                "Telemetry pipeline initially required manual trace correlation rather than automated dependency bottleneck detection.",
             ],
             mitigation_applied="Activated ServiceB cached fallback route to safely bypass degraded ServiceC storage path.",
+            recovery_status=recovery_status,
+            recovery_evidence=recovery_evidence,
+            resolution_status="NOT PERFORMED / PROPOSED FOLLOW-UP",
+            resolution_plan="Underlying storage mock delay remains active in fixture; in production, storage concurrency limits and query lock contention would be resolved.",
             permanent_safeguards=[
-                "Implement adaptive circuit breaker and bulkhead pattern in ServiceB for all storage calls.",
-                "Introduce automated canary analysis for storage configuration changes.",
-                "Enforce W3C traceparent context propagation across all internal RPC boundaries.",
+                "Implement non-blocking timeout circuit breaker in ServiceB for all storage calls",
+                "Introduce automated canary verification for storage configuration changes",
+                "Enforce W3C traceparent context propagation across all internal RPC boundaries",
             ],
             unresolved_questions=[
                 "What is the maximum staleness tolerance for cached storage fallback data during extended outages?",
-                "How does network partition or packet loss between ServiceB and ServiceC alter timeout detection thresholds?",
+                "How do network packet loss and partial partitions alter timeout detection thresholds?",
             ],
         )
 
@@ -166,11 +189,14 @@ def run_activity_l20_02() -> int:
             "incident_request_status": incident_req["status_code"],
             "incident_request_duration_ms": incident_req["elapsed_ms"],
             "localized_fault": timeline["fault_localized"],
+            "diagnostic_inference": timeline["diagnostic_inference"],
             "mitigated_request_status": mitigated_req["status_code"],
             "mitigated_request_duration_ms": mitigated_req["elapsed_ms"],
-            "recovery_verified": True,
+            "recovery_status": recovery_status,
+            "recovery_evidence": recovery_evidence,
             "total_logs_emitted": len(all_logs_step3),
             "correlated_timeline_records_count": timeline["record_count"],
+            "jsonl_events_path": jsonl_log_path,
         }
 
         with open(out_json, "w", encoding="utf-8") as f:

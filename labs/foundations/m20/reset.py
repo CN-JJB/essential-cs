@@ -28,7 +28,7 @@ def reset_m20_environment(verbose: bool = True) -> int:
 
     # 1. Clean scratch directory files and directory
     if os.path.isdir(SCRATCH_DIR):
-        patterns = ("*.json", "*.tmp", "*.log", "*.md")
+        patterns = ("*.json", "*.jsonl", "*.tmp", "*.log", "*.md")
         for pat in patterns:
             for file_path in glob.glob(os.path.join(SCRATCH_DIR, pat)):
                 try:

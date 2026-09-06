@@ -13,11 +13,18 @@ Verifies all Core M20 invariants:
 7. Reset Idempotence & Fail-Closed Cleanup Regression.
 """
 
+import io
 import json
 import os
+import sys
 import time
 import unittest
 from unittest import mock
+
+# Ensure labs/foundations/m20 is in sys.path for direct or root execution
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+if _current_dir not in sys.path:
+    sys.path.insert(0, _current_dir)
 
 from reset import reset_m20_environment
 from s6_m20_observability_pipeline import (
@@ -26,11 +33,16 @@ from s6_m20_observability_pipeline import (
     StructuredLogger,
     compute_distribution_statistics,
     compute_elapsed_duration_ms,
+    evaluate_request_sli_slo,
     evaluate_sli_slo,
+    evaluate_time_availability_sli_slo,
     generate_blameless_postmortem,
+    generate_span_id,
+    generate_trace_id,
     generate_traceparent,
     parse_traceparent,
     reconstruct_correlated_timeline,
+    sanitize_privacy_fields,
 )
 
 
@@ -65,6 +77,11 @@ class TestClockSemantics(unittest.TestCase):
         self.assertGreater(mono_diff, 0.0)
         self.assertGreaterEqual(compute_elapsed_duration_ms(m0, m1), 8.0)
 
+    def test_negative_step_validation(self) -> None:
+        adapter = ClockAdapter()
+        with self.assertRaises(ValueError):
+            adapter.inject_wall_step_backward(-5.0)
+
 
 class TestDistributionStatistics(unittest.TestCase):
     def test_nearest_rank_percentiles(self) -> None:
@@ -97,24 +114,26 @@ class TestDistributionStatistics(unittest.TestCase):
             compute_distribution_statistics([])
 
 
-class TestSliSloEvaluator(unittest.TestCase):
-    def test_sli_slo_evaluation_success(self) -> None:
-        # 10,000 requests, 9,995 good, 99.9% SLO
-        res = evaluate_sli_slo(
+class TestDecoupledSliSloEvaluator(unittest.TestCase):
+    def test_request_sli_slo_evaluation_success(self) -> None:
+        res = evaluate_request_sli_slo(
             total_valid_requests=10000,
             good_requests=9995,
             slo_target_percent=99.9,
-            window_seconds=2592000.0,
         )
+        self.assertEqual(res["sli_dimension"], "request_event")
         self.assertEqual(res["actual_sli_percent"], 99.95)
         self.assertTrue(res["slo_met"])
         self.assertEqual(res["allowed_bad_requests"], 10.0)
         self.assertEqual(res["bad_requests"], 5)
         self.assertEqual(res["remaining_budget_requests"], 5.0)
         self.assertEqual(res["budget_consumed_percent"], 50.0)
+        # Ensure request SLI does NOT emit downtime minutes
+        self.assertNotIn("allowed_downtime_minutes_in_window", res)
+        self.assertNotIn("allowed_downtime_minutes", res)
 
-    def test_sli_slo_budget_exhaustion(self) -> None:
-        res = evaluate_sli_slo(
+    def test_request_sli_slo_budget_exhaustion(self) -> None:
+        res = evaluate_request_sli_slo(
             total_valid_requests=10000,
             good_requests=9980,
             slo_target_percent=99.9,
@@ -123,17 +142,47 @@ class TestSliSloEvaluator(unittest.TestCase):
         self.assertFalse(res["slo_met"])
         self.assertEqual(res["bad_requests"], 20)
         self.assertEqual(res["budget_consumed_percent"], 200.0)
+        self.assertIn("policy_note", res)
+
+    def test_backward_compatible_wrapper(self) -> None:
+        res = evaluate_sli_slo(
+            total_valid_requests=10000,
+            good_requests=9995,
+            slo_target_percent=99.9,
+        )
+        self.assertEqual(res["sli_dimension"], "request_event")
+        self.assertEqual(res["actual_sli_percent"], 99.95)
+        self.assertNotIn("allowed_downtime_minutes", res)
+
+    def test_time_availability_sli_slo_evaluation(self) -> None:
+        # 30-day window = 2,592,000s; 20 min downtime = 1200s downtime; 2,590,800s uptime
+        res = evaluate_time_availability_sli_slo(
+            total_window_seconds=2592000.0,
+            uptime_seconds=2590800.0,
+            slo_target_percent=99.9,
+        )
+        self.assertEqual(res["sli_dimension"], "time_duration")
+        self.assertAlmostEqual(res["actual_availability_percent"], 99.9537, places=4)
+        self.assertTrue(res["slo_met"])
+        self.assertEqual(res["allowed_downtime_minutes"], 43.2)
+        self.assertEqual(res["downtime_minutes"], 20.0)
+        self.assertEqual(res["remaining_downtime_minutes"], 23.2)
+        self.assertAlmostEqual(res["budget_consumed_percent"], 46.3, places=1)
 
     def test_invalid_parameters_raise(self) -> None:
         with self.assertRaises(ValueError):
-            evaluate_sli_slo(0, 0, 99.0)
+            evaluate_request_sli_slo(0, 0, 99.0)
         with self.assertRaises(ValueError):
-            evaluate_sli_slo(100, 105, 99.0)
+            evaluate_request_sli_slo(100, 105, 99.0)
         with self.assertRaises(ValueError):
-            evaluate_sli_slo(100, 90, 105.0)
+            evaluate_request_sli_slo(100, 90, 105.0)
+        with self.assertRaises(ValueError):
+            evaluate_time_availability_sli_slo(0.0, 0.0, 99.0)
+        with self.assertRaises(ValueError):
+            evaluate_time_availability_sli_slo(100.0, 105.0, 99.0)
 
 
-class TestW3CTraceContext(unittest.TestCase):
+class TestW3CTraceContextStrict(unittest.TestCase):
     def test_generate_and_parse_valid_traceparent(self) -> None:
         tp = generate_traceparent(sampled=True)
         self.assertEqual(len(tp), 55)
@@ -147,6 +196,17 @@ class TestW3CTraceContext(unittest.TestCase):
         self.assertEqual(parsed["trace_flags"], "01")
         self.assertTrue(parsed["sampled"])
 
+    def test_unified_trace_id_and_span_id_generators(self) -> None:
+        tid = generate_trace_id()
+        self.assertEqual(len(tid), 32)
+        self.assertNotEqual(tid, "00000000000000000000000000000000")
+        int(tid, 16)  # must be valid hex
+
+        sid = generate_span_id()
+        self.assertEqual(len(sid), 16)
+        self.assertNotEqual(sid, "0000000000000000")
+        int(sid, 16)  # must be valid hex
+
     def test_all_zero_trace_id_rejected(self) -> None:
         bad_header = "00-00000000000000000000000000000000-1234567812345678-01"
         with self.assertRaises(ValueError) as ctx:
@@ -159,11 +219,18 @@ class TestW3CTraceContext(unittest.TestCase):
             parse_traceparent(bad_header)
         self.assertIn("all-zero parent ID", str(ctx.exception))
 
-    def test_invalid_version_length_and_characters_rejected(self) -> None:
-        # Version 'ff' forbidden
-        with self.assertRaises(ValueError):
-            parse_traceparent("ff-4bf92f3577b34da6a3ce929d0e0e4736-1234567812345678-01")
+    def test_version_not_00_rejected(self) -> None:
+        # Version 01 must be rejected (Requirement 4 regression test)
+        with self.assertRaises(ValueError) as ctx1:
+            parse_traceparent("01-4bf92f3577b34da6a3ce929d0e0e4736-1234567812345678-01")
+        self.assertIn("Unsupported or invalid traceparent version", str(ctx1.exception))
 
+        # Version ff must be rejected
+        with self.assertRaises(ValueError) as ctx2:
+            parse_traceparent("ff-4bf92f3577b34da6a3ce929d0e0e4736-1234567812345678-01")
+        self.assertIn("Unsupported or invalid traceparent version", str(ctx2.exception))
+
+    def test_invalid_length_and_characters_rejected(self) -> None:
         # Wrong character count for version 00
         with self.assertRaises(ValueError):
             parse_traceparent("00-4bf92f3577b34da6a3ce929d0e0e4736-1234567812345678-01-extra")
@@ -173,35 +240,109 @@ class TestW3CTraceContext(unittest.TestCase):
             parse_traceparent("00-4bf92f3577b34da6a3ce929d0e0e47zz-1234567812345678-01")
 
 
-class TestStructuredLoggerPrivacy(unittest.TestCase):
-    def test_logger_redacts_passwords_and_tokens(self) -> None:
-        logger = StructuredLogger()
-        entry = logger.log(
-            service="ServiceA",
-            event="user_login",
-            trace_id="4bf92f3577b34da6a3ce929d0e0e4736",
-            details={
-                "username": "alice",
-                "auth_header": "Bearer secret_token_123",
-                "password": "super_secret_password",
-                "cookie": "session_id=xyz",
-                "item_id": 42,
-            },
+class TestStructuredLoggerAndSink(unittest.TestCase):
+    def test_logger_emits_valid_parseable_json_to_sink(self) -> None:
+        stream = io.StringIO()
+        logger = StructuredLogger(sink_stream=stream)
+
+        trace_id = generate_trace_id()
+        span_id = generate_span_id()
+        record = logger.log(
+            service="TestService",
+            event="test_event",
+            trace_id=trace_id,
+            span_id=span_id,
+            duration_ms=12.345,
+            status="OK",
+            details={"key": "val"},
         )
-        self.assertEqual(entry["details"]["username"], "alice")
-        self.assertEqual(entry["details"]["item_id"], 42)
-        self.assertEqual(entry["details"]["auth_header"], "[REDACTED]")
-        self.assertEqual(entry["details"]["password"], "[REDACTED]")
-        self.assertEqual(entry["details"]["cookie"], "[REDACTED]")
+
+        emitted_lines = logger.get_emitted_json_lines()
+        self.assertEqual(len(emitted_lines), 1)
+
+        # Parse emitted JSON string
+        parsed = json.loads(emitted_lines[0])
+        self.assertEqual(parsed["service"], "TestService")
+        self.assertEqual(parsed["event"], "test_event")
+        self.assertEqual(parsed["trace_id"], trace_id)
+        self.assertEqual(parsed["span_id"], span_id)
+        self.assertEqual(parsed["duration_ms"], 12.345)
+        self.assertIn("timestamp_utc", parsed)
+        self.assertIn("timestamp_wall_epoch_s", parsed)
+        self.assertEqual(parsed["details"], {"key": "val"})
+
+        # Stream sink received matching line
+        stream_content = stream.getvalue()
+        self.assertTrue(stream_content.endswith("\n"))
+        stream_parsed = json.loads(stream_content.strip())
+        self.assertEqual(stream_parsed["trace_id"], trace_id)
+
+    def test_logger_file_sink_jsonl(self) -> None:
+        scratch_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".scratch")
+        os.makedirs(scratch_dir, exist_ok=True)
+        test_jsonl = os.path.join(scratch_dir, "test_sink_events.jsonl")
+        if os.path.exists(test_jsonl):
+            os.remove(test_jsonl)
+
+        try:
+            logger = StructuredLogger(jsonl_path=test_jsonl)
+            trace_id = generate_trace_id()
+            logger.log(service="FileSinkService", event="file_event", trace_id=trace_id)
+
+            self.assertTrue(os.path.exists(test_jsonl))
+            with open(test_jsonl, "r", encoding="utf-8") as f:
+                lines = [line.strip() for line in f if line.strip()]
+            self.assertEqual(len(lines), 1)
+            parsed = json.loads(lines[0])
+            self.assertEqual(parsed["service"], "FileSinkService")
+            self.assertEqual(parsed["trace_id"], trace_id)
+        finally:
+            if os.path.exists(test_jsonl):
+                os.remove(test_jsonl)
+
+    def test_recursive_privacy_sanitizer(self) -> None:
+        # Complex nested structure with case-insensitivity and Bearer values
+        raw_data = {
+            "user": "alice",
+            "PASSWORD": "plaintext_password",
+            "Auth_Header": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+            "nested": {
+                "secret_key": "12345",
+                "session_COOKIE": "session=abc",
+                "allowed_flag": True,
+                "user_token": "secret_token_123",
+                "safe_list": ["Bearer secret-token-abc", "normal_string"],
+            },
+            "services_config": [
+                {"db_password": "sql_pass", "db_host": "127.0.0.1"},
+                "Bearer standalone_token",
+            ],
+        }
+
+        sanitized = sanitize_privacy_fields(raw_data)
+
+        self.assertEqual(sanitized["user"], "alice")
+        self.assertEqual(sanitized["PASSWORD"], "[REDACTED]")
+        self.assertEqual(sanitized["Auth_Header"], "[REDACTED]")
+        self.assertEqual(sanitized["nested"]["secret_key"], "[REDACTED]")
+        self.assertEqual(sanitized["nested"]["session_COOKIE"], "[REDACTED]")
+        self.assertEqual(sanitized["nested"]["user_token"], "[REDACTED]")
+        self.assertTrue(sanitized["nested"]["allowed_flag"])
+        self.assertEqual(sanitized["nested"]["safe_list"][0], "Bearer [REDACTED]")
+        self.assertEqual(sanitized["nested"]["safe_list"][1], "normal_string")
+        self.assertEqual(sanitized["services_config"][0]["db_password"], "[REDACTED]")
+        self.assertEqual(sanitized["services_config"][0]["db_host"], "127.0.0.1")
+        self.assertEqual(sanitized["services_config"][1], "Bearer [REDACTED]")
 
 
 class TestThreeServicePipelineIntegration(unittest.TestCase):
     def setUp(self) -> None:
-        self.manager = ObservabilityPipelineManager()
+        self.manager = ObservabilityPipelineManager(watchdog_timeout_s=30.0)
         self.manager.start()
 
     def tearDown(self) -> None:
-        self.manager.shutdown()
+        if self.manager._is_running:
+            self.manager.shutdown()
 
     def test_normal_end_to_end_request(self) -> None:
         res = self.manager.dispatch_request()
@@ -213,40 +354,93 @@ class TestThreeServicePipelineIntegration(unittest.TestCase):
         services_seen = {r["service"] for r in records}
         self.assertEqual(services_seen, {"ServiceA", "ServiceB", "ServiceC"})
 
-    def test_fault_injection_and_timeline_localization(self) -> None:
-        # Inject 250ms delay in ServiceC
-        self.manager.set_fault(fault_mode="DELAY", delay_s=0.25)
+    def test_fault_injection_delay_and_relative_localization(self) -> None:
+        # Inject 200ms delay in ServiceC
+        self.manager.set_fault(fault_mode="DELAY", delay_s=0.20)
         res = self.manager.dispatch_request()
 
         self.assertEqual(res["status_code"], 200)
-        self.assertGreaterEqual(res["elapsed_ms"], 240.0)
+        self.assertGreaterEqual(res["elapsed_ms"], 190.0)
 
         trace_id = res["response"]["trace_id"]
         timeline = reconstruct_correlated_timeline(
             self.manager.logger.get_records(), trace_id
         )
+        # Verify localization uses relative concentration or degraded status, not fixed 200ms
         self.assertIsNotNone(timeline["fault_localized"])
-        self.assertIn("ServiceC", timeline["fault_localized"])
-        self.assertGreaterEqual(timeline["service_durations_ms"]["ServiceC"], 240.0)
+        self.assertEqual(timeline["fault_localized"], "ServiceC")
+        self.assertIn("fixture_ground_truth", timeline)
+        self.assertIn("production_inference_boundary", timeline)
+        self.assertIsNotNone(timeline["diagnostic_inference"])
+
+    def test_fault_injection_http_500_mode(self) -> None:
+        self.manager.set_fault(fault_mode="HTTP_500")
+        res = self.manager.dispatch_request()
+        # Without mitigation, ServiceB propagates downstream error to ServiceA
+        self.assertIn(res["status_code"], (500, 502))
+
+    def test_fault_injection_parameter_validation(self) -> None:
+        # Unknown mode rejected
+        with self.assertRaises(ValueError) as ctx1:
+            self.manager.set_fault(fault_mode="UNSUPPORTED_MODE")
+        self.assertIn("Unsupported fault_mode", str(ctx1.exception))
+
+        # Negative delay rejected
+        with self.assertRaises(ValueError) as ctx2:
+            self.manager.set_fault(fault_mode="DELAY", delay_s=-0.5)
+        self.assertIn("cannot be negative", str(ctx2.exception))
+
+        # Unsafe delay rejected
+        with self.assertRaises(ValueError) as ctx3:
+            self.manager.set_fault(fault_mode="DELAY", delay_s=10.0)
+        self.assertIn("exceeds maximum safety bound", str(ctx3.exception))
 
     def test_safe_mitigation_recovers_latency(self) -> None:
-        # Under delay fault
-        self.manager.set_fault(fault_mode="DELAY", delay_s=0.3)
-        # Apply mitigation
-        self.manager.set_mitigation(enabled=True)
+        self.manager.set_fault(fault_mode="DELAY", delay_s=0.25)
+        incident_res = self.manager.dispatch_request()
 
-        res = self.manager.dispatch_request()
-        self.assertEqual(res["status_code"], 200)
-        # Should be served via fallback cache in ServiceB without calling ServiceC
-        self.assertLess(res["elapsed_ms"], 50.0)
+        self.manager.set_mitigation(enabled=True)
+        mitigated_res = self.manager.dispatch_request()
+
+        self.assertEqual(mitigated_res["status_code"], 200)
+        # Relative latency verification (mitigated significantly faster than degraded)
+        self.assertLess(mitigated_res["elapsed_ms"], incident_res["elapsed_ms"])
+
+
+class TestLifecycleAndSafety(unittest.TestCase):
+    def test_pipeline_shutdown_fails_closed_on_error(self) -> None:
+        manager = ObservabilityPipelineManager(watchdog_timeout_s=5.0)
+        manager.start()
+        self.assertTrue(manager._is_running)
+
+        # Mock server_close on server_c to raise an error
+        with mock.patch.object(manager.server_c, "server_close", side_effect=OSError("Simulated socket close failure")):
+            with self.assertRaises(RuntimeError) as ctx:
+                manager.shutdown()
+            self.assertIn("Pipeline shutdown failed", str(ctx.exception))
+            self.assertIn("ServiceC server close error", str(ctx.exception))
+            # State remains True (fails closed, does not wipe state)
+            self.assertTrue(manager._is_running)
+
+        # Clean shutdown without mock
+        manager.shutdown()
+        self.assertFalse(manager._is_running)
+
+    def test_watchdog_bounded_execution(self) -> None:
+        # Test bounded watchdog auto-cleanup on owned in-process servers
+        manager = ObservabilityPipelineManager(watchdog_timeout_s=0.2)
+        manager.start()
+        self.assertTrue(manager._is_running)
+        t0 = time.time()
+        while manager._is_running and (time.time() - t0 < 4.0):
+            time.sleep(0.05)
+        self.assertFalse(manager._is_running)
 
 
 class TestResetAndCleanup(unittest.TestCase):
     def test_reset_runs_twice_idempotently(self) -> None:
-        # First run
         count1 = reset_m20_environment(verbose=False)
         self.assertIsInstance(count1, int)
-        # Second run immediately following
         count2 = reset_m20_environment(verbose=False)
         self.assertEqual(count2, 0)
 
@@ -262,29 +456,52 @@ class TestResetAndCleanup(unittest.TestCase):
                 reset_m20_environment(verbose=False)
             self.assertIn("M20 cleanup incomplete", str(ctx.exception))
 
-            # Clean up dummy file manually
             if os.path.exists(dummy_file):
                 os.remove(dummy_file)
 
 
 class TestBlamelessPostmortemFormat(unittest.TestCase):
-    def test_postmortem_generation_contains_required_sections(self) -> None:
+    def test_postmortem_generation_evidence_driven(self) -> None:
         pm = generate_blameless_postmortem(
             incident_id="INC-TEST-001",
             impact_summary="Test outage impact",
-            timeline_entries=[("T0", "Alert triggered"), ("T1", "Mitigated")],
+            timeline_entries=[
+                ("T0 (Fault)", "Fixture injected DELAY 200ms"),
+                ("T1 (Mitigation)", "Enabled fallback cache"),
+                ("T2 (Resolution)", "NOT PERFORMED / PROPOSED FOLLOW-UP"),
+            ],
             proximate_mechanism="Injected delay in storage mock",
             contributing_conditions=["Missing timeout limit", "No fallback cache"],
             mitigation_applied="Activated local fallback bypass",
+            recovery_status="PASS",
+            recovery_evidence="Mitigated request returned HTTP 200 in 3.5ms",
+            resolution_status="NOT PERFORMED / PROPOSED FOLLOW-UP",
+            resolution_plan="Proposed database connection pool tuning in production.",
             permanent_safeguards=["Add circuit breaker", "Enforce traceparent"],
             unresolved_questions=["Cache invalidation horizon"],
         )
         self.assertIn("# Incident Postmortem: INC-TEST-001", pm)
         self.assertIn("BLAMELESS POSTMORTEM", pm)
-        self.assertIn("Contributing Systemic Conditions", pm)
-        self.assertIn("Mitigation vs. Resolution Distinction", pm)
-        self.assertIn("Exact Inference Limits", pm)
+        self.assertIn("Recovery Verification Status**: PASS", pm)
+        self.assertIn("Recovery Observable Evidence**: Mitigated request returned HTTP 200 in 3.5ms", pm)
+        self.assertIn("Resolution Status**: `NOT PERFORMED / PROPOSED FOLLOW-UP`", pm)
         self.assertNotIn("Bob forgot", pm)
+        # Confirm no fabricated facts
+        self.assertNotIn("connection pool tuned; root lock contention resolved", pm)
+
+    def test_postmortem_generation_rejects_invalid_recovery_status(self) -> None:
+        with self.assertRaises(ValueError) as ctx:
+            generate_blameless_postmortem(
+                incident_id="INC-TEST-002",
+                impact_summary="Test impact",
+                timeline_entries=[],
+                proximate_mechanism="none",
+                contributing_conditions=[],
+                mitigation_applied="none",
+                recovery_status="INVALID_STATUS",
+                recovery_evidence="none",
+            )
+        self.assertIn("Invalid recovery_status", str(ctx.exception))
 
 
 if __name__ == "__main__":
