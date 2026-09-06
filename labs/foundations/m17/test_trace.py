@@ -126,7 +126,7 @@ class TestM17QuorumOverlap(unittest.TestCase):
         self.assertEqual(ce["proof"], "OVERLAP_ALONE_DOES_NOT_GUARANTEE_LINEARIZABILITY")
 
     def test_counterexample_concurrent_conflicting_writes(self):
-        # Gate 15: Concurrent writes under quorum overlap without consensus
+        # Gate 15: Concurrent writes under quorum overlap without a named order/conflict rule
         ce = QuorumValidator.demonstrate_counterexample_concurrent_conflicting_writes()
         self.assertEqual(ce["overlap_node"], "N2")
         self.assertIn("Reader {N1, N2} sees B", ce["disjoint_readers_anomaly"])
