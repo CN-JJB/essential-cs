@@ -18,13 +18,13 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 ## B — Replication Acknowledgment Policy & Durability
 
-- Evaluated Scenario ID: `<actual scenario ID, e.g. ASYNC_FAILOVER / SEMI_SYNC_CRASH>`
-- Configured Acknowledgment Policy: `<ASYNC / SEMI_SYNC / SYNC_ALL / QUORUM_W>`
+- Evaluated Scenario ID: `<actual course scenario ID>`
+- Configured Acknowledgment Policy: `<actual course acknowledgment policy name>`
 - Client Success Condition:
   `<Learner specifies when the client receives success under the policy>`
 - Replica States at Acknowledgment Time:
   `<Learner records which replicas held the entry when the client was acknowledged>`
-- Storage Assumptions: `<VOLATILE_RAM / DURABLE_DISK (fsync)>`
+- Storage Assumptions: `<actual worksheet durability assumption; do not claim real fsync unless observed>`
 - Failure Model Evaluated: `<Leader crash / follower partition / network delay>`
 - Observed Failover Durability Outcome:
   `<Learner records whether data was lost or preserved upon failover to new leader>`
@@ -93,7 +93,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Safety Conclusion:
   `<Learner verifies that Election Safety held (at most one leader per term)>`
 - Boundary of Majority Overlap:
-  `<Learner explains why majority overlap alone does NOT prove Leader Completeness without the Log Up-To-Date voting rule>`
+  `<Learner explains that majority-set overlap alone is only set intersection; Election Safety also uses the one-vote-per-term rule, while Leader Completeness additionally uses election restriction plus log/commit rules>`
 
 ---
 
@@ -104,11 +104,11 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Crash Failure Assumption:
   `<Learner notes at least one unannounced crash-stop process failure is possible>`
 - Safety Property Evaluated:
-  `<Learner defines Agreement and Validity under Raft>`
+  `<Learner records the safety property/properties being discussed under the named consensus/Raft model>`
 - Liveness / Termination Condition:
   `<Learner states why deterministic termination cannot be guaranteed under asynchronous FLP>`
 - Randomized Election Timeouts Disposition:
-  `<Learner explains why randomized timeouts improve practical liveness under partial synchrony, but DO NOT formally refute or defeat FLP>`
+  `<Learner explains why randomized election timing changes collision behavior but does not refute the classic FLP result; any liveness claim names its additional assumptions>`
 
 ---
 
@@ -121,7 +121,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   $$op_1 <_{\text{real-time}} op_2 \iff \text{resp}(op_1) < \text{inv}(op_2)$$
   - Precedence Relation Satisfied: `<YES / NO>`
 - Classification Outcome:
-  `<LINEARIZABLE / NON_LINEARIZABLE / RYW_VIOLATION / MONOTONIC_READS_VIOLATION>`
+  `<learner records actual classification>`
 - Violating Operation Pair (if any):
   - Operation 1: `<op_id, type, value, interval>`
   - Operation 2: `<op_id, type, value, interval>`
@@ -136,11 +136,11 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Partition Scenario Evaluated: `<network partition separating client from majority or minority>`
 - Named Request Path & Operation: `<Read or Write on specific partition side>`
 - Behavior Under Consistency ($C$) Prioritization:
-  `<Learner records system returning error or blocking request to preserve linearizability>`
+  `<Learner records the actual modeled behavior of this request path when preserving atomic/linearizable consistency>`
 - Behavior Under Availability ($A$) Prioritization:
-  `<Learner records system returning local stale/conflicting data to guarantee non-error response>`
+  `<Learner records the actual modeled response behavior when theorem-defined availability is required, and states which consistency guarantee cannot also be promised>`
 - Rejection of "Pick Any Two" Menu:
-  `<Learner explicitly writes why P is an environmental fault to tolerate rather than an optional configuration choice>`
+  `<Learner rejects the static pick-two menu and explains the theorem in terms of allowed partition/message-loss executions for the named object/request path>`
 
 ---
 
@@ -150,14 +150,18 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/8eb16d3628bbd77ee7e8471b9871ec09_MIT6_033S18lec14.pdf`
 - Source Inspection Date: `<actual date>`
 - Source Access Disposition: `<LIVE_SOURCE_ACCESSIBLE / OPTIONAL SOURCE RECHECK BLOCKED>`
-- Primary-Backup State Tracking Note:
-  `<Learner paraphrases primary/backup state from Lecture 14>`
+- Lecture 14 Replication Foundation Note:
+  `<Learner paraphrases the reliability/replication principle actually supported by Lecture 14>`
+- Lecture 19 View Server Source Inspected:
+  `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/resources/mit6_033s18lec19/`
+- Lecture 19 Official Outline Inspected:
+  `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/pages/week-11/lecture-19-outline/`
 - Failure Detection Ambiguity Note:
-  `<Learner records why ping silence cannot distinguish crash from network partition>`
-- View Server Coordination Role:
-  `<Learner records how view number and primary ACK barrier prevent dual primary>`
+  `<Learner records the limits of ping-based failure detection from the Lecture 19 model>`
+- View Server Coordination / Centralization Note:
+  `<Learner records the View Server role/rules and the central dependency described by Lecture 19>`
 - Comparison to Course M17 Raft Trace:
-  `<Learner contrasts centralized View Server against decentralized majority quorum>`
+  `<Learner compares the Lecture 19 centralized View Server model against the course bounded Raft trace, naming majority-set overlap plus vote/log/commit obligations>`
 - Stopping Point Verified:
   `<Learner confirms stopping at bounded reading card without external code compilation>`
 
@@ -180,6 +184,6 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Cleanup & Safety Verification:
   - Reset Script Executed: `labs/foundations/m17/reset.py`
   - Reset Idempotence Verified (Ran twice cleanly): `<YES / NO>`
-  - Zero Distributed Service Daemons or Background Sockets: `<CONFIRMED>`
+  - Zero Distributed Service Daemons or Background Sockets: `<learner/source-audit actual disposition>`
 - Exact Inference Limits Acknowledged:
   `<Learner acknowledges that quorum overlap does not equal linearizability, that Raft safety does not collapse to majority alone, that randomized timeouts do not defeat FLP, and that CAP is a partition trade-off rather than a pick-two menu>`
