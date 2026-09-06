@@ -104,6 +104,11 @@ class TestM17QuorumOverlap(unittest.TestCase):
         self.assertTrue(res["has_overlap"])
         self.assertEqual(res["overlap_nodes"], ["node_2"])
 
+        with self.assertRaises(ValueError):
+            qv.evaluate_overlap({"node_1"}, {"node_2", "node_3"})
+        with self.assertRaises(ValueError):
+            QuorumValidator(cluster_size=3, write_quorum=4, read_quorum=1)
+
     def test_counterexample_unversioned_stale_read(self):
         # Gate 13: Overlap alone does NOT equal latest-value read without versioning rule
         ce = QuorumValidator.demonstrate_counterexample_unversioned_stale_read()
@@ -259,9 +264,19 @@ class TestM17SafetyAndReset(unittest.TestCase):
     """Gate 9, Gate 10, Gate 29: No distributed service, no open ports, idempotent reset."""
 
     def test_reset_idempotence(self):
-        # Running reset twice succeeds without error
+        # Reset removes only course-owned scratch and then remains idempotent.
+        m17_dir = os.path.dirname(os.path.abspath(__file__))
+        scratch_dir = os.path.join(m17_dir, ".scratch")
+        os.makedirs(scratch_dir, exist_ok=True)
+        artifact = os.path.join(scratch_dir, "reset-test.json")
+        with open(artifact, "w", encoding="utf-8") as handle:
+            handle.write("{}")
+        self.assertTrue(os.path.exists(artifact))
+
         res1 = reset_m17_environment()
         self.assertEqual(res1, 0)
+        self.assertFalse(os.path.exists(scratch_dir))
+
         res2 = reset_m17_environment()
         self.assertEqual(res2, 0)
 
