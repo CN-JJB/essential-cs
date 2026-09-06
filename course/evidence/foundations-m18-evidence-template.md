@@ -19,9 +19,9 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 ## B — Delegation & Delivery Contract
 
 - Scenario ID: `<actual course scenario ID>`
-- Queue / Log Abstraction Evaluated: `<WORK_QUEUE_COMPETING_CONSUMERS / PARTITIONED_EVENT_LOG>`
-- Ordering Scope Named: `<QUEUE_FIFO / PARTITION_KEY_ORDER / NONE / OTHER>`
-- Delivery Label Contract: `<AT_MOST_ONCE / AT_LEAST_ONCE / EXACTLY_ONCE_SCOPED>`
+- Queue / Log Abstraction Evaluated: `<actual abstraction used in the scenario>`
+- Ordering Scope Named: `<actual ordering scope, if any>`
+- Delivery Label Contract: `<actual named delivery/effect contract>`
 - Retry / Redelivery Assumptions:
   `<Learner specifies when and why messages are redelivered under this contract>`
 - Exact Inference Limit:
@@ -31,9 +31,9 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 ## C — Broken Dual-Write Divergence
 
-- Local Database Transaction State: `<COMMITTED / ROLLED_BACK / NONE>`
-- Scripted Failure Point: `<POST_DB_COMMIT_PRE_QUEUE_ENQUEUE>`
-- Delivery Buffer / Queue State: `<EMPTY / ENQUEUED>`
+- Local Database Transaction State: `<actual observed transaction state>`
+- Scripted Failure Point: `<actual course failure point exercised>`
+- Delivery Buffer / Queue State: `<actual observed delivery-buffer state>`
 - Observed State Divergence:
   `<Learner records whether business row exists while queue delivery action is missing>`
 - Invariant Judgment:
@@ -46,7 +46,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Local SQLite Transaction Boundary: `BEGIN IMMEDIATE ... COMMIT`
 - Orders Table Row State: `<RECORDED_ROW_STATE>`
 - Outbox Events Table Row State: `<RECORDED_ROW_STATE>`
-- Atomic Commit Disposition: `<COMMITTED_TOGETHER / FAILED>`
+- Atomic Commit Disposition: `<actual observed commit/rollback disposition>`
 - Exact Atomicity Scope:
   `<Learner explains why the outbox table MUST reside in the exact same SQLite database as the business entities>`
 
@@ -55,13 +55,13 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 ## E — Relay Retry & Duplicate Delivery
 
 - Outbox Event ID: `<actual recorded event ID>`
-- First Delivery State to Worker: `<DELIVERED / FAILED>`
-- Scripted Relay Failure Point: `<POST_WORKER_DELIVERY_PRE_DISPATCH_MARK>`
-- Outbox `dispatched` Flag After Crash: `<0 / 1>`
+- First Delivery State to Worker: `<actual observed first-attempt state>`
+- Scripted Relay Failure Point: `<actual course relay failure point exercised>`
+- Outbox `dispatched` Flag After Failure: `<actual recorded value>`
 - Observed Redelivery Count on Retry: `<actual count>`
-- Final Outbox `dispatched` Flag: `<0 / 1>`
+- Final Outbox `dispatched` Flag: `<actual recorded value>`
 - Inference Boundary:
-  `<Learner explains why at-least-once delivery is an inevitable consequence of deliver-before-mark crash recovery>`
+  `<Learner explains why this fixture's deliver-before-mark + retry policy permits/produces redelivery, without generalizing it to every at-least-once implementation>`
 
 ---
 
@@ -74,7 +74,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Selected Consumer Effect State (`fulfillments` table): `<RECORDED_FULFILLMENT_STATE>`
 - Exact One-Transaction Boundary:
   `<Learner explains why claim in processed_events and fulfillment update must happen in ONE SQLite transaction>`
-- Duplicate Conflict Path Followed: `<EXISTING_KEY_CHECK / INTEGRITY_CONFLICT>`
+- Duplicate Conflict Path Followed: `<actual conflict/dedup path observed>`
 - Exact Guarantee Scope:
   `<Learner defines what duplicate safety is proved here, and why it cannot be called arbitrary end-to-end exactly-once>`
 
@@ -84,7 +84,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 - Conceptual Distinction:
   `<Learner explains the difference between an Event Log (storage/messaging structure) and Event Sourcing (architectural pattern)>`
-- Is Current M18 Outbox Fixture Event-Sourced? `<YES / NO>`
+- Is Current M18 Outbox Fixture Event-Sourced? `<learner records judgment from the actual fixture>`
 - Mechanical Reason:
   `<Learner justifies whether system state is derived exclusively from replaying events, or stored in mutable tables>`
 
@@ -92,13 +92,13 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 ## H — Classic Two-Phase Commit (2PC) Uncertainty
 
-- Coordinator Logged Decision: `<COMMIT / ABORT / NONE>`
+- Coordinator Logged Decision: `<actual recorded coordinator state/decision>`
 - Participant Name Evaluated: `<participant name>`
-- Participant State under Silence: `<PREPARED / COMMITTED / ABORTED>`
-- Participant Vote Cast: `<YES / NO>`
-- Decision Known to Participant: `<TRUE / FALSE>`
-- Can Unilaterally Commit: `<TRUE / FALSE>`
-- Can Unilaterally Abort: `<TRUE / FALSE>`
+- Participant State under Silence: `<actual recorded participant state>`
+- Participant Vote Cast: `<actual vote in the exercised trace>`
+- Decision Known to Participant: `<actual participant knowledge state in the trace>`
+- Can Unilaterally Commit: `<actual trace result>`
+- Can Unilaterally Abort: `<actual trace result>`
 - Disposition & Blocking Reason:
   `<Learner explains why a prepared participant cannot guess the outcome and must block>`
 - Contrast Case (Vote NO):
@@ -119,7 +119,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - Checkpoint: `<checkpoint name>`
   - Intermediate Observation: `<actual inventory/order state observed>`
   - Isolation Anomaly Identified:
-    `<Learner explains why concurrent observation of intermediate uncommitted state violates Isolation (I in ACID)>`
+    `<Learner explains that the observed state came from already-applied local Saga steps and demonstrates lack of workflow-wide isolation; do not call it a database dirty read unless an uncommitted DB transaction was actually read>`
 - Semantic Forward Recovery vs. Physical Rollback:
   `<Learner explains why compensation does not erase time or historical visibility>`
 
@@ -128,12 +128,12 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 ## J — Distributed Leases & Storage Fencing Tokens
 
 - Initial Lease Holder & Token: `<holder name, token number>`
-- Scripted Client Event: `<GC_PAUSE / NETWORK_STALL>`
-- Lease Expiry Disposition: `<EXPIRED_IN_LOCK_SERVICE>`
+- Scripted Client Event: `<actual course client pause/stall scenario>`
+- Lease Expiry Disposition: `<actual logical lease state>`
 - Newer Lease Holder & Token: `<holder name, token number>`
 - Storage `highest_token` Before Stale Write: `<token number>`
 - Stale Holder Write Attempt Token: `<token number>`
-- Storage Action Recorded: `<ACCEPT_WRITE / REJECT_STALE_WRITE>`
+- Storage Action Recorded: `<actual resource action>`
 - Invariant Evaluated: `presented_token < highest_token => REJECT`
 - Resource-Boundary Inference Limit:
   `<Learner explains why fencing tokens require validation at the protected resource boundary, and why fencing is one mitigation pattern rather than the only valid lock design>`
@@ -162,4 +162,4 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - Gray (1978) 2PC
   - Garcia-Molina & Salem (1987) Sagas
   - Kleppmann (2016) Fencing Tokens
-  - Current Broker Delivery Semantics (Kafka, SQS FIFO, AMQP/JMS)
+  - `<current product/spec sources actually inspected; include Kafka/SQS only if used>`
