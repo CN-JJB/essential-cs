@@ -23,15 +23,16 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 # ==============================================================================
 
 class AckPolicy(Enum):
-    ASYNC = "ASYNC"                 # Leader acks after local write; followers async
-    SEMI_SYNC = "SEMI_SYNC"         # Leader acks after local write + 1 follower
-    SYNC_ALL = "SYNC_ALL"           # Leader acks after all replicas confirm
-    QUORUM_W = "QUORUM_W"           # Leader acks after W replicas confirm (including leader)
+    ASYNC = "ASYNC"                 # Course scenario: ack after leader-local modeled write
+    SEMI_SYNC = "SEMI_SYNC"         # Course scenario: ack after a configured follower threshold
+    SYNC_ALL = "SYNC_ALL"           # Course scenario: ack after every modeled replica confirms
+    QUORUM_W = "QUORUM_W"           # Course scenario: ack after W modeled replicas confirm
 
 
 class StorageDurability(Enum):
-    VOLATILE_RAM = "VOLATILE_RAM"   # Unsynced memory buffer (lost on crash/power loss)
-    DURABLE_DISK = "DURABLE_DISK"   # fsync'd durable disk
+    # These are worksheet assumptions only. The harness performs no real fsync/disk test.
+    VOLATILE_RAM = "VOLATILE_RAM"
+    DURABLE_DISK = "DURABLE_DISK"
 
 
 @dataclass
@@ -39,6 +40,7 @@ class ReplicaState:
     node_id: str
     is_leader: bool = False
     is_alive: bool = True
+    reachable_from_leader: bool = True
     storage: StorageDurability = StorageDurability.DURABLE_DISK
     log: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -52,6 +54,8 @@ class ReplicationAckTrace:
     client_acked: bool = False
     ack_error: Optional[str] = None
     acknowledged_replicas: Set[str] = field(default_factory=set)
+    replicas_at_client_ack: Set[str] = field(default_factory=set)
+    required_follower_acks: int = 1
 
     @classmethod
     def simulate_write(
@@ -62,75 +66,98 @@ class ReplicationAckTrace:
         unreachable_replicas: Set[str],
         crashed_after_write_leader: bool = False,
         w_quorum: int = 2,
+        required_follower_acks: int = 1,
     ) -> "ReplicationAckTrace":
         """
-        Simulate a single write operation under the named acknowledgment policy.
+        Simulate one bounded acknowledgment-point worksheet.
+
+        "unreachable_replicas" means unreachable from the old leader during this
+        modeled write step; it does NOT mean those replicas are dead forever.
         """
+        if cluster_size < 1:
+            raise ValueError("cluster_size must be positive")
+        node_ids = [f"node_{i+1}" for i in range(cluster_size)]
+        if leader_id not in node_ids:
+            raise ValueError("leader_id must name a modeled replica")
+        if not (1 <= w_quorum <= cluster_size):
+            raise ValueError("w_quorum must be within the modeled cluster")
+        if required_follower_acks < 0 or required_follower_acks > cluster_size - 1:
+            raise ValueError("required_follower_acks is outside the modeled follower set")
+
         replicas = {
-            f"node_{i+1}": ReplicaState(
-                node_id=f"node_{i+1}",
-                is_leader=(f"node_{i+1}" == leader_id),
-                is_alive=(f"node_{i+1}" not in unreachable_replicas),
+            nid: ReplicaState(
+                node_id=nid,
+                is_leader=(nid == leader_id),
+                is_alive=True,
+                reachable_from_leader=(nid == leader_id or nid not in unreachable_replicas),
             )
-            for i in range(cluster_size)
+            for nid in node_ids
         }
 
         entry = {"key": "balance", "val": 100, "version": 1}
-        acked_replicas: Set[str] = set()
+        replicas_with_entry: Set[str] = set()
+        replicas_at_ack: Set[str] = set()
 
         leader = replicas[leader_id]
-        if not leader.is_alive:
-            return cls(
-                policy=policy,
-                cluster_size=cluster_size,
-                w_quorum=w_quorum,
-                replicas=replicas,
-                client_acked=False,
-                ack_error="LEADER_UNREACHABLE",
-                acknowledged_replicas=set(),
-            )
+        leader.log.append(dict(entry))
+        replicas_with_entry.add(leader_id)
 
-        # Leader records write locally
-        leader.log.append(entry)
-        acked_replicas.add(leader_id)
+        reachable_followers = [
+            nid
+            for nid in node_ids
+            if nid != leader_id and replicas[nid].reachable_from_leader
+        ]
 
-        # Disseminate to reachable followers
-        for nid, node in replicas.items():
-            if nid != leader_id and node.is_alive:
-                node.log.append(entry)
-                acked_replicas.add(nid)
-
-        # Evaluate client acknowledgment condition
         client_acked = False
         ack_error = None
 
         if policy == AckPolicy.ASYNC:
-            # Client acked as soon as leader writes locally
+            # Ack point occurs before any follower replication in this scenario.
             client_acked = True
+            replicas_at_ack = {leader_id}
+
         elif policy == AckPolicy.SEMI_SYNC:
-            # Requires leader + at least 1 follower
-            follower_acks = len(acked_replicas - {leader_id})
-            if follower_acks >= 1:
+            # "Semi-sync" is not a universal one-follower definition; this worksheet
+            # uses a configurable follower threshold.
+            selected = reachable_followers[:required_follower_acks]
+            for nid in selected:
+                replicas[nid].log.append(dict(entry))
+                replicas_with_entry.add(nid)
+            if len(selected) >= required_follower_acks:
                 client_acked = True
+                replicas_at_ack = set(replicas_with_entry)
             else:
                 ack_error = "SEMI_SYNC_REPLICA_TIMEOUT"
+
         elif policy == AckPolicy.SYNC_ALL:
-            # Requires all replicas
-            if len(acked_replicas) == cluster_size:
+            for nid in reachable_followers:
+                replicas[nid].log.append(dict(entry))
+                replicas_with_entry.add(nid)
+            if len(replicas_with_entry) == cluster_size:
                 client_acked = True
+                replicas_at_ack = set(replicas_with_entry)
             else:
                 ack_error = "SYNC_ALL_TIMEOUT_FOLLOWER_UNREACHABLE"
+
         elif policy == AckPolicy.QUORUM_W:
-            # Requires W replicas
-            if len(acked_replicas) >= w_quorum:
+            needed_followers = max(0, w_quorum - 1)
+            selected = reachable_followers[:needed_followers]
+            for nid in selected:
+                replicas[nid].log.append(dict(entry))
+                replicas_with_entry.add(nid)
+            if len(replicas_with_entry) >= w_quorum:
                 client_acked = True
+                replicas_at_ack = set(replicas_with_entry)
             else:
                 ack_error = "QUORUM_WRITE_UNSATISFIED"
 
-        # Ambiguous write case: leader crashed before returning ACK to client
+        # Ambiguous outcome: the modeled leader crashes after the selected replication
+        # step but before the client observes success. Remote state may still contain
+        # the entry even though client_acked is false.
         if crashed_after_write_leader:
             leader.is_alive = False
             client_acked = False
+            replicas_at_ack = set()
             ack_error = "CLIENT_TIMEOUT_LEADER_CRASHED_POST_REPLICATION"
 
         return cls(
@@ -140,7 +167,9 @@ class ReplicationAckTrace:
             replicas=replicas,
             client_acked=client_acked,
             ack_error=ack_error,
-            acknowledged_replicas=acked_replicas,
+            acknowledged_replicas=set(replicas_with_entry),
+            replicas_at_client_ack=replicas_at_ack,
+            required_follower_acks=required_follower_acks,
         )
 
     def evaluate_failover_loss(self, new_leader_id: str) -> Dict[str, Any]:
@@ -285,8 +314,8 @@ class QuorumValidator:
         At N1: holds 'A'.
         At N3: holds 'B'.
         At N2: whichever packet arrived last overwrote the other.
-        Without consensus/total order, Reader {N1, N3} sees mutually conflicting values
-        with no way to determine which write was serialized first.
+        Without a named version/order/conflict-resolution protocol, Reader {N1, N3}
+        sees conflicting values and the set-overlap fact alone does not select a winner.
         """
         return {
             "scenario": "CONCURRENT_WRITES_WITHOUT_CONSENSUS",
@@ -299,7 +328,7 @@ class QuorumValidator:
                 "N3": "B",
             },
             "disjoint_readers_anomaly": "Reader {N1, N2} sees B; Reader {N1} only sees A",
-            "proof": "QUORUM_OVERLAP_CANNOT_RESOLVE_CONCURRENT_WRITE_ORDER_WITHOUT_CONSENSUS",
+            "proof": "QUORUM_OVERLAP_CANNOT_RESOLVE_CONCURRENT_WRITE_ORDER_WITHOUT_A_NAMED_ORDER_CONFLICT_RULE",
         }
 
 
@@ -446,13 +475,17 @@ class RaftTraceValidator:
             "stale_candidate_rejected": not granted_stale,
             "stale_rejection_reason": reason_stale,
             "flp_boundary_notes": (
-                "Raft guarantees Safety under all asynchronous conditions. "
-                "Liveness requires partial synchrony (bounded message delay during stable election period). "
-                "Randomized election timeouts reduce split votes but DO NOT disprove or defeat the FLP theorem."
+                "Within Raft's stated crash-failure/non-Byzantine model, its safety argument "
+                "does not require a known fixed message-delay bound. Progress requires additional "
+                "communication/timing conditions that allow a stable election and quorum exchange. "
+                "Randomized election timeouts reduce repeated collisions but DO NOT disprove FLP."
             ),
             "safety_vs_majority_alone": (
-                "Majority overlap alone guarantees no two leaders in the same term. "
-                "Leader Completeness strictly requires BOTH majority quorum AND the Log Up-To-Date voting rule."
+                "Majority-set overlap ALONE proves only a set-intersection fact. "
+                "Election Safety also relies on the at-most-one-vote-per-term rule. "
+                "Leader Completeness additionally relies on Raft's election restriction plus "
+                "the log-matching/commit rules. This worksheet checks bounded ingredients, "
+                "not the paper's complete safety proof."
             ),
         }
 
@@ -474,73 +507,151 @@ class Operation:
 
 class ConsistencyEvaluator:
     """
-    Classifies execution histories based on real-time invocation/response precedence.
-    Does NOT use unsynchronized physical machine clocks.
+    Bounded single-register history evaluator.
+
+    The checker reasons from invocation/response precedence on one course-owned
+    worksheet timeline. It does not compare independent machine wall clocks.
     """
 
     @staticmethod
     def precedes(op1: Operation, op2: Operation) -> bool:
-        """
-        op1 precedes op2 in real time iff op1 completed before op2 was invoked.
-        op1 <_real-time op2 <=> op1.resp_time < op2.inv_time
-        """
+        """op1 precedes op2 iff op1 completed before op2 was invoked."""
         return op1.resp_time < op2.inv_time
+
+    @staticmethod
+    def _validate_operations(operations: List[Operation]) -> None:
+        seen_ids: Set[str] = set()
+        for op in operations:
+            if op.op_id in seen_ids:
+                raise ValueError(f"duplicate operation id: {op.op_id}")
+            seen_ids.add(op.op_id)
+            if op.op_type not in {"W", "R"}:
+                raise ValueError(f"unsupported operation type: {op.op_type}")
+            if op.resp_time < op.inv_time:
+                raise ValueError(f"response precedes invocation for {op.op_id}")
 
     @classmethod
     def check_linearizability_single_register(
-        cls, operations: List[Operation]
+        cls,
+        operations: List[Operation],
+        initial_value: Any = 0,
     ) -> Tuple[bool, Optional[str], Optional[Tuple[str, str]]]:
         """
-        Evaluates whether a sequence of operations on a single register
-        violates linearizability.
-        Specifically detects stale reads where an earlier completed write
-        is not reflected in a strictly later invoked read.
+        Exhaustively search linearizations for the small completed histories used by M17.
+
+        A candidate sequential order must preserve every real-time precedence edge.
+        Writes replace the register value; reads are legal only when they return the
+        current sequential register value. This is a bounded teaching validator, not
+        a production general-purpose linearizability checker.
         """
-        # Sort operations by invocation time
-        writes = [op for op in operations if op.op_type == "W"]
-        reads = [op for op in operations if op.op_type == "R"]
+        cls._validate_operations(operations)
+        ops = list(operations)
+        ids = {op.op_id for op in ops}
+        predecessors: Dict[str, Set[str]] = {op.op_id: set() for op in ops}
 
-        for w in writes:
-            for r in reads:
-                # If write completed strictly before read was invoked:
-                if cls.precedes(w, r):
-                    # If read returned a value older than or different from the completed write
-                    # (assuming single write sequence for worked trace)
-                    if r.value != w.value and r.value == 0:  # Returned initial unwritten state
-                        return (
-                            False,
-                            f"STALE_READ_VIOLATION: Write {w.op_id} (resp={w.resp_time}) "
-                            f"preceded Read {r.op_id} (inv={r.inv_time}), but Read returned stale {r.value}",
-                            (w.op_id, r.op_id),
-                        )
+        for a in ops:
+            for b in ops:
+                if a.op_id != b.op_id and cls.precedes(a, b):
+                    predecessors[b.op_id].add(a.op_id)
 
-        return True, "LINEARIZABLE", None
+        # Preserve per-client program order for well-formed course histories.
+        by_client: Dict[str, List[Operation]] = {}
+        for op in ops:
+            by_client.setdefault(op.client_id, []).append(op)
+        for client_ops in by_client.values():
+            ordered = sorted(client_ops, key=lambda x: (x.inv_time, x.resp_time, x.op_id))
+            for prev, nxt in zip(ordered, ordered[1:]):
+                predecessors[nxt.op_id].add(prev.op_id)
+
+        def search(
+            placed: Set[str],
+            current_value: Any,
+        ) -> bool:
+            if placed == ids:
+                return True
+
+            for op in ops:
+                if op.op_id in placed:
+                    continue
+                if not predecessors[op.op_id].issubset(placed):
+                    continue
+
+                if op.op_type == "R":
+                    if op.value != current_value:
+                        continue
+                    next_value = current_value
+                else:
+                    next_value = op.value
+
+                if search(placed | {op.op_id}, next_value):
+                    return True
+            return False
+
+        if search(set(), initial_value):
+            return True, "LINEARIZABLE", None
+
+        # Provide a bounded witness when a completed-before read relation is obvious.
+        for r in sorted(
+            (op for op in ops if op.op_type == "R"),
+            key=lambda x: (x.inv_time, x.resp_time),
+        ):
+            prior_writes = [w for w in ops if w.op_type == "W" and cls.precedes(w, r)]
+            if prior_writes and all(r.value != w.value for w in prior_writes):
+                latest = max(prior_writes, key=lambda x: (x.resp_time, x.inv_time))
+                return (
+                    False,
+                    f"NON_LINEARIZABLE_HISTORY: no legal sequential register order preserves "
+                    f"the real-time constraints; read {r.op_id} returned {r.value!r} after "
+                    f"completed write {latest.op_id} returned {latest.value!r}",
+                    (latest.op_id, r.op_id),
+                )
+
+        return (
+            False,
+            "NON_LINEARIZABLE_HISTORY: no legal sequential register order satisfies the "
+            "observed reads and real-time precedence constraints",
+            None,
+        )
+
+    @staticmethod
+    def _numeric_version(value: Any, op_id: str) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(
+                f"{op_id} must use a numeric version token for this bounded session checker"
+            )
+        return float(value)
 
     @classmethod
     def check_read_your_writes(
         cls, operations: List[Operation]
     ) -> Tuple[bool, Optional[str], Optional[Tuple[str, str]]]:
         """
-        Verifies client-centric Read-Your-Writes session guarantee:
-        If client C writes value v, subsequent reads by client C must observe v or newer.
+        Bounded RYW checker using numeric version tokens.
+
+        A later read by the same client must not observe a version older than that
+        client's latest completed write. A newer version from another write is allowed.
         """
+        cls._validate_operations(operations)
         by_client: Dict[str, List[Operation]] = {}
         for op in operations:
             by_client.setdefault(op.client_id, []).append(op)
 
         for cid, client_ops in by_client.items():
-            last_written_val = None
-            last_write_op = None
-            for op in sorted(client_ops, key=lambda x: x.inv_time):
+            last_written_version: Optional[float] = None
+            last_write_op: Optional[Operation] = None
+            for op in sorted(client_ops, key=lambda x: (x.inv_time, x.resp_time, x.op_id)):
                 if op.op_type == "W":
-                    last_written_val = op.value
+                    last_written_version = cls._numeric_version(op.value, op.op_id)
                     last_write_op = op
-                elif op.op_type == "R" and last_written_val is not None:
-                    if op.value != last_written_val:
+                elif op.op_type == "R" and last_written_version is not None:
+                    read_version = cls._numeric_version(op.value, op.op_id)
+                    if read_version < last_written_version:
                         return (
                             False,
-                            f"RYW_VIOLATION: Client {cid} wrote {last_written_val} in {last_write_op.op_id}, "
-                            f"but subsequent read {op.op_id} returned {op.value}",
+                            f"RYW_VIOLATION: Client {cid} wrote version "
+                            f"{last_written_version:g} in {last_write_op.op_id}, but "
+                            f"subsequent read {op.op_id} returned older version "
+                            f"{read_version:g}",
                             (last_write_op.op_id, op.op_id),
                         )
 
@@ -550,29 +661,27 @@ class ConsistencyEvaluator:
     def check_monotonic_reads(
         cls, operations: List[Operation]
     ) -> Tuple[bool, Optional[str], Optional[Tuple[str, str]]]:
-        """
-        Verifies client-centric Monotonic Reads session guarantee:
-        If client C observes value v1, subsequent reads by client C must never observe an older value v0.
-        """
+        """Bounded monotonic-read checker using numeric version tokens."""
+        cls._validate_operations(operations)
         by_client: Dict[str, List[Operation]] = {}
         for op in operations:
             by_client.setdefault(op.client_id, []).append(op)
 
         for cid, client_ops in by_client.items():
-            seen_read_values: List[Tuple[Operation, int]] = []
-            for op in sorted(client_ops, key=lambda x: x.inv_time):
-                if op.op_type == "R":
-                    # Assume values are version integers for ordering
-                    val_int = int(op.value) if isinstance(op.value, (int, float)) else 0
-                    for prev_op, prev_val in seen_read_values:
-                        if val_int < prev_val:
-                            return (
-                                False,
-                                f"MONOTONIC_READS_VIOLATION: Client {cid} observed version {prev_val} in {prev_op.op_id}, "
-                                f"but later read {op.op_id} observed older version {val_int}",
-                                (prev_op.op_id, op.op_id),
-                            )
-                    seen_read_values.append((op, val_int))
+            previous: Optional[Tuple[Operation, float]] = None
+            for op in sorted(client_ops, key=lambda x: (x.inv_time, x.resp_time, x.op_id)):
+                if op.op_type != "R":
+                    continue
+                read_version = cls._numeric_version(op.value, op.op_id)
+                if previous is not None and read_version < previous[1]:
+                    return (
+                        False,
+                        f"MONOTONIC_READS_VIOLATION: Client {cid} observed version "
+                        f"{previous[1]:g} in {previous[0].op_id}, but later read "
+                        f"{op.op_id} observed older version {read_version:g}",
+                        (previous[0].op_id, op.op_id),
+                    )
+                previous = (op, read_version)
 
         return True, "MONOTONIC_READS_SATISFIED", None
 
