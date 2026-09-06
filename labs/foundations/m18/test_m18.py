@@ -8,6 +8,9 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from unittest import mock
+
+import reset as reset_module
 
 from coordination_trace import (
     CourseSagaScenario,
@@ -93,6 +96,39 @@ class TestM18OutboxFixture(unittest.TestCase):
         self.assertIsNotNone(order_row)
         self.assertIsNotNone(outbox_row)
         self.assertEqual(outbox_row[1], 0)
+
+    def test_transactional_outbox_rolls_back_both_rows_on_injected_failure(self) -> None:
+        """Proves the protected path rolls back business and outbox rows together."""
+        order_id = "ord-atomic-rollback"
+        event_id = "evt-atomic-rollback"
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "SCRIPTED_FAILURE_INSIDE_OUTBOX_TRANSACTION_AFTER_ORDER",
+        ):
+            produce_transactional_outbox(
+                db_path=self.db_path,
+                order_id=order_id,
+                customer="Rollback",
+                item="Fixture",
+                amount=1.0,
+                event_id=event_id,
+                simulate_failure_after_order=True,
+            )
+
+        conn = sqlite3.connect(self.db_path)
+        try:
+            order_row = conn.execute(
+                "SELECT id FROM orders WHERE id = ?", (order_id,)
+            ).fetchone()
+            outbox_row = conn.execute(
+                "SELECT id FROM outbox_events WHERE id = ?", (event_id,)
+            ).fetchone()
+        finally:
+            conn.close()
+
+        self.assertIsNone(order_row)
+        self.assertIsNone(outbox_row)
 
     def test_relay_deliver_before_mark_retry_duplicate(self) -> None:
         """Verifies that relay crash before mark leaves dispatched=0, inducing duplicate delivery on retry."""
@@ -217,15 +253,16 @@ class TestM18CoordinationTrace(unittest.TestCase):
         self.assertEqual(res.final_state["stock"], 10)
         self.assertEqual(res.final_state["orders"]["ord-saga-test"]["status"], "CANCELLED")
 
-    def test_saga_intermediate_state_dirty_read(self) -> None:
+    def test_saga_intermediate_state_visibility(self) -> None:
         """Verifies that intermediate state is visible to observers before payment outcome (lack of isolation)."""
         saga = CourseSagaScenario(initial_stock=10)
-        res = saga.execute_saga(order_id="ord-saga-dirty-read", fail_at_step3=True, inspect_between_step2_and_3=True)
+        res = saga.execute_saga(order_id="ord-saga-visible-state", fail_at_step3=True, inspect_between_step2_and_3=True)
 
         obs = res.intermediate_state_observed
         self.assertIsNotNone(obs)
         self.assertEqual(obs["order_status"], "PENDING")
-        self.assertEqual(obs["stock_observed"], 9)  # Decremented stock was visible!
+        self.assertEqual(obs["stock_observed"], 9)  # Already-applied Step 2 state was visible.
+        self.assertIn("not an uncommitted database dirty read", obs["explanation"])
 
     def test_lease_stale_holder_fencing_token_rejection(self) -> None:
         """Verifies that storage engine rejects a write with an older fencing token."""
@@ -264,17 +301,71 @@ class TestM18CoordinationTrace(unittest.TestCase):
         self.assertEqual(storage.records["k"], "v2")
         self.assertEqual(storage.highest_token, 15)
 
+    def test_fencing_checker_is_not_a_lease_expiry_or_authentication_oracle(self) -> None:
+        """A token is rejected as stale only after a higher token has reached this resource."""
+        lock_service = LeaseLockService()
+        storage = FencedStorageEngine()
+
+        lease1 = lock_service.acquire_lease("Client_1")
+        lock_service.expire_lease(lease1)
+
+        # No higher token has reached storage yet. This bounded checker cannot infer
+        # lease expiry from token 1 alone, so it accepts the write.
+        res = storage.write("k", "v1", lease1.token, "Client_1")
+        self.assertEqual(res["action"], "ACCEPT_WRITE")
+        self.assertEqual(storage.highest_token, lease1.token)
+
 
 class TestM18Reset(unittest.TestCase):
-    def test_reset_idempotent_twice(self) -> None:
-        """Verifies that reset runs twice cleanly without error and is fail-closed."""
-        # Run 1
-        count1 = reset_m18_environment(verbose=False)
-        self.assertIsInstance(count1, int)
+    def test_reset_removes_owned_db_sidecars_and_is_idempotent(self) -> None:
+        """Reset removes course-owned artifacts, then succeeds again on a clean scratch."""
+        with tempfile.TemporaryDirectory(prefix="test_m18_reset_") as temp_dir:
+            scratch = os.path.join(temp_dir, ".scratch")
+            pycache = os.path.join(temp_dir, "__pycache__")
+            os.makedirs(scratch)
+            os.makedirs(pycache)
 
-        # Run 2
-        count2 = reset_m18_environment(verbose=False)
-        self.assertIsInstance(count2, int)
+            for name in (
+                "fixture.db",
+                "fixture.db-journal",
+                "fixture.db-wal",
+                "fixture.db-shm",
+                "observation.json",
+                "trace.log",
+            ):
+                with open(os.path.join(scratch, name), "w", encoding="utf-8") as handle:
+                    handle.write("owned")
+            with open(os.path.join(pycache, "x.pyc"), "wb") as handle:
+                handle.write(b"x")
+
+            with mock.patch.object(reset_module, "SCRATCH_DIR", scratch), mock.patch.object(
+                reset_module, "PYCACHE_DIR", pycache
+            ):
+                count1 = reset_module.reset_m18_environment(verbose=False)
+                self.assertGreaterEqual(count1, 6)
+                self.assertFalse(os.path.exists(scratch))
+                self.assertFalse(os.path.exists(pycache))
+
+                count2 = reset_module.reset_m18_environment(verbose=False)
+                self.assertEqual(count2, 0)
+
+    def test_reset_fails_closed_when_owned_directory_cannot_be_removed(self) -> None:
+        """Deletion failure must surface as RuntimeError rather than a false successful reset."""
+        with tempfile.TemporaryDirectory(prefix="test_m18_reset_fail_") as temp_dir:
+            scratch = os.path.join(temp_dir, ".scratch")
+            os.makedirs(scratch)
+            with open(os.path.join(scratch, "owned.bin"), "wb") as handle:
+                handle.write(b"x")
+
+            with mock.patch.object(reset_module, "SCRATCH_DIR", scratch), mock.patch.object(
+                reset_module, "PYCACHE_DIR", os.path.join(temp_dir, "__pycache__")
+            ), mock.patch.object(
+                reset_module.shutil,
+                "rmtree",
+                side_effect=OSError("scripted removal failure"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cleanup incomplete"):
+                    reset_module.reset_m18_environment(verbose=False)
 
 
 if __name__ == "__main__":
