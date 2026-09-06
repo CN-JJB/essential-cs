@@ -111,7 +111,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - Propagation Model Parameters: `[Record modeled propagation speed and delay per km]`
   - Evaluated Path Lower Bounds: `[Record calculated one-way and RTT propagation floors for modeled scenario distances]`
 - Provider SLA Boundary:
-  `[Learner explains why an SLA is a contractual financial credit remedy, not an independent physical failure probability]`
+  `[Learner records the named provider/service SLA source if one is used, then explains why its specific measurement/remedy terms are not automatically an independent per-instance failure probability]`
 
 ---
 

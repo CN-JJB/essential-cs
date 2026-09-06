@@ -535,8 +535,8 @@ def simulate_tag_vs_digest() -> Dict[str, Any]:
     """
     Demonstrates:
     1. Mutable tag references pointing to manifest digests.
-    2. Content digest immutability under cryptographic hash algorithms (SHA-256 baseline;
-       OCI Image Spec v1.1 also registers SHA-512 and BLAKE3).
+    2. Algorithm-qualified content digest identity (this fixture computes SHA-256).
+       OCI Image Spec v1.1.1 defines SHA-256 and SHA-512; current unreleased main also defines BLAKE3.
     3. Content verification requirement: calculating hash and comparing with expected digest
        communicated over a secure channel.
     4. The fundamental 4-part boundary:
@@ -568,25 +568,27 @@ def simulate_tag_vs_digest() -> Dict[str, Any]:
             "target_at_t1": registry_tag_at_t1,
             "tag_repointed_and_mutable": tag_was_mutated,
             "policy_note": (
-                "OCI registries allow tag mutability by default, though specific registries or "
-                "repository policies may enforce tag immutability. Tags remain mutable references "
-                "unless an explicit policy prevents modification."
+                "This course-owned registry map intentionally permits this tag-like reference to be repointed. "
+                "Real registry/repository policy may permit updates or enforce tag immutability; "
+                "OCI Image Spec does not define one universal tag-mutation policy."
             ),
         },
         "trust_boundary_analysis": {
             "digest_identity_evidence": (
-                "A content digest (e.g. sha256:..., sha512:..., or blake3:...) identifies exact content "
-                "bits under that hash function. Verification requires recalculating the digest and comparing "
-                "it to an expected digest received over a secure/trusted channel."
+                "An algorithm-qualified content digest identifies exact content bits under the selected hash. "
+                "This fixture computes SHA-256; released OCI Image Spec v1.1.1 defines SHA-256/SHA-512, while "
+                "current unreleased main additionally defines BLAKE3. Verification requires recalculating and "
+                "comparing with an expected digest obtained through a trusted context."
             ),
             "signature_verification": (
-                "Digital signatures (e.g. Cosign / Sigstore) prove that a specific cryptographic identity "
-                "or key signed the artifact digest. It does NOT prove the code is benign or defect-free."
+                "Signature verification is meaningful relative to configured trust roots and expected identity/issuer "
+                "claims. For Sigstore keyless verification, the verifier constrains certificate identity and OIDC issuer. "
+                "A valid signature still does NOT prove the code is benign or defect-free."
             ),
             "provenance_attestation": (
-                "Provenance (e.g. SLSA attestations) provides verifiable evidence about build materials, "
-                "source repository, builder identity, and environment. Provenance is evidence to be evaluated, "
-                "not automatic proof of trustworthiness."
+                "Provenance/attestation (e.g. SLSA) carries machine-readable claims about how an artifact was built. "
+                "Those claims must be authenticated and evaluated against the relevant SLSA requirements and local policy; "
+                "provenance is evidence, not automatic proof of trustworthiness."
             ),
             "trust_policy_decision": (
                 "An organization's admission control / runtime policy must evaluate signatures, identities, "

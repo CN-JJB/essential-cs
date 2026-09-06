@@ -22,6 +22,7 @@ import datetime
 import json
 import os
 import platform
+import re
 import socket
 import sqlite3
 import subprocess
@@ -30,7 +31,7 @@ import tempfile
 import time
 import unittest
 import urllib.request
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 CS144_BENCHMARK = {
     "course": "Stanford CS144 (Introduction to Computer Networking)",

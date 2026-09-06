@@ -6,7 +6,7 @@ This directory contains executable, course-owned fixtures and worked-trace harne
 
 - **Zero Container Runtimes Required**: Strictly no Docker, Podman, containerd, Kubernetes, or cloud provider accounts required to execute Core activities or verify invariants.
 - **Strictly Read-Only Observation**: Core Linux container deconstruction uses read-only inspection of `/proc/self/ns` and `/proc/self/cgroup`. Zero mutations of host namespaces or cgroup files are performed.
-- **Truthful Non-Linux Disposition**: On non-Linux host platforms (Windows/macOS), the environment is truthfully classified as `ENVIRONMENT-BLOCKED / NOT RUN` without throwing unhandled exceptions. To record Required Core evidence for L19-01, execution must take place inside a canonical Linux environment (native Linux, WSL2, or a Linux VM).
+- **Truthful Non-Linux Disposition**: On non-Linux host platforms (Windows/macOS), the environment is truthfully classified as `ENVIRONMENT-BLOCKED / NOT RUN`. The inspector/activity CLI exits non-zero when Required Core mechanism evidence is unavailable; process exit success is never used to disguise a blocked semantic result. To record Required Core evidence for L19-01, execution must take place inside a canonical Linux environment (native Linux, WSL2, or a Linux VM).
 - **Physical Availability & Latency Lower-Bounds**: Mathematical models demonstrate the speed-of-light propagation floor in optical fiber and the series-component availability ceiling under shared single points of failure.
 - **Zero-Downtime Myth Busted**: Deterministic simulations demonstrate rolling deployment version-skew crashes under uncoordinated database schema renames, and verify the multi-phase Expand-Contract pattern.
 
@@ -26,13 +26,13 @@ This directory contains executable, course-owned fixtures and worked-trace harne
 3. **`activity_l19_02.py`**
    - Evaluates availability "nines" and converts percentages to annual downtime minutes.
    - Computes parallel redundancy math and highlights why $A = 1 - (1-a_1)(1-a_2)$ collapses when components share hidden dependencies.
-   - Computes speed-of-light latency floors in single-mode fiber ($n \approx 1.468, \sim 5\,\mu\text{s/km}$) across local, cross-zone, cross-continent, and trans-oceanic distances.
+   - Computes a course-owned optical propagation lower-bound model for explicitly labeled illustrative path lengths; outputs are not provider RTT, zone distance, or SLA claims.
    - Generates `.scratch/l19_02_worksheet.json`.
 
 4. **`activity_l19_03.py`**
    - **Breaking Rolling Update**: Simulates a 3-instance service pool where an uncoordinated column rename causes version-skew SQL crashes on live customer traffic during the rolling rollout window.
-   - **Protected Expand-Contract**: Executes the 3-phase Expand-Contract (Parallel Run) migration pattern, verifying zero customer request errors throughout the rollout.
-   - **Digest vs. Tag**: Demonstrates mutable registry tag repointing versus immutable content digests, and formalizes the boundary between digest identity, digital signatures, and provenance attestations.
+   - **Protected Expand-Contract**: Executes the course-owned Expand-Contract fixture across coexistence and post-contract phases; its observed zero errors are scoped to this deterministic scenario only.
+   - **Digest vs. Tag**: Demonstrates a course-owned repointable tag/reference map versus content digests, while making real registry tag policy explicit and separating digest identity, signature verification, provenance/attestation, and trust-policy decisions.
    - Generates `.scratch/l19_03_deployment.json`.
 
 5. **`reset.py`**

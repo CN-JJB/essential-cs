@@ -40,13 +40,15 @@ class TestInspectorComponents(unittest.TestCase):
             pre["disposition"],
             {"REQUIRED CAPABILITY PASS", "ENVIRONMENT-BLOCKED / NOT RUN"},
         )
-        if pre["is_canonical_linux"]:
+        if pre["disposition"] == "REQUIRED CAPABILITY PASS":
+            self.assertTrue(pre["is_canonical_linux"])
             self.assertTrue(pre["proc_ns_readable"])
             self.assertTrue(pre["proc_cgroup_readable"])
             self.assertTrue(pre["mounts_readable"])
             self.assertTrue(pre["proc_status_readable"])
             self.assertTrue(pre["proc_limits_readable"])
-            self.assertEqual(pre["disposition"], "REQUIRED CAPABILITY PASS")
+        else:
+            self.assertEqual(pre["disposition"], "ENVIRONMENT-BLOCKED / NOT RUN")
 
     def test_parse_ns_symlink(self):
         ns_type, inode = inspector.NamespaceInspector.parse_ns_symlink("net:[4026531992]")

@@ -78,10 +78,10 @@ def calculate_fiber_propagation_floor(
     - One-way propagation delay: ~5 µs per km (~0.005 ms/km)
     - Round-trip time (RTT) floor: ~10 µs per km (~0.010 ms/km)
 
-    NOTE: Modeled path length is a geometric lower bound, not an actual provider distance.
-    Real network RTT includes cable tortuosity (typically 1.2x-1.5x geodesic distance),
-    optical amplifiers (EDFA), switch store-and-forward latency, serialization delay,
-    queuing delay under congestion, and OS network stack processing.
+    NOTE: Modeled path length is an illustrative lower-bound input, not an actual provider distance.
+    Real network RTT depends on the actual optical route plus link equipment, switching/routing,
+    serialization, queuing, protocol processing, and endpoint behavior. This course does not
+    freeze a universal route-inflation multiplier or device-latency constant.
     """
     if distance_km < 0:
         raise ValueError("Distance must be non-negative")
@@ -98,7 +98,7 @@ def calculate_fiber_propagation_floor(
         "one_way_propagation_floor_ms": round(one_way_ms, 4),
         "rtt_propagation_floor_ms": round(rtt_floor_ms, 4),
         "real_network_overhead_factors": [
-            "Fiber route tortuosity (physical cable follows roads/railways/sea trenches, 1.2x - 1.5x geodesic)",
+            "Actual optical route length differs from simple geometric distance; no universal multiplier is assumed",
             "Optical dispersion compensation modules and repeaters/amplifiers",
             "Router/switch queuing delay, packet serialization, and bufferbloat under congestion",
             "Software network stack interrupt processing and context switching in host operating systems",
@@ -150,7 +150,7 @@ def evaluate_cloud_architecture(scenario: Dict[str, Any]) -> Dict[str, Any]:
             "Failover and load balancing mechanisms operate instantaneously and introduce no unmodeled failure.",
         ],
         "omitted_shared_dependencies": [
-            "DNS provider resolution failure (external single point of failure)",
+            "External DNS / name-resolution dependency, if shared by the scenario",
             "Cloud provider control plane / IAM service outage preventing failover or autoscaling",
             "Shared software-defined overlay network routing drops or BGP flapping",
             "Correlated application defects or poisoned configuration deployed across all instances",
@@ -158,10 +158,10 @@ def evaluate_cloud_architecture(scenario: Dict[str, Any]) -> Dict[str, Any]:
             "Metropolitan utility grid or power transmission corridor shared across physical sites",
         ],
         "provider_sla_boundary": (
-            "A cloud provider SLA is a legal/commercial contract that specifies financial credit remedies "
-            "if availability drops below a defined threshold over a monthly or quarterly billing window. "
-            "An SLA percentage is NOT an independent physical failure probability for an individual virtual machine, "
-            "and does not prevent business losses exceeding the credit amount."
+            "A provider/service SLA is an external contractual commitment whose measurement window, scope, "
+            "exclusions, and remedies (if any) are specific to that named agreement. Its percentage is NOT "
+            "automatically an independent physical failure probability for an individual instance. "
+            "The availability values in this evaluator are course-authored scenario inputs, not provider SLA facts."
         ),
     }
 
@@ -198,8 +198,8 @@ def run_activity(save_scratch: bool = True) -> int:
     print(f" Single Instance Modeled Availability:       {a_single * 100.0:.1f}% ({calculate_annual_downtime(a_single * 100.0):.1f} min downtime/yr)")
     print(f" Two Independent Parallel Instances:         {a_parallel * 100.0:.2f}% ({calculate_annual_downtime(a_parallel * 100.0):.1f} min downtime/yr)")
     print("\n IMPORTANT MODEL ASSUMPTIONS:")
-    print(" - The formula A = 1 - (1-a1)(1-a2) holds ONLY when failures are strictly independent.")
-    print(" - If both instances share a Load Balancer with 99.9% availability,")
+    print(" - This course formula assumes independent failures, substitutable capacity, and successful routing/failover.")
+    print(" - If both instances share a modeled Load Balancer with 99.9% availability,")
     print("   overall system availability CANNOT exceed 99.9% (A_system <= min(A_i) series rule).")
 
     # 3. Speed of Light & Geographic Topology

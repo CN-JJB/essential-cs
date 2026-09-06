@@ -567,10 +567,16 @@ def main() -> int:
     args = parser.parse_args()
 
     report = inspect_system(run_optional_probe=args.run_optional_unshare)
+    core_ready = (
+        report["os_preflight"]["disposition"] == "REQUIRED CAPABILITY PASS"
+        and report["namespace_inspection"]["available"]
+        and report["cgroup_inspection"]["available"]
+        and report["process_status_inspection"]["available"]
+    )
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        return 0 if report["os_preflight"]["is_canonical_linux"] else 1
+        return 0 if core_ready else 1
 
     print("=" * 72)
     print(" Essential CS S6-M19: Canonical Linux Namespace & Cgroup Inspector")
@@ -621,7 +627,7 @@ def main() -> int:
     print(f"   Reason:                {un['reason']}")
     print("=" * 72)
 
-    return 0 if pre["is_canonical_linux"] else 1
+    return 0 if core_ready else 1
 
 
 if __name__ == "__main__":

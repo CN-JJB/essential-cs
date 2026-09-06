@@ -89,13 +89,12 @@ def run_activity(save_scratch: bool = True) -> int:
     # 6. Step 5: Mental Model Synthesis
     print("\n[STEP 5: Architectural Boundaries: Process vs. Container vs. VM]")
     print(" " + "-" * 74)
-    print(" | Dimension         | Host Process    | Container (Linux) | Virtual Machine (VM) |")
-    print(" | :---------------- | :-------------- | :---------------- | :------------------- |")
-    print(" | Kernel Boundary   | Host kernel     | Host kernel (shared)| Independent Guest OS|")
-    print(" | Hardware Emulation| None            | None              | Full / Hypervisor    |")
-    print(" | Visibility (View) | Full host view  | Namespace-scoped  | VM-scoped (Guest)    |")
-    print(" | Resource Quotas   | Unbounded/System| Cgroup-scoped     | Fixed vCPU / RAM     |")
-    print(" | Security Boundary | Process level   | Shared kernel!    | Hardware/Hypervisor  |")
+    print(" | Dimension         | Ordinary Process        | Containerized Process   | VM (conventional)   |")
+    print(" | :---------------- | :---------------------- | :---------------------- | :------------------ |")
+    print(" | Kernel Boundary   | Current host kernel     | Same host kernel        | Guest-kernel boundary|")
+    print(" | Visibility (View) | Actual namespace/creds  | Configured namespaces   | Guest OS view       |")
+    print(" | Resource Controls | May also use cgroups/rlimits | Configured cgroups/rlimits | VM/runtime config |")
+    print(" | Security Evidence | Depends on actual controls | Shared-kernel trust boundary | Different boundary; not proof |")
     print(" " + "-" * 74)
     print(" Key Takeaway: 'Containers are just processes.' They are not lightweight VMs.")
     print(" Container security boundaries are bounded by the shared Linux kernel attack surface.")
@@ -127,7 +126,7 @@ def run_activity(save_scratch: bool = True) -> int:
             print(f"\n[Notice]: Could not write scratch artifact: {e}")
 
     print("=" * 76)
-    return 0
+    return 0 if overall_status == "REQUIRED CAPABILITY PASS" else 1
 
 
 if __name__ == "__main__":
