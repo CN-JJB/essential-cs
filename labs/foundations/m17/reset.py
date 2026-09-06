@@ -1,46 +1,43 @@
 #!/usr/bin/env python3
 """
-labs/foundations/m17/reset.py
+Fail-closed, idempotent cleanup for M17 course-owned runtime artifacts.
 
-Idempotent cleanup script for M17 activities and test artifacts.
-Removes generated observation JSON files, logs, and temporary scratch data.
-Safe to run repeatedly.
+Only removes files created under labs/foundations/m17/.scratch and the local
+__pycache__ directory. Source files and any unrelated JSON are never globbed.
 """
 
-import glob
 import os
 import shutil
 import sys
 
 
+M17_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRATCH_DIR = os.path.join(M17_DIR, ".scratch")
+PYCACHE_DIR = os.path.join(M17_DIR, "__pycache__")
+
+
 def reset_m17_environment() -> int:
-    m17_dir = os.path.dirname(os.path.abspath(__file__))
-    patterns = [
-        "*.json",
-        "*.tmp",
-        "*.log",
-    ]
+    errors = []
 
-    removed_files = 0
-    for pattern in patterns:
-        for filepath in glob.glob(os.path.join(m17_dir, pattern)):
-            try:
-                os.remove(filepath)
-                removed_files += 1
-            except OSError as e:
-                print(f"[WARN] Failed to remove {filepath}: {e}", file=sys.stderr)
-
-    # Clean __pycache__ if present
-    pycache_dir = os.path.join(m17_dir, "__pycache__")
-    if os.path.exists(pycache_dir):
+    for owned_dir in (SCRATCH_DIR, PYCACHE_DIR):
+        if not os.path.exists(owned_dir):
+            continue
         try:
-            shutil.rmtree(pycache_dir)
-        except OSError as e:
-            print(f"[WARN] Failed to remove {pycache_dir}: {e}", file=sys.stderr)
+            shutil.rmtree(owned_dir)
+        except OSError as exc:
+            errors.append(f"{owned_dir}: {exc}")
 
-    print(f"[RESET] M17 workspace clean. Removed {removed_files} artifact(s).")
+    if errors:
+        message = "M17 cleanup incomplete: " + "; ".join(errors)
+        print(f"[RESET] {message}", file=sys.stderr)
+        raise RuntimeError(message)
+
+    print("[RESET] M17 course-owned scratch is clean.")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(reset_m17_environment())
+    try:
+        sys.exit(reset_m17_environment())
+    except RuntimeError:
+        sys.exit(1)
