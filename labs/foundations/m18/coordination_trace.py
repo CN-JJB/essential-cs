@@ -399,8 +399,9 @@ class FencedStorageEngine:
                 "highest_token": self.highest_token,
                 "reason": (
                     f"FENCING_TOKEN_VIOLATION: Token {presented_token} is strictly less "
-                    f"than storage highest_token {self.highest_token}. Lease has expired "
-                    "and a newer lease holder has already taken precedence."
+                    f"than storage highest_token {self.highest_token}. This resource "
+                    "has already observed a newer fencing order; this checker does not "
+                    "independently prove lease expiry or authenticate the token issuer."
                 ),
             }
             self.rejections.append(record)
