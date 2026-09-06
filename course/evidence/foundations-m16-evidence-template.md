@@ -23,9 +23,9 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 - Request ID: `<actual request ID observed>`
 - Localhost Ephemeral Port Bound: `<actual ephemeral port assigned>`
-- Configured Client Deadline / Timeout: `<actual configured timeout, e.g. in seconds or ms>`
+- Configured Client Deadline / Timeout: `<actual configured timeout with unit>`
 - Scripted Application-Layer Fault Action: `<actual fault action configured on FaultShim>`
-- Client Observed Outcome / Exception: `<actual exception type, e.g. TimeoutError>`
+- Client Observed Outcome / Exception: `<actual observed outcome / exception type>`
 - Client Stopped Waiting Timestamp: `<actual timestamp>`
 - Server Execution Completion Timestamp: `<actual timestamp>`
 - Server Request ID Completed: `<actual request ID logged by server>`
@@ -48,7 +48,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 ## D — Retry Policy & Amplification Reasoning
 
-- Configured Total-Attempt Budget: `<actual attempt bound, e.g. 1, 2, 3>`
+- Configured Total-Attempt Budget: `<actual configured total-attempt bound>`
 - Actual Dispatched Attempts: `<actual number of attempts made>`
 - Retry Policy Name: `<NO_RETRY / DETERMINISTIC / EXPONENTIAL_JITTER>`
 - Actual Backoff / Sleep Values Applied: `<actual backoff durations in ms>`
@@ -62,7 +62,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 ## E — Unsafe Duplicate Path (No Idempotency Key)
 
-- Logical Operation Dispatched: `<e.g. unsafe_increment>`
+- Logical Operation Dispatched: `<actual logical operation name>`
 - Client Dispatched Attempts: `<actual number of attempts dispatched>`
 - Server Business-Execution Count: `<actual executions logged by server>`
 - Initial Counter State: `<actual initial value>`
@@ -77,7 +77,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 - Idempotency Key: `<actual idempotency key string>`
 - Client Dispatched Attempts: `<actual number of attempts dispatched>`
-- Recorded Server Business-Executions: `<actual number of executions, e.g. 1>`
+- Recorded Server Business-Executions: `<actual recorded server business-execution count>`
 - Initial Counter State: `<actual initial value>`
 - Final Counter State: `<actual final value>`
 - Duplicate Invariant Preserved ($f(f(x)) = f(x)$): `<YES / NO>`
