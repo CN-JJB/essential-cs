@@ -13,13 +13,15 @@ Demonstrates:
 4. Trace 3: Client-centric Read-Your-Writes (RYW) guarantee violation.
 5. Trace 4: Client-centric Monotonic Reads guarantee violation.
 6. The CAP boundary:
-   - Partition (P) is a condition/fault that must be tolerated, not a selectable feature.
-   - Reject the false slogan "Pick two of C, A, P".
-   - Under partition, trade-off is between C (linearizability) and A (availability).
+   - Analyze partition/message-loss executions for a named object/request path.
+   - Reject the static product-menu slogan "Pick two of C, A, P".
+   - Under the theorem's model, atomic consistency and theorem-defined availability
+     cannot both hold for every relevant request in all allowed partition executions.
 7. Three-way disambiguation:
-   - ACID Consistency = application invariant preservation under transaction contract.
-   - Transaction Isolation = multi-operation serializability boundaries.
-   - Replicated Linearizability = real-time recency/visibility boundary across nodes.
+   - ACID Consistency = application invariant preservation under a transaction contract.
+   - Transaction Isolation = a family of concurrency-visibility guarantees; serializability
+     is one strong member.
+   - Replicated Linearizability = legal sequential behavior plus real-time precedence.
 """
 
 import json
@@ -86,17 +88,29 @@ def run_activity() -> int:
     # --------------------------------------------------------------------------
     print("\n[PART 3] CAP Theorem & Consistency Disambiguation")
     cap_analysis = {
-        "partition_nature": "Partition (P) is an unavoidable network fault, NEVER a selectable checkbox.",
-        "false_menu_rejected": "The slogan 'Pick any two of C, A, P' is false and rejected.",
+        "partition_nature": (
+            "CAP analyzes executions in which the network may lose messages across a partition; "
+            "this is a failure condition to include in the model, not a static product feature menu."
+        ),
+        "false_menu_rejected": (
+            "The slogan 'Pick any two of C, A, P' hides the theorem's quantification over "
+            "partition executions and request paths."
+        ),
         "theorem_tradeoff": (
-            "Under a network partition, a distributed system must choose between returning "
-            "an error/blocking (preserving Linearizable Consistency C at the cost of Availability A) "
-            "or returning potentially stale local data (preserving Availability A at the cost of Consistency C)."
+            "For the atomic read/write object in the course model, during allowed partition "
+            "executions the same request path cannot guarantee both atomic/linearizable "
+            "consistency and theorem-defined availability for every request."
         ),
         "three_way_disambiguation": {
-            "ACID_Consistency": "Application-level invariant preservation (e.g. balance >= 0, foreign keys).",
-            "Transaction_Isolation": "Concurrency ordering among multi-operation transactions (Serializability).",
-            "Replicated_Linearizability": "Real-time visibility and recency of individual operations across distributed nodes.",
+            "ACID_Consistency": (
+                "Application invariant preservation under the named transaction contract."
+            ),
+            "Transaction_Isolation": (
+                "A family of concurrency-visibility guarantees; serializability is one strong member."
+            ),
+            "Replicated_Linearizability": (
+                "A legal sequential object history that preserves real-time precedence."
+            ),
         },
     }
     print(f" -> CAP Partition Reality: {cap_analysis['partition_nature']}")
