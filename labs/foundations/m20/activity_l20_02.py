@@ -25,12 +25,13 @@ import sys
 from s6_m20_observability_pipeline import (
     ClockAdapter,
     ObservabilityPipelineManager,
+    OwnedSubprocessWatchdog,
     generate_blameless_postmortem,
     reconstruct_correlated_timeline,
 )
 
 
-def run_activity_l20_02() -> int:
+def _run_child_worker() -> int:
     scratch_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".scratch")
     os.makedirs(scratch_dir, exist_ok=True)
     out_json = os.path.join(scratch_dir, "l20_02_observation.json")
@@ -206,13 +207,59 @@ def run_activity_l20_02() -> int:
 
     finally:
         print("\n[CLEANUP: Shutting Down Ephemeral Servers]")
-        manager.shutdown()
-        print(" - Sockets closed and threads joined cleanly.")
+        try:
+            manager.shutdown()
+            print(" - Sockets closed and threads joined cleanly.")
+        except Exception as exc:
+            err_msg = str(exc)
+            print(f"CLEANUP_FAILURE: {err_msg}", file=sys.stderr)
+            sys.exit(101)
 
     print("\n" + "=" * 70)
-    print(" Activity L20-02 Completed Successfully.")
+    print(" Activity L20-02 Child Worker Completed Successfully.")
     print("=" * 70)
     return 0
+
+
+def run_activity_l20_02(watchdog_timeout_s: float = 30.0) -> int:
+    """
+    Parent runner supervising Activity L20-02 child execution under watchdog.
+    """
+    if "--child-worker" in sys.argv:
+        return _run_child_worker()
+
+    print("=" * 70)
+    print(" Essential CS -- Activity L20-02: Distributed Incident & Trace Context")
+    print(" [Parent Runner: Supervising Child Process under Watchdog]")
+    print("=" * 70)
+
+    watchdog = OwnedSubprocessWatchdog(timeout_s=watchdog_timeout_s)
+    cmd = [sys.executable, "-u", os.path.abspath(__file__), "--child-worker"]
+
+    result = watchdog.run(cmd)
+
+    if result.get("stdout"):
+        print(result["stdout"], end="")
+
+    if result["status"] == "PASS":
+        print("\n" + "=" * 70)
+        print(" Activity L20-02 Completed Successfully under Owned Subprocess Watchdog.")
+        print(f" - Child PID:    {result['child_pid']}")
+        print(f" - Child Reaped: {result['reaped']}")
+        print("=" * 70)
+        return 0
+    elif result["status"] == "TIMEOUT":
+        print(f"\n[WATCHDOG TIMEOUT ERROR]: Child process timed out after {watchdog_timeout_s}s.", file=sys.stderr)
+        print(f" - Terminated and reaped owned child PID {result['child_pid']}.", file=sys.stderr)
+        return 1
+    elif result["status"] == "CLEANUP_FAILURE":
+        print(f"\n[CLEANUP FAILURE]: {result['cleanup_failure']}", file=sys.stderr)
+        return 1
+    else:
+        if result.get("stderr"):
+            print(result["stderr"], file=sys.stderr)
+        print(f"\n[EXECUTION ERROR]: Child process exited with status {result['status']}.", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

@@ -57,7 +57,7 @@ def run_activity_l20_01() -> int:
     # Small elapsed interval for relative timing
     time.sleep(0.03)
 
-    # Simulate wall-clock stepping backward (e.g. NTP synchronization step)
+    # Inject backward adjustment into teaching wall-clock adapter
     injected_wall_step = 5.0
     adapter.inject_wall_step_backward(injected_wall_step)
 

@@ -34,7 +34,7 @@ Architectural Commitments:
 9. Incident Lifecycle & Blameless Postmortem: Evidence-driven postmortem recording actual observations,
    actual mitigation, explicit recovery status, and unexecuted resolution marked NOT PERFORMED / PROPOSED FOLLOW-UP.
 10. Lifecycle Safety & Fail-Closed Shutdown: Explicit shutdown, socket close, thread join verification,
-    and bounded watchdog protection.
+    and owned-subprocess watchdog protection (no fake threading.Timer watchdog).
 """
 
 import argparse
@@ -46,6 +46,7 @@ import os
 import re
 import secrets
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -98,8 +99,8 @@ class ClockAdapter:
 
     def inject_wall_step_backward(self, step_seconds: float) -> None:
         """
-        Simulates an adjustable wall-clock step backward (e.g. -5.0s).
-        Teaching adapter only: DOES NOT mutate real host clock or NTP daemon.
+        Injects a backward adjustment into the teaching wall-clock adapter.
+        Teaching adapter only: DOES NOT mutate real host clock or claim real NTP reproduction.
         """
         if step_seconds < 0:
             raise ValueError("step_seconds must be non-negative.")
@@ -1018,7 +1019,6 @@ class ObservabilityPipelineManager:
         self.clock = clock or ClockAdapter()
         self.logger = StructuredLogger(clock_adapter=self.clock, jsonl_path=jsonl_path)
         self.watchdog_timeout_s = watchdog_timeout_s
-        self._watchdog_timer: Optional[threading.Timer] = None
         self.fixture_state: Dict[str, Any] = {
             "fault_mode": "NONE",
             "injected_delay_s": 0.0,
@@ -1087,20 +1087,6 @@ class ObservabilityPipelineManager:
         self.thread_a.start()
 
         self._is_running = True
-
-        # Bounded watchdog protection on owned in-process server threads
-        if self.watchdog_timeout_s > 0:
-            def _watchdog_trigger() -> None:
-                if self._is_running:
-                    try:
-                        self.shutdown()
-                    except Exception:
-                        pass
-
-            self._watchdog_timer = threading.Timer(self.watchdog_timeout_s, _watchdog_trigger)
-            self._watchdog_timer.daemon = True
-            self._watchdog_timer.name = "m20-pipeline-watchdog"
-            self._watchdog_timer.start()
 
     def get_urls(self) -> Dict[str, str]:
         return {
@@ -1186,10 +1172,6 @@ class ObservabilityPipelineManager:
         if not self._is_running:
             return
 
-        if self._watchdog_timer:
-            self._watchdog_timer.cancel()
-            self._watchdog_timer = None
-
         shutdown_errors: List[str] = []
 
         # 1. Shutdown and close sockets for each server
@@ -1228,6 +1210,263 @@ class ObservabilityPipelineManager:
         self.thread_a = None
         self.thread_b = None
         self.thread_c = None
+
+
+# ============================================================================
+# 6b. Owned Subprocess Watchdog & Child Fixture Runner
+# ============================================================================
+
+class OwnedSubprocessWatchdog:
+    """
+    Process-boundary watchdog manager for course-owned child fixtures.
+
+    Architecture (Curriculum Contract #110):
+    Parent runner
+      -> owned child process
+        -> child owns ServiceA / ServiceB / ServiceC / server threads
+
+    Invariants:
+    1. Configurable watchdog timeout (timeout_s).
+    2. Child normal execution: child performs graceful service shutdown before exiting.
+    3. Watchdog timeout: parent terminates/kills ONLY its own created child process.
+    4. Parent must wait and reap the child process handle (zero leftover processes).
+    5. Parent never kills unrelated host processes.
+    6. Child cleanup failures are explicitly surfaced, never swallowed.
+    7. Truthful outcomes: PASS, BLOCKED, NOT RUN, TIMEOUT, CLEANUP_FAILURE.
+    """
+
+    def __init__(self, timeout_s: float = 30.0) -> None:
+        if not isinstance(timeout_s, (int, float)) or timeout_s <= 0:
+            raise ValueError(f"Watchdog timeout_s must be a positive number, got {timeout_s}")
+        self.timeout_s = float(timeout_s)
+
+    def run(
+        self,
+        cmd: List[str],
+        cwd: Optional[str] = None,
+        env: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Executes the child command under parent watchdog supervision.
+        Returns structured execution dictionary with truthful status.
+        """
+        child_env = os.environ.copy()
+        if env:
+            child_env.update(env)
+
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            env=child_env,
+            text=True,
+        )
+        child_pid = proc.pid
+        watchdog_triggered = False
+        stdout_str = ""
+        stderr_str = ""
+        reaped = False
+
+        try:
+            stdout_str, stderr_str = proc.communicate(timeout=self.timeout_s)
+            reaped = True
+        except subprocess.TimeoutExpired:
+            watchdog_triggered = True
+            # Timeout: terminate/kill ONLY the owned child process
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            try:
+                stdout_str, stderr_str = proc.communicate(timeout=5.0)
+            except Exception:
+                pass
+            reaped = proc.poll() is not None
+
+        # Verify whether child process has been reaped and is dead
+        still_alive = self._is_pid_alive(child_pid)
+
+        # Parse outcome
+        if watchdog_triggered:
+            return {
+                "status": "TIMEOUT",
+                "watchdog_triggered": True,
+                "child_pid": child_pid,
+                "reaped": reaped and not still_alive,
+                "returncode": proc.returncode,
+                "cleanup_failure": None,
+                "stdout": stdout_str,
+                "stderr": stderr_str,
+                "data": None,
+            }
+
+        # Inspect stdout for structured JSON outcome emitted by child
+        data: Optional[Dict[str, Any]] = None
+        for line in reversed(stdout_str.splitlines()):
+            line_s = line.strip()
+            if line_s.startswith("{") and line_s.endswith("}"):
+                try:
+                    parsed = json.loads(line_s)
+                    if isinstance(parsed, dict) and "status" in parsed:
+                        data = parsed
+                        break
+                except Exception:
+                    continue
+
+        # Check for cleanup failure in returncode, data, or stderr
+        cleanup_failure_msg: Optional[str] = None
+        if data and data.get("status") == "CLEANUP_FAILURE":
+            cleanup_failure_msg = data.get("cleanup_failure", "Child reported cleanup failure")
+        elif "CLEANUP_FAILURE:" in stderr_str or "CLEANUP_FAILURE:" in stdout_str:
+            for text in (stderr_str, stdout_str):
+                for line in text.splitlines():
+                    if "CLEANUP_FAILURE:" in line:
+                        cleanup_failure_msg = line.split("CLEANUP_FAILURE:", 1)[1].strip()
+                        break
+                if cleanup_failure_msg:
+                    break
+        elif proc.returncode == 101:
+            cleanup_failure_msg = "Child exited with code 101 indicating cleanup failure"
+
+        if cleanup_failure_msg is not None:
+            return {
+                "status": "CLEANUP_FAILURE",
+                "watchdog_triggered": False,
+                "child_pid": child_pid,
+                "reaped": reaped and not still_alive,
+                "returncode": proc.returncode,
+                "cleanup_failure": cleanup_failure_msg,
+                "stdout": stdout_str,
+                "stderr": stderr_str,
+                "data": data,
+            }
+
+        # Check for BLOCKED or NOT RUN
+        if data and data.get("status") in ("BLOCKED", "NOT RUN"):
+            return {
+                "status": data["status"],
+                "watchdog_triggered": False,
+                "child_pid": child_pid,
+                "reaped": reaped and not still_alive,
+                "returncode": proc.returncode,
+                "cleanup_failure": None,
+                "stdout": stdout_str,
+                "stderr": stderr_str,
+                "data": data,
+            }
+
+        # Normal completion
+        if proc.returncode == 0:
+            return {
+                "status": "PASS",
+                "watchdog_triggered": False,
+                "child_pid": child_pid,
+                "reaped": reaped and not still_alive,
+                "returncode": 0,
+                "cleanup_failure": None,
+                "stdout": stdout_str,
+                "stderr": stderr_str,
+                "data": data,
+            }
+
+        return {
+            "status": "FAIL",
+            "watchdog_triggered": False,
+            "child_pid": child_pid,
+            "reaped": reaped and not still_alive,
+            "returncode": proc.returncode,
+            "cleanup_failure": None,
+            "stdout": stdout_str,
+            "stderr": stderr_str,
+            "data": data,
+        }
+
+    @staticmethod
+    def _is_pid_alive(pid: int) -> bool:
+        """Checks whether an owned process ID is still alive on the host."""
+        if pid <= 0:
+            return False
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+                handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+                if not handle:
+                    return False
+                exit_code = ctypes.c_ulong()
+                res = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+                ctypes.windll.kernel32.CloseHandle(handle)
+                STILL_ACTIVE = 259
+                return bool(res and exit_code.value == STILL_ACTIVE)
+            except Exception:
+                pass
+        try:
+            os.kill(pid, 0)
+            return True
+        except (OSError, ProcessLookupError):
+            return False
+
+
+def run_child_fixture(
+    simulate_hang: bool = False,
+    simulate_cleanup_failure: bool = False,
+    simulate_blocked: bool = False,
+    simulate_not_run: bool = False,
+) -> int:
+    """
+    Executes the three-service pipeline within an owned child process.
+    Normal path: starts services, runs requests, performs graceful shutdown, reports PASS.
+    Simulated modes support regression tests for watchdog timeout, cleanup failure, and disposition.
+    """
+    if simulate_blocked:
+        payload = {"status": "BLOCKED", "reason": "Precondition missing in fixture environment"}
+        print(json.dumps(payload))
+        return 0
+
+    if simulate_not_run:
+        payload = {"status": "NOT RUN", "reason": "Execution skipped by test harness"}
+        print(json.dumps(payload))
+        return 0
+
+    if simulate_hang:
+        # Intentionally sleep past parent watchdog timeout to trigger watchdog reap
+        time.sleep(60.0)
+        return 0
+
+    adapter = ClockAdapter()
+    manager = ObservabilityPipelineManager(clock=adapter)
+    manager.start()
+
+    res1 = manager.dispatch_request()
+    manager.set_fault(fault_mode="DELAY", delay_s=0.20)
+    res2 = manager.dispatch_request()
+    manager.set_mitigation(enabled=True)
+    res3 = manager.dispatch_request()
+
+    # Graceful shutdown with explicit cleanup failure surfacing
+    try:
+        if simulate_cleanup_failure:
+            def _failing_close() -> None:
+                raise OSError("Simulated server close error during child cleanup")
+            if manager.server_c:
+                manager.server_c.server_close = _failing_close  # type: ignore[assignment]
+        manager.shutdown()
+    except Exception as exc:
+        err_msg = str(exc)
+        print(json.dumps({"status": "CLEANUP_FAILURE", "cleanup_failure": err_msg}))
+        print(f"CLEANUP_FAILURE: {err_msg}", file=sys.stderr)
+        return 101
+
+    payload = {
+        "status": "PASS",
+        "urls": manager.get_urls(),
+        "trace_id": res2["response"].get("trace_id"),
+        "records_count": len(manager.logger.get_records()),
+        "mitigated_status": res3["status_code"],
+    }
+    print(json.dumps(payload))
+    return 0
 
 
 # ============================================================================
@@ -1421,7 +1660,20 @@ def main() -> int:
     parser.add_argument("--demo-stats", action="store_true", help="Demonstrate tail vs. mean distribution stats")
     parser.add_argument("--demo-sli-slo", action="store_true", help="Demonstrate decoupled SLI/SLO calculations")
     parser.add_argument("--demo-incident", action="store_true", help="Run three-service pipeline with fault injection")
+    parser.add_argument("--child-fixture", action="store_true", help="Execute three-service pipeline in child process mode under watchdog")
+    parser.add_argument("--simulate-hang", action="store_true", help="Simulate child hanging indefinitely")
+    parser.add_argument("--simulate-cleanup-failure", action="store_true", help="Simulate child shutdown failure")
+    parser.add_argument("--simulate-blocked", action="store_true", help="Simulate BLOCKED status in child")
+    parser.add_argument("--simulate-not-run", action="store_true", help="Simulate NOT RUN status in child")
     args = parser.parse_args()
+
+    if args.child_fixture:
+        return run_child_fixture(
+            simulate_hang=args.simulate_hang,
+            simulate_cleanup_failure=args.simulate_cleanup_failure,
+            simulate_blocked=args.simulate_blocked,
+            simulate_not_run=args.simulate_not_run,
+        )
 
     adapter = ClockAdapter()
 

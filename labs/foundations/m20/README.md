@@ -27,7 +27,8 @@ This directory contains executable, course-owned fixtures and worked activities 
      - `generate_traceparent` & `parse_traceparent`: Strict W3C Level 1 version-00 validation (rejecting non-`00` versions, all-zero identifiers, and malformed lengths).
      - `StructuredLogger` & `sanitize_privacy_fields`: File and stream JSON logging with monotonic durations and recursive secret/token redaction across nested objects.
      - `ServiceA`, `ServiceB`, `ServiceC`: In-process three-service pipeline on localhost ephemeral ports.
-     - `ObservabilityPipelineManager`: Bounded watchdog timer, fail-closed teardown, socket closure, and thread joins.
+     - `ObservabilityPipelineManager`: Ephemeral three-service lifecycle manager, fail-closed teardown, socket closure, and thread joins.
+     - `OwnedSubprocessWatchdog`: Robust parent-runner process lifecycle watchdog, configurable timeout, graceful child teardown, terminate/kill with wait/reap of owned child process trees only, explicit cleanup failure surfacing, and truthful outcome reporting (`PASS`, `BLOCKED`, `NOT RUN`, `TIMEOUT`, `CLEANUP_FAILURE`, `FAIL`).
      - `reconstruct_correlated_timeline`: Hop-by-hop latency and status breakdown filtered by `trace_id`.
      - `generate_blameless_postmortem`: Evidence-driven postmortem generator with verified recovery status and unexecuted resolution tracking.
 
@@ -45,7 +46,7 @@ This directory contains executable, course-owned fixtures and worked activities 
      - Injects ServiceC delay fault (350ms).
      - Compares uncorrelated log inspection with correlated `trace_id` filtering.
      - Reconstructs request-hop timeline and localizes downstream bottleneck to ServiceC.
-     - Applies safe mitigation (ServiceB fallback cache) and verifies recovery ($< 20$ms).
+     - Applies safe mitigation (ServiceB fallback cache) and verifies recovery (bypassing degraded ServiceC, relative recovery verified).
      - Generates blameless postmortem draft `.scratch/l20_02_postmortem_draft.md`.
      - Generates observation record `.scratch/l20_02_observation.json`.
      - Cleanly shuts down ephemeral servers and joins threads.

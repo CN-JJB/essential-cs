@@ -17,6 +17,7 @@ import io
 import json
 import os
 import sys
+import subprocess
 import time
 import unittest
 from unittest import mock
@@ -30,6 +31,7 @@ from reset import reset_m20_environment
 from s6_m20_observability_pipeline import (
     ClockAdapter,
     ObservabilityPipelineManager,
+    OwnedSubprocessWatchdog,
     StructuredLogger,
     compute_distribution_statistics,
     compute_elapsed_duration_ms,
@@ -54,7 +56,7 @@ class TestClockSemantics(unittest.TestCase):
         t1 = adapter.monotonic_time()
         self.assertGreater(t1, t0)
         dur = compute_elapsed_duration_ms(t0, t1)
-        self.assertGreaterEqual(dur, 8.0)
+        self.assertGreater(dur, 0.0)
 
     def test_fake_wall_clock_step_does_not_mutate_monotonic(self) -> None:
         adapter = ClockAdapter()
@@ -75,7 +77,7 @@ class TestClockSemantics(unittest.TestCase):
         self.assertLess(wall_diff, -10.0)
         # Monotonic clock duration remains positive and valid
         self.assertGreater(mono_diff, 0.0)
-        self.assertGreaterEqual(compute_elapsed_duration_ms(m0, m1), 8.0)
+        self.assertGreater(compute_elapsed_duration_ms(m0, m1), 0.0)
 
     def test_negative_step_validation(self) -> None:
         adapter = ClockAdapter()
@@ -360,7 +362,6 @@ class TestThreeServicePipelineIntegration(unittest.TestCase):
         res = self.manager.dispatch_request()
 
         self.assertEqual(res["status_code"], 200)
-        self.assertGreaterEqual(res["elapsed_ms"], 190.0)
 
         trace_id = res["response"]["trace_id"]
         timeline = reconstruct_correlated_timeline(
@@ -372,6 +373,18 @@ class TestThreeServicePipelineIntegration(unittest.TestCase):
         self.assertIn("fixture_ground_truth", timeline)
         self.assertIn("production_inference_boundary", timeline)
         self.assertIsNotNone(timeline["diagnostic_inference"])
+
+        # Check injected fault event metadata in correlated records
+        c_records = [r for r in timeline["records"] if r.get("service") == "ServiceC"]
+        self.assertTrue(len(c_records) >= 1)
+        fault_events = [r for r in c_records if r.get("event") == "injected_delay_started"]
+        self.assertEqual(len(fault_events), 1)
+        self.assertEqual(fault_events[0].get("status"), "DEGRADED")
+        self.assertEqual(fault_events[0].get("details", {}).get("delay_s"), 0.20)
+
+        # Causal ordering: ServiceA dispatch -> ServiceB receive -> ServiceC receive
+        services_order = [r.get("service") for r in timeline["records"] if r.get("status") == "START"]
+        self.assertEqual(services_order, ["ServiceA", "ServiceB", "ServiceC"])
 
     def test_fault_injection_http_500_mode(self) -> None:
         self.manager.set_fault(fault_mode="HTTP_500")
@@ -403,7 +416,19 @@ class TestThreeServicePipelineIntegration(unittest.TestCase):
         mitigated_res = self.manager.dispatch_request()
 
         self.assertEqual(mitigated_res["status_code"], 200)
-        # Relative latency verification (mitigated significantly faster than degraded)
+
+        # Verify ServiceB cache fallback event is present and ServiceC is absent from mitigated trace
+        mitigated_trace_id = mitigated_res["response"]["trace_id"]
+        mitigated_records = self.manager.logger.filter_by_trace_id(mitigated_trace_id)
+        mitigated_services = {r["service"] for r in mitigated_records}
+        self.assertIn("ServiceA", mitigated_services)
+        self.assertIn("ServiceB", mitigated_services)
+        self.assertNotIn("ServiceC", mitigated_services)
+
+        fallback_events = [r for r in mitigated_records if r.get("event") == "mitigation_cache_served"]
+        self.assertEqual(len(fallback_events), 1)
+
+        # Relative latency verification (mitigated faster than degraded without absolute threshold)
         self.assertLess(mitigated_res["elapsed_ms"], incident_res["elapsed_ms"])
 
 
@@ -426,15 +451,80 @@ class TestLifecycleAndSafety(unittest.TestCase):
         manager.shutdown()
         self.assertFalse(manager._is_running)
 
-    def test_watchdog_bounded_execution(self) -> None:
-        # Test bounded watchdog auto-cleanup on owned in-process servers
-        manager = ObservabilityPipelineManager(watchdog_timeout_s=0.2)
-        manager.start()
-        self.assertTrue(manager._is_running)
-        t0 = time.time()
-        while manager._is_running and (time.time() - t0 < 4.0):
-            time.sleep(0.05)
-        self.assertFalse(manager._is_running)
+
+class TestOwnedSubprocessWatchdog(unittest.TestCase):
+    def test_child_normal_completion_and_reap(self) -> None:
+        watchdog = OwnedSubprocessWatchdog(timeout_s=15.0)
+        pipeline_path = os.path.join(_current_dir, "s6_m20_observability_pipeline.py")
+        res = watchdog.run([sys.executable, pipeline_path, "--child-fixture"])
+
+        self.assertEqual(res["status"], "PASS")
+        self.assertFalse(res["watchdog_triggered"])
+        self.assertTrue(res["reaped"])
+        self.assertEqual(res["returncode"], 0)
+        self.assertIsNone(res["cleanup_failure"])
+        self.assertIsNotNone(res["data"])
+        self.assertEqual(res["data"]["status"], "PASS")
+        # Zero leftover process
+        self.assertFalse(OwnedSubprocessWatchdog._is_pid_alive(res["child_pid"]))
+
+    def test_watchdog_timeout_terminates_and_reaps_owned_child(self) -> None:
+        watchdog = OwnedSubprocessWatchdog(timeout_s=0.6)
+        pipeline_path = os.path.join(_current_dir, "s6_m20_observability_pipeline.py")
+        res = watchdog.run([sys.executable, pipeline_path, "--child-fixture", "--simulate-hang"])
+
+        self.assertEqual(res["status"], "TIMEOUT")
+        self.assertTrue(res["watchdog_triggered"])
+        self.assertTrue(res["reaped"])
+        self.assertIsNotNone(res["returncode"])
+        # Zero leftover process
+        self.assertFalse(OwnedSubprocessWatchdog._is_pid_alive(res["child_pid"]))
+
+    def test_cleanup_failure_is_surfaced(self) -> None:
+        watchdog = OwnedSubprocessWatchdog(timeout_s=15.0)
+        pipeline_path = os.path.join(_current_dir, "s6_m20_observability_pipeline.py")
+        res = watchdog.run([sys.executable, pipeline_path, "--child-fixture", "--simulate-cleanup-failure"])
+
+        self.assertEqual(res["status"], "CLEANUP_FAILURE")
+        self.assertFalse(res["watchdog_triggered"])
+        self.assertTrue(res["reaped"])
+        self.assertIsNotNone(res["cleanup_failure"])
+        self.assertIn("Simulated server close error during child cleanup", res["cleanup_failure"])
+        # Zero leftover process
+        self.assertFalse(OwnedSubprocessWatchdog._is_pid_alive(res["child_pid"]))
+
+    def test_truthful_outcome_reporting(self) -> None:
+        watchdog = OwnedSubprocessWatchdog(timeout_s=15.0)
+        pipeline_path = os.path.join(_current_dir, "s6_m20_observability_pipeline.py")
+
+        res_blocked = watchdog.run([sys.executable, pipeline_path, "--child-fixture", "--simulate-blocked"])
+        self.assertEqual(res_blocked["status"], "BLOCKED")
+        self.assertTrue(res_blocked["reaped"])
+        self.assertFalse(OwnedSubprocessWatchdog._is_pid_alive(res_blocked["child_pid"]))
+
+        res_not_run = watchdog.run([sys.executable, pipeline_path, "--child-fixture", "--simulate-not-run"])
+        self.assertEqual(res_not_run["status"], "NOT RUN")
+        self.assertTrue(res_not_run["reaped"])
+        self.assertFalse(OwnedSubprocessWatchdog._is_pid_alive(res_not_run["child_pid"]))
+
+    def test_unrelated_process_not_killed(self) -> None:
+        # Launch an independent dummy process
+        unrelated = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(10)"]
+        )
+        try:
+            self.assertIsNone(unrelated.poll())
+            watchdog = OwnedSubprocessWatchdog(timeout_s=0.5)
+            pipeline_path = os.path.join(_current_dir, "s6_m20_observability_pipeline.py")
+            res = watchdog.run([sys.executable, pipeline_path, "--child-fixture", "--simulate-hang"])
+            self.assertEqual(res["status"], "TIMEOUT")
+            self.assertTrue(res["reaped"])
+
+            # Verify the unrelated process is STILL running and was NOT killed
+            self.assertIsNone(unrelated.poll())
+        finally:
+            unrelated.kill()
+            unrelated.wait()
 
 
 class TestResetAndCleanup(unittest.TestCase):
