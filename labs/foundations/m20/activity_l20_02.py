@@ -250,10 +250,19 @@ def run_activity_l20_02(watchdog_timeout_s: float = 30.0) -> int:
         return 0
     elif result["status"] == "TIMEOUT":
         print(f"\n[WATCHDOG TIMEOUT ERROR]: Child process timed out after {watchdog_timeout_s}s.", file=sys.stderr)
-        print(f" - Terminated and reaped owned child PID {result['child_pid']}.", file=sys.stderr)
+        if result.get("reaped"):
+            print(f" - Terminated and reaped owned child PID {result['child_pid']}.", file=sys.stderr)
+        else:
+            print(
+                f" - Cleanup state is not confirmed for owned child PID {result['child_pid']}; "
+                "do not treat timeout cleanup as successful.",
+                file=sys.stderr,
+            )
         return 1
     elif result["status"] == "CLEANUP_FAILURE":
-        print(f"\n[CLEANUP FAILURE]: {result['cleanup_failure']}", file=sys.stderr)
+        origin = "watchdog timeout cleanup" if result.get("watchdog_triggered") else "child graceful cleanup"
+        print(f"\n[CLEANUP FAILURE during {origin}]: {result['cleanup_failure']}", file=sys.stderr)
+        print(f" - Child Reaped: {result.get('reaped', False)}", file=sys.stderr)
         return 1
     else:
         if result.get("stderr"):
