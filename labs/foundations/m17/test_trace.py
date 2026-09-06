@@ -86,9 +86,10 @@ class TestM17ReplicationAck(unittest.TestCase):
         )
         self.assertFalse(trace.client_acked)
         self.assertEqual(trace.ack_error, "CLIENT_TIMEOUT_LEADER_CRASHED_POST_REPLICATION")
-        # Followers do hold the replicated entry despite client seeing failure/timeout!
+        # The selected W=2 modeled replica set holds the entry despite the client
+        # not observing success; non-selected node_3 need not hold it.
         self.assertTrue(len(trace.replicas["node_2"].log) > 0)
-        self.assertTrue(len(trace.replicas["node_3"].log) > 0)
+        self.assertEqual(len(trace.replicas["node_3"].log), 0)
 
 
 class TestM17QuorumOverlap(unittest.TestCase):
@@ -126,7 +127,7 @@ class TestM17QuorumOverlap(unittest.TestCase):
         self.assertIn("Reader {N1, N2} sees B", ce["disjoint_readers_anomaly"])
         self.assertEqual(
             ce["proof"],
-            "QUORUM_OVERLAP_CANNOT_RESOLVE_CONCURRENT_WRITE_ORDER_WITHOUT_CONSENSUS",
+            "QUORUM_OVERLAP_CANNOT_RESOLVE_CONCURRENT_WRITE_ORDER_WITHOUT_A_NAMED_ORDER_CONFLICT_RULE",
         )
 
 
@@ -177,10 +178,13 @@ class TestM17RaftTrace(unittest.TestCase):
         self.assertEqual(res["votes_granted_to_C"], ["C", "D", "E"])
         self.assertTrue(res["stale_candidate_rejected"])
 
-        # Majority overlap alone does not prove Leader Completeness
-        self.assertIn("Leader Completeness strictly requires BOTH", res["safety_vs_majority_alone"])
-        # Randomized election timeouts do not defeat FLP
-        self.assertIn("DO NOT disprove or defeat the FLP theorem", res["flp_boundary_notes"])
+        # Majority-set overlap alone is only set intersection; Raft safety also
+        # depends on vote/log/commit rules.
+        self.assertIn("Majority-set overlap ALONE", res["safety_vs_majority_alone"])
+        self.assertIn("at-most-one-vote-per-term", res["safety_vs_majority_alone"])
+        self.assertIn("log-matching/commit rules", res["safety_vs_majority_alone"])
+        # Randomized election timeouts do not defeat FLP.
+        self.assertIn("DO NOT disprove FLP", res["flp_boundary_notes"])
 
 
 class TestM17ConsistencyHistories(unittest.TestCase):
@@ -200,8 +204,21 @@ class TestM17ConsistencyHistories(unittest.TestCase):
         t2 = self.traces["Trace_2_Stale_Read_Non_Linearizable"]
         is_lin, msg, viol = ConsistencyEvaluator.check_linearizability_single_register(t2)
         self.assertFalse(is_lin)
-        self.assertIn("STALE_READ_VIOLATION", msg)
+        self.assertIn("NON_LINEARIZABLE_HISTORY", msg)
         self.assertEqual(viol, ("w1", "r1"))
+
+    def test_multi_write_stale_read_is_not_false_positive(self):
+        # Regression: after w1=1 and later w2=2 both complete, a later read of 1
+        # cannot be accepted merely because 1 is not the initial value.
+        history = [
+            Operation("w1", "A", "W", "x", 1, 1.0, 2.0),
+            Operation("w2", "B", "W", "x", 2, 3.0, 4.0),
+            Operation("r1", "C", "R", "x", 1, 5.0, 6.0),
+        ]
+        is_lin, msg, viol = ConsistencyEvaluator.check_linearizability_single_register(history)
+        self.assertFalse(is_lin)
+        self.assertIn("NON_LINEARIZABLE_HISTORY", msg)
+        self.assertEqual(viol, ("w2", "r1"))
 
     def test_read_your_writes_session_guarantee(self):
         # Gate 21: Read-Your-Writes tested distinctly
@@ -211,10 +228,18 @@ class TestM17ConsistencyHistories(unittest.TestCase):
         self.assertIn("RYW_VIOLATION", msg)
         self.assertEqual(viol, ("w1", "r1"))
 
-        # In linearizable trace 1, RYW is satisfied
+        # In linearizable trace 1, RYW is satisfied.
         t1 = self.traces["Trace_1_Linearizable"]
         is_ryw_t1, _, _ = ConsistencyEvaluator.check_read_your_writes(t1)
         self.assertTrue(is_ryw_t1)
+
+        # A later version is also compatible with the bounded RYW rule.
+        newer = [
+            Operation("w1", "client_A", "W", "x", 1, 1.0, 2.0),
+            Operation("r1", "client_A", "R", "x", 2, 3.0, 4.0),
+        ]
+        is_ryw_newer, _, _ = ConsistencyEvaluator.check_read_your_writes(newer)
+        self.assertTrue(is_ryw_newer)
 
     def test_monotonic_reads_session_guarantee(self):
         # Gate 21: Monotonic Reads tested distinctly
