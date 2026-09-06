@@ -12,27 +12,33 @@ Use this template for **one actual source inspection and reading card completion
 - Target Document 1 (Primary):
   - Lecture 14 (Fault Tolerance: Reliability via Replication):
     `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/8eb16d3628bbd77ee7e8471b9871ec09_MIT6_033S18lec14.pdf`
-  - Reachability / Access Status: `<LIVE_SOURCE_ACCESSIBLE / OPTIONAL SOURCE RECHECK BLOCKED>`
+  - Reachability / Access Status: `<actual source access disposition>`
 - Target Document 2 (Comparative):
   - Lecture 15 (Fault Tolerance: Introduction to Transactions):
     `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/df1526408e3ec6f7e43aadfa1ce5f944_MIT6_033S18lec15.pdf`
-  - Reachability / Access Status: `<LIVE_SOURCE_ACCESSIBLE / OPTIONAL SOURCE RECHECK BLOCKED>`
+  - Reachability / Access Status: `<actual source access disposition>`
 - Target Document 3 (Comparative):
   - Lecture 16 (Atomicity via Logging):
     `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/76fa216e8e5a4c4722c315a84b8e09a8c_MIT6_033S18lec16.pdf`
-  - Reachability / Access Status: `<LIVE_SOURCE_ACCESSIBLE / OPTIONAL SOURCE RECHECK BLOCKED>`
+  - Reachability / Access Status: `<actual source access disposition>`
+- Lead Provenance Correction for View Server Comparison:
+  - Lecture 19 (Availability via Replication):
+    `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/resources/mit6_033s18lec19/`
+  - Official Lecture 19 Outline:
+    `https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/pages/week-11/lecture-19-outline/`
+  - Reachability / Access Status: `<actual source access disposition>`
 - License Compliance Audit:
   - Source License: `CC BY-NC-SA 4.0 (with third-party rights reservation)`
-  - Vendoring Audit: `CONFIRMED ZERO VENDORED SLIDES, FIGURES, CODE OR VERBATIM PASSAGES`
+  - Vendoring Audit: `<learner/source-audit disposition; record any issue instead of pre-filling PASS>`
   - Essential CS Format: `Link-and-Paraphrase Only`
 
 ---
 
 ## 2 — Guiding Questions & Reading Card Findings
 
-### (1) Primary / Backup State Tracking
+### (1) Lecture 19 Primary / Backup State Tracking
 - What state does the Primary maintain?
-  `<Learner records state tracked by primary under Lecture 14>`
+  `<Learner records state tracked by primary under Lecture 19>`
 - What state does the Backup maintain?
   `<Learner records state tracked by backup>`
 - How does the client identify where to send operations?
@@ -54,11 +60,11 @@ Use this template for **one actual source inspection and reading card completion
 - What happens if the View Server itself crashes?
   `<Learner identifies the single-point-of-coordination vulnerability of a centralized view server>`
 
-### (4) Architectural Comparison: View Server vs. Raft
-- Centralized vs. Decentralized:
-  `<Learner contrasts the centralized coordinator model with Raft's peer-to-peer majority voting>`
-- Liveness under Partition:
-  `<Learner compares partition tolerance of View Server vs Raft 2 | 3 split>`
+### (4) Architectural Comparison: Lecture 19 View Server vs. Course Bounded Raft Trace
+- Authority model comparison:
+  `<Learner compares the centralized View Server authority with the course's replicated-voting trace; majority-set overlap must not be treated as the full Raft proof>`
+- Partition/failure-model comparison:
+  `<Learner compares the stated partition/failure assumptions of the Lecture 19 View Server model and the course 2 | 3 logical Raft trace>`
 - Simpler Single-Node Alternative:
   `<Learner contrasts multi-node replication against a single node with durable storage and cold spare, evaluating MTBF/MTTR>`
 
@@ -77,8 +83,8 @@ Use this template for **one actual source inspection and reading card completion
 
 ## 4 — Bounded Stopping Point Confirmation
 
-- Stopped before reading beyond Lecture 14-16 scope: `<CONFIRMED>`
-- Zero external code downloaded or compiled: `<CONFIRMED>`
-- Zero MIT assignment solutions reproduced: `<CONFIRMED>`
+- Bounded route respected (L14/L15/L16 plus narrow L19 provenance correction only): `<learner records actual disposition>`
+- Zero external code downloaded or compiled: `<learner records actual disposition>`
+- Zero MIT assignment solutions reproduced: `<learner records actual disposition>`
 - Summary Judgment:
-  `<Learner summarizes the primary lesson learned from MIT 6.033 Primary-Backup vs Raft>`
+  `<Learner summarizes L14 replication foundations, L19 Primary/Backup + View Server, and the bounded comparison to the course Raft trace>`
