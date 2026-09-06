@@ -208,7 +208,7 @@ class TestM18CoordinationTrace(unittest.TestCase):
         p2 = TwoPhaseCommitParticipant("P2")
         coord = TwoPhaseCommitCoordinator([p1, p2])
 
-        # Both vote YES; coordinator commits, but crashes before delivering to P1
+        # Both vote YES; coordinator durably chooses COMMIT, but P1 is scripted not to receive the decision.
         res = coord.execute_transaction(
             {"P1": TwoPhaseVote.YES, "P2": TwoPhaseVote.YES},
             crash_before_delivery_to=["P1"],
@@ -225,7 +225,7 @@ class TestM18CoordinationTrace(unittest.TestCase):
         self.assertEqual(p2_rep["state"], ParticipantState.COMMITTED.value)
 
     def test_2pc_unilateral_abort_when_voting_no(self) -> None:
-        """Verifies that a participant voting NO can unilaterally abort, proving not all coordinator crashes block forever."""
+        """Verifies the classic contrast: a participant voting NO can abort locally."""
         p1 = TwoPhaseCommitParticipant("P1")
         coord = TwoPhaseCommitCoordinator([p1])
 
