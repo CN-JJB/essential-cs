@@ -68,12 +68,16 @@ class TestM16Foundations(unittest.TestCase):
         self.assertEqual(res["disposition"], "PASS")
         self.assertTrue(res["unsafe_path"]["duplicate_effect_observed"])
         self.assertGreater(res["unsafe_path"]["delta"], 1)
-        self.assertTrue(res["protected_path"]["exact_once_invariant_preserved"])
+        self.assertTrue(res["protected_path"]["one_intended_effect_preserved"])
         self.assertEqual(res["protected_path"]["delta"], 1)
-        self.assertTrue(res["concurrent_path"]["exact_once_invariant_preserved"])
+        self.assertTrue(res["concurrent_path"]["one_intended_effect_preserved"])
+        self.assertTrue(res["concurrent_path"]["threads_joined"])
+        self.assertEqual(res["concurrent_path"]["errors"], [])
         self.assertEqual(res["concurrent_path"]["delta"], 1)
         self.assertTrue(res["retention_boundary"]["protected_within_ttl"])
+        self.assertEqual(res["retention_boundary"]["clock_mode"], "INJECTED_FUTURE_PURGE_TIME")
         self.assertTrue(res["retention_boundary"]["re_executed_after_purge"])
+        self.assertIsNone(res["cleanup_error"])
         self.assertIn("scope_of_idempotency", res["inference_limits"])
         self.assertIn("retention_boundary", res["inference_limits"])
 
@@ -142,7 +146,9 @@ class TestM16Foundations(unittest.TestCase):
     def test_reset_idempotence(self):
         """Verifies that reset_m16_foundations runs idempotently without error."""
         this_dir = os.path.dirname(os.path.abspath(__file__))
-        dummy_file = os.path.join(this_dir, "test_dummy_artifact.tmp")
+        scratch_dir = os.path.join(this_dir, ".scratch")
+        os.makedirs(scratch_dir, exist_ok=True)
+        dummy_file = os.path.join(scratch_dir, "test_dummy_artifact.tmp")
         with open(dummy_file, "w") as f:
             f.write("temporary data")
 
