@@ -19,17 +19,17 @@ This directory contains executable, course-owned worked-trace harnesses and acti
 
 2. **`activity_l17_01.py`** — Replication Acknowledgment, Quorum Overlap & Overlap != Linearizability
    - Runs interactive demonstration of acknowledgment policies, failover durability, and the 3 quorum counterexamples.
-   - Generates `l17_01_observation.json`.
+   - Generates `.scratch/l17_01_observation.json`.
 
 3. **`activity_l17_02.py`** — Consensus Invariants, Raft Log Up-To-Date & Partition Scenarios
    - Evaluates RequestVote decisions, majority elections under partition, and the FLP boundary.
-   - Generates `l17_02_observation.json`.
+   - Generates `.scratch/l17_02_observation.json`.
 
 4. **`activity_l17_03.py`** — Linearizability, Session Guarantees & Real CAP Trade-off
    - Evaluates linearizable vs. non-linearizable histories, Read-Your-Writes, Monotonic Reads, and the three-way distinction between ACID Consistency, Transaction Isolation, and Replicated Linearizability.
-   - Generates `l17_03_observation.json`.
+   - Generates `.scratch/l17_03_observation.json`.
 
-5. **`reset.py`** — Idempotent cleanup script removing generated JSON observations and temporary logs.
+5. **`reset.py`** — Fail-closed, idempotent cleanup limited to course-owned `.scratch/` and local `__pycache__/`.
 
 6. **`test_trace.py`** — Automated unit test suite verifying all 4 trace families and reset idempotence.
 
