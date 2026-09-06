@@ -94,7 +94,7 @@ Learner Validation is deferred during authoring but remains mandatory before v1.
 
 ## Current priority
 
-1. Create one formal **S6-B5 M20 Observability & Reliability Engineering learner implementation** Issue from the accepted S6 Design Dossier and current canonical main. Preserve one-Issue/one-Executor/one-branch/worktree/one-PR/independent-Lead-Review; do not combine later S7 work.
+1. Proceed through one formal **S6-B5 M20 Observability & Reliability Engineering learner implementation** Issue from the accepted S6 Design Dossier and its assigned canonical base. Preserve one-Issue/one-Executor/one-branch/worktree/one-PR/independent-Lead-Review; do not combine later S7 work.
 2. Implement exactly **L20-01 — “How do I know the system is OK?”** and **L20-02 — “How do I debug a production incident?”**, plus the Design-named course-owned M20 observability/incident fixture, learner evidence template, and narrowly necessary S6 preflight extension.
 3. Preserve M20 module entry exactly: **Hard M19 + M16; Soft M11**. L20-01 predecessors are L19-02 + M16; M04 measurement discipline is revisit context only, not a new prerequisite edge. L20-02 follows L20-01.
 4. Keep the M20 Core **zero-SaaS / Python-standard-library only**: structured JSON logs, course-owned correlation/trace context, localhost services, and monotonic timers. Datadog, Prometheus, Grafana, Jaeger, cloud telemetry accounts, and daemon clusters are not Core requirements.
