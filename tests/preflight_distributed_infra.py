@@ -226,9 +226,7 @@ def probe_optional_cs144_source(live_probe: bool = False) -> Dict[str, Any]:
         with urllib.request.urlopen(req, timeout=3.0) as resp:
             record["reachability"] = f"REACHABLE (HTTP {resp.status})"
     except Exception as e:
-        record["reachability"] = (
-            f"SOURCE RECHECK BLOCKED / CONTINUE WITH COURSE-OWNED TRACE ({e})"
-        )
+        record["reachability"] = f"OPTIONAL SOURCE UNAVAILABLE / SKIP ({e})"
 
     return record
 
@@ -280,7 +278,9 @@ def probe_optional_mit_6033_source(live_probe: bool = False) -> Dict[str, Any]:
         with urllib.request.urlopen(req, timeout=3.0) as resp:
             record["reachability"] = f"REACHABLE (HTTP {resp.status})"
     except Exception as e:
-        record["reachability"] = f"OPTIONAL SOURCE UNAVAILABLE / SKIP ({e})"
+        record["reachability"] = (
+            f"SOURCE RECHECK BLOCKED / CONTINUE WITH COURSE-OWNED TRACE ({e})"
+        )
 
     return record
 
