@@ -590,19 +590,25 @@ class ConsistencyEvaluator:
         if search(set(), initial_value):
             return True, "LINEARIZABLE", None
 
-        # Provide a bounded witness when a completed-before read relation is obvious.
+        # Provide a bounded witness only when one completed write is forced to be
+        # after every other completed-before write by real-time precedence.
         for r in sorted(
             (op for op in ops if op.op_type == "R"),
             key=lambda x: (x.inv_time, x.resp_time),
         ):
             prior_writes = [w for w in ops if w.op_type == "W" and cls.precedes(w, r)]
-            if prior_writes and all(r.value != w.value for w in prior_writes):
-                latest = max(prior_writes, key=lambda x: (x.resp_time, x.inv_time))
+            forced_latest = [
+                w
+                for w in prior_writes
+                if all(o.op_id == w.op_id or cls.precedes(o, w) for o in prior_writes)
+            ]
+            if len(forced_latest) == 1 and r.value != forced_latest[0].value:
+                latest = forced_latest[0]
                 return (
                     False,
                     f"NON_LINEARIZABLE_HISTORY: no legal sequential register order preserves "
                     f"the real-time constraints; read {r.op_id} returned {r.value!r} after "
-                    f"completed write {latest.op_id} returned {latest.value!r}",
+                    f"forced-latest completed write {latest.op_id} returned {latest.value!r}",
                     (latest.op_id, r.op_id),
                 )
 
