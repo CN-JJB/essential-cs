@@ -1,19 +1,35 @@
 #!/usr/bin/env python3
 """
-Alias / facade module for s6_m18_outbox_fixture.py.
-Preserves the naming specified in Section 19 of the Design Dossier.
+Facade for the M18 transactional-outbox fixture name retained by the Design Dossier.
+
+Supports both:
+- direct sibling/script loading from labs/foundations/m18; and
+- package-style imports when the repository is imported as a namespace package.
 """
 
-from .outbox_fixture import (
-    DeliveryBuffer,
-    DualWriteCrashError,
-    OutboxRelay,
-    RelayCrashBeforeMarkError,
-    Worker,
-    init_database,
-    produce_broken_dual_write,
-    produce_transactional_outbox,
-)
+if __package__:
+    from .outbox_fixture import (
+        DeliveryBuffer,
+        DualWriteCrashError,
+        OutboxRelay,
+        RelayCrashBeforeMarkError,
+        Worker,
+        init_database,
+        produce_broken_dual_write,
+        produce_transactional_outbox,
+    )
+else:
+    from outbox_fixture import (
+        DeliveryBuffer,
+        DualWriteCrashError,
+        OutboxRelay,
+        RelayCrashBeforeMarkError,
+        Worker,
+        init_database,
+        produce_broken_dual_write,
+        produce_transactional_outbox,
+    )
+
 
 __all__ = [
     "DeliveryBuffer",
