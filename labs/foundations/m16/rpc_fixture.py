@@ -206,7 +206,7 @@ class IdempotencyStore:
             if row:
                 status, cached_json, row_expires = row
                 # Check retention boundary
-                if now > row_expires:
+                if now >= row_expires:
                     # Expired entry: purge and allow re-execution
                     cur.execute("DELETE FROM idempotency_keys WHERE key = ?", (key,))
                 elif status == "COMPLETED":
