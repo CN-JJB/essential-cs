@@ -12,10 +12,10 @@ This directory contains executable, course-owned worked-trace harnesses and acti
 ## Files Overview
 
 1. **`trace_harness.py`** — Core Worked-Trace Harness
-   - **Replication Acknowledgment**: Models `ASYNC`, `SEMI_SYNC`, `SYNC_ALL`, and `QUORUM_W` acknowledgment semantics; models ambiguous write states (leader crash post-replication) and failover data loss.
+   - **Replication Acknowledgment**: Models course-owned `ASYNC`, configurable-threshold `SEMI_SYNC`, `SYNC_ALL`, and `QUORUM_W` acknowledgment scenarios. These are worksheet contracts, not universal product definitions; ack-point replica state and failover assumptions are explicit.
    - **Quorum Set-Intersection Validator**: Verifies Pigeonhole intersection $W + R > N \implies (W+R)-N \ge 1$; provides 3 formal counterexamples proving that **Overlap alone does NOT equal Linearizability or Latest-Value reads** (unversioned stale reads, ambiguous partial writes, and concurrent conflicting writes).
-   - **Raft Election Safety Worksheet**: Models logical 5-node cluster partition ($2 \mid 3$); evaluates the Log Up-To-Date voting rule (§5.4.1); enforces the boundary between majority overlap and full Leader Completeness; formalizes the FLP impossibility boundary.
-   - **Consistency History Evaluator**: Classifies multi-client execution histories based on real-time invocation/response precedence ($op_1 <_{\text{real-time}} op_2 \iff \text{resp}(op_1) < \text{inv}(op_2)$); detects stale reads, Read-Your-Writes violations, and Monotonic Reads violations without using unsynchronized physical machine clocks.
+   - **Raft Election Safety Worksheet**: Models a logical 5-node partition ($2 \mid 3$); evaluates the Log Up-To-Date rule (§5.4.1); separates majority-set overlap from the vote/log/commit rules used by Raft safety reasoning; records the FLP boundary without implementing Raft.
+   - **Consistency History Evaluator**: Exhaustively checks the small completed single-register histories used by this course against legal sequential register behavior plus real-time precedence. It also provides bounded numeric-version RYW/Monotonic-Read checks. It is a teaching validator, not a production general-purpose linearizability checker.
 
 2. **`activity_l17_01.py`** — Replication Acknowledgment, Quorum Overlap & Overlap != Linearizability
    - Runs interactive demonstration of acknowledgment policies, failover durability, and the 3 quorum counterexamples.
