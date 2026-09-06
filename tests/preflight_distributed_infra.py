@@ -289,45 +289,60 @@ def probe_optional_mit_6033_source(live_probe: bool = False) -> Dict[str, Any]:
 
 
 def probe_m18_coordination_capabilities() -> Dict[str, Any]:
+    """
+    Probe only capabilities actually required by M18 Core:
+    file-backed SQLite commit/rollback behavior in a writable local directory.
+    The M18 implementation does not require Python threads.
+    """
     try:
-        import threading
-
-        # Test file-backed SQLite transaction, commit, and rollback capabilities
         with tempfile.TemporaryDirectory(prefix="essential_cs_m18_probe_") as tmpdir:
             probe_db = os.path.join(tmpdir, "probe_m18.db")
-            conn = sqlite3.connect(probe_db)
-            conn.execute("CREATE TABLE probe_orders (id TEXT PRIMARY KEY, val TEXT)")
-            conn.execute("BEGIN IMMEDIATE")
-            conn.execute("INSERT INTO probe_orders (id, val) VALUES ('test_order', 'init')")
-            conn.commit()
+            conn = sqlite3.connect(probe_db, isolation_level=None)
+            try:
+                conn.execute("CREATE TABLE probe_orders (id TEXT PRIMARY KEY, val TEXT)")
 
-            row = conn.execute("SELECT val FROM probe_orders WHERE id = 'test_order'").fetchone()
-            assert row and row[0] == "init"
-            conn.close()
+                conn.execute("BEGIN IMMEDIATE")
+                conn.execute(
+                    "INSERT INTO probe_orders (id, val) VALUES (?, ?)",
+                    ("committed_order", "committed"),
+                )
+                conn.execute("COMMIT")
+                committed = conn.execute(
+                    "SELECT val FROM probe_orders WHERE id = ?",
+                    ("committed_order",),
+                ).fetchone()
 
-        # Test threading availability
-        thread_ran = False
+                conn.execute("BEGIN IMMEDIATE")
+                conn.execute(
+                    "INSERT INTO probe_orders (id, val) VALUES (?, ?)",
+                    ("rolled_back_order", "should_not_persist"),
+                )
+                conn.execute("ROLLBACK")
+                rolled_back = conn.execute(
+                    "SELECT val FROM probe_orders WHERE id = ?",
+                    ("rolled_back_order",),
+                ).fetchone()
+            finally:
+                conn.close()
 
-        def _probe_worker():
-            nonlocal thread_ran
-            thread_ran = True
-
-        t = threading.Thread(target=_probe_worker)
-        t.start()
-        t.join(timeout=1.0)
-        assert thread_ran
-
+        functional = committed == ("committed",) and rolled_back is None
         return {
-            "available": True,
-            "sqlite_file_tx": True,
-            "threads_functional": True,
-            "disposition": "REQUIRED CAPABILITY PASS",
+            "available": functional,
+            "sqlite_file_tx": functional,
+            "commit_functional": committed == ("committed",),
+            "rollback_functional": rolled_back is None,
+            "disposition": (
+                "REQUIRED CAPABILITY PASS"
+                if functional
+                else "ENVIRONMENT-BLOCKED / NOT RUN"
+            ),
         }
     except Exception as e:
         return {
             "available": False,
             "sqlite_file_tx": False,
-            "threads_functional": False,
+            "commit_functional": False,
+            "rollback_functional": False,
             "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "error": str(e),
         }
