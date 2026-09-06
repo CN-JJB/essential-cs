@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Reset script for M16 Foundations activities.
-Idempotently cleans up database, journal, WAL, SHM, temporary, and log files.
-Must be idempotent and pass cleanly when executed repeatedly.
+Idempotently cleans only course-owned M16 scratch artifacts.
+Cleanup failures are surfaced instead of being silently converted to success.
 """
 
 import glob
@@ -10,33 +10,57 @@ import os
 import sys
 
 LAB_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRATCH_DIR = os.path.join(LAB_DIR, ".scratch")
 
 
 def reset_m16_foundations(verbose: bool = True) -> int:
-    patterns = [
-        os.path.join(LAB_DIR, "*.db"),
-        os.path.join(LAB_DIR, "*.db-journal"),
-        os.path.join(LAB_DIR, "*.db-wal"),
-        os.path.join(LAB_DIR, "*.db-shm"),
-        os.path.join(LAB_DIR, "*.tmp"),
-        os.path.join(LAB_DIR, "*.log"),
-    ]
+    roots = [LAB_DIR, SCRATCH_DIR]
+    suffix_patterns = (
+        "*.db",
+        "*.db-journal",
+        "*.db-wal",
+        "*.db-shm",
+        "*.tmp",
+        "*.log",
+    )
     removed_count = 0
-    for pattern in patterns:
-        for file_path in glob.glob(pattern):
-            try:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                    removed_count += 1
-                    if verbose:
-                        print(f"[RESET] Removed: {os.path.basename(file_path)}")
-            except OSError as e:
-                if verbose:
-                    print(f"[RESET] Error removing {file_path}: {e}", file=sys.stderr)
+    errors = []
+
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for suffix in suffix_patterns:
+            for file_path in glob.glob(os.path.join(root, suffix)):
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        removed_count += 1
+                        if verbose:
+                            print(f"[RESET] Removed: {file_path}")
+                except OSError as e:
+                    errors.append(f"{file_path}: {e}")
+
+    if errors:
+        message = "M16 cleanup incomplete: " + "; ".join(errors)
+        if verbose:
+            print(f"[RESET] {message}", file=sys.stderr)
+        raise RuntimeError(message)
+
+    if os.path.isdir(SCRATCH_DIR):
+        try:
+            if not os.listdir(SCRATCH_DIR):
+                os.rmdir(SCRATCH_DIR)
+        except OSError:
+            # Directory removal is best-effort only after all tracked artifacts are gone.
+            pass
+
     if verbose:
         print(f"[RESET] M16 Foundations reset complete. ({removed_count} files removed)")
     return removed_count
 
 
 if __name__ == "__main__":
-    reset_m16_foundations(verbose=True)
+    try:
+        reset_m16_foundations(verbose=True)
+    except RuntimeError:
+        sys.exit(1)
