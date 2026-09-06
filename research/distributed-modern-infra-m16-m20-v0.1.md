@@ -560,11 +560,12 @@ In accordance with Blueprint restraint, Essential CS does not burden learners wi
 - **Disposition:** Strictly **Optional and link-only**. The course provides conceptual guidance and prediction prompts, but vendors zero CS144 code.
 
 ### 5.3 Deep-Dive Audit: EXP-05 (MIT 6.033 Replication, Transactions, Logging)
-- **Pedagogical Purpose:** Inspect mature, classic systems engineering lecture cases on fault tolerance, primary-backup replication, transaction coordination, and logging.
+- **Pedagogical Purpose:** Inspect mature, classic systems engineering lecture cases on fault tolerance, replication, transaction coordination, logging, and a bounded Primary/Backup + View Server comparison.
 - **Source Route:** MIT OCW 6.033 Spring 2018:
-  1. Lecture 14: *Fault Tolerance: Reliability via Replication*
-  2. Lecture 15: *Fault Tolerance: Introduction to Transactions*
-  3. Lecture 16: *Atomicity via Logging*
+  1. Lecture 14: *Fault Tolerance: Reliability via Replication* — reliability/replication foundation.
+  2. Lecture 15: *Fault Tolerance: Introduction to Transactions*.
+  3. Lecture 16: *Atomicity via Logging*.
+  4. **Lead provenance correction (2026-09-05):** Lecture 19, *Availability via Replication*, is the official source for Primary/Backup, View Server, partition/centralization, and the bridge to distributed consensus/Raft. Do not attribute those View Server rules to Lecture 14.
 - **License Gate:** CC BY-NC-SA 4.0. Essential CS must **not** adapt or bundle text under its own license without legal review. Strictly link and paraphrase.
 
 ### 5.4 M16–M18 Original Core Hands-On Mechanisms
