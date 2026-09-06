@@ -22,6 +22,7 @@ import datetime
 import json
 import os
 import platform
+import re
 import socket
 import sqlite3
 import subprocess
@@ -30,7 +31,7 @@ import tempfile
 import time
 import unittest
 import urllib.request
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 CS144_BENCHMARK = {
     "course": "Stanford CS144 (Introduction to Computer Networking)",
@@ -348,6 +349,138 @@ def probe_m18_coordination_capabilities() -> Dict[str, Any]:
         }
 
 
+def probe_m19_linux_capabilities() -> Dict[str, Any]:
+    """
+    Probe capabilities required by M19 Core:
+    read-only Linux namespace, cgroup, and process status/limits observation.
+    Requires:
+    - Canonical Linux environment (platform.system() == 'Linux')
+    - /proc/self/ns exists and contains at least one valid namespace symlink handle
+    - /proc/self/cgroup is readable and non-empty
+    - mount info in /proc/self/mountinfo or /proc/mounts is readable so cgroup arrangement is classifiable
+    - process status (/proc/self/status) and limits (/proc/self/limits) are readable without mutation
+    Non-Linux hosts or environments missing canonical Linux interfaces report
+    ENVIRONMENT-BLOCKED / NOT RUN truthfully without mutation.
+    Docker/Podman and unshare are NOT required for Core readiness.
+    """
+    is_linux = platform.system() == "Linux"
+    if not is_linux:
+        return {
+            "available": False,
+            "is_canonical_linux": False,
+            "proc_ns_readable": False,
+            "valid_namespaces_count": 0,
+            "proc_cgroup_readable": False,
+            "cgroup_arrangement_classifiable": False,
+            "proc_status_readable": False,
+            "proc_limits_readable": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "reason": (
+                f"Non-Linux host ({platform.system()} {platform.release()}). "
+                "M19 Core baseline requires canonical Linux environment with /proc/self/ns, "
+                "/proc/self/cgroup, /proc/self/status, and /proc/self/limits access."
+            ),
+        }
+
+    # 1. Namespace handle discovery
+    valid_namespaces_count = 0
+    proc_ns_path = "/proc/self/ns"
+    if os.path.isdir(proc_ns_path) and os.access(proc_ns_path, os.R_OK):
+        try:
+            for entry in os.listdir(proc_ns_path):
+                try:
+                    target = os.readlink(os.path.join(proc_ns_path, entry))
+                    if re.match(r"^([a-z_]+):\[(\d+)\]$", target):
+                        valid_namespaces_count += 1
+                except OSError:
+                    pass
+        except Exception:
+            pass
+    proc_ns_readable = (valid_namespaces_count > 0)
+
+    # 2. Cgroup membership lines
+    proc_cgroup_lines: List[str] = []
+    proc_cgroup_path = "/proc/self/cgroup"
+    if os.path.exists(proc_cgroup_path) and os.access(proc_cgroup_path, os.R_OK):
+        try:
+            with open(proc_cgroup_path, "r", encoding="utf-8") as f:
+                proc_cgroup_lines = [l.strip() for l in f if l.strip()]
+        except Exception:
+            pass
+    proc_cgroup_readable = len(proc_cgroup_lines) > 0
+
+    # 3. Mounts and cgroup classification
+    has_v1_mount = False
+    has_v2_mount = False
+    mount_file = "/proc/self/mountinfo" if (os.path.exists("/proc/self/mountinfo") and os.access("/proc/self/mountinfo", os.R_OK)) else "/proc/mounts"
+    if os.path.exists(mount_file) and os.access(mount_file, os.R_OK):
+        try:
+            with open(mount_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if "cgroup2" in line:
+                        has_v2_mount = True
+                    if "cgroup" in line and "cgroup2" not in line:
+                        has_v1_mount = True
+        except Exception:
+            pass
+
+    has_v2_line = any(l.startswith("0::") for l in proc_cgroup_lines)
+    has_v1_lines = any(not l.startswith("0::") and ":" in l for l in proc_cgroup_lines)
+
+    cgroup_arrangement_classifiable = (
+        (has_v2_line or has_v2_mount or has_v1_lines or has_v1_mount)
+        and proc_cgroup_readable
+    )
+
+    # 4. Status and limits
+    proc_status_readable = False
+    if os.path.exists("/proc/self/status") and os.access("/proc/self/status", os.R_OK):
+        try:
+            with open("/proc/self/status", "r", encoding="utf-8") as f:
+                content = f.read()
+                proc_status_readable = ("Uid:" in content and "Gid:" in content)
+        except Exception:
+            pass
+
+    proc_limits_readable = False
+    if os.path.exists("/proc/self/limits") and os.access("/proc/self/limits", os.R_OK):
+        try:
+            with open("/proc/self/limits", "r", encoding="utf-8") as f:
+                content = f.read()
+                proc_limits_readable = ("Max open files" in content)
+        except Exception:
+            pass
+
+    available = (
+        proc_ns_readable
+        and proc_cgroup_readable
+        and cgroup_arrangement_classifiable
+        and proc_status_readable
+        and proc_limits_readable
+    )
+
+    return {
+        "available": available,
+        "is_canonical_linux": True,
+        "proc_ns_readable": proc_ns_readable,
+        "valid_namespaces_count": valid_namespaces_count,
+        "proc_cgroup_readable": proc_cgroup_readable,
+        "cgroup_arrangement_classifiable": cgroup_arrangement_classifiable,
+        "proc_status_readable": proc_status_readable,
+        "proc_limits_readable": proc_limits_readable,
+        "disposition": (
+            "REQUIRED CAPABILITY PASS"
+            if available
+            else "ENVIRONMENT-BLOCKED / NOT RUN"
+        ),
+        "reason": (
+            "Canonical Linux read-only inspection baseline accessible."
+            if available
+            else "Linux host detected, but required /proc interfaces (ns, cgroup, status, limits) are incomplete or unreadable."
+        ),
+    }
+
+
 def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[str, Any]:
     os_info = probe_os()
     py_info = probe_python()
@@ -360,6 +493,7 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
     m17_trace_info = probe_m17_trace_capabilities()
     mit_info = probe_optional_mit_6033_source(live_probe=check_mit)
     m18_coord_info = probe_m18_coordination_capabilities()
+    m19_linux_info = probe_m19_linux_capabilities()
 
     m16_core_ready = (
         sock_info["available"]
@@ -377,12 +511,18 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
         and m18_coord_info["available"]
     )
 
+    m19_core_ready = (
+        m19_linux_info["available"]
+        and temp_info["writable"]
+    )
+
     return {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "oq_bp_006_status": "OPEN / UNRESOLVED",
         "m16_core_status": "READY" if m16_core_ready else "BLOCKED",
         "m17_core_status": "READY" if m17_core_ready else "BLOCKED",
         "m18_core_status": "READY" if m18_core_ready else "BLOCKED",
+        "m19_core_status": "READY" if m19_core_ready else "BLOCKED",
         "dimensions": {
             "1_os": os_info,
             "2_python": py_info,
@@ -395,11 +535,13 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
             "9_m17_trace_capabilities": m17_trace_info,
             "10_optional_mit_6033_source": mit_info,
             "11_m18_coordination_capabilities": m18_coord_info,
+            "12_m19_linux_capabilities": m19_linux_info,
         },
         "notes": (
             "Readiness is not lesson/lab PASS. "
-            "M16, M17, and M18 use standard Python stdlib capabilities which are cross-platform, "
-            "but OQ-BP-006 remains open for the wider course curriculum."
+            "M16, M17, and M18 use standard Python stdlib capabilities which are cross-platform. "
+            "M19 requires canonical Linux read-only observation (/proc/self/ns and /proc/self/cgroup). "
+            "OQ-BP-006 remains open for the wider course curriculum."
         ),
     }
 
@@ -483,6 +625,27 @@ class TestPreflightDistributedInfra(unittest.TestCase):
             {"REQUIRED CAPABILITY PASS", "ENVIRONMENT-BLOCKED / NOT RUN"},
         )
 
+    def test_m19_core_capabilities_report_truthfully(self):
+        report = run_preflight()
+        dims = report["dimensions"]
+        m19_info = dims["12_m19_linux_capabilities"]
+
+        self.assertIn(
+            m19_info["disposition"],
+            {"REQUIRED CAPABILITY PASS", "ENVIRONMENT-BLOCKED / NOT RUN"},
+        )
+        if m19_info["available"]:
+            self.assertEqual(report["m19_core_status"], "READY")
+            self.assertTrue(m19_info["is_canonical_linux"])
+            self.assertTrue(m19_info["proc_ns_readable"])
+            self.assertGreater(m19_info["valid_namespaces_count"], 0)
+            self.assertTrue(m19_info["proc_cgroup_readable"])
+            self.assertTrue(m19_info["cgroup_arrangement_classifiable"])
+            self.assertTrue(m19_info["proc_status_readable"])
+            self.assertTrue(m19_info["proc_limits_readable"])
+        else:
+            self.assertEqual(report["m19_core_status"], "BLOCKED")
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Preflight verification for Stage 6 Distributed Infra")
@@ -491,7 +654,7 @@ def main() -> int:
     parser.add_argument("--check-mit-source", action="store_true", help="Probe MIT 6.033 reachability")
     parser.add_argument(
         "--module",
-        choices=("m16", "m17", "m18", "all"),
+        choices=("m16", "m17", "m18", "m19", "all"),
         default="m16",
         help=(
             "Select which Core readiness status controls the exit code. "
@@ -506,10 +669,12 @@ def main() -> int:
         "m16": report["m16_core_status"] == "READY",
         "m17": report["m17_core_status"] == "READY",
         "m18": report["m18_core_status"] == "READY",
+        "m19": report["m19_core_status"] == "READY",
         "all": (
             report["m16_core_status"] == "READY"
             and report["m17_core_status"] == "READY"
             and report["m18_core_status"] == "READY"
+            and report["m19_core_status"] == "READY"
         ),
     }[args.module]
 
@@ -526,6 +691,7 @@ def main() -> int:
     print(f" M16 Core Status:           {report['m16_core_status']}")
     print(f" M17 Core Status:           {report['m17_core_status']}")
     print(f" M18 Core Status:           {report['m18_core_status']}")
+    print(f" M19 Core Status:           {report['m19_core_status']}")
     print("-" * 70)
     print(f" [Host OS]:                 {report['dimensions']['1_os']['system']} {report['dimensions']['1_os']['release']} ({report['dimensions']['1_os']['architecture']})")
     print(f" [Python Runtime]:          {report['dimensions']['2_python']['implementation']} {report['dimensions']['2_python']['version']}")
@@ -540,6 +706,9 @@ def main() -> int:
     print(f" [EXP-05 MIT 6.033]:        {report['dimensions']['10_optional_mit_6033_source']['disposition']}")
     print(f"   Reachability:            {report['dimensions']['10_optional_mit_6033_source']['reachability']}")
     print(f" [M18 Coordination]:        {report['dimensions']['11_m18_coordination_capabilities']['disposition']}")
+    print(f" [M19 Linux Read-Only]:     {report['dimensions']['12_m19_linux_capabilities']['disposition']}")
+    if not report['dimensions']['12_m19_linux_capabilities']['available']:
+        print(f"   Reason:                  {report['dimensions']['12_m19_linux_capabilities']['reason']}")
     print("=" * 70)
 
     return 0 if selected_ready else 1
