@@ -401,7 +401,8 @@ class RPCServer:
         while not self._stop_event.is_set():
             try:
                 client_sock, addr = self._server_sock.accept()
-                client_sock.settimeout(5.0)
+                # Harness safety bound only; not a networking curriculum constant.
+                client_sock.settimeout(self.watchdog_timeout)
                 with self._lock:
                     self._client_sockets.append(client_sock)
                 t = threading.Thread(
@@ -440,7 +441,9 @@ class RPCServer:
                     })
                     break  # Close socket without processing
                 elif req_action == FaultAction.DELAY_REQUEST and req_delay > 0:
-                    time.sleep(req_delay)
+                    # Interruptible harness delay so shutdown cannot leave a sleeping worker behind.
+                    if self._stop_event.wait(req_delay):
+                        break
 
                 # 2. Execute business logic
                 handler = self._methods.get(method_name)
@@ -493,7 +496,9 @@ class RPCServer:
                     })
                     break  # Suppress response and close connection
                 elif resp_action == FaultAction.DELAY_RESPONSE and resp_delay > 0:
-                    time.sleep(resp_delay)
+                    # Interruptible harness delay so explicit shutdown remains truthful.
+                    if self._stop_event.wait(resp_delay):
+                        break
 
                 try:
                     send_msg(client_sock, resp)
@@ -509,30 +514,50 @@ class RPCServer:
                     self._client_sockets.remove(client_sock)
 
     def stop(self) -> None:
-        """Explicit shutdown: closes all sockets and joins all threads."""
+        """Explicit shutdown: close owned sockets and prove owned threads have joined."""
         self._stop_event.set()
+
         if self._server_sock:
             try:
                 self._server_sock.close()
             except OSError:
                 pass
+
         with self._lock:
-            for s in list(self._client_sockets):
-                try:
-                    s.close()
-                except OSError:
-                    pass
-            self._client_sockets.clear()
+            sockets = list(self._client_sockets)
+        for s in sockets:
+            try:
+                s.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            try:
+                s.close()
+            except OSError:
+                pass
+
+        deadline = time.monotonic() + self.watchdog_timeout
 
         if self._listener_thread and self._listener_thread.is_alive():
-            self._listener_thread.join(timeout=2.0)
+            self._listener_thread.join(timeout=max(0.0, deadline - time.monotonic()))
 
         with self._lock:
             threads = list(self._client_threads)
         for t in threads:
             if t.is_alive():
-                t.join(timeout=2.0)
+                t.join(timeout=max(0.0, deadline - time.monotonic()))
+
+        alive = []
+        if self._listener_thread and self._listener_thread.is_alive():
+            alive.append(self._listener_thread.name)
+        alive.extend(t.name for t in threads if t.is_alive())
+        if alive:
+            raise RuntimeError(
+                "Owned RPCServer threads did not stop within the configured harness watchdog: "
+                + ", ".join(alive)
+            )
+
         with self._lock:
+            self._client_sockets.clear()
             self._client_threads.clear()
 
 
@@ -576,6 +601,13 @@ class RPCClient:
         """
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
+        valid_policies = {
+            RetryPolicy.NO_RETRY,
+            RetryPolicy.DETERMINISTIC,
+            RetryPolicy.EXPONENTIAL_JITTER,
+        }
+        if retry_policy not in valid_policies:
+            raise ValueError(f"Unknown retry policy: {retry_policy!r}")
 
         call_timeout = timeout if timeout is not None else self.default_timeout
         req_id = request_id or f"req-{time.time_ns()}-{random.randint(1000, 9999)}"
@@ -610,15 +642,18 @@ class RPCClient:
                 send_msg(sock, req_payload)
                 resp = recv_msg(sock)
 
-                attempt_record["outcome"] = "SUCCESS"
                 attempt_record["duration"] = time.time() - attempt_start
                 attempt_record["response"] = resp
-                self.call_traces.append(attempt_record)
-
                 if resp.get("status") == "OK":
+                    attempt_record["outcome"] = "SUCCESS"
+                    self.call_traces.append(attempt_record)
                     return resp
-                else:
-                    raise RuntimeError(f"RPC Server Error: {resp.get('error')}")
+
+                attempt_record["outcome"] = "SERVER_ERROR"
+                attempt_record["error_type"] = "RPCServerError"
+                attempt_record["error_detail"] = str(resp.get("error"))
+                self.call_traces.append(attempt_record)
+                raise RuntimeError(f"RPC Server Error: {resp.get('error')}")
 
             except (socket.timeout, TimeoutError) as e:
                 attempt_record["outcome"] = "TIMEOUT"
@@ -655,7 +690,8 @@ class RPCClient:
                     cap_ms = min(max_backoff_ms, base_backoff_ms * (2 ** (attempts_made - 1)))
                     sleep_sec = random.uniform(0, cap_ms) / 1000.0
                 else:
-                    sleep_sec = 0.0
+                    # Defensive only: policy values are validated before the loop.
+                    raise AssertionError(f"Unhandled retry policy: {retry_policy!r}")
 
                 attempt_record["backoff_applied_sec"] = sleep_sec
                 time.sleep(sleep_sec)
