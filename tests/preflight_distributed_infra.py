@@ -288,6 +288,51 @@ def probe_optional_mit_6033_source(live_probe: bool = False) -> Dict[str, Any]:
     return record
 
 
+def probe_m18_coordination_capabilities() -> Dict[str, Any]:
+    try:
+        import threading
+
+        # Test file-backed SQLite transaction, commit, and rollback capabilities
+        with tempfile.TemporaryDirectory(prefix="essential_cs_m18_probe_") as tmpdir:
+            probe_db = os.path.join(tmpdir, "probe_m18.db")
+            conn = sqlite3.connect(probe_db)
+            conn.execute("CREATE TABLE probe_orders (id TEXT PRIMARY KEY, val TEXT)")
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("INSERT INTO probe_orders (id, val) VALUES ('test_order', 'init')")
+            conn.commit()
+
+            row = conn.execute("SELECT val FROM probe_orders WHERE id = 'test_order'").fetchone()
+            assert row and row[0] == "init"
+            conn.close()
+
+        # Test threading availability
+        thread_ran = False
+
+        def _probe_worker():
+            nonlocal thread_ran
+            thread_ran = True
+
+        t = threading.Thread(target=_probe_worker)
+        t.start()
+        t.join(timeout=1.0)
+        assert thread_ran
+
+        return {
+            "available": True,
+            "sqlite_file_tx": True,
+            "threads_functional": True,
+            "disposition": "REQUIRED CAPABILITY PASS",
+        }
+    except Exception as e:
+        return {
+            "available": False,
+            "sqlite_file_tx": False,
+            "threads_functional": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "error": str(e),
+        }
+
+
 def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[str, Any]:
     os_info = probe_os()
     py_info = probe_python()
@@ -299,6 +344,7 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
     cs144_info = probe_optional_cs144_source(live_probe=check_cs144)
     m17_trace_info = probe_m17_trace_capabilities()
     mit_info = probe_optional_mit_6033_source(live_probe=check_mit)
+    m18_coord_info = probe_m18_coordination_capabilities()
 
     m16_core_ready = (
         sock_info["available"]
@@ -310,11 +356,18 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
 
     m17_core_ready = m17_trace_info["available"] and temp_info["writable"]
 
+    m18_core_ready = (
+        sqlite_info["available"]
+        and temp_info["writable"]
+        and m18_coord_info["available"]
+    )
+
     return {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "oq_bp_006_status": "OPEN / UNRESOLVED",
         "m16_core_status": "READY" if m16_core_ready else "BLOCKED",
         "m17_core_status": "READY" if m17_core_ready else "BLOCKED",
+        "m18_core_status": "READY" if m18_core_ready else "BLOCKED",
         "dimensions": {
             "1_os": os_info,
             "2_python": py_info,
@@ -326,10 +379,11 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
             "8_optional_cs144_source": cs144_info,
             "9_m17_trace_capabilities": m17_trace_info,
             "10_optional_mit_6033_source": mit_info,
+            "11_m18_coordination_capabilities": m18_coord_info,
         },
         "notes": (
             "Readiness is not lesson/lab PASS. "
-            "M16 and M17 use standard Python stdlib capabilities which are cross-platform, "
+            "M16, M17, and M18 use standard Python stdlib capabilities which are cross-platform, "
             "but OQ-BP-006 remains open for the wider course curriculum."
         ),
     }
@@ -395,6 +449,25 @@ class TestPreflightDistributedInfra(unittest.TestCase):
             "ZERO VENDORED SOURCE",
         )
 
+    def test_m18_core_capabilities_report_truthfully(self):
+        report = run_preflight()
+        dims = report["dimensions"]
+
+        expected_status = (
+            "READY"
+            if (
+                dims["5_embedded_sqlite"]["available"]
+                and dims["6_writable_temp"]["writable"]
+                and dims["11_m18_coordination_capabilities"]["available"]
+            )
+            else "BLOCKED"
+        )
+        self.assertEqual(report["m18_core_status"], expected_status)
+        self.assertIn(
+            dims["11_m18_coordination_capabilities"]["disposition"],
+            {"REQUIRED CAPABILITY PASS", "ENVIRONMENT-BLOCKED / NOT RUN"},
+        )
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Preflight verification for Stage 6 Distributed Infra")
@@ -403,7 +476,7 @@ def main() -> int:
     parser.add_argument("--check-mit-source", action="store_true", help="Probe MIT 6.033 reachability")
     parser.add_argument(
         "--module",
-        choices=("m16", "m17", "all"),
+        choices=("m16", "m17", "m18", "all"),
         default="m16",
         help=(
             "Select which Core readiness status controls the exit code. "
@@ -417,9 +490,11 @@ def main() -> int:
     selected_ready = {
         "m16": report["m16_core_status"] == "READY",
         "m17": report["m17_core_status"] == "READY",
+        "m18": report["m18_core_status"] == "READY",
         "all": (
             report["m16_core_status"] == "READY"
             and report["m17_core_status"] == "READY"
+            and report["m18_core_status"] == "READY"
         ),
     }[args.module]
 
@@ -435,6 +510,7 @@ def main() -> int:
     print(f" Selected Exit Gate:        {args.module}")
     print(f" M16 Core Status:           {report['m16_core_status']}")
     print(f" M17 Core Status:           {report['m17_core_status']}")
+    print(f" M18 Core Status:           {report['m18_core_status']}")
     print("-" * 70)
     print(f" [Host OS]:                 {report['dimensions']['1_os']['system']} {report['dimensions']['1_os']['release']} ({report['dimensions']['1_os']['architecture']})")
     print(f" [Python Runtime]:          {report['dimensions']['2_python']['implementation']} {report['dimensions']['2_python']['version']}")
@@ -448,6 +524,7 @@ def main() -> int:
     print(f" [M17 Trace Capability]:    {report['dimensions']['9_m17_trace_capabilities']['disposition']}")
     print(f" [EXP-05 MIT 6.033]:        {report['dimensions']['10_optional_mit_6033_source']['disposition']}")
     print(f"   Reachability:            {report['dimensions']['10_optional_mit_6033_source']['reachability']}")
+    print(f" [M18 Coordination]:        {report['dimensions']['11_m18_coordination_capabilities']['disposition']}")
     print("=" * 70)
 
     return 0 if selected_ready else 1

@@ -1,0 +1,10 @@
+.scratch/
+__pycache__/
+*.pyc
+*.tmp
+*.log
+*.json
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
