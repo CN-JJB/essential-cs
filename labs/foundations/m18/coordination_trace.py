@@ -94,11 +94,12 @@ class TwoPhaseCommitParticipant:
                 "can_unilaterally_abort": False,
                 "disposition": "BLOCKED_IN_PREPARED_DECISION_UNKNOWN",
                 "reason": (
-                    "Participant voted YES and entered PREPARED. If another participant "
-                    "voted NO, coordinator decided ABORT; if all voted YES, coordinator "
-                    "decided COMMIT. Unilateral commit violates Consistency if decision "
-                    "was ABORT; unilateral abort violates Consistency if decision was COMMIT. "
-                    "In this classic PREPARED/decision-unknown trace, the participant cannot choose COMMIT or ABORT from silence alone."
+                    "Participant voted YES and entered PREPARED. Silence does not reveal "
+                    "the global atomic-commit outcome: another participant may have caused "
+                    "ABORT, or the coordinator may have durably chosen COMMIT. Choosing a "
+                    "conflicting local outcome would violate atomic-commit agreement. In "
+                    "this classic PREPARED/decision-unknown trace, the participant cannot "
+                    "choose COMMIT or ABORT from silence alone."
                 ),
                 "recovery_requirement": (
                     "Requires coordinator recovery log or cooperative termination protocol "
@@ -326,9 +327,10 @@ class CourseSagaScenario:
                     "order_status": self.orders.get(order_id, {}).get("status"),
                     "stock_observed": self.stock,
                     "explanation": (
-                        "External observer sees intermediate state: inventory is decremented "
-                        "and order is pending, before payment outcome is resolved. This proves "
-                        "lack of Isolation (I in ACID)."
+                        "External observer sees already-applied Saga step state: inventory is "
+                        "decremented and order is pending before the payment outcome is known. "
+                        "This fixture therefore lacks one ACID isolation boundary across the "
+                        "whole workflow; this is not an uncommitted database dirty read."
                     ),
                 }
 
