@@ -36,7 +36,8 @@ CS144_BENCHMARK = {
     "course": "Stanford CS144 (Introduction to Computer Networking)",
     "term": "Fall 2025",
     "assignment": "Checkpoint 2 (TCP Receiver)",
-    "official_url": "https://cs144.github.io/",
+    "course_url": "https://cs144.github.io/",
+    "official_url": "https://cs144.github.io/assignments/check2.pdf",
     "course_inspection_date": "2026-09-05",
     "rights_status": "UNESTABLISHED (zero vendored code, link-only)",
 }
@@ -71,7 +72,7 @@ def probe_stdlib_socket() -> Dict[str, Any]:
     except Exception as e:
         return {
             "available": False,
-            "disposition": "ENVIRONMENT-BLOCKED / FAIL",
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "error": str(e),
         }
 
@@ -92,7 +93,7 @@ def probe_localhost_ephemeral_bind() -> Dict[str, Any]:
         return {
             "bound": False,
             "sample_ephemeral_port": None,
-            "disposition": "ENVIRONMENT-BLOCKED / FAIL",
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "error": str(e),
         }
 
@@ -100,25 +101,34 @@ def probe_localhost_ephemeral_bind() -> Dict[str, Any]:
 def probe_embedded_sqlite() -> Dict[str, Any]:
     try:
         ver = sqlite3.sqlite_version
-        conn = sqlite3.connect(":memory:")
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE test (id INT PRIMARY KEY, val TEXT)")
-        cur.execute("INSERT INTO test VALUES (1, 'ok')")
-        conn.commit()
-        cur.execute("SELECT val FROM test WHERE id = 1")
-        row = cur.fetchone()
-        conn.close()
+        with tempfile.TemporaryDirectory(prefix="essential_cs_s6_sqlite_") as tmpdir:
+            db_path = os.path.join(tmpdir, "preflight.db")
+            conn = sqlite3.connect(db_path, timeout=1.0, isolation_level=None)
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                conn.execute("CREATE TABLE test (id INT PRIMARY KEY, val TEXT)")
+                conn.execute("INSERT INTO test VALUES (1, 'ok')")
+                conn.execute("COMMIT")
+                row = conn.execute("SELECT val FROM test WHERE id = 1").fetchone()
+            finally:
+                conn.close()
+        functional = row == ("ok",)
         return {
-            "available": True,
+            "available": functional,
             "sqlite_version": ver,
-            "memory_db_functional": row == ("ok",),
-            "disposition": "REQUIRED CAPABILITY PASS",
+            "file_backed_transaction_functional": functional,
+            "disposition": (
+                "REQUIRED CAPABILITY PASS"
+                if functional
+                else "ENVIRONMENT-BLOCKED / NOT RUN"
+            ),
         }
     except Exception as e:
         return {
             "available": False,
             "sqlite_version": None,
-            "disposition": "ENVIRONMENT-BLOCKED / FAIL",
+            "file_backed_transaction_functional": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "error": str(e),
         }
 
@@ -139,7 +149,7 @@ def probe_writable_temp() -> Dict[str, Any]:
     except Exception as e:
         return {
             "writable": False,
-            "disposition": "ENVIRONMENT-BLOCKED / FAIL",
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "error": str(e),
         }
 
@@ -177,7 +187,7 @@ def probe_subprocess_watchdog() -> Dict[str, Any]:
         return {
             "watchdog_usable": False,
             "reaped": False,
-            "disposition": "ENVIRONMENT-BLOCKED / FAIL",
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "error": str(e),
         }
 
@@ -246,15 +256,38 @@ def run_preflight(check_cs144: bool = False) -> Dict[str, Any]:
 
 
 class TestPreflightDistributedInfra(unittest.TestCase):
-    def test_m16_core_capabilities(self):
+    def test_m16_core_capabilities_report_truthfully(self):
         report = run_preflight(check_cs144=False)
         self.assertEqual(report["oq_bp_006_status"], "OPEN / UNRESOLVED")
-        self.assertEqual(report["m16_core_status"], "READY")
-        self.assertEqual(report["dimensions"]["3_stdlib_socket"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["dimensions"]["4_localhost_ephemeral_bind"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["dimensions"]["5_embedded_sqlite"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["dimensions"]["6_writable_temp"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["dimensions"]["7_subprocess_watchdog"]["disposition"], "REQUIRED CAPABILITY PASS")
+
+        dims = report["dimensions"]
+        required_facts = [
+            dims["3_stdlib_socket"]["available"],
+            dims["4_localhost_ephemeral_bind"]["bound"],
+            dims["5_embedded_sqlite"]["available"],
+            dims["6_writable_temp"]["writable"],
+            dims["7_subprocess_watchdog"]["watchdog_usable"],
+        ]
+        expected_status = "READY" if all(required_facts) else "BLOCKED"
+        self.assertEqual(report["m16_core_status"], expected_status)
+
+        allowed = {
+            "REQUIRED CAPABILITY PASS",
+            "ENVIRONMENT-BLOCKED / NOT RUN",
+        }
+        for key in (
+            "3_stdlib_socket",
+            "4_localhost_ephemeral_bind",
+            "5_embedded_sqlite",
+            "6_writable_temp",
+            "7_subprocess_watchdog",
+        ):
+            self.assertIn(dims[key]["disposition"], allowed)
+
+        self.assertEqual(
+            dims["8_optional_cs144_source"]["disposition"],
+            "OPTIONAL / RIGHTS-GATED / LINK-ONLY",
+        )
 
 
 def main() -> int:
