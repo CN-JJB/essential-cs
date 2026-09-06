@@ -21,9 +21,9 @@ This directory contains executable, course-owned exploratory activities and fixt
 
 3. **`activity_l16_02.py`** — Retry Amplification, Backoff & Idempotency Store
    - **Phase 1 (Unsafe)**: Scripted response drop triggers client retries without idempotency; server records duplicate side effects (counter $> 1$).
-   - **Phase 2 (Protected)**: Client carries `idempotency_key`; server deduplication table ensures exactly-once business side effects within the declared SQLite transaction boundary (counter $= 1$).
+   - **Phase 2 (Protected)**: Client carries `idempotency_key`; the course-owned SQLite transaction demonstrates one intended counter effect for duplicate attempts inside the declared local boundary. This is not an unbounded exactly-once claim.
    - **Phase 3 (Concurrent)**: Multiple concurrent threads dispatching the identical idempotency key serialize safely without duplicate side effects.
-   - **Phase 4 (Retention Horizon)**: Demonstrates that expired deduplication keys allow re-execution after TTL eviction.
+   - **Phase 4 (Retention Horizon)**: Uses an injected future purge time to deterministically demonstrate that an evicted dedup key can allow re-execution; no wall-clock TTL duration is a curriculum constant.
    - Analyzes retry amplification across call graphs and presents exponential backoff with full jitter as an architectural policy choice.
 
 4. **`reset.py`** — Idempotent cleanup script removing all `.db`, `.db-journal`, `.db-wal`, `.db-shm`, `.tmp`, and `.log` files.
