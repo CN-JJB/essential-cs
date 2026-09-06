@@ -50,6 +50,9 @@ MIT_6033_BENCHMARK = {
     "lecture_14_url": "https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/8eb16d3628bbd77ee7e8471b9871ec09_MIT6_033S18lec14.pdf",
     "lecture_15_url": "https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/df1526408e3ec6f7e43aadfa1ce5f944_MIT6_033S18lec15.pdf",
     "lecture_16_url": "https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/76fa216e8e5a4c4722c315a84b8e09a8c_MIT6_033S18lec16.pdf",
+    "lecture_19_view_server_url": "https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/resources/mit6_033s18lec19/",
+    "lecture_19_outline_url": "https://ocw.mit.edu/courses/6-033-computer-system-engineering-spring-2018/pages/week-11/lecture-19-outline/",
+    "source_correction": "View Server/Primary-Backup availability material is Lecture 19, not Lecture 14",
     "course_inspection_date": "2026-09-05",
     "rights_status": "CC BY-NC-SA 4.0 (link-and-paraphrase only, zero vendored slides/code)",
 }
@@ -398,19 +401,38 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Output JSON report")
     parser.add_argument("--check-cs144-source", action="store_true", help="Probe Stanford CS144 reachability")
     parser.add_argument("--check-mit-source", action="store_true", help="Probe MIT 6.033 reachability")
+    parser.add_argument(
+        "--module",
+        choices=("m16", "m17", "all"),
+        default="m16",
+        help=(
+            "Select which Core readiness status controls the exit code. "
+            "Default m16 preserves the pre-existing M16 preflight behavior."
+        ),
+    )
     args = parser.parse_args()
 
     report = run_preflight(check_cs144=args.check_cs144_source, check_mit=args.check_mit_source)
 
+    selected_ready = {
+        "m16": report["m16_core_status"] == "READY",
+        "m17": report["m17_core_status"] == "READY",
+        "all": (
+            report["m16_core_status"] == "READY"
+            and report["m17_core_status"] == "READY"
+        ),
+    }[args.module]
+
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        return 0 if (report["m16_core_status"] == "READY" and report["m17_core_status"] == "READY") else 1
+        return 0 if selected_ready else 1
 
     print("=" * 70)
     print(" Essential CS: Distributed Infrastructure Preflight Capability Report")
     print("=" * 70)
     print(f" Timestamp:                 {report['timestamp']}")
     print(f" OQ-BP-006 Status:          {report['oq_bp_006_status']}")
+    print(f" Selected Exit Gate:        {args.module}")
     print(f" M16 Core Status:           {report['m16_core_status']}")
     print(f" M17 Core Status:           {report['m17_core_status']}")
     print("-" * 70)
@@ -428,7 +450,7 @@ def main() -> int:
     print(f"   Reachability:            {report['dimensions']['10_optional_mit_6033_source']['reachability']}")
     print("=" * 70)
 
-    return 0 if (report["m16_core_status"] == "READY" and report["m17_core_status"] == "READY") else 1
+    return 0 if selected_ready else 1
 
 
 if __name__ == "__main__":
