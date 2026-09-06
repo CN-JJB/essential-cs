@@ -164,6 +164,7 @@ def produce_transactional_outbox(
     item: str,
     amount: float,
     event_id: Optional[str] = None,
+    simulate_failure_after_order: bool = False,
 ) -> Tuple[str, str]:
     """
     Demonstrates the Transactional Outbox pattern.
@@ -195,6 +196,9 @@ def produce_transactional_outbox(
             "VALUES (?, ?, ?, ?, 'PLACED', ?)",
             (order_id, customer, item, amount, now),
         )
+        if simulate_failure_after_order:
+            raise RuntimeError("SCRIPTED_FAILURE_INSIDE_OUTBOX_TRANSACTION_AFTER_ORDER")
+
         conn.execute(
             "INSERT INTO outbox_events (id, event_type, payload, dispatched, created_at) "
             "VALUES (?, 'OrderPlaced', ?, 0, ?)",
@@ -324,7 +328,7 @@ class OutboxRelay:
         try:
             cur = conn.execute(
                 "SELECT id, event_type, payload FROM outbox_events "
-                "WHERE dispatched = 0 ORDER BY created_at ASC"
+                "WHERE dispatched = 0 ORDER BY created_at ASC, id ASC"
             )
             pending_rows = cur.fetchall()
 
