@@ -3,8 +3,8 @@
 Activity L18-02: Do I Need a Distributor?
 Demonstrates:
 - Part 1: Classic Two-Phase Commit (2PC) blocking uncertainty in PREPARED state,
-          plus proof that voting NO allows safe unilateral abort.
-- Part 2: Saga 3-step scenario failure, intermediate dirty-read observation,
+          plus the contrast case that voting NO permits a safe local abort outcome.
+- Part 2: Saga 3-step scenario failure, visible already-applied intermediate Saga state,
           and configured reverse-order compensating transactions.
 - Part 3: Distributed lease expiry during client pause and fencing token rejection
           at the protected resource boundary.
@@ -49,7 +49,7 @@ def run_activity_l18_02() -> dict:
     p2 = TwoPhaseCommitParticipant("Bank_B")
     coord = TwoPhaseCommitCoordinator([p1, p2])
 
-    # Both vote YES; Coordinator decides COMMIT, but crashes before delivering to Bank_A
+    # Both vote YES; coordinator durably decides COMMIT, but the decision is scripted as unavailable to Bank_A.
     votes = {"Bank_A": TwoPhaseVote.YES, "Bank_B": TwoPhaseVote.YES}
     trace_res = coord.execute_transaction(votes, crash_before_delivery_to=["Bank_A"])
 
@@ -75,8 +75,8 @@ def run_activity_l18_02() -> dict:
     print(f"   Bank_Rejecter State:        {p_no_report['state']}")
     print(f"   Can unilaterally abort?     {p_no_report['can_unilaterally_abort']}")
     print(f"   Disposition:                {p_no_report['disposition']}")
-    print("   Takeaway:                   Not every coordinator crash blocks everyone forever;")
-    print("                               a participant that voted NO can abort safely.")
+    print("   Takeaway:                   Not every participant is PREPARED/uncertain;")
+    print("                               under this classic rule, a participant that voted NO can abort locally.")
 
     observation["part1_2pc"] = {
         "scenario_1_prepared_uncertainty": {
@@ -106,14 +106,14 @@ def run_activity_l18_02() -> dict:
     print(f" Compensations Executed:       {saga_res.compensated_steps} (in reverse order: Step 2 -> Step 1)")
     print(f" Final System State:           {saga_res.final_state}")
 
-    print("\n [INTERMEDIATE STATE ANOMALY (DIRTY READ)]")
+    print("\n [INTERMEDIATE SAGA STATE VISIBLE]")
     obs_dict = saga_res.intermediate_state_observed
     print(f"   Checkpoint:                 {obs_dict['checkpoint']}")
     print(f"   Order Status Observed:      {obs_dict['order_status']}")
     print(f"   Stock Observed:             {obs_dict['stock_observed']} (decremented from 10 to 9 before payment failed!)")
     print(f"   Explanation:                {obs_dict['explanation']}")
-    print("   Takeaway:                   Sagas lack Isolation (I in ACID). Later compensation")
-    print("                               does not erase the fact that intermediate state was observed.")
+    print("   Takeaway:                   This Saga has no single ACID isolation boundary across all steps.")
+    print("                               Later compensation does not erase the earlier observation.")
 
     observation["part2_saga"] = {
         "completed_steps": saga_res.completed_steps,
@@ -136,11 +136,11 @@ def run_activity_l18_02() -> dict:
     print(f" 1. Client 1 acquires lock lease: Token = {lease_c1.token}")
 
     # Step 2: Client 1 pauses (GC pause / network stall)
-    print(" 2. Client 1 enters simulated 15s GC pause...")
+    print(" 2. Client 1 enters a scripted pause that outlasts the lease validity window...")
 
     # Step 3: Lease expires in lock service
     lock_service.expire_lease(lease_c1)
-    print(" 3. Lock service expires Client 1's lease after TTL.")
+    print(" 3. Lock service marks Client 1's lease expired under the scenario policy.")
 
     # Step 4: Client 2 acquires lease
     lease_c2 = lock_service.acquire_lease(holder="Client_2")
@@ -173,8 +173,8 @@ def run_activity_l18_02() -> dict:
     )
 
     if fencing_passed:
-        print("\n [VERIFICATION PASS] Fencing token protected storage against split-brain stale write!")
-        print("   Storage rejected token 1 because highest_token was already 2.")
+        print("\n [SCENARIO CHECK PASS] Resource-side fencing rejected the superseded token.")
+        print("   The old token was rejected because a higher token had already reached the resource.")
         print("   Takeaway: Fencing tokens move validation to the resource boundary.")
 
     observation["part3_fencing"] = {
