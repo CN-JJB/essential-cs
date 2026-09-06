@@ -15,12 +15,13 @@ Demonstrates:
    - Majority partition {C, D, E} elects Term 2 leader with 3 votes.
    - Out-of-date candidate rejected by voter.
 4. Why Majority Overlap alone is NOT the entire Raft safety proof:
-   - Majority overlap prevents two leaders in the same term.
-   - Leader Completeness requires BOTH majority overlap AND the Log Up-To-Date rule.
+   - Majority-set overlap is only a set-intersection fact.
+   - Election Safety also relies on at-most-one-vote-per-term.
+   - Leader Completeness additionally relies on Raft's election restriction and log/commit rules.
 5. FLP boundary:
-   - Asynchronous network + at least one crash failure => no deterministic consensus can guarantee termination.
-   - Randomized election timeouts provide practical liveness under partial synchrony,
-     but DO NOT formally disprove or defeat FLP.
+   - Under the classic asynchronous model, deterministic consensus cannot guarantee
+     termination in every admissible execution with even one crash-failure possibility.
+   - Randomized election timeouts reduce repeated election collisions but do not refute FLP.
 """
 
 import json
@@ -49,7 +50,10 @@ def run_activity() -> int:
 
     print(f" -> Cluster Nodes: {part_res['cluster_nodes']}")
     print(f" -> Partition Topology: Minority={part_res['partition']['minority']}, Majority={part_res['partition']['majority']}")
-    print(f" -> Can minority partition commit new entries? {part_res['minority_can_commit_new_entries']} (Needs 3/5 votes)")
+    print(
+        f" -> Can minority partition commit new entries in this course majority-commit scenario? "
+        f"{part_res['minority_can_commit_new_entries']} (requires 3 reachable voters)"
+    )
     print(f" -> Majority candidate {part_res['majority_candidate']} votes granted: {part_res['votes_granted_to_C']}")
     print(f" -> Majority candidate elected: {part_res['majority_candidate_elected']}")
 
