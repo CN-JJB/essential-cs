@@ -480,6 +480,30 @@ class TestOwnedSubprocessWatchdog(unittest.TestCase):
         # Zero leftover process
         self.assertFalse(OwnedSubprocessWatchdog._is_pid_alive(res["child_pid"]))
 
+    def test_watchdog_timeout_reap_failure_is_cleanup_failure(self) -> None:
+        watchdog = OwnedSubprocessWatchdog(timeout_s=0.1)
+        fake_proc = mock.Mock()
+        fake_proc.pid = 424242
+        fake_proc.returncode = None
+        fake_proc.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd=["fake-child"], timeout=0.1),
+            RuntimeError("simulated post-kill reap failure"),
+        ]
+        fake_proc.kill.return_value = None
+        fake_proc.poll.return_value = None
+
+        with mock.patch("subprocess.Popen", return_value=fake_proc), mock.patch.object(
+            OwnedSubprocessWatchdog, "_is_pid_alive", return_value=True
+        ):
+            res = watchdog.run(["fake-child"])
+
+        self.assertEqual(res["status"], "CLEANUP_FAILURE")
+        self.assertTrue(res["watchdog_triggered"])
+        self.assertFalse(res["reaped"])
+        self.assertIsNotNone(res["cleanup_failure"])
+        self.assertIn("still alive", res["cleanup_failure"])
+        self.assertIn("not reaped", res["cleanup_failure"])
+
     def test_cleanup_failure_is_surfaced(self) -> None:
         watchdog = OwnedSubprocessWatchdog(timeout_s=15.0)
         pipeline_path = os.path.join(_current_dir, "s6_m20_observability_pipeline.py")
