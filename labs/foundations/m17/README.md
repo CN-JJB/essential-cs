@@ -36,6 +36,9 @@ This directory contains executable, course-owned worked-trace harnesses and acti
 ## Running the Activities
 
 ```bash
+# Check only the local capabilities required by M17 Core
+python tests/preflight_distributed_infra.py --module m17
+
 # Run each activity
 python labs/foundations/m17/activity_l17_01.py
 python labs/foundations/m17/activity_l17_02.py
