@@ -206,6 +206,14 @@ class QuorumValidator:
     write_quorum: int  # W
     read_quorum: int   # R
 
+    def __post_init__(self) -> None:
+        if self.cluster_size < 1:
+            raise ValueError("cluster_size must be positive")
+        if not (1 <= self.write_quorum <= self.cluster_size):
+            raise ValueError("write_quorum must be within the modeled cluster")
+        if not (1 <= self.read_quorum <= self.cluster_size):
+            raise ValueError("read_quorum must be within the modeled cluster")
+
     def is_quorum_valid(self) -> bool:
         """
         Pigeonhole Principle check: W + R > N.
@@ -223,6 +231,13 @@ class QuorumValidator:
         write_set: Set[str],
         read_set: Set[str],
     ) -> Dict[str, Any]:
+        if len(write_set) != self.write_quorum:
+            raise ValueError("write_set size does not match W")
+        if len(read_set) != self.read_quorum:
+            raise ValueError("read_set size does not match R")
+        if len(write_set.union(read_set)) > self.cluster_size:
+            raise ValueError("sets name more distinct replicas than N")
+
         overlap_nodes = write_set.intersection(read_set)
         return {
             "write_set": sorted(list(write_set)),
