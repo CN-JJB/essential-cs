@@ -3,14 +3,16 @@
 s6_m19_ns_cgroup_inspector.py
 Essential CS: Stage 6 Module 19 (M19) Canonical Inspector.
 
-Performs read-only observation of Linux namespaces, cgroups, and optional
-capability boundaries without mutating host system state or requiring root/Docker.
+Performs read-only observation of Linux namespaces, cgroups, process status,
+and optional capability boundaries without mutating host system state or
+requiring root/Docker.
 
 Components:
 1. OSPreflight: Confirms execution inside canonical Linux environment.
 2. NamespaceInspector: Dynamic observation of /proc/self/ns/* symlinks.
 3. CgroupInspector: Classifies cgroup arrangement (v2, v1, hybrid) and controllers.
-4. CapabilityGate: Safe capability-gated unshare probe in an owned child process.
+4. ProcessStatusInspector: Read-only observation of /proc/self/status and limits.
+5. CapabilityGate: Safe capability-gated unshare probe in an owned child process.
 """
 
 import argparse
@@ -31,16 +33,56 @@ class OSPreflight:
     """
 
     @staticmethod
-    def inspect() -> Dict[str, Any]:
+    def inspect(proc_dir: str = "/proc") -> Dict[str, Any]:
         system_name = platform.system()
         is_linux = (system_name == "Linux")
-        proc_ns_path = Path("/proc/self/ns")
-        proc_cgroup_path = Path("/proc/self/cgroup")
+        proc_path = Path(proc_dir)
+        proc_ns_path = proc_path / "self" / "ns"
+        proc_cgroup_path = proc_path / "self" / "cgroup"
+        proc_status_path = proc_path / "self" / "status"
+        proc_limits_path = proc_path / "self" / "limits"
+        mountinfo_path = proc_path / "self" / "mountinfo"
+        mounts_path = proc_path / "mounts"
 
-        proc_ns_readable = is_linux and proc_ns_path.exists() and os.access(str(proc_ns_path), os.R_OK)
-        proc_cgroup_readable = is_linux and proc_cgroup_path.exists() and os.access(str(proc_cgroup_path), os.R_OK)
+        proc_ns_readable = False
+        valid_namespaces_count = 0
+        if is_linux and proc_ns_path.exists() and os.access(str(proc_ns_path), os.R_OK):
+            try:
+                for entry in os.listdir(str(proc_ns_path)):
+                    try:
+                        target = os.readlink(str(proc_ns_path / entry))
+                        if re.match(r"^([a-z_]+):\[(\d+)\]$", target):
+                            valid_namespaces_count += 1
+                    except OSError:
+                        pass
+                proc_ns_readable = (valid_namespaces_count > 0)
+            except Exception:
+                proc_ns_readable = False
 
-        core_available = is_linux and proc_ns_readable and proc_cgroup_readable
+        proc_cgroup_readable = False
+        if is_linux and proc_cgroup_path.exists() and os.access(str(proc_cgroup_path), os.R_OK):
+            try:
+                with open(str(proc_cgroup_path), "r", encoding="utf-8") as f:
+                    lines = [l.strip() for l in f if l.strip()]
+                    proc_cgroup_readable = len(lines) > 0
+            except Exception:
+                proc_cgroup_readable = False
+
+        mounts_readable = is_linux and (
+            (mountinfo_path.exists() and os.access(str(mountinfo_path), os.R_OK))
+            or (mounts_path.exists() and os.access(str(mounts_path), os.R_OK))
+        )
+        status_readable = is_linux and proc_status_path.exists() and os.access(str(proc_status_path), os.R_OK)
+        limits_readable = is_linux and proc_limits_path.exists() and os.access(str(proc_limits_path), os.R_OK)
+
+        core_available = (
+            is_linux
+            and proc_ns_readable
+            and proc_cgroup_readable
+            and mounts_readable
+            and status_readable
+            and limits_readable
+        )
 
         return {
             "platform_system": system_name,
@@ -49,16 +91,23 @@ class OSPreflight:
             "architecture": platform.machine(),
             "is_canonical_linux": is_linux,
             "proc_ns_readable": proc_ns_readable,
+            "valid_namespaces_count": valid_namespaces_count,
             "proc_cgroup_readable": proc_cgroup_readable,
+            "mounts_readable": mounts_readable,
+            "proc_status_readable": status_readable,
+            "proc_limits_readable": limits_readable,
             "disposition": (
                 "REQUIRED CAPABILITY PASS"
                 if core_available
                 else "ENVIRONMENT-BLOCKED / NOT RUN"
             ),
             "reason": (
-                "Canonical Linux /proc inspection interfaces accessible."
+                "Canonical Linux /proc inspection interfaces accessible with valid namespace and cgroup evidence."
                 if core_available
-                else f"Non-Linux or restricted environment ({system_name}). Requires Linux with /proc access."
+                else (
+                    f"Non-Linux or restricted environment ({system_name}). Requires canonical Linux "
+                    "with readable /proc/self/ns/*, /proc/self/cgroup, /proc/self/status, and mount info."
+                )
             ),
         }
 
@@ -128,6 +177,17 @@ class NamespaceInspector:
                     "error": str(err),
                 }
 
+        valid_handles = sum(1 for d in namespaces_present.values() if d.get("inode") is not None)
+        if valid_handles == 0:
+            return {
+                "available": False,
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "namespaces_present": namespaces_present,
+                "namespace_count": len(namespaces_present),
+                "parent_comparison": {},
+                "reason": "No valid namespace symlink targets could be read and parsed from /proc/self/ns/*.",
+            }
+
         # Compare with parent process if possible
         parent_comparison: Dict[str, Any] = {}
         try:
@@ -161,6 +221,7 @@ class NamespaceInspector:
             "disposition": "REQUIRED CAPABILITY PASS",
             "namespaces_present": namespaces_present,
             "namespace_count": len(namespaces_present),
+            "valid_handles_count": valid_handles,
             "parent_comparison": parent_comparison,
             "inference_limit": (
                 "Namespace IDs (inodes) identify kernel isolation boundaries for this process. "
@@ -173,13 +234,14 @@ class NamespaceInspector:
 class CgroupInspector:
     """
     Inspects cgroup hierarchy and available controllers without modifying any state.
-    Classifies arrangement: cgroup_v2, cgroup_v1, hybrid, or unavailable.
+    Classifies arrangement: cgroup_v2, cgroup_v1, hybrid, or reports unavailable.
     Zero writes to /sys/fs/cgroup.
     """
 
     @classmethod
     def inspect(cls, proc_dir: str = "/proc", sys_dir: str = "/sys") -> Dict[str, Any]:
         cgroup_file = Path(proc_dir) / "self" / "cgroup"
+        mountinfo_file = Path(proc_dir) / "self" / "mountinfo"
         mounts_file = Path(proc_dir) / "mounts"
         sys_cgroup_dir = Path(sys_dir) / "fs" / "cgroup"
 
@@ -207,26 +269,36 @@ class CgroupInspector:
                 "reason": f"Failed reading {cgroup_file}: {e}",
             }
 
+        if not proc_lines:
+            return {
+                "available": False,
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "arrangement": "unavailable",
+                "proc_self_cgroup_lines": [],
+                "reason": f"{cgroup_file} is empty.",
+            }
+
         # Inspect mounts for cgroup/cgroup2
         has_v1_mount = False
         has_v2_mount = False
         v1_controllers_mounted: List[str] = []
 
-        if mounts_file.exists() and os.access(str(mounts_file), os.R_OK):
+        active_mount_file = mountinfo_file if (mountinfo_file.exists() and os.access(str(mountinfo_file), os.R_OK)) else mounts_file
+        if active_mount_file.exists() and os.access(str(active_mount_file), os.R_OK):
             try:
-                with open(str(mounts_file), "r", encoding="utf-8") as f:
+                with open(str(active_mount_file), "r", encoding="utf-8") as f:
                     for line in f:
-                        parts = line.strip().split()
-                        if len(parts) >= 3:
-                            fstype = parts[2]
-                            mountpoint = parts[1]
-                            if fstype == "cgroup2":
-                                has_v2_mount = True
-                            elif fstype == "cgroup":
-                                has_v1_mount = True
-                                base_name = os.path.basename(mountpoint)
-                                if base_name and base_name not in v1_controllers_mounted:
-                                    v1_controllers_mounted.append(base_name)
+                        line_str = line.strip()
+                        if "cgroup2" in line_str:
+                            has_v2_mount = True
+                        if "cgroup" in line_str and "cgroup2" not in line_str:
+                            has_v1_mount = True
+                            parts = line_str.split()
+                            for p in parts:
+                                if "cgroup/" in p:
+                                    base_name = os.path.basename(p)
+                                    if base_name and base_name not in v1_controllers_mounted:
+                                        v1_controllers_mounted.append(base_name)
             except Exception:
                 pass
 
@@ -243,6 +315,17 @@ class CgroupInspector:
             arrangement = "hybrid"
         else:
             arrangement = "unknown"
+
+        if arrangement == "unknown":
+            return {
+                "available": False,
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "arrangement": "unknown",
+                "proc_self_cgroup_lines": proc_lines,
+                "cgroup_v2_controllers": [],
+                "cgroup_v1_controllers": [],
+                "reason": "Cgroup arrangement could not be classified from /proc/self/cgroup and mount evidence.",
+            }
 
         # Check controllers available under cgroup v2
         v2_controllers: List[str] = []
@@ -265,6 +348,70 @@ class CgroupInspector:
             "inference_limit": (
                 "Cgroups meter, allocate, and constrain host physical resources (CPU, memory, IO, PIDs). "
                 "Cgroups do NOT isolate namespace visibility or create an independent operating system kernel."
+            ),
+        }
+
+
+class ProcessStatusInspector:
+    """
+    Reads process credentials, capabilities, and resource limits from /proc/self/status
+    and /proc/self/limits without mutation.
+    """
+
+    @classmethod
+    def inspect(cls, proc_dir: str = "/proc") -> Dict[str, Any]:
+        status_file = Path(proc_dir) / "self" / "status"
+        limits_file = Path(proc_dir) / "self" / "limits"
+
+        if not status_file.exists() or not os.access(str(status_file), os.R_OK):
+            return {
+                "available": False,
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "status_fields": {},
+                "limits_fields": {},
+                "reason": f"{status_file} unreadable or absent.",
+            }
+
+        status_fields: Dict[str, str] = {}
+        try:
+            with open(str(status_file), "r", encoding="utf-8") as f:
+                for line in f:
+                    if ":" in line:
+                        k, v = line.split(":", 1)
+                        key = k.strip()
+                        if key in ("Uid", "Gid", "Groups", "NSpid", "CapInh", "CapPrm", "CapEff", "CapBnd", "CapAmb", "Seccomp"):
+                            status_fields[key] = v.strip()
+        except Exception as e:
+            return {
+                "available": False,
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "status_fields": {},
+                "limits_fields": {},
+                "reason": f"Failed reading {status_file}: {e}",
+            }
+
+        limits_fields: Dict[str, str] = {}
+        if limits_file.exists() and os.access(str(limits_file), os.R_OK):
+            try:
+                with open(str(limits_file), "r", encoding="utf-8") as f:
+                    for line in f:
+                        for target_limit in ("Max open files", "Max processes", "Max cpu time"):
+                            if line.startswith(target_limit):
+                                limits_fields[target_limit] = line.strip()
+            except Exception:
+                pass
+
+        available = ("Uid" in status_fields and len(limits_fields) > 0)
+        return {
+            "available": available,
+            "disposition": "REQUIRED CAPABILITY PASS" if available else "ENVIRONMENT-BLOCKED / NOT RUN",
+            "status_fields": status_fields,
+            "limits_fields": limits_fields,
+            "read_only_verified": True,
+            "reason": (
+                "Process status and limits read successfully."
+                if available
+                else "Process status or limits fields could not be fully parsed."
             ),
         }
 
@@ -341,7 +488,6 @@ class CapabilityGate:
             )
             stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout_sec)
             code = proc.returncode
-            reaped = True
         except subprocess.TimeoutExpired:
             if proc:
                 proc.kill()
@@ -385,12 +531,14 @@ def inspect_system(run_optional_probe: bool = False) -> Dict[str, Any]:
     preflight = OSPreflight.inspect()
     ns_info = NamespaceInspector.inspect()
     cgroup_info = CgroupInspector.inspect()
+    status_info = ProcessStatusInspector.inspect()
     signals = CapabilityGate.inspect_signals()
 
     report: Dict[str, Any] = {
         "os_preflight": preflight,
         "namespace_inspection": ns_info,
         "cgroup_inspection": cgroup_info,
+        "process_status_inspection": status_info,
         "capability_signals": signals,
     }
 
@@ -454,6 +602,18 @@ def main() -> int:
         print(f"   Self Cgroup Path:      {cg['proc_self_cgroup_lines'][0] if cg['proc_self_cgroup_lines'] else 'none'}")
     else:
         print(f"   Reason:                {cg.get('reason')}")
+    print("-" * 72)
+
+    ps = report["process_status_inspection"]
+    print(f" [Process Status & Limits]:{ps['disposition']}")
+    if ps["available"]:
+        uids = ps['status_fields'].get('Uid', 'N/A')
+        gids = ps['status_fields'].get('Gid', 'N/A')
+        print(f"   Uid / Gid:             {uids} / {gids}")
+        for lk, lv in ps['limits_fields'].items():
+            print(f"   {lk}:     {lv}")
+    else:
+        print(f"   Reason:                {ps.get('reason')}")
     print("-" * 72)
 
     un = report["optional_unshare_probe"]

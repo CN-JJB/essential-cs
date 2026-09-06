@@ -351,8 +351,15 @@ def probe_m18_coordination_capabilities() -> Dict[str, Any]:
 def probe_m19_linux_capabilities() -> Dict[str, Any]:
     """
     Probe capabilities required by M19 Core:
-    read-only Linux namespace and cgroup observation in /proc and /sys/fs/cgroup.
-    Non-Linux hosts report ENVIRONMENT-BLOCKED / NOT RUN truthfully without mutation.
+    read-only Linux namespace, cgroup, and process status/limits observation.
+    Requires:
+    - Canonical Linux environment (platform.system() == 'Linux')
+    - /proc/self/ns exists and contains at least one valid namespace symlink handle
+    - /proc/self/cgroup is readable and non-empty
+    - mount info in /proc/self/mountinfo or /proc/mounts is readable so cgroup arrangement is classifiable
+    - process status (/proc/self/status) and limits (/proc/self/limits) are readable without mutation
+    Non-Linux hosts or environments missing canonical Linux interfaces report
+    ENVIRONMENT-BLOCKED / NOT RUN truthfully without mutation.
     Docker/Podman and unshare are NOT required for Core readiness.
     """
     is_linux = platform.system() == "Linux"
@@ -361,24 +368,105 @@ def probe_m19_linux_capabilities() -> Dict[str, Any]:
             "available": False,
             "is_canonical_linux": False,
             "proc_ns_readable": False,
+            "valid_namespaces_count": 0,
             "proc_cgroup_readable": False,
+            "cgroup_arrangement_classifiable": False,
+            "proc_status_readable": False,
+            "proc_limits_readable": False,
             "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
             "reason": (
                 f"Non-Linux host ({platform.system()} {platform.release()}). "
-                "M19 Core baseline requires canonical Linux environment with /proc/self/ns "
-                "and /proc/self/cgroup access (e.g. native Linux, WSL2, or Linux VM)."
+                "M19 Core baseline requires canonical Linux environment with /proc/self/ns, "
+                "/proc/self/cgroup, /proc/self/status, and /proc/self/limits access."
             ),
         }
 
-    proc_ns_readable = os.path.exists("/proc/self/ns") and os.access("/proc/self/ns", os.R_OK)
-    proc_cgroup_readable = os.path.exists("/proc/self/cgroup") and os.access("/proc/self/cgroup", os.R_OK)
+    # 1. Namespace handle discovery
+    valid_namespaces_count = 0
+    proc_ns_path = "/proc/self/ns"
+    if os.path.isdir(proc_ns_path) and os.access(proc_ns_path, os.R_OK):
+        try:
+            for entry in os.listdir(proc_ns_path):
+                try:
+                    target = os.readlink(os.path.join(proc_ns_path, entry))
+                    if re.match(r"^([a-z_]+):\[(\d+)\]$", target):
+                        valid_namespaces_count += 1
+                except OSError:
+                    pass
+        except Exception:
+            pass
+    proc_ns_readable = (valid_namespaces_count > 0)
 
-    available = proc_ns_readable and proc_cgroup_readable
+    # 2. Cgroup membership lines
+    proc_cgroup_lines: List[str] = []
+    proc_cgroup_path = "/proc/self/cgroup"
+    if os.path.exists(proc_cgroup_path) and os.access(proc_cgroup_path, os.R_OK):
+        try:
+            with open(proc_cgroup_path, "r", encoding="utf-8") as f:
+                proc_cgroup_lines = [l.strip() for l in f if l.strip()]
+        except Exception:
+            pass
+    proc_cgroup_readable = len(proc_cgroup_lines) > 0
+
+    # 3. Mounts and cgroup classification
+    has_v1_mount = False
+    has_v2_mount = False
+    mount_file = "/proc/self/mountinfo" if (os.path.exists("/proc/self/mountinfo") and os.access("/proc/self/mountinfo", os.R_OK)) else "/proc/mounts"
+    if os.path.exists(mount_file) and os.access(mount_file, os.R_OK):
+        try:
+            with open(mount_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if "cgroup2" in line:
+                        has_v2_mount = True
+                    if "cgroup" in line and "cgroup2" not in line:
+                        has_v1_mount = True
+        except Exception:
+            pass
+
+    has_v2_line = any(l.startswith("0::") for l in proc_cgroup_lines)
+    has_v1_lines = any(not l.startswith("0::") and ":" in l for l in proc_cgroup_lines)
+
+    cgroup_arrangement_classifiable = (
+        (has_v2_line or has_v2_mount or has_v1_lines or has_v1_mount)
+        and proc_cgroup_readable
+    )
+
+    # 4. Status and limits
+    proc_status_readable = False
+    if os.path.exists("/proc/self/status") and os.access("/proc/self/status", os.R_OK):
+        try:
+            with open("/proc/self/status", "r", encoding="utf-8") as f:
+                content = f.read()
+                proc_status_readable = ("Uid:" in content and "Gid:" in content)
+        except Exception:
+            pass
+
+    proc_limits_readable = False
+    if os.path.exists("/proc/self/limits") and os.access("/proc/self/limits", os.R_OK):
+        try:
+            with open("/proc/self/limits", "r", encoding="utf-8") as f:
+                content = f.read()
+                proc_limits_readable = ("Max open files" in content)
+        except Exception:
+            pass
+
+    available = (
+        proc_ns_readable
+        and proc_cgroup_readable
+        and cgroup_arrangement_classifiable
+        and proc_status_readable
+        and proc_limits_readable
+    )
+
     return {
         "available": available,
         "is_canonical_linux": True,
         "proc_ns_readable": proc_ns_readable,
+        "valid_namespaces_count": valid_namespaces_count,
         "proc_cgroup_readable": proc_cgroup_readable,
+        "cgroup_arrangement_classifiable": cgroup_arrangement_classifiable,
+        "proc_status_readable": proc_status_readable,
+        "proc_limits_readable": proc_limits_readable,
         "disposition": (
             "REQUIRED CAPABILITY PASS"
             if available
@@ -387,7 +475,7 @@ def probe_m19_linux_capabilities() -> Dict[str, Any]:
         "reason": (
             "Canonical Linux read-only inspection baseline accessible."
             if available
-            else "Linux host detected, but /proc/self/ns or /proc/self/cgroup is not readable."
+            else "Linux host detected, but required /proc interfaces (ns, cgroup, status, limits) are incomplete or unreadable."
         ),
     }
 
@@ -549,7 +637,11 @@ class TestPreflightDistributedInfra(unittest.TestCase):
             self.assertEqual(report["m19_core_status"], "READY")
             self.assertTrue(m19_info["is_canonical_linux"])
             self.assertTrue(m19_info["proc_ns_readable"])
+            self.assertGreater(m19_info["valid_namespaces_count"], 0)
             self.assertTrue(m19_info["proc_cgroup_readable"])
+            self.assertTrue(m19_info["cgroup_arrangement_classifiable"])
+            self.assertTrue(m19_info["proc_status_readable"])
+            self.assertTrue(m19_info["proc_limits_readable"])
         else:
             self.assertEqual(report["m19_core_status"], "BLOCKED")
 

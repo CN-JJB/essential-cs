@@ -4,171 +4,162 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 
 ---
 
-## A — Environment Capabilities & Execution Ref
+## A — Environment Capabilities & Preflight
 
-- Execution commit / ref: `<actual HEAD commit SHA>`
-- Host Operating System: `<actual OS and architecture>`
-- Canonical Linux Environment: `<True / False>`
-- Python Implementation & Version: `<actual Python version>`
-- Local Writable Scratch Capability: `<PASS / FAIL / BLOCKED>`
-- Preflight Distributed Infra M19 Status: `<READY / ENVIRONMENT-BLOCKED / NOT RUN>`
+- Execution commit / ref: `[Record actual HEAD commit SHA]`
+- Host Operating System / kernel / platform: `[Record actual OS and architecture]`
+- Python Implementation & Version: `[Record actual Python version]`
+- Canonical Linux Environment Status: `[Record observed Linux presence and /proc access]`
+- Required Read-Only Capability Disposition: `[Record REQUIRED CAPABILITY PASS or ENVIRONMENT-BLOCKED / NOT RUN]`
+- Optional `unshare` Extension Disposition: `[Record CAPABILITY PASS, ENVIRONMENT-BLOCKED, or NOT RUN]`
 - OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED`
 
 ---
 
 ## B — Linux Namespaces: View Partitioning (EC-CON-013 Isolation)
 
-- `/proc/self/ns` Read-Only Inspection Status: `<PASS / ENVIRONMENT-BLOCKED / NOT RUN>`
+- `/proc/self/ns` Read-Only Inspection Status: `[Record observed inspection disposition]`
 - Detected Active Namespace Handles:
-  - `cgroup`: `<actual inode or N/A>`
-  - `ipc`: `<actual inode or N/A>`
-  - `mnt`: `<actual inode or N/A>`
-  - `net`: `<actual inode or N/A>`
-  - `pid`: `<actual inode or N/A>`
-  - `pid_for_children`: `<actual inode or N/A>`
-  - `time`: `<actual inode or N/A>`
-  - `user`: `<actual inode or N/A>`
-- Child Process Inode Comparison:
-  - Did child in same namespace share identical inode numbers? `<YES / NO / N/A>`
-  - Mechanism Reflection:
-    `<Learner explains why matching inode numbers prove shared namespace view, and what namespace isolation does NOT prevent>`
+  `[Record table or list of namespace types and actual symlink targets / inodes observed from /proc/self/ns/*]`
+- Parent Process Namespace Comparison (if readable):
+  `[Record comparison outcome between self and parent process namespace IDs]`
+- Access / Block Reason (if restricted or non-Linux):
+  `[Record reason if namespace inspection was blocked]`
+- Mechanism Inference Limit:
+  `[Learner explains what namespace inode matching proves about view partitioning, and what security properties namespaces do NOT provide]`
 
 ---
 
 ## C — Linux Cgroups: Resource Quotas & Accounting
 
-- Cgroup Arrangement Detected: `<cgroup_v2 / cgroup_v1 / hybrid_unknown / ENVIRONMENT-BLOCKED>`
-- Unified Hierarchy Root Present: `<True / False / N/A>`
-- Active / Available Controllers Observed:
-  `<Learner lists actual controllers present in /sys/fs/cgroup/cgroup.controllers or N/A>`
-- Current Process Cgroup Membership:
-  `<Learner records entry from /proc/self/cgroup>`
+- `/proc/self/cgroup` Evidence:
+  `[Record lines read from /proc/self/cgroup]`
+- Detected Hierarchy Arrangement:
+  `[Record detected cgroup arrangement: cgroup_v2, cgroup_v1, hybrid, or unreadable]`
+- Controllers Actually Observed:
+  `[Record controllers present in /sys/fs/cgroup/cgroup.controllers or mounted v1 controllers]`
+- Confirmation of Zero Host Mutation:
+  `[Learner confirms zero writes were performed to /sys/fs/cgroup]`
 - Quota vs. View Distinction:
-  `<Learner contrasts Cgroups resource limits (memory.max, cpu.max, pids.max) with Namespace view partitioning>`
+  `[Learner contrasts Cgroups resource limits (e.g. memory.max, cpu.max) with Namespace view partitioning]`
 
 ---
 
-## D — Capability-Gated Namespace Creation Extension
+## D — Process vs. Container vs. Virtual Machine Boundary
 
-- Probe Method Attempted: `unshare(CLONE_NEWUSER | CLONE_NEWPID)`
-- Probe Execution Disposition: `<PASS / ENVIRONMENT-BLOCKED / NOT RUN>`
-- Child PID Observed Inside New Namespace: `<1 / N/A>`
-- Actual Error / Limitation (if blocked): `<PermissionError / EPERM / Unsupported / N/A>`
-- Privilege Invariant:
-  `<Learner explains why missing privilege or non-Linux host must remain ENVIRONMENT-BLOCKED rather than converted to PASS>`
-
----
-
-## E — Process vs. Container vs. Virtual Machine Boundary
-
-- Boundary Matrix Evaluation:
-  - Kernel Sharing: `<Learner states which abstractions share the host kernel>`
-  - Hardware Virtualization / Hypervisor: `<Learner identifies where hypervisor isolation exists>`
-  - Isolation Boundary: `<Learner articulates why containers are host processes with view/resource limits, not VMs>`
-  - Security Blast Radius:
-    `<Learner explains why a container root process without user namespaces shares the host kernel attack surface>`
+- Kernel Boundary Analysis:
+  `[Learner articulates why canonical Linux containers share the host kernel while VMs run independent guest kernels]`
+- Hardware Emulation & Virtualization:
+  `[Learner identifies the role of hypervisors and hardware-assisted virtualization vs. kernel namespaces]`
+- Isolation & Security Boundary (EC-CON-013 Isolation):
+  `[Learner explains why container root without user namespaces shares the host kernel attack surface]`
+- Security Claims Not Established by Read-Only Core:
+  `[Learner lists why namespace/cgroup inspection alone does not prove a complete container security posture]`
 
 ---
 
-## F — Availability 'Nines' & Downtime Mathematics
+## E — OCI Image / Runtime / Storage Boundary
 
-- Basis: Non-leap calendar year = 525,600 minutes
-- Downtime Derivations:
-  - 99.0% (2 nines): `<actual calculated minutes>` (equivalent days)
-  - 99.9% (3 nines): `<actual calculated minutes>` (equivalent hours)
-  - 99.95%: `<actual calculated minutes>` (equivalent hours)
-  - 99.99% (4 nines): `<actual calculated minutes>` (equivalent minutes)
-  - 99.999% (5 nines): `<actual calculated minutes>` (equivalent minutes)
-- Mathematical Invariant:
-  `<Learner explains why downtime decreases by an order of magnitude with each added 'nine'>`
-
----
-
-## G — Parallel Redundancy Math vs. Shared Dependencies
-
-- Single Instance Modeled Availability: `<e.g. 99.0%>`
-- Dual Independent Parallel Instance Modeled Availability:
-  - Formula: $A = 1 - (1 - a_1)(1 - a_2)$
-  - Result: `<e.g. 99.99%>`
-- Shared Upstream Dependency Evaluated (e.g. Load Balancer / DNS):
-  - Upstream Availability: `<e.g. 99.9%>`
-  - System Availability Ceiling: `<Learner derives why system availability cannot exceed 99.9%>`
-- Common-Mode Failure Analysis:
-  `<Learner lists at least 3 common-mode failures (e.g. poison config, rack PDU, shared DB) that invalidate independent failure assumptions>`
+- OCI Image Specification Source & Currentness:
+  `[Record official OCI Image Spec version, release date, and URL checked]`
+- OCI Runtime Specification Source & Currentness:
+  `[Record official OCI Runtime Spec version, release date, and URL checked]`
+- Image Artifact vs. Running Container Distinction:
+  `[Learner explains the difference between an OCI image manifest/layer blob and a running process bundle]`
+- Storage Driver Mechanism Boundary:
+  `[Learner explains why OverlayFS is one Linux runtime storage driver, not an invariant requirement of the OCI specification]`
 
 ---
 
-## H — Fiber Optic Propagation Floors (Speed of Light in Silica)
+## F — Tag vs. Content Digest vs. Cryptographic Trust Boundaries (EC-CON-017 Trust Boundary)
 
-- Physical Constants:
-  - Vacuum speed of light ($c$): $\approx 299,792\,\text{km/s}$
-  - Single-mode silica fiber refractive index ($n$): $\approx 1.4682$
-  - Fiber speed of light ($v$): $\approx 204,190\,\text{km/s} \approx 204.2\,\text{km/ms}$
-  - Propagation delay lower bound: $\approx 0.004897\,\text{ms/km} \approx 5\,\mu\text{s/km}$
-- Evaluated Topology RTT Lower Bounds:
-  - Metro Adjacent AZs (30 km): `<actual calculated theoretical RTT ms>`
-  - Cross-Zone Edge (100 km): `<actual calculated theoretical RTT ms>`
-  - Trans-Continental (3,800 km): `<actual calculated theoretical RTT ms>`
-  - Trans-Atlantic (5,500 km): `<actual calculated theoretical RTT ms>`
-  - Trans-Pacific (8,700 km): `<actual calculated theoretical RTT ms>`
-- Distributed Consistency Consequence:
-  `<Learner explains why Multi-Region synchronous consensus (e.g. cross-continent Raft) cannot beat the fiber RTT floor>`
+- Tag / Reference Before & After Mapping in Course Scenario:
+  `[Record tag name, target digest at T0, and target digest at T1 from simulation]`
+- Content Digest Computation:
+  `[Record calculated content digest and hash algorithm used]`
+- Four-Part Trust Boundary Analysis:
+  `[Learner articulates why: digest identity/integrity evidence != signature verification != provenance/attestation != trust policy decision]`
+- Verification Prerequisite:
+  `[Learner explains why content digest verification requires comparing against an expected digest received via a trusted channel]`
 
 ---
 
-## I — Cloud Failure Domains & Architectural Trade-off
+## G — Cloud Provider Source Audit (EC-CON-010 Failure)
 
-- Topology Selected for Scenario: `<Single-AZ / Multi-AZ / Multi-Region>`
-- Justification (EC-CON-006 Trade-off):
-  - Blast Radius Handled: `<Rack / Datacenter / Regional>`
-  - Latency Penalty Incurred: `<ms penalty>`
-  - Data Transfer / Egress Cost Trade-off: `<Learner notes financial impact of cross-AZ / cross-region traffic>`
-- Cloud SLA vs. MTBF Distinction:
-  `<Learner explains why a cloud provider SLA is a commercial billing credit policy, not a guarantee that an individual VM will not reboot>`
-
----
-
-## J — Rolling Deployment Version Skew (The Broken Path)
-
-- Simulation Run: `activity_l19_03.py` (Part 1)
-- Breaking Schema Action: `Immediate column rename (phone -> contact_phone)`
-- Total Requests Evaluated during Skew Window: `<count>`
-- Successful Requests (HTTP 200): `<count>`
-- Failed Requests (HTTP 500): `<count>`
-- Observed Error Spike: `<percentage>`
-- Crash Diagnosis:
-  `<Learner quotes the exact SQL error and explains why surviving v1 instances failed>`
+- Named Cloud Provider Audited:
+  `[Record provider name, e.g. AWS or Google Cloud]`
+- Official Current Region / Zone Documentation Source:
+  `[Record document title, official URL, and audit date]`
+- Provider-Defined Failure Domain Claim:
+  `[Record how the audited provider explicitly defines Region and Zone / Availability Zone]`
+- Non-Universal Scope & Shared Dependencies:
+  `[Learner explains why provider region/zone definitions are provider-specific logical failure domains, not universal physical hierarchies]`
 
 ---
 
-## K — Expand-Contract (Parallel Run) Safe Migration (The Protected Path)
+## H — Availability Mathematics & Physical Latency Floors (EC-CON-006 Trade-off)
 
-- Simulation Run: `activity_l19_03.py` (Part 2)
+- Scenario Mathematical Inputs:
+  `[Record component availability values used in the evaluation scenario]`
+- Parallel Redundancy Derivation:
+  - Formula Applied: `[Record formula, e.g. A = 1 - (1-a1)(1-a2)]`
+  - Stated Scenario Assumptions: `[Record independence and substitutable capacity assumptions]`
+  - Modeled System Availability Result: `[Record calculated availability percentage and annual downtime minutes]`
+- Serial Dependency Ceiling:
+  `[Learner explains why a shared serial component constrains overall system availability: A_system <= min(A_i)]`
+- Optical Fiber Physical Propagation Floor:
+  - Propagation Model Parameters: `[Record modeled propagation speed and delay per km]`
+  - Evaluated Path Lower Bounds: `[Record calculated one-way and RTT propagation floors for modeled scenario distances]`
+- Provider SLA Boundary:
+  `[Learner explains why an SLA is a contractual financial credit remedy, not an independent physical failure probability]`
+
+---
+
+## I — Deployment Strategies & Version Skew (The Broken Path)
+
+- Rolling Deployment Simulation Execution:
+  `[Record execution of activity_l19_03.py breaking path]`
+- Breaking Schema Action:
+  `[Record the uncoordinated schema modification performed]`
+- Observed Version-Skew Error Spike:
+  - Total Requests in Skew Window: `[Record count]`
+  - Failed Requests (HTTP 500): `[Record count]`
+  - Observed Failure Rate %: `[Record percentage]`
+- Root Cause Diagnosis:
+  `[Learner quotes the exact SQL error and explains why surviving v1 instances crashed on live traffic]`
+
+---
+
+## J — Expand-Contract Safe Migration (The Protected Path)
+
+- Simulation Lifecycle Execution:
+  `[Record execution of activity_l19_03.py protected path]`
 - Phase 1 (Expand) Actions:
-  `<Learner records additive nullable column and dual-write behavior>`
-- Phase 2 (Transition / Rolling Update) Actions:
-  `<Learner records rolling deployment of v2 instances with fallback-read and dual-write>`
+  `[Record additive schema change and initial backfill]`
+- Phase 2 (Transition / Coexistence) Verification:
+  - Cross-Version Compatibility: `[Record observed result of V2 reading V1 write]`
+  - Dual-Write Verification: `[Record observed result of V1 reading V2 dual-write]`
+  - Coexistence Requests Evaluated: `[Record count]`
 - Phase 3 (Contract) Actions:
-  `<Learner records removal of legacy column after 100% v2 adoption>`
-- Transition Window Request Evaluation:
-  - Total Transition Requests: `<count>`
-  - Total Failures: `<0>`
-  - Transition Error Rate: `<0.0%>`
-- Invariant Judgment:
-  `<Learner explains what Expand-Contract proves for this deterministic scenario, and why it does not guarantee universal zero-downtime under unhandled concurrent mutations>`
+  `[Record removal of deprecated column after 100% adoption of V2Final]`
+- Phase 4 (Post-Contract) Verification:
+  - Requests Evaluated on Contracted Schema: `[Record count of reads and writes evaluated post-contract]`
+- Overall Invariant & Scope:
+  - Total Requests Evaluated Across All Phases: `[Record total request count]`
+  - Observed Error Rate %: `[Record observed percentage]`
+  - Scenario-Specific Inference Scope: `[Learner explains why 0 errors in this deterministic test is not a universal zero-downtime guarantee]`
 
 ---
 
-## L — OCI Content Digest vs. Mutable Tag & Cryptographic Trust
+## K — Cleanup, Competencies, Concepts & Visuals
 
-- Tag Mutation Observed:
-  - Tag Name: `<e.g. payment-service:v1.0>`
-  - Digest at T0: `<sha256:...>`
-  - Digest at T1: `<sha256:...>`
-  - Mutation Demonstrated: `<YES / NO>`
-- Immutability Boundary:
-  `<Learner explains why tags are mutable pointers while digests bind exact manifest bits>`
-- Trust Boundary Analysis (EC-CON-017 Trust Boundary):
-  - What Digest Guarantees: `<Integrity / Tamper Detection>`
-  - What Digest Does NOT Guarantee: `<Authorship / Provenance / Pipeline Integrity / Malicious Intent>`
-  - Required Trust Infrastructure: `<Cryptographic Signatures (Cosign/Sigstore) + SLSA Provenance Attestations>`
+- Idempotent Cleanup Verification:
+  `[Record outcome of running reset.py twice consecutively]`
+- Primary Competencies Exercised:
+  `[Learner notes specific activities exercising Explain, Judge, Trace, Estimate, Diagnose]`
+- Concepts Formally Revisited:
+  `[Learner notes revisits to EC-CON-013, EC-CON-018, EC-CON-002, EC-CON-006, EC-CON-010, EC-CON-005, EC-CON-017]`
+- Visual Artifact Review:
+  `[Learner confirms review of FIG-M19-01, FIG-M19-02, and FIG-M19-03]`
+- Authoritative Source Recheck:
+  `[Record dates and status for Linux, OCI Image Spec v1.1.1, OCI Runtime Spec v1.3.0, and cloud provider documentation]`

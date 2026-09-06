@@ -32,6 +32,7 @@ def run_activity(save_scratch: bool = True) -> int:
     pre = report["os_preflight"]
     ns = report["namespace_inspection"]
     cg = report["cgroup_inspection"]
+    ps = report["process_status_inspection"]
     sig = report["capability_signals"]
 
     # 2. Print Step 1: Host & Preflight
@@ -74,8 +75,19 @@ def run_activity(save_scratch: bool = True) -> int:
         print(f" Status: {cg['disposition']}")
         print(f" Reason: {cg.get('reason')}")
 
-    # 5. Step 4: Mental Model Synthesis
-    print("\n[STEP 4: Architectural Boundaries: Process vs. Container vs. VM]")
+    # 5. Print Step 4: Process Status and Limits
+    print("\n[STEP 4: Process Credentials & Limits (Read-Only Status)]")
+    if ps["available"]:
+        print(f" Status:                  {ps['disposition']}")
+        print(f" Uid / Gid:               {ps['status_fields'].get('Uid', 'N/A')} / {ps['status_fields'].get('Gid', 'N/A')}")
+        for lk, lv in ps["limits_fields"].items():
+            print(f" {lk:<24}: {lv}")
+    else:
+        print(f" Status:                  {ps['disposition']}")
+        print(f" Reason:                  {ps.get('reason')}")
+
+    # 6. Step 5: Mental Model Synthesis
+    print("\n[STEP 5: Architectural Boundaries: Process vs. Container vs. VM]")
     print(" " + "-" * 74)
     print(" | Dimension         | Host Process    | Container (Linux) | Virtual Machine (VM) |")
     print(" | :---------------- | :-------------- | :---------------- | :------------------- |")
@@ -88,12 +100,26 @@ def run_activity(save_scratch: bool = True) -> int:
     print(" Key Takeaway: 'Containers are just processes.' They are not lightweight VMs.")
     print(" Container security boundaries are bounded by the shared Linux kernel attack surface.")
 
-    # 6. Save scratch report if writable
+    # 7. Overall Mechanism Status
+    overall_status = (
+        "REQUIRED CAPABILITY PASS"
+        if (pre["is_canonical_linux"] and ns["available"] and cg["available"] and ps["available"])
+        else "ENVIRONMENT-BLOCKED / NOT RUN"
+    )
+    print("-" * 76)
+    print(f" Overall L19-01 Mechanism Status: {overall_status}")
+    if overall_status != "REQUIRED CAPABILITY PASS":
+        print(" Note: Host lacks canonical Linux interfaces. On non-Linux hosts (e.g. Windows),")
+        print(" mechanism observation must be reported as ENVIRONMENT-BLOCKED / NOT RUN truthfully.")
+    print("-" * 76)
+
+    # 8. Save scratch report if writable
     if save_scratch:
         scratch_dir = CURRENT_DIR / ".scratch"
         try:
             scratch_dir.mkdir(parents=True, exist_ok=True)
             out_file = scratch_dir / "l19_01_observation.json"
+            report["overall_status"] = overall_status
             with open(out_file, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
             print(f"\n[Artifact Saved]: {out_file.relative_to(CURRENT_DIR)}")

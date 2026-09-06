@@ -8,7 +8,7 @@ Removes files created under labs/foundations/m19/.scratch/ including:
 - Local Python cache: __pycache__/
 
 Source files and code are never touched.
-Fails closed if any deletion encounters an error.
+Fails closed (raises RuntimeError) if any deletion encounters an error.
 Idempotent: passes when run multiple times in sequence.
 """
 
@@ -16,18 +16,26 @@ import glob
 import os
 import shutil
 import sys
+from typing import Optional
 
 M19_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRATCH_DIR = os.path.join(M19_DIR, ".scratch")
 PYCACHE_DIR = os.path.join(M19_DIR, "__pycache__")
 
 
-def reset_m19_environment(verbose: bool = True) -> int:
+def reset_m19_environment(
+    verbose: bool = True,
+    scratch_dir: Optional[str] = None,
+    pycache_dir: Optional[str] = None,
+) -> int:
+    target_scratch = scratch_dir if scratch_dir is not None else SCRATCH_DIR
+    target_pycache = pycache_dir if pycache_dir is not None else PYCACHE_DIR
+
     errors = []
     removed_count = 0
 
     # 1. Clean scratch directory files and directory
-    if os.path.isdir(SCRATCH_DIR):
+    if os.path.isdir(target_scratch):
         patterns = (
             "*.db",
             "*.db-journal",
@@ -38,7 +46,7 @@ def reset_m19_environment(verbose: bool = True) -> int:
             "*.log",
         )
         for pat in patterns:
-            for file_path in glob.glob(os.path.join(SCRATCH_DIR, pat)):
+            for file_path in glob.glob(os.path.join(target_scratch, pat)):
                 try:
                     if os.path.isfile(file_path):
                         os.remove(file_path)
@@ -50,20 +58,20 @@ def reset_m19_environment(verbose: bool = True) -> int:
 
         # Also remove scratch directory
         try:
-            shutil.rmtree(SCRATCH_DIR)
+            shutil.rmtree(target_scratch)
             if verbose:
-                print(f"[RESET] Removed directory: {SCRATCH_DIR}")
+                print(f"[RESET] Removed directory: {target_scratch}")
         except OSError as exc:
-            errors.append(f"{SCRATCH_DIR}: {exc}")
+            errors.append(f"{target_scratch}: {exc}")
 
     # 2. Clean __pycache__ directory
-    if os.path.isdir(PYCACHE_DIR):
+    if os.path.isdir(target_pycache):
         try:
-            shutil.rmtree(PYCACHE_DIR)
+            shutil.rmtree(target_pycache)
             if verbose:
-                print(f"[RESET] Removed directory: {PYCACHE_DIR}")
+                print(f"[RESET] Removed directory: {target_pycache}")
         except OSError as exc:
-            errors.append(f"{PYCACHE_DIR}: {exc}")
+            errors.append(f"{target_pycache}: {exc}")
 
     if errors:
         message = "M19 cleanup incomplete: " + "; ".join(errors)
