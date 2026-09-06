@@ -124,7 +124,8 @@ def run_activity() -> int:
     print(f"    {part_res['flp_boundary_notes']}")
 
     # Save output summary for learner evidence
-    out_dir = os.path.dirname(__file__)
+    out_dir = os.path.join(os.path.dirname(__file__), ".scratch")
+    os.makedirs(out_dir, exist_ok=True)
     summary_path = os.path.join(out_dir, "l17_02_observation.json")
     with open(summary_path, "w", encoding="utf-8") as f:
         json.dump(
