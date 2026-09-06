@@ -1268,32 +1268,56 @@ class OwnedSubprocessWatchdog:
         stderr_str = ""
         reaped = False
 
+        timeout_cleanup_errors: List[str] = []
         try:
             stdout_str, stderr_str = proc.communicate(timeout=self.timeout_s)
             reaped = True
         except subprocess.TimeoutExpired:
             watchdog_triggered = True
-            # Timeout: terminate/kill ONLY the owned child process
+            # Timeout: terminate/kill ONLY the owned child process.
+            # Any failure to confirm termination + reap is a cleanup failure,
+            # not a successful TIMEOUT cleanup.
             try:
                 proc.kill()
-            except Exception:
-                pass
+            except Exception as exc:
+                timeout_cleanup_errors.append(f"kill failed: {exc}")
             try:
                 stdout_str, stderr_str = proc.communicate(timeout=5.0)
-            except Exception:
-                pass
+            except Exception as exc:
+                timeout_cleanup_errors.append(f"post-kill communicate/reap failed: {exc}")
             reaped = proc.poll() is not None
 
-        # Verify whether child process has been reaped and is dead
+        # Verify whether child process has been reaped and is dead.
         still_alive = self._is_pid_alive(child_pid)
 
-        # Parse outcome
+        # Parse outcome.
         if watchdog_triggered:
+            cleanup_confirmed = reaped and not still_alive
+            if not cleanup_confirmed:
+                if still_alive:
+                    timeout_cleanup_errors.append("owned child process is still alive after watchdog cleanup")
+                if not reaped:
+                    timeout_cleanup_errors.append("owned child process handle was not reaped")
+                cleanup_failure = "; ".join(timeout_cleanup_errors) or (
+                    "watchdog timeout cleanup could not confirm owned child termination and reap"
+                )
+                return {
+                    "status": "CLEANUP_FAILURE",
+                    "watchdog_triggered": True,
+                    "child_pid": child_pid,
+                    "reaped": False,
+                    "returncode": proc.returncode,
+                    "cleanup_failure": cleanup_failure,
+                    "stdout": stdout_str,
+                    "stderr": stderr_str,
+                    "data": None,
+                }
+
             return {
                 "status": "TIMEOUT",
                 "watchdog_triggered": True,
                 "child_pid": child_pid,
-                "reaped": reaped and not still_alive,
+                "reaped": True,
                 "returncode": proc.returncode,
                 "cleanup_failure": None,
                 "stdout": stdout_str,
