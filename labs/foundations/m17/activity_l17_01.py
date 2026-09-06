@@ -14,7 +14,7 @@ Demonstrates:
 5. Counterexamples proving Overlap Alone is NOT Linearizability or Latest Value:
    - Stale read under unversioned quorum read.
    - Ambiguous/partial write causing non-linearizable history.
-   - Concurrent conflicting writes without consensus.
+   - Concurrent conflicting writes without a named version/order/conflict-resolution rule.
 """
 
 import json
@@ -120,7 +120,10 @@ def run_activity() -> int:
     ce3 = QuorumValidator.demonstrate_counterexample_concurrent_conflicting_writes()
     print(f" -> Counterexample 3 (Concurrent Conflicting Writes):")
     print(f"    Client A wrote to {ce3['client_A_quorum']}, Client B wrote to {ce3['client_B_quorum']}")
-    print(f"    Overlap node {ce3['overlap_node']} overwritten without total order.")
+    print(
+        f"    Overlap node {ce3['overlap_node']} has conflicting arrival/order state; "
+        "set overlap alone supplies no winner."
+    )
     print(f"    Disjoint readers observation anomaly: {ce3['disjoint_readers_anomaly']}")
 
     # Save output summary for learner evidence
