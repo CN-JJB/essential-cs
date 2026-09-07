@@ -656,7 +656,7 @@ In accordance with the Living Curriculum Policy (`meta/LIVING_CURRICULUM_POLICY.
 | **Authentication vs. Authorization Separation** | M22 | **STABLE** | 24–36 months | Conceptual boundary invariant across all multi-user computing systems. |
 | **Session Cookies (`HttpOnly`, `Secure`, `SameSite` / Layered Cookies drift)** | M22 | **CURRENT** | 12–18 months | RFC 6265 baseline and WHATWG standards; `draft-ietf-httpbis-layered-cookies-02` (May 2026 active drift; draft-rfc6265bis-22 expired June 2026); browser defaults evolve. |
 | **JWT Specification & Best Current Practices (RFC 7519, RFC 8725 / BCP 225)** | M22 | **CURRENT** | 12–18 months | BCP guidelines on algorithm restrictions, key confusion, and claim validation require regular verification. |
-| **OAuth 2.0 Security BCP 240 (RFC 9700) & OAuth 2.1 draft** | M22 | **CURRENT** | 12–18 months | RFC 9700 (BCP 240, Jan 2025, Proposed Standard) and `draft-ietf-oauth-v2-1-15` (March 2026 active WG draft); PKCE requirements and grant deprecations. |
+| **OAuth 2.0 Security BCP 240 (RFC 9700) & OAuth 2.1 draft** | M22 | **CURRENT** | 12–18 months | RFC 9700 (BCP 240, Jan 2025, Best Current Practice) and `draft-ietf-oauth-v2-1-15` (March 2026 active WG draft); PKCE requirements and grant deprecations. |
 | **SQL Injection & Driver Parameter Separation** | M22 | **STABLE** | 24–36 months | API-level separation of code and data values is a timeless computing mechanism. |
 | **XSS Context-Aware Output Encoding** | M22 | **STABLE** | 24–36 months | Browser execution context escaping invariant remains stable. |
 | **Content Security Policy (W3C CSP Level 3)** | M22 | **CURRENT** | 12–18 months | W3C Working Draft (13 August 2026) updates and browser support for strict nonce-based CSP directives. |
@@ -922,9 +922,9 @@ All authoritative sources researched for Stage 7 were verified as of **2026-09-0
    - Author/Organization: IETF TLS Working Group (E. Rescorla)
    - Publication Date: July 2026 (Checked 2026-09-07)
    - URL: `https://www.rfc-editor.org/info/rfc9846` (also `https://www.rfc-editor.org/rfc/rfc9846.html`)
-   - Status: **CURRENT / STANDARDS TRACK (Proposed Standard; obsoletes RFC 8446, RFC 8996, RFC 9155)**
+   - Status: **CURRENT / STANDARDS TRACK (Proposed Standard; obsoletes RFC 5077, RFC 5246, RFC 6961, RFC 7627, RFC 8422, and RFC 8446; updates RFC 5705 and RFC 6066)**
    - Rights: IETF Trust Legal Provisions (TLP 5.0).
-   - Key Content: The normative definition of the TLS 1.3 protocol; handshake protocol, cryptographic key schedule, record layer, 0-RTT/PSK considerations, and security analysis. Formally obsoletes RFC 8446, RFC 8996, and RFC 9155.
+   - Key Content: The normative definition of the TLS 1.3 protocol; handshake protocol, cryptographic key schedule, record layer, 0-RTT/PSK considerations, and security analysis. Formally obsoletes RFC 5077, RFC 5246, RFC 6961, RFC 7627, RFC 8422, and RFC 8446, and updates RFC 5705 and RFC 6066.
 7. **IETF RFC 9525** — *Service Identity in TLS*
    - Author/Organization: IETF (P. Saint-Andre, J. Hodges)
    - Publication Date: November 2023
