@@ -64,9 +64,9 @@ $$\begin{aligned}
    - The accepted lab map contains exactly 5 Required Labs, 5 Optional Labs, and 5 Source Expeditions.
    - **No new Required Lab is introduced.** The open question of a course-owned vulnerable app is evaluated for Design: Research recommends **Candidate B: bounded, course-owned localhost security fixtures embedded directly in M21/M22 standard activity pairs**, accompanied by security/privacy reviews on the Mini Cloud App (P2/P8/P9). Research does not freeze Design; Design owns the final adoption, refinement, or rejection within canonical architecture.
 5. **Modern Authoritative Source Alignment (Checked 2026-09-07):**
-   - Cryptographic claims: NIST SP 800-131A Rev. 2 (current Final), NIST SP 800-131A Rev. 3 (Initial Public Draft, Oct 2024), NIST SP 800-63B-4 (Final, July 2025; supersedes SP 800-63B), FIPS 186-5 (digital signatures), FIPS 202 (SHA-3), RFC 8446 / RFC 9846 (TLS 1.3 Standards Track), RFC 9525 (service identity in TLS), RFC 9106 (Argon2id).
-   - Web/Composition claims: W3C CSP Level 3 (Working Draft, 13 August 2026), WHATWG Fetch/HTML Living Standards, RFC 6265bis (`draft-ietf-httpbis-rfc6265bis-22`, August 2026), RFC 7519 / RFC 8725 (JWT & BCP 225), RFC 6749 / RFC 9700 (OAuth 2.0 Security BCP 240, Jan 2025) / `draft-ietf-oauth-v2-1-16` (OAuth 2.1 Internet-Draft, Sept 2026), OWASP Top 10 (2021/2025 empirical industry guidance).
-   - Supply-chain claims: SLSA v1.2 (current Approved; v1.0 is retired), Community Specification License 1.0, Sigstore / in-toto concepts, cryptographic lockfile digests.
+   - Cryptographic claims: NIST SP 800-131A Rev. 2 (current Final), NIST SP 800-131A Rev. 3 (Initial Public Draft, Oct 2024), NIST SP 800-63B-4 (Final, July 2025; supersedes SP 800-63B), FIPS 186-5 (digital signatures), FIPS 202 (SHA-3), RFC 9846 (*The Transport Layer Security (TLS) Protocol Version 1.3*, Standards Track, July 2026; obsoletes RFC 8446), RFC 9525 (service identity in TLS), RFC 9106 (Argon2id).
+   - Web/Composition claims: W3C CSP Level 3 (Working Draft, 13 August 2026), WHATWG Fetch/HTML Living Standards, RFC 6265 baseline and current active drift `draft-ietf-httpbis-layered-cookies-02` (21 May 2026; historical `draft-ietf-httpbis-rfc6265bis-22` expired 4 June 2026), RFC 7519 / RFC 8725 (JWT & BCP 225), RFC 6749 / RFC 9700 (OAuth 2.0 Security BCP 240, Jan 2025) / `draft-ietf-oauth-v2-1-15` (OAuth 2.1 Internet-Draft, Work in Progress, 2 March 2026), OWASP Top 10 (2021/2025 empirical industry guidance).
+   - Supply-chain claims: SLSA v1.2 (current Approved; v1.0 is retired), Community Specification License 1.0, Sigstore / in-toto concepts, bounded cryptographic lockfile digests and provenance models.
    - Runtime tooling: PyCA `cryptography` v50.0.1 (released 2026-08-25).
 6. **M23 Systems Judgment & D-015 Framework Consolidation:**
    - Consolidates the applied measurement-uncertainty toolkit (first assessed at M04 `L04-02`, productionized at M20 `L20-01`) into an open, question-driven measurement methodology: question, workload model, environment, mechanism-driven warm-up, justified sample size, distribution reporting (percentiles for skewed latency, median/IQR where robust, mean/std where appropriate), and explicit inference limits.
@@ -306,14 +306,26 @@ M21 extracts cryptography from the "black box of TLS" and establishes **what cry
      - *Asymmetric Key Agreement (ECDH / X25519):* Parties establish a shared symmetric secret over an untrusted channel. **Boundary:** ECDH by itself provides key agreement without peer authentication; unless combined with digital signatures or pre-authenticated certificates, unauthenticated ECDH is vulnerable to Man-In-The-Middle (MITM) attacks.
      - *Digital Signatures (Ed25519 / RSA-PSS / ECDSA):* Private key signs; public key verifies. Proves that the entity holding the corresponding private key generated the signature over the specified digest.
    - **Public Key Infrastructure (PKI) & Certificates (Revisit M11):**
-     - An X.509 certificate binds an identity (e.g. domain name via SAN per RFC 9525) to a public key, digitally signed by a Certificate Authority (CA).
-     - **Critical Layer Separation:**
-       1. *Certificate credential:* Binds public key to an identity/SAN. A certificate alone does NOT prove that the remote peer holds the private key in real time.
-       2. *Proof of private-key possession:* Performed during protocol execution (e.g. TLS handshake `CertificateVerify` message where the peer signs a transcript hash using the private key).
-       3. *Certificate-path validation:* RFC 5280 path validation verifying signatures up to a trusted trust anchor/root.
-       4. *Service-identity verification:* RFC 9525 matching of the expected domain name against Subject Alternative Names (SAN).
-       5. *Authorization decision:* Determining whether the authenticated service or user is permitted to perform the requested operation.
-     - *Boundary:* A valid certificate proves identity ownership of a domain name. **A certificate does NOT prove that the endpoint is safe, non-malicious, or bug-free.**
+      - An X.509 certificate is an issuer-signed credential containing a binding assertion between an identifier and a public key issued under a Certificate Authority's validation policy.
+      - **Rigorous Multi-Layer Verification Model (What Each Layer Proves and Does NOT Prove):**
+        1. *Certificate Credential:* An issuer-signed data structure binding an identifier (e.g. DNS domain name in SAN per RFC 9525) to a public key.
+           - *What it proves:* The issuing CA signed this binding assertion under its stated issuance policy.
+           - *What it does NOT prove:* Does NOT prove the remote peer currently holds the private key; does NOT prove the certificate is currently valid without path and revocation checks; does NOT prove the endpoint is safe, non-malicious, or bug-free; and does NOT prove domain "ownership" beyond the CA's issuance validation check.
+        2. *Certificate-Path Validation:* RFC 5280 validation verifying signatures, validity dates, extensions, and revocation status from the end-entity certificate through intermediate CAs to a configured local trust anchor.
+           - *What it proves:* The cryptographic chain of signatures to a trusted root is unbroken and conforms to path validation policy.
+           - *What it does NOT prove:* Does NOT verify that the certificate matches the specific target domain name requested by the client, nor that the remote peer holds the private key.
+        3. *Service-Identity Verification:* RFC 9525 rules matching the client's reference identifier (the expected domain name) against certificate identifiers (Subject Alternative Names).
+           - *What it proves:* The validated certificate was issued for the specific target service name intended by the client.
+           - *What it does NOT prove:* Does NOT establish peer possession of the private key or peer authorization.
+        4. *Proof of Private-Key Possession:* Established dynamically during protocol execution (e.g. TLS 1.3 `CertificateVerify` message per RFC 9846, where the peer digitally signs the handshake transcript hash using the private key corresponding to the certificate's public key).
+           - *What it proves:* The communicating peer actively possesses and controls the private key paired with the public key in the certificate.
+           - *What it does NOT prove:* Does NOT establish authorization or identity by itself without the validated certificate path and service-identity binding.
+        5. *Authentication:* Established when all preceding layers succeed concurrently (valid path to trust anchor + service identity match + live proof of private-key possession).
+           - *What it proves:* The active communicating peer controls the private key corresponding to a trust-anchor-validated certificate matching the expected service name.
+           - *What it does NOT prove:* Does NOT prove authorization (what actions the peer is permitted to perform) and does NOT prove that software executing on the endpoint is safe, bug-free, or trustworthy.
+        6. *Authorization Decision:* A separate, subsequent decision determining whether the authenticated entity is permitted to perform the requested operation or access specific resources.
+           - *What it proves:* Policy evaluation grants or denies access based on verified identity, roles, attributes, and context.
+           - *What it does NOT prove:* Authorization does not establish identity; it depends on prior authentication.
    - **Randomness, Nonces, and Entropy:**
      - Security requires a **Cryptographically Secure Pseudorandom Number Generator (CSPRNG)** backed by OS entropy (`/dev/urandom`, Windows `BCryptGenRandom`, Python `secrets` module / `os.urandom`).
      - *Boundary:* PRNGs designed for simulation or algorithmic randomized testing (e.g. Python `random`, C `rand()`) are **not cryptographically secure** and are completely unsuitable for security credentials, session tokens, nonces, or salts.
@@ -329,7 +341,7 @@ The research establishes strict boundaries to avoid common curriculum fallacies:
 - **Do not teach "encryption proves identity":** Symmetric encryption only proves that whoever produced the ciphertext possessed the shared key; it does not identify which of the shared-key holders created it. Plain asymmetric encryption provides confidentiality, not authenticity, unless paired with a signature or authenticated exchange.
 - **Do not teach "signature means the content is trustworthy":** A digital signature proves only that the private key matching the public key signed the digest. It does not prove the content is accurate, safe, or benevolent.
 - **Do not present digital signatures as unconditional legal/business "non-repudiation":** Legal and business non-repudiation depends on extensive external assumptions: proof of sole key custody, hardware security module (HSM) guarantees, trusted timestamping, verifier revocation checking, and legal jurisdiction contracts. A mathematical signature alone does not establish legal non-repudiation.
-- **Do not teach "certificate means the endpoint is safe":** A TLS certificate proves identity ownership of a domain name, not the safety of the software running behind it. Phishing sites routinely obtain valid TLS certificates.
+- **Do not teach "certificate proves ownership or safety":** A certificate is an issuer-signed binding assertion under a validation policy. Live peer authentication requires successful certificate-path validation, RFC 9525 service-identity matching, and cryptographic proof of private-key possession (e.g. TLS `CertificateVerify`) in the protocol exchange. Even when fully authenticated, a certificate does not prove the endpoint is safe, non-malicious, or bug-free; phishing sites routinely obtain valid certificates for attacker-controlled domain names.
 - **Do not teach "random UUID/token is automatically secure":** A standard UUIDv4 generated from an unseeded or non-cryptographic PRNG lacks cryptographic unpredictability.
 - **Do not teach "one algorithm or key size is forever correct":** Cryptographic parameters have explicit lifetimes governed by cryptanalysis and computational advances (e.g., NIST SP 800-131A Rev. 2 current transitions, and Rev. 3 draft post-2030 proposals).
 - **Do not teach "don't roll your own crypto" as a thought-terminating slogan:** Explain the concrete engineering rationale: cryptographic algorithms have subtle implementation invariants (timing side channels, padding oracle attacks, nonce reuse catastrophic failure, cache attacks) that standard high-level libraries handle, whereas ad-hoc implementations almost universally fail.
@@ -373,18 +385,20 @@ The learner goal is **defense-first composition judgment**: understanding root c
    - **Authorization:** Determining whether a verified identity has permission to perform a requested action on a specific resource ("What are you allowed to do?").
    - *Critical Boundary:* **Authentication never implies authorization.** Successfully logging in as User A does not authorize User A to read or edit User B's documents (Broken Object Level Authorization / IDOR).
 2. **Password Storage Guidance (NIST SP 800-63B-4 & RFC 9106):**
-   - *NIST Normative Requirements (SP 800-63B-4, Final July 2025):*
-     - Passwords must be hashed using a salted, memory-hard, one-way hash function.
-     - Passwords must not be truncated arbitrarily; minimum length of at least 8 characters required (15+ recommended for higher assurance).
-     - Passwords must be checked against lists of compromised credentials.
+   - *NIST SP 800-63B-4 Normative Requirements (§3.1.1.2 Memorized Secret Verifiers):*
+     - Passwords SHALL be salted and hashed using a suitable one-way password hashing scheme.
+     - A memory-hard AND compute-hard function SHOULD be used (e.g., Argon2id per RFC 9106). (Normative note: memory-hard is a SHOULD recommendation in NIST SP 800-63B-4, not an absolute MUST).
+     - Single-factor passwords SHALL be at least 15 characters in length.
+     - Passwords used only as part of multi-factor authentication (MFA) MAY be shorter, but SHALL be at least 8 characters in length.
+     - Passwords SHALL NOT be truncated arbitrarily by the verifier (verifiers SHALL support passwords of at least 64 characters).
+     - Salt SHALL be at least 32 bits in length and arbitrarily chosen to minimize collisions.
+     - Passwords SHALL be checked against lists of compromised credentials.
      - Periodic forced password rotation without evidence of compromise is explicitly discouraged.
-   - *Algorithm Distinctions:*
-     - **Argon2id (RFC 9106):** Current state-of-the-art memory-hard function (winner of the Password Hashing Competition; balances side-channel resistance with GPU cracking resistance).
-     - **scrypt (RFC 7914) / bcrypt:** Established memory-hard alternatives.
-     - **PBKDF2 (RFC 8018):** CPU-bound only (no memory hardness); vulnerable to accelerated GPU/ASIC attacks compared to memory-hard functions.
-   - *Work-Factor & Salt Policy (Distinguishing Invariant from Named Policy):*
-     - The universal invariant is that salts must be unique and unpredictable per password, and work factors must be tunable.
-     - Specific numbers (e.g. minimum 32-bit salt per NIST SP 800-63B vs 128-bit salt in RFC 9106; OWASP PBKDF2-HMAC-SHA256 guideline of 600,000 iterations) are **CURRENT / NAMED POLICY / ILLUSTRATIVE INPUTS**, not timeless mathematical theorems.
+   - *Distinction Between Normative Authority and Implementation Guidance:*
+     - **NIST SP 800-63B-4 (§3.1.1.2):** Sets the federal normative baseline. Enforces explicit SHALL requirements for salting, hashing, collision-minimization salt length (≥ 32 bits), single-factor length (≥ 15 characters), MFA-only minimum (≥ 8 characters), compromised credential checks, and truncation prohibition; specifies SHOULD for memory-hard and compute-hard functions.
+     - **IETF RFC 9106 (Argon2):** Informational RFC specifying Argon2 algorithm profiles; recommends Argon2id for password hashing, recommends a minimum salt of 128 bits (16 bytes) for cryptographic security, and defines tunable memory, time, and parallelism parameters.
+     - **OWASP Password Storage Guidance:** Empirical industry recommendations that periodically increase iteration counts and memory parameters (e.g. PBKDF2-HMAC-SHA256 at 600,000 iterations in recent guidance) to track GPU hardware cracking capabilities.
+     - *Pedagogical Boundary:* Tunable parameters (memory size, iteration count, salt length) are **CURRENT / NAMED POLICY / ILLUSTRATIVE INPUTS** that evolve with hardware speeds; the architectural invariant is salting to prevent precomputation (rainbow tables) and collision minimization, paired with tunable computational cost.
 3. **Session vs. Token Mechanics:**
    - **Server-Side Session:** Client holds an opaque session identifier (stored in an `HttpOnly`, `Secure` cookie); server stores session state in database/cache.
      - *Gains:* Immediate, centralized revocation capability; minimal sensitive payload exposed to client.
@@ -404,7 +418,7 @@ The learner goal is **defense-first composition judgment**: understanding root c
      - For Confidential Clients: PKCE is **RECOMMENDED** under BCP conditions (and required under code injection threat models).
      - Resource Owner Password Credentials (ROPC) grant: **MUST NOT** be used.
      - Implicit Grant: **SHOULD NOT** be used except under specific conditions outlined in the BCP.
-   - *OAuth 2.1 Status:* Currently an active Internet-Draft (`draft-ietf-oauth-v2-1-16`, Sept 2026); consolidates OAuth 2.0 and security BCPs into a single document.
+   - *OAuth 2.1 Status:* Currently an active Internet-Draft (`draft-ietf-oauth-v2-1-15`, published 2026-03-02, active Work in Progress, checked 2026-09-07); consolidates OAuth 2.0 (RFC 6749) and security BCPs into a single document. OAuth 2.1 is **NON-FINAL**; RFC 9700 (BCP 240, Jan 2025) remains the current normative OAuth 2.0 security authority.
 6. **Web Vulnerabilities & Safe Defense Patterns:**
    - **SQL Injection (SQLi):**
      - *Root Cause:* Conflating code and data by dynamically interpolating untrusted strings into query syntax.
@@ -416,24 +430,51 @@ The learner goal is **defense-first composition judgment**: understanding root c
      - *Boundary:* CSP is a defense-in-depth mitigation against execution; it does not replace the requirement for context-aware escaping.
    - **Cross-Site Request Forgery (CSRF):**
      - *Root Cause:* The browser automatically attaches ambient credentials (cookies, HTTP basic auth) to cross-site requests.
-     - *Safe Defense:* Anti-CSRF tokens (Synchronizer Token Pattern) + `SameSite` cookie attributes + verifying `Origin` / `Referer` headers + custom request headers (`X-Requested-With`).
-     - *Boundary:* Defense depends on the credential model, request method, and client architecture. `SameSite=Lax` allows cross-site top-level GET navigation; state-changing requests must enforce POST/PUT/DELETE with explicit anti-CSRF tokens.
+     - *Defense Strategy & Mental Model:*
+       - Safe methods (GET, HEAD, OPTIONS per RFC 9110) should not carry state-changing semantics.
+       - CSRF defense depends on the application credential model (ambient credentials such as cookies vs explicit non-ambient headers such as `Authorization: Bearer`), client architecture (SPA, server-rendered multi-page app, mobile client), framework protections, and request type.
+       - Where ambient cookie credentials are used for state-changing browser requests:
+         - `SameSite` cookie attributes (`SameSite=Strict` or `SameSite=Lax` depending on navigation requirements) mitigate cross-site request leakage.
+         - Origin / Referer header verification validates that requests originate from expected origins.
+         - Anti-CSRF token mechanisms (such as the Synchronizer Token Pattern or Double Submit Cookie pattern) provide explicit cryptographic validation of intent where appropriate.
+         - Custom request headers (e.g. `X-Requested-With`) trigger browser CORS preflights for cross-origin asynchronous requests.
+       - *Boundary:* There is no single universal defense bundle. Pure token-based APIs utilizing non-ambient `Authorization` headers are not vulnerable to classic browser ambient-credential CSRF, while cookie-authenticated endpoints require defense layered to the specific request profile.
    - **Server-Side Request Forgery (SSRF):**
-     - *Root Cause:* The server fetches a user-supplied URL without restricting internal network access.
-     - *Safe Defense:* Parse URL, resolve IP address, and enforce an **egress firewall/allowlist at socket connection time** (validating the socket remote address after connection or pinning the IP), blocking loopback (`127.0.0.0/8`), private networks (RFC 1918), and cloud metadata services (`169.254.169.254`).
-     - *Boundary:* Simple string parsing or pre-connection DNS checks do not prevent DNS rebinding or redirect-based bypasses unless connection-time enforcement and redirect restrictions are applied.
+     - *Root Cause:* The server fetches a network resource at a destination influenced by untrusted user input without restricting destination scope or network boundaries.
+     - *Safe Defense Pattern (End-to-End Resolution & Socket Binding):*
+       1. *Parse and Canonicalize:* Parse and canonicalize the user-supplied destination URL.
+       2. *Destination Policy Evaluation:* Apply an explicit destination authorization policy (e.g. allowlist of approved schemes, hosts, and ports).
+       3. *Address Resolution:* Resolve destination hostnames to IP addresses via DNS.
+       4. *Egress Network Boundary Validation:* Validate resolved IP addresses against an egress policy, blocking loopback (`127.0.0.0/8`), private networks (RFC 1918), link-local/cloud metadata services (`169.254.169.254`), IPv6 equivalents (`::1`, `fe80::/10`), and alternate IP representations (decimal integers, octal, hex).
+       5. *Connection-Time Address Binding:* Bind the validated address directly to the actual outgoing socket connection (e.g. connecting explicitly to the resolved, verified IP address with the HTTP `Host` header set), eliminating Time-of-Check to Time-of-Use (TOCTOU) DNS rebinding gaps.
+       6. *Infrastructure Egress Controls:* Enforce network egress firewalls or dedicated egress proxy controls at the infrastructure level.
+       7. *Redirect and Proxy Handling:* Re-apply the complete destination policy and IP validation cycle on every HTTP redirect; handle forward proxies explicitly to ensure internal endpoints cannot be reached via proxy tunnels.
+       8. *Data Transmission Boundary:* Do NOT send any attacker-influenced application data until the destination authorization policy and address binding are fully satisfied.
+       - *What NOT to Teach:* Do NOT teach "connect first, then validate socket remote address" as a safe general pattern; establishing a connection can trigger internal side effects, hit internal management interfaces, or leak sensitive handshake metadata prior to socket termination.
    - **Insecure Deserialization:**
-     - *Root Cause:* Passing untrusted byte streams into object reconstruction engines that execute arbitrary constructors or gadget chains (e.g. Python `pickle`, Java `ObjectInputStream`).
+     - *Root Cause:* Passing untrusted byte streams into object reconstruction engines that execute arbitrary constructors or callable gadget chains (e.g. Python `pickle`, Java `ObjectInputStream`).
      - *Safe Defense:* Use structured data formats (JSON, Protocol Buffers) with strict schema validation.
-     - *Boundary:* JSON and Protocol Buffers eliminate polymorphic code execution during parsing, but do not guarantee application safety without validation (e.g. JSON prototype pollution, deeply nested entity expansion, or memory exhaustion).
+     - *Boundary:* Structured formats avoid `pickle`-style arbitrary object reconstruction semantics by default (they parse pure data representations rather than invoking arbitrary runtime class constructors). However, structured formats do NOT provide absolute execution safety on their own. Security boundaries still depend on parser implementation limits, runtime behavior, schema validation, resource limits (preventing deeply nested structure expansion, entity expansion attacks, or memory exhaustion), downstream interpretation (preventing prototype pollution, SQL injection, or command injection in consuming application logic), and application authorization.
 7. **Supply Chain & Dependency Provenance (Connecting M19 to M22):**
-   - *Risk:* Modern applications import transitive third-party dependencies that can introduce vulnerabilities or malicious code.
-   - *Layered Defense (SLSA v1.2 Current Concepts):*
-     1. *Dependency Pinning:* Freezing exact version numbers in configuration.
-     2. *Digest Verification:* Recording SHA-256 hashes in lockfiles to ensure byte-for-byte artifact integrity.
-     3. *Build & Source Provenance:* Cryptographic attestations (e.g. SLSA Provenance predicates) recording the source repository, commit, and build environment.
-     4. *Attestation Verification Policy:* Client-side verification enforcing that artifacts were produced by authorized builders from trusted sources.
-   - *Boundary:* Lockfile hashes ensure reproducibility and detect modified artifacts, but do not prove the original source code is free of bugs, vulnerabilities, or malicious backdoors. Digital signatures prove who signed an artifact, not whether the code is safe to execute.
+   - *Risk:* Modern applications import transitive third-party dependencies that can introduce vulnerabilities, compromised build environments, or malicious code.
+   - *Rigorous Separation of Supply-Chain Concepts:*
+     1. *Dependency Pinning:* Constrains package manager dependency resolution according to ecosystem-specific semantics (e.g. exact versions or semantic version ranges in requirements files). Pinning constrains resolution; it does not by itself verify artifact bytes or build reproducibility.
+     2. *Artifact Digest Verification:* Verifies that retrieved package/archive bytes match an expected cryptographic digest (e.g. SHA-256 in a lockfile). An artifact digest detects modified, corrupted, or replaced package files; it does not prove the original source code is free of bugs or backdoors.
+     3. *Build Reproducibility:* A lockfile with cryptographic digests alone does NOT guarantee reproducible builds. Reproducibility requires deterministic build inputs, an isolated and controlled build environment, identical toolchains and compilers, platform/architecture constraints, pinned source and network behavior, and a deterministic build process.
+     4. *Digital Signature Verification:* Proves that an artifact was signed by a specific private key corresponding to a recognized public key. A valid signature alone does NOT prove human identity, organization identity, source trustworthiness, or code safety. Establishing signer identity requires a trusted key/identity binding, a public key infrastructure or identity system (e.g. Sigstore Fulcio/OIDC identity tokens), and an explicit verifier policy.
+     5. *Build & Source Provenance (SLSA v1.2 Current Concepts):* Cryptographic attestations (e.g. SLSA Provenance predicates) that document the builder identity, source repository, commit, and build environment.
+     6. *Attestation Verification Policy:* Client-side verification enforcing that artifacts were produced by authorized builders from trusted sources under defined policies. Provenance only establishes the fields and guarantees actually included in the attestation predicate and verified under an explicit verifier policy; it does not prove that source code is bug-free or non-malicious.
+
+#### 3.2.3 Web Composition & Supply Chain Claim Boundaries (What NOT to Universalize)
+
+To maintain rigorous pedagogical boundaries:
+- **Do not teach "CORS is an authentication/authorization mechanism":** CORS is a browser mechanism that relaxes the Same-Origin Policy for cross-origin reads; it is enforced by the client browser, not the server. CORS headers do not protect server resources from direct non-browser requests (e.g. `curl` or server-to-server calls).
+- **Do not teach "CSP eliminates XSS entirely":** Content Security Policy is a defense-in-depth mitigation that restricts execution contexts (scripts, styles, connections); it does not replace the requirement for context-aware output encoding and safe templating. Misconfigured CSP (e.g. `'unsafe-inline'` or overly broad domain allowlists) provides zero protection.
+- **Do not teach "SameSite cookies eliminate all CSRF":** `SameSite=Lax` allows cookies on top-level cross-site GET navigations. If state-changing operations are improperly attached to GET requests, `SameSite=Lax` provides no protection. Complete CSRF defense requires safe HTTP methods, appropriate cookie configuration, Origin/Referer verification, and anti-CSRF token mechanisms where appropriate.
+- **Do not teach "post-connect socket address validation is a safe general SSRF defense":** Establishing a socket connection before verifying destination policy can leak sensitive handshake data, trigger internal side effects, or hit private management endpoints. Safe SSRF defense requires canonicalization, destination authorization, IP resolution validation, and socket connection binding prior to sending application data.
+- **Do not teach "JSON or Protobuf parsing is unconditionally safe":** While structured formats avoid arbitrary class deserialization gadgets by default, parser vulnerabilities, prototype pollution, resource exhaustion (deep nesting / large payloads), and downstream code injection remain active attack surfaces.
+- **Do not teach "lockfiles guarantee reproducible builds":** Lockfile hashes verify that downloaded packages match specific byte digests; true build reproducibility requires deterministic build inputs, toolchains, build environments, and build processes.
+- **Do not teach "a digital signature proves the signer's human/organizational identity":** A signature proves verification under a cryptographic key. Establishing who owned or operated that key requires trusted identity binding, PKI or OIDC identity systems, and an explicit verifier policy.
 
 ---
 
@@ -491,20 +532,16 @@ D-015 is canonical curriculum architecture. The 12-dimension Technology Card str
 
 **Technology Rejection as a Passing Outcome:** A vital principle of D-015 is that **deciding NOT to adopt a technology** (e.g. rejecting Kafka in favor of a local SQLite queue; rejecting Kubernetes in favor of a single Linux systemd service; rejecting microservices in favor of a modular monolith) is often the most mature engineering choice. Learner assessment must reward defensible rejection equally with defensible adoption.
 
-#### 3.3.4 Named Current Case Study & Bounded Stable Principle: Redis
+#### 3.3.4 Bounded Architectural Trade-off Principle: Off-Path & In-Memory Execution
 
-To illustrate how current technologies are examined under D-015 without turning product implementation details into universal theorems:
+To illustrate how candidate technologies are examined under D-015 without turning temporary product implementation details into timeless architecture:
 
-- **Named Current Case:** Redis (e.g. Redis 7.x/8.x architecture).
-- **Product & Implementation Authority:** Redis documentation and source architecture.
-- **Specific Implementation Context:**
-  - Redis serves commands in an in-memory data store using an event-driven multiplexed I/O architecture (`epoll`/`kqueue`). While threaded I/O was introduced in Redis 6.0 for network socket reading/writing, the core command execution engine remains single-threaded to avoid multi-thread lock synchronization over in-memory data structures.
-  - Persistence options include point-in-time snapshots (RDB via `fork()`) and append-only logging (AOF with tunable `fsync` policies).
-- **Observed Trade-offs (Not Universal Claims):**
-  - Storing state entirely in memory provides low microsecond-range access latency, but capacity is bounded by available physical RAM, and cost per gigabyte is higher than block storage.
-  - Asynchronous background snapshotting or non-blocking AOF writes provide high request throughput, but introduce data loss exposure windows during sudden power loss or process termination (`EC-CON-016 Durability`).
-- **Derived Bounded Stable Principle:**
-  *"Moving work off a critical request path (e.g. to in-memory buffers, memory-mapped data structures, or asynchronous background queues) may reduce one latency component, but moves cost, state management, memory constraints, and durability obligations elsewhere."*
+- **Bounded Stable Principle:**
+  *"Moving work off a critical request path may reduce one latency component while moving cost, state-management, memory, durability, or operational constraints elsewhere."*
+- **Pedagogical Boundary & Trade-Off Analysis:**
+  - Moving state into in-memory data structures reduces access latency relative to persistent disk I/O, but volatile memory capacity is constrained by physical RAM limits, cost per gigabyte is higher than block storage, and sudden process or power failure risks data loss unless explicit durability mechanisms (`EC-CON-016 Durability`) are introduced.
+  - Asynchronous background queues or buffers decouple request-response latency from slow background processing, but introduce state synchronization complexity, duplicate execution risks, and operational monitoring requirements.
+  - Learners evaluate candidate technologies (such as in-memory data stores, message brokers, or caching layers) by rigorously identifying what specific constraint was moved and what new operational, consistency, or durability liabilities were incurred, without treating transient vendor benchmark numbers or implementation-specific defaults as universal theorems.
 
 #### 3.3.5 Handling AI-Generated Claims (Interim State under OQ-BP-001)
 
@@ -583,18 +620,17 @@ The following matrix categorizes all primary technical and architectural claims 
 | **M21** | Crypto | Digital signatures (Ed25519, RSA-PSS) provide authenticity and integrity verification via asymmetric keys. | **SPECIFICATION** | IETF RFC 8032 (Ed25519); NIST FIPS 186-5 | **ESTABLISHED** |
 | **M21** | Crypto | Unauthenticated ECDH provides key agreement but is MITM-vulnerable without authentication. | **PRINCIPLE** | Katz & Lindell; RFC 8446 | **ESTABLISHED** |
 | **M21** | Crypto | SHA-1 and 2-key 3DES are disallowed for signatures and data protection; ECB mode slated for retirement. | **CURRENT PRACTICE** | NIST SP 800-131A Rev. 2 (Final) & Rev. 3 (Initial Public Draft Oct 2024) | **CURRENT-PRACTICE** |
-| **M21** | PKI | TLS certificates bind domain identity to public keys; private-key possession is proven in handshake. | **SPECIFICATION** | IETF RFC 5280, RFC 9525 (Service Identity), RFC 8446 / RFC 9846 | **ESTABLISHED** |
+| **M21** | PKI | Certificates are issuer-signed bindings; authentication requires path validation, service-identity match, and live private-key possession proof. | **SPECIFICATION** | IETF RFC 5280, RFC 9525, RFC 9846 | **ESTABLISHED** |
 | **M21** | Randomness | PRNGs for simulation (e.g. Python `random`, C `rand`) are not cryptographically secure credentials. | **SPECIFICATION** | NIST SP 800-90A Rev. 1; Python docs `secrets` module | **ESTABLISHED** |
 | **M22** | Authn/Authz | Authentication (identity verification) is orthogonal to authorization (permission decision). | **PRINCIPLE** | Saltzer & Schroeder; NIST SP 800-63-4 / SP 800-162 | **ESTABLISHED** |
-| **M22** | Passwords | Passwords must use salted, memory-hard hashing (Argon2id); fast hashes (MD5/SHA) are insecure. | **SPECIFICATION** | NIST SP 800-63B-4 §5.1.1.2 (Final July 2025); IETF RFC 9106 (Argon2) | **CURRENT-PRACTICE** |
+| **M22** | Passwords | NIST SP 800-63B-4 requires salted/hashed passwords; memory-hard function recommended (Argon2id); single-factor ≥15 chars. | **SPECIFICATION** | NIST SP 800-63B-4 §3.1.1.2 (Final July 2025); IETF RFC 9106 (Argon2) | **CURRENT-PRACTICE** |
 | **M22** | Sessions | Stateless tokens trade off immediate out-of-band revocation against decentralized verification. | **PRINCIPLE** | RFC 6749, RFC 7519; Kleppmann *DDIA* | **ESTABLISHED** |
 | **M22** | Tokens | JWTs must reject `alg: "none"`; claim validation is governed by application/profile contracts. | **SPECIFICATION** | IETF RFC 7519, RFC 8725 (JWT BCP 225) | **ESTABLISHED** |
-| **M22** | OAuth | OAuth 2.0 is an authorization delegation framework, not an authentication protocol. | **SPECIFICATION** | IETF RFC 6749, RFC 6750; OpenID Connect Core 1.0 | **ESTABLISHED** |
-| **M22** | OAuth | RFC 9700 (BCP 240) mandates PKCE for public clients, recommends for confidential; ROPC disallowed. | **SPECIFICATION** | IETF RFC 9700 (BCP 240, Jan 2025); draft-ietf-oauth-v2-1-16 (Sept 2026) | **CURRENT-PRACTICE** |
+| **M22** | OAuth | RFC 9700 (BCP 240) mandates PKCE for public clients, recommends for confidential; ROPC disallowed; OAuth 2.1 in draft. | **SPECIFICATION** | IETF RFC 9700 (BCP 240, Jan 2025); draft-ietf-oauth-v2-1-15 (March 2026) | **CURRENT-PRACTICE** |
 | **M22** | Injection | Parameterized queries separate data values from query syntax at the driver/API level. | **SPECIFICATION** | ANSI SQL / ISO/IEC 9075; database client protocols | **ESTABLISHED** |
 | **M22** | Web XSS | Context-aware output encoding prevents XSS; CSP provides defense-in-depth mitigation. | **SPECIFICATION** | W3C CSP Level 3 (WD Aug 2026); WHATWG HTML | **ESTABLISHED** |
-| **M22** | Web CSRF | CSRF defense depends on credential model; SameSite=Lax allows top-level GET navigation. | **SPECIFICATION** | IETF RFC 6265bis (draft-22, Aug 2026); OWASP Cheat Sheet | **CURRENT-PRACTICE** |
-| **M22** | Web SSRF | SSRF defense requires validating resolved IP addresses at connection time to mitigate DNS rebinding. | **CURRENT PRACTICE** | OWASP SSRF Prevention Cheat Sheet; CWE-918 | **CURRENT-PRACTICE** |
+| **M22** | Web CSRF | CSRF defense depends on credential model; SameSite=Lax allows top-level GET navigation. | **SPECIFICATION** | RFC 6265 baseline; WHATWG Fetch; draft-ietf-httpbis-layered-cookies-02 (May 2026); OWASP Cheat Sheet | **CURRENT-PRACTICE** |
+| **M22** | Web SSRF | SSRF defense requires destination policy, address resolution validation, and socket connection binding. | **CURRENT PRACTICE** | OWASP SSRF Prevention Cheat Sheet; CWE-918 | **CURRENT-PRACTICE** |
 | **M22** | Composition | Insecure deserialization of polymorphic executable objects (Python `pickle`) causes RCE. | **IMPLEMENTATION** | Python standard library `pickle` documentation; CWE-502 | **IMPLEMENTATION-SPECIFIC** |
 | **M22** | Supply Chain | Lockfile digests verify byte integrity; provenance attestations verify builder and source context. | **CURRENT PRACTICE** | SLSA v1.2 specification (Approved); Sigstore architecture | **CURRENT-PRACTICE** |
 | **M23** | Measurement | Average latency misleads on skewed distributions; distribution percentiles reveal tail behavior. | **PRINCIPLE** | Dean & Barroso *The Datacenter as a Computer*; Gil Tene (Coordinated Omission) | **ESTABLISHED** |
@@ -616,11 +652,11 @@ In accordance with the Living Curriculum Policy (`meta/LIVING_CURRICULUM_POLICY.
 | **Trust Boundary & Threat Model** | M21 | **STABLE** | 24–36 months | Foundational computing invariants (Saltzer & Schroeder 1975). Core principles do not drift with software versions. |
 | **Cryptographic Primitives (Hash, MAC, Symmetric, Asymmetric, Signatures)** | M21 | **STABLE** | 24–36 months | Mathematical and algorithmic foundations (Katz & Lindell). Core properties and use models remain invariant. |
 | **Approved Crypto Algorithms & Key Transitions (NIST SP 800-131A Rev. 2 / Rev. 3 draft)** | M21 | **CURRENT** | 12–18 months | Specific key sizes (RSA 2048 vs 3072, ECC curves) and deprecated algorithms (SHA-1, 3DES, ECB) evolve with cryptanalysis. |
-| **Password Hashing Guidelines (NIST SP 800-63B-4, RFC 9106 Argon2id)** | M22 | **CURRENT** | 12–18 months | SP 800-63B-4 (Final July 2025) and RFC 9106 Argon2id; memory/time parameters evolve with hardware capabilities. |
+| **Password Hashing Guidelines (NIST SP 800-63B-4, RFC 9106 Argon2id)** | M22 | **CURRENT** | 12–18 months | SP 800-63B-4 §3.1.1.2 (Final July 2025) and RFC 9106 Argon2id; memory/time parameters evolve with hardware capabilities. |
 | **Authentication vs. Authorization Separation** | M22 | **STABLE** | 24–36 months | Conceptual boundary invariant across all multi-user computing systems. |
-| **Session Cookies (`HttpOnly`, `Secure`, `SameSite` / RFC 6265bis)** | M22 | **CURRENT** | 12–18 months | RFC 6265bis evolution (`draft-22`, Aug 2026); browser defaults for `SameSite` and third-party cookie restrictions evolve. |
+| **Session Cookies (`HttpOnly`, `Secure`, `SameSite` / Layered Cookies drift)** | M22 | **CURRENT** | 12–18 months | RFC 6265 baseline and WHATWG standards; `draft-ietf-httpbis-layered-cookies-02` (May 2026 active drift; draft-rfc6265bis-22 expired June 2026); browser defaults evolve. |
 | **JWT Specification & Best Current Practices (RFC 7519, RFC 8725 / BCP 225)** | M22 | **CURRENT** | 12–18 months | BCP guidelines on algorithm restrictions, key confusion, and claim validation require regular verification. |
-| **OAuth 2.0 Security BCP 240 (RFC 9700) & OAuth 2.1 draft** | M22 | **CURRENT** | 12–18 months | RFC 9700 (BCP 240, Jan 2025) and `draft-ietf-oauth-v2-1-16` (Sept 2026); PKCE requirements and grant deprecations. |
+| **OAuth 2.0 Security BCP 240 (RFC 9700) & OAuth 2.1 draft** | M22 | **CURRENT** | 12–18 months | RFC 9700 (BCP 240, Jan 2025, Proposed Standard) and `draft-ietf-oauth-v2-1-15` (March 2026 active WG draft); PKCE requirements and grant deprecations. |
 | **SQL Injection & Driver Parameter Separation** | M22 | **STABLE** | 24–36 months | API-level separation of code and data values is a timeless computing mechanism. |
 | **XSS Context-Aware Output Encoding** | M22 | **STABLE** | 24–36 months | Browser execution context escaping invariant remains stable. |
 | **Content Security Policy (W3C CSP Level 3)** | M22 | **CURRENT** | 12–18 months | W3C Working Draft (13 August 2026) updates and browser support for strict nonce-based CSP directives. |
@@ -716,7 +752,7 @@ In strict compliance with `meta/blueprint/lab-source-selection-map-v0.1.md` §7 
 | Source / Reference | Author / Standards Body | Version / Checked Date | Upstream License / Rights Status | Permitted Usage in Essential CS | Mandatory Attribution / Boundary Note |
 |---|---|---|---|---|---|
 | **NIST SP 800 Series (800-131A Rev 2, Rev 3 draft; 800-63B-4; 800-38D; FIPS 186-5; FIPS 202)** | NIST (US Dept. of Commerce) | SP 800-63B-4 (Final July 2025); SP 800-131A Rev 2 (Final); Rev 3 IPD (Oct 2024); checked 2026-09-07 | US Government Work (17 U.S.C. § 105; public domain in the US; foreign rights may be reserved by DOC/NIST) | Full quoting, linking, paraphrasing, and algorithmic specification derivation. | Attribute NIST publication title, document number, and date. Does not imply worldwide public domain. |
-| **IETF RFCs (RFC 2104, 5280, 6749, 7519, 8032, 8439, 8446, 8725, 9106, 9525, 9700, 9846; drafts 6265bis, oauth-v2-1)** | Internet Engineering Task Force (IETF) | RFC 9700 (BCP 240, Jan 2025); RFC 9846; draft-ietf-oauth-v2-1-16 (Sept 2026); draft-ietf-httpbis-rfc6265bis-22; checked 2026-09-07 | IETF Trust Legal Provisions (TLP 5.0) | Normative citation, linking, paraphrasing. Code Components extracted are subject to the IETF Trust Revised BSD License. | Link to official RFC Editor / Datatracker URLs; attribute authors and RFC/draft numbers. Distinguish citation from code extraction. |
+| **IETF RFCs (RFC 2104, 5280, 6749, 7519, 8032, 8439, 8446, 8725, 9106, 9525, 9700, 9846; drafts layered-cookies, oauth-v2-1)** | Internet Engineering Task Force (IETF) | RFC 9700 (BCP 240, Jan 2025); RFC 9846 (July 2026); draft-ietf-oauth-v2-1-15 (March 2026); draft-ietf-httpbis-layered-cookies-02 (May 2026); draft-ietf-httpbis-rfc6265bis-22 (expired June 2026); checked 2026-09-07 | IETF Trust Legal Provisions (TLP 5.0) | Normative citation, linking, paraphrasing. Code Components extracted are subject to the IETF Trust Revised BSD License. | Link to official RFC Editor / Datatracker URLs; attribute authors and RFC/draft numbers. Distinguish citation from code extraction. |
 | **W3C Standards (CSP Level 3, WebAppSec)** | World Wide Web Consortium (W3C) | CSP Level 3 Working Draft (13 August 2026, checked 2026-09-07) | W3C Document License | Normative citation, conceptual exposition, linking. | Cite W3C specification URL and draft date. |
 | **WHATWG Standards (HTML, Fetch, URL)** | WHATWG | Living Standards (checked 2026-09-07) | CC BY 4.0 | Normative citation, linking, paraphrasing. | Attribute WHATWG Living Standard and URL. |
 | **OWASP Top 10 & Cheat Sheet Series** | Open Worldwide Application Security Project (OWASP) | Top 10 2021 / 2025 update; Cheat Sheets (checked 2026-09-07) | CC BY-SA 4.0 | Citation, empirical industry reference, conceptual guidance. Zero mass vendoring. | Cite OWASP; adhere to CC BY-SA 4.0 attribution if text is adapted. |
@@ -862,12 +898,12 @@ All authoritative sources researched for Stage 7 were verified as of **2026-09-0
    - Status: **CURRENT / INITIAL PUBLIC DRAFT (In-progress transition context)**
    - Key Content: Proposed transition to 128-bit minimum security strength post-2030; retirement of ECB mode; alignment of asymmetric transitions with post-quantum standards.
 3. **NIST SP 800-63B-4** — *Digital Identity Guidelines: Authentication and Lifecycle Management*
-   - Author/Organization: NIST
+   - Author/Organization: NIST (P. Grassi et al.)
    - Publication Date: July 2025 (Final, supersedes SP 800-63B; checked 2026-09-07)
-   - URL: `https://csrc.nist.gov/pubs/sp/800/63/4/final`
+   - URL: `https://csrc.nist.gov/pubs/sp/800/63/b/4/final` (also `https://pages.nist.gov/800-63-4/sp800-63b.html`)
    - Status: **CURRENT / NORMATIVE GUIDELINE (Revision 4)**
    - Rights: US Government Work (17 U.S.C. § 105; foreign rights reserved).
-   - Key Content: Requirements for password hashing using salted memory-hard functions; minimum length >= 8; checking compromised credential lists; disallowance of arbitrary truncation and forced periodic rotation without cause.
+   - Key Content (§3.1.1.2 Memorized Secret Verifiers): Passwords SHALL be salted and hashed using a suitable one-way password hashing scheme; a memory-hard AND compute-hard function SHOULD be used; single-factor passwords SHALL be at least 15 characters; passwords used only as part of MFA MAY be shorter, but SHALL be at least 8 characters; salt SHALL be at least 32 bits and chosen to minimize collisions; verifiers SHALL NOT truncate passwords arbitrarily (must support at least 64 chars); checking against compromised credential lists; periodic forced rotation without evidence of compromise is explicitly discouraged.
 4. **NIST FIPS 186-5** — *Digital Signature Standard (DSS)*
    - Author/Organization: NIST
    - Publication Date: February 2023
@@ -882,13 +918,13 @@ All authoritative sources researched for Stage 7 were verified as of **2026-09-0
    - Status: **STABLE / NORMATIVE SPECIFICATION**
    - Rights: US Government Work.
    - Key Content: AEAD authenticated encryption specifications; nonce uniqueness invariants.
-6. **IETF RFC 9846** — *Deprecation of Obsolete TLS Versions and TLS 1.3 Updates*
-   - Author/Organization: IETF TLS Working Group
-   - Publication Date: Standards Track (Checked 2026-09-07)
-   - URL: `https://www.rfc-editor.org/rfc/rfc9846.html`
-   - Status: **CURRENT / NORMATIVE STANDARD**
+6. **IETF RFC 9846** — *The Transport Layer Security (TLS) Protocol Version 1.3*
+   - Author/Organization: IETF TLS Working Group (E. Rescorla)
+   - Publication Date: July 2026 (Checked 2026-09-07)
+   - URL: `https://www.rfc-editor.org/info/rfc9846` (also `https://www.rfc-editor.org/rfc/rfc9846.html`)
+   - Status: **CURRENT / STANDARDS TRACK (Proposed Standard; obsoletes RFC 8446, RFC 8996, RFC 9155)**
    - Rights: IETF Trust Legal Provisions (TLP 5.0).
-   - Key Content: TLS 1.3 protocol profiles and operational BCPs.
+   - Key Content: The normative definition of the TLS 1.3 protocol; handshake protocol, cryptographic key schedule, record layer, 0-RTT/PSK considerations, and security analysis. Formally obsoletes RFC 8446, RFC 8996, and RFC 9155.
 7. **IETF RFC 9525** — *Service Identity in TLS*
    - Author/Organization: IETF (P. Saint-Andre, J. Hodges)
    - Publication Date: November 2023
@@ -924,13 +960,13 @@ All authoritative sources researched for Stage 7 were verified as of **2026-09-0
     - Status: **CURRENT / BEST CURRENT PRACTICE (BCP 240)**
     - Rights: IETF Trust Legal Provisions (TLP 5.0).
     - Key Content: PKCE MUST for public clients, RECOMMENDED for confidential; ROPC MUST NOT; Implicit SHOULD NOT except under BCP conditions.
-12. **IETF OAuth 2.1 Draft** — *The OAuth 2.1 Authorization Framework (`draft-ietf-oauth-v2-1-16`)*
+12. **IETF OAuth 2.1 Draft** — *The OAuth 2.1 Authorization Framework (`draft-ietf-oauth-v2-1-15`)*
     - Author/Organization: IETF OAuth WG (D. Hardt, A. Parecki, T. Lodderstedt)
-    - Draft Date: September 2026 (Work in progress / Internet-Draft, checked 2026-09-07)
+    - Publication Date: 2026-03-02 (Active Work in Progress / Internet-Draft, checked 2026-09-07)
     - URL: `https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/`
-    - Status: **CURRENT PRACTICE / IN-PROGRESS INTERNET-DRAFT**
+    - Status: **CURRENT PRACTICE / IN-PROGRESS INTERNET-DRAFT (NON-FINAL)**
     - Rights: IETF Trust Legal Provisions.
-    - Key Content: Consolidation of OAuth 2.0 core and security BCPs.
+    - Key Content: Consolidation of OAuth 2.0 core (RFC 6749) and security BCPs into a single specification; mandates PKCE for authorization code grant; deprecates ROPC and implicit grants. Note: RFC 9700 (BCP 240, Jan 2025) remains the current normative OAuth 2.0 security BCP standard.
 13. **W3C Content Security Policy Level 3** — *W3C Working Draft (13 August 2026)*
     - Author/Organization: W3C WebAppSec Working Group
     - Publication Date: 13 August 2026 (Checked 2026-09-07)
@@ -938,13 +974,13 @@ All authoritative sources researched for Stage 7 were verified as of **2026-09-0
     - Status: **CURRENT / W3C WORKING DRAFT**
     - Rights: W3C Document License.
     - Key Content: Directives for script execution control, strict nonces, and object restriction.
-14. **IETF RFC 6265bis Draft** — *Cookies: HTTP State Management Mechanism (`draft-ietf-httpbis-rfc6265bis-22`)*
-    - Author/Organization: IETF HTTPbis WG (J. Yasskin, M. West)
-    - Draft Date: 13 August 2026 (Work in progress, checked 2026-09-07)
-    - URL: `https://datatracker.ietf.org/doc/draft-ietf-httpbis-rfc6265bis/`
-    - Status: **CURRENT / IN-PROGRESS INTERNET-DRAFT**
+14. **IETF HTTPbis Cookie Specifications & Drafts** — *Layered Cookies Draft (`draft-ietf-httpbis-layered-cookies-02`) & RFC 6265bis Draft (`draft-ietf-httpbis-rfc6265bis-22`)*
+    - Author/Organization: IETF HTTPbis Working Group
+    - Publication Date: `draft-ietf-httpbis-layered-cookies-02` published 2026-05-21 (active Work in Progress, checked 2026-09-07); `draft-ietf-httpbis-rfc6265bis-22` published 2025-12-01, expired 2026-06-04 (expired historical draft).
+    - URL: `https://datatracker.ietf.org/doc/draft-ietf-httpbis-layered-cookies/` and `https://datatracker.ietf.org/doc/draft-ietf-httpbis-rfc6265bis/`
+    - Status: **CURRENT / IN-PROGRESS INTERNET-DRAFT (`layered-cookies-02`) & EXPIRED HISTORICAL DRAFT (`rfc6265bis-22`)**
     - Rights: IETF Trust Legal Provisions.
-    - Key Content: SameSite cookie semantics (`Lax`, `Strict`, `None`), cookie prefixes (`__Host-`, `__Secure-`).
+    - Key Content: `draft-ietf-httpbis-layered-cookies-02` proposes a layered cookie architecture that would obsolete RFC 6265 and 6265bis if approved. Stable cookie mechanics and browser behaviors (SameSite defaulting, Secure requirement for SameSite=None, `__Host-` / `__Secure-` cookie prefixes) are grounded in the RFC 6265 baseline and WHATWG Fetch/HTML Living Standards rather than transient draft churn.
 15. **WHATWG Fetch & HTML Standards** — *Living Standards*
     - Author/Organization: WHATWG
     - Status: **CURRENT / LIVING STANDARD (checked 2026-09-07)**
@@ -997,20 +1033,20 @@ The following table records the required technical, architectural, and governanc
 | 13 | **No New Required Lab** | Lab counts remain 5/5/5; zero new Required Labs | Evaluated in §7; Recommended Candidate B evaluates embedding safe exercises in standard activities without adding a 6th Required Lab. | **PASS** |
 | 14 | **Security Safe-Target Analysis** | Completed with safe localhost recommendation | Completed in §7; Candidate B evaluated with concrete task outlines for M21 and M22. Design retains authority to accept/refine/reject. | **PASS** |
 | 15 | **No Offensive Training Escalation** | Zero penetration testing, exploit tools, or live targets | Enforced in §6: strictly defense-first, fix-and-verify evidence, no weaponized payloads or public scanning. | **PASS** |
-| 16 | **Crypto Claim Boundaries** | Authn/authz and crypto claims bounded | Detailed in §3.1.3: hashing != encryption, encryption != identity, signature != trustworthy content, non-repudiation bounded, ECDH requires auth. | **PASS** |
-| 17 | **Web Composition Bounded** | Web security claims bounded to specifications | Detailed in §3.2.3: CORS != auth, CSP != complete XSS defense, SameSite != universal CSRF proof, SSRF requires connect-time filter. | **PASS** |
-| 18 | **Password/Token/JWT Currentness** | Current specifications and BCPs reviewed | Re-audited in §3.2.2 & §15: NIST SP 800-63B-4 (Final July 2025), Argon2id (RFC 9106), JWT BCP (RFC 8725), RFC 9700 (BCP 240, Jan 2025), draft-ietf-oauth-v2-1-16 (Sept 2026). | **PASS** |
-| 19 | **Supply-Chain Currentness** | Provenance and lockfile currentness reviewed | Re-audited in §3.2.2 & §15: SLSA v1.2 (Approved; v1.0 retired), Community Specification License 1.0, Sigstore, SHA-256 lockfile integrity. | **PASS** |
+| 16 | **Crypto & PKI Claim Boundaries** | Authn/authz, PKI, and crypto claims bounded | Detailed in §3.1.2 & §3.1.3: hashing != encryption, encryption != identity, signature != trustworthy content, non-repudiation bounded, ECDH requires auth, certificate is issuer-signed binding assertion requiring path validation + RFC 9525 service identity + live private-key possession proof (e.g. TLS CertificateVerify) for peer authentication. | **PASS** |
+| 17 | **Web Composition Bounded** | Web security claims bounded to specifications | Detailed in §3.2.2 & §3.2.3: CORS != auth, CSP != complete XSS defense, SameSite != universal CSRF proof, SSRF requires destination policy + address resolution validation + socket connection binding, structured formats (JSON/Protobuf) avoid pickle gadgets but require schema/depth validation. | **PASS** |
+| 18 | **Password/Token/JWT Currentness** | Current specifications and BCPs reviewed | Re-audited in §3.2.2 & §15: NIST SP 800-63B-4 §3.1.1.2 (Final July 2025: salted/hashed SHALL, memory-hard SHOULD, single-factor ≥15 chars SHALL, MFA-only ≥8 chars SHALL, salt ≥32 bits SHALL), Argon2id (RFC 9106), JWT BCP (RFC 8725), RFC 9700 (BCP 240, Jan 2025), draft-ietf-oauth-v2-1-15 (March 2026, active WG draft). | **PASS** |
+| 19 | **Supply-Chain Currentness** | Provenance and lockfile currentness reviewed | Re-audited in §3.2.2, §3.2.3 & §15: SLSA v1.2 (Approved; v1.0 retired), Community Specification License 1.0, Sigstore; bounded definitions separating dependency pinning, artifact digests, reproducibility, signature verification, and provenance attestations. | **PASS** |
 | 20 | **M23 Measurement Boundaries** | Question-driven measurement methodology researched | Researched in §3.3.2: question-driven design, open vs closed models, coordinated omission, mechanism-driven warm-up, monotonic clock requirement. | **PASS** |
-| 21 | **D-015 Framework Preserved** | 12-dimension Technology Evaluation Framework intact | Formulated in §3.3.3; explicit recognition of technology rejection as a passing outcome; Redis analyzed as named CURRENT case with bounded principle (§3.3.4). | **PASS** |
+| 21 | **D-015 Framework Preserved** | 12-dimension Technology Evaluation Framework intact | Formulated in §3.3.3; explicit recognition of technology rejection as a passing outcome; off-path and in-memory architectural trade-offs analyzed as bounded stable principle (§3.3.4). | **PASS** |
 | 22 | **AI Claim Handling Policy** | AI outputs treated as untrusted hypotheses | Formulated in §3.3.5; satisfies 2026 literacy while leaving OQ-BP-001 OPEN without creating an AI module. | **PASS** |
 | 23 | **M24 Assessment Scope** | M24 is integration/assessment, not new mechanism | Established in §3.4: capstone defense connects evidence to claims across the 8 competencies; candidate research dimensions outlined. | **PASS** |
 | 24 | **Rights & Licensing Recorded** | Truthful licenses recorded for all external sources | Re-audited in §8: NIST (17 U.S.C. § 105; foreign rights reserved), IETF Trust (TLP 5.0 Revised BSD for code components), W3C, WHATWG, OWASP (CC BY-SA), SLSA (Community Specification License 1.0), PyCA `cryptography` (Apache-2.0/BSD), Passlib (BSD-3-Clause), argon2-cffi (MIT). | **PASS** |
-| 25 | **STABLE/CURRENT/FRONTIER Classified** | Fast-drifting claims explicitly categorized | Complete classification matrix provided in §5 in accordance with D-013. | **PASS** |
+| 25 | **STABLE/CURRENT/FRONTIER Classified** | Fast-drifting claims explicitly categorized | Complete classification matrix provided in §5 in accordance with D-013, incorporating verified current statuses: RFC 9846 (TLS 1.3 Proposed Standard, July 2026), draft-ietf-oauth-v2-1-15 (March 2026 active draft), draft-ietf-httpbis-layered-cookies-02 (May 2026 active drift). | **PASS** |
 | 26 | **Open Questions Preserved** | OQ-BP-001, OQ-BP-003, OQ-BP-006 remain OPEN | Formally recorded as OPEN in §13; zero unauthorized resolution. | **PASS** |
 | 27 | **Issue #34 Deferred** | Real learner validation remains DEFERRED per D-027 | Confirmed in §13; authoring authorized to proceed build-first. | **PASS** |
 | 28 | **Zero Unrelated Churn** | S1–S6 governance and historical files untouched | `git status` confirms zero modifications to existing S1–S6 files. | **PASS** |
-| 29 | **Source Index Recorded** | Complete source citations with dates and status | Comprehensive index of 20 standards and canonical sources with exact currentness dates and revisions provided in §15. | **PASS** |
+| 29 | **Source Index Recorded** | Complete source citations with dates and status | Comprehensive index of 20 standards and canonical sources with exact currentness dates, authoritative titles, and formal statuses provided in §15 (including RFC 9846 official title, NIST SP 800-63B-4 §3.1.1.2 URL, draft-ietf-oauth-v2-1-15, layered-cookies-02). | **PASS** |
 | 30 | **Git Diff Check** | `git diff --check` passes cleanly with zero whitespace issues | Verified via command line execution (code 0). | **PASS** |
 
 ---
