@@ -97,7 +97,7 @@ Learner Validation is deferred during authoring but remains mandatory before v1.
 
 ## Current priority
 
-1. **S7-B1 / M21 implementation is next.** Implement only L21-01 “Where are the boundaries I must protect?” and L21-02 “What do I use crypto for?” plus the accepted course-owned M21 activities/evidence/preflight surface.
+1. **Formal active task: Issue #116 — S7-B1 M21 Trust Boundaries & Crypto Use learner packet v0.1.** Implement only L21-01 “Where are the boundaries I must protect?” and L21-02 “What do I use crypto for?” plus the accepted course-owned M21 activities/evidence/preflight surface.
 2. Preserve M21 Module entry exactly: Hard M11 + M07 + M12; Soft M09. Lesson refinement remains L21-01 ← L11-01/L07-01/L12-03 and L21-02 ← L21-01; no new hard edges.
 3. Preserve canonical primary competencies exactly: L21-01 = Judge, Explain, Diagnose; L21-02 = Explain, Judge, Learn-New-Tech.
 4. Preserve Concept first homes: EC-CON-017 Trust Boundary and EC-CON-013 Isolation remain M07/L07-01; M21 only revisits/synthesizes. No new Concept IDs.
