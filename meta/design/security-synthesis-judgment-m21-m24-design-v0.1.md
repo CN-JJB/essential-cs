@@ -700,7 +700,7 @@ Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-ma
 Never concatenate untrusted input into an interpreter stream. Maintain strict structural separation between code instructions and user data at every architectural layer.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** SQL ISO/IEC 9075, W3C Content Security Policy Level 3 (Working Draft 29 July 2026; active working draft), WHATWG HTML / Fetch Living Standards, RFC 6265bis / `draft-ietf-httpbis-layered-cookies-02` (May 2026 active Internet-Draft).
+- **Specification:** SQL ISO/IEC 9075, W3C Content Security Policy Level 3 (Working Draft 29 July 2026; active working draft), WHATWG HTML / Fetch Living Standards, and `draft-ietf-httpbis-layered-cookies-02` (21 May 2026 active Internet-Draft; current successor work that says it would obsolete RFC 6265 and 6265bis if approved).
 - **Implementation:** Python `sqlite3` parameterized queries (`?`), Jinja2 autoescaping, HTTP response headers (`Content-Security-Policy`, `Set-Cookie: SameSite=Lax; Secure; HttpOnly`).
 - **Current Practice:** Nonce-based CSP (`'strict-dynamic'`), automated static analysis (SAST), ORM parameterized abstractions, defense against DNS rebinding via post-resolution socket connection inspection.
 
@@ -749,7 +749,7 @@ Learners run `labs/foundations/m22/activity_l22_02.py`, hosting an ephemeral loc
 - **Full Explanation:** If the DNS record has a TTL of 0, the operating system or HTTP library will perform a second DNS resolution when establishing the actual socket connection. To prevent DNS rebinding, the application must resolve DNS once, validate the resulting IP against an IP blocklist, and open the socket directly to that validated IP address, passing the original domain name only in the HTTP `Host` header and TLS SNI.
 
 ### 14. Required Visuals
-- *Visual M22-V3:* Code vs. Data: AST Parsing Boundary in SQL Queries.
+- *Visual M22-V3:* Code vs. Data: Parameterized API / Driver Boundary in SQL Queries.
 - *Visual M22-V4:* Browser Vulnerabilities & Defensive Boundaries (XSS, CSRF, SSRF).
 
 ### 15. Failure Modes
@@ -766,7 +766,7 @@ Learners run `labs/foundations/m22/activity_l22_02.py`, hosting an ephemeral loc
 
 ### 18. Source Grounding with Currentness Classification
 - **W3C Content Security Policy Level 3:** CURRENT / FRONTIER (Working Draft 29 July 2026; active working draft). Modern nonce-based script execution.
-- **draft-ietf-httpbis-layered-cookies-02 / RFC 6265bis:** CURRENT / FRONTIER (active Internet-Draft, May 2026). SameSite cookie semantics (`Strict`, `Lax`, `None`) and layered cookie boundaries limiting ambient authority; distinguishes draft churn from stable browser mechanisms.
+- **draft-ietf-httpbis-layered-cookies-02:** CURRENT / FRONTIER (active Internet-Draft, 21 May 2026). Current HTTPbis successor work for cookie semantics and layered cookie boundaries; it states that it would obsolete RFC 6265 and 6265bis if approved. Treat it as Work in Progress and keep stable browser-security mechanisms separate from draft churn.
 - **OWASP Top 10 (2021/2025):** STABLE / CURRENT. Injection, Broken Access Control, SSRF taxonomy.
 
 ---
