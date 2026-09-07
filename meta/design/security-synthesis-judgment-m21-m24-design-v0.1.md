@@ -124,7 +124,7 @@ The architectural design incorporates all validated findings from `research/secu
    - Exact redirect URI string matching is mandatory.
 
 5. **W3C Content Security Policy Level 3 Baseline (Adopted):**
-   Adopted W3C CSP3 (Working Draft 13 August 2026):
+   Adopted W3C CSP3 (Working Draft 29 July 2026):
    - Modern CSP deployment centers on nonce-based policies (`'nonce-{random}'`) and strict-dynamic (`'strict-dynamic'`) for script execution, rather than brittle domain allowlists.
 
 6. **SLSA v1.2 Supply Chain Security Baseline (Adopted):**
@@ -602,7 +602,7 @@ Never confuse possessing a credential with possessing authority. Every protected
 
 ### 8. Required Distinctions / Misconceptions
 - *Misconception:* Hashing a password with SHA-256 makes it secure for storage.
-  *Reality:* SHA-256 is an unkeyed fast hash designed for high-throughput data integrity. Massively parallel GPU/ASIC hardware can compute billions of candidate hashes per second in offline dictionary attacks. Passwords require unique salts (>= 32 bits to minimize collisions) and tunable slow functions: compute-hard functions (such as PBKDF2 per SP 800-132) to force repeated computation, or memory-hard functions (such as Argon2id per RFC 9106) to resist ASIC/GPU parallelization.
+  *Reality:* SHA-256 is an unkeyed fast hash designed for high-throughput data integrity. Massively parallel GPU/ASIC hardware can evaluate fast hashes at high rates; the exact rate depends on the algorithm, implementation, hardware, and date. Password verifiers require salts (>= 32 bits and chosen to minimize collisions under the current NIST baseline) and tunable slow functions: compute-hard functions such as PBKDF2 per SP 800-132, or memory-hard current-practice candidates such as Argon2id per RFC 9106.
 - *Misconception:* PBKDF2 is a memory-hard password hashing function.
   *Reality:* PBKDF2 is compute-hard (iteration-hard), but requires minimal memory, allowing parallelized ASIC implementation. True memory-hard functions (Argon2id per RFC 9106, scrypt per RFC 7914) require significant RAM per evaluation, resisting hardware acceleration.
 - *Misconception:* A valid JWT signature proves the token was issued by a trusted IdP and that the user is authorized.
@@ -700,7 +700,7 @@ Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-ma
 Never concatenate untrusted input into an interpreter stream. Maintain strict structural separation between code instructions and user data at every architectural layer.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** SQL ISO/IEC 9075, W3C Content Security Policy Level 3 (Working Draft 13 August 2026; active working draft), WHATWG HTML / Fetch Living Standards, RFC 6265bis / `draft-ietf-httpbis-layered-cookies-02` (May 2026 active Internet-Draft).
+- **Specification:** SQL ISO/IEC 9075, W3C Content Security Policy Level 3 (Working Draft 29 July 2026; active working draft), WHATWG HTML / Fetch Living Standards, RFC 6265bis / `draft-ietf-httpbis-layered-cookies-02` (May 2026 active Internet-Draft).
 - **Implementation:** Python `sqlite3` parameterized queries (`?`), Jinja2 autoescaping, HTTP response headers (`Content-Security-Policy`, `Set-Cookie: SameSite=Lax; Secure; HttpOnly`).
 - **Current Practice:** Nonce-based CSP (`'strict-dynamic'`), automated static analysis (SAST), ORM parameterized abstractions, defense against DNS rebinding via post-resolution socket connection inspection.
 
@@ -765,7 +765,7 @@ Learners run `labs/foundations/m22/activity_l22_02.py`, hosting an ephemeral loc
 - Reviewer-Required: Inspection of learner's architectural description of SSRF DNS rebinding defense.
 
 ### 18. Source Grounding with Currentness Classification
-- **W3C Content Security Policy Level 3:** CURRENT / FRONTIER (Working Draft 13 August 2026; active working draft). Modern nonce-based script execution.
+- **W3C Content Security Policy Level 3:** CURRENT / FRONTIER (Working Draft 29 July 2026; active working draft). Modern nonce-based script execution.
 - **draft-ietf-httpbis-layered-cookies-02 / RFC 6265bis:** CURRENT / FRONTIER (active Internet-Draft, May 2026). SameSite cookie semantics (`Strict`, `Lax`, `None`) and layered cookie boundaries limiting ambient authority; distinguishes draft churn from stable browser mechanisms.
 - **OWASP Top 10 (2021/2025):** STABLE / CURRENT. Injection, Broken Access Control, SSRF taxonomy.
 
@@ -1403,14 +1403,14 @@ If you do not have an explicit failure recovery or deployment compatibility stra
 Learners evaluate a pre-ship verification plan using explicit scenario-card parameters (numbers represent scenario-specific targets, not universal course rules):
 - *Scenario Card Context:* Internal document-indexing service release (target throughput 500 req/s, single database instance).
 - *Must Measure (Scenario Card Targets):* Latency distribution under simulated steady-state arrival load (scenario target: p95 < 150 ms under 500 req/s open arrival); process RSS memory growth during a 30-minute test run to verify bounded memory usage.
-- *Must Test:* Automated regression suite (100% pass on document parsing and access control invariants); idempotent retry handling on client disconnect.
+- *Must Test:* Automated regression suite with all mandatory document-parsing and access-control invariant gates passing; idempotent retry handling on client disconnect.
 - *Must Inspect:* Credential handling (environment variables vs. committed secrets); structured error response sanitization (preventing stack trace leakage to clients).
 - *Acceptable Unknown:* System behavior under an unannounced multi-hour cloud zone network partition (explicitly documented as an unmitigated operational risk outside current project scope).
 - *Deployment Compatibility Strategy:* Analyze migration trade-offs: if a column addition is backward-compatible (nullable), a rollback to previous code is safe; if a migration is destructive, a roll-forward or snapshot recovery strategy is required, with stated data-loss bounds.
 
 ### 10. Bounded Hands-On / Observation
 Learners execute a pre-ship verification audit against their Mini Cloud App:
-1. Run automated test suites (`test_m21.py`, `test_m22.py`, `test_m23.py`, `test_m24.py`) ensuring 100% pass on core invariant gates.
+1. Run the applicable automated test suites and require every mandatory core invariant gate in the selected scenario to pass.
 2. Verify observability and error-handling readiness: simulate a missing database or unresponsive loopback port and verify that structured error logs with context are emitted.
 3. Audit the database schema migration plan for the project's actual database (e.g., SQLite table alter or schema version bump), verifying whether the planned change is backward-compatible and documenting the rollback or recovery procedure.
 
@@ -1762,8 +1762,8 @@ Learner App (Client)          Browser / User             Authorization Server (I
        │◄───────────────────────────── 6. Return access token ──────│
 ```
 
-#### Visual M22-V3: Code vs. Data: AST Parsing Boundary in SQL Queries
-- **Purpose:** Contrast vulnerable string concatenation with structural AST separation in parameterized queries.
+#### Visual M22-V3: Code vs. Data: Parameterized API / Driver Boundary in SQL Queries
+- **Purpose:** Contrast vulnerable SQL string construction with the parameterized API/driver contract that keeps value data separate from SQL syntax; exact parser/bytecode mechanics remain engine-specific.
 - **Layout Blueprint:**
 ```
 CONCATENATION:
@@ -1944,8 +1944,8 @@ All normative claims in Stage 7 are grounded in authoritative technical specific
 | **RFC 9525** | Standards Track | **November 2023** | Proposed Standard (Obsoletes RFC 6125) | 2026-09-07 | Service identity verification in TLS; MUST check SAN, MUST NOT use CN fallback. | Does not validate application-layer authorization policies. | **STABLE / CURRENT** | IETF TLP Section 4/5; Code Components under BSD 3-Clause. |
 | **RFC 9700 / BCP 240** | Best Current Practice 240 | January 2025 | IETF Best Current Practice | 2026-09-07 | OAuth 2.0 Security BCP: PKCE MUST for public, RECOMMENDED for confidential; ROPC MUST NOT; Implicit Grant SHOULD NOT; exact redirect matching. | Does not define identity assertion schemas (handled by OpenID Connect). | **CURRENT** | IETF TLP Section 4/5; Code Components under BSD 3-Clause. |
 | **draft-ietf-oauth-v2-1-15** | Working Group Draft | March 2026 | Active Internet-Draft | 2026-09-07 | Consolidated OAuth 2.1 authorization framework incorporating BCP 240; removes Implicit Grant. | Draft status; subject to minor text revisions before final RFC publication. | **CURRENT / FRONTIER** | IETF Trust copyright under TLP. |
-| **draft-ietf-httpbis-layered-cookies-02** | Internet-Draft (Revision 02) | **12 May 2026** | Active Internet-Draft (IETF HTTPbis WG) | 2026-09-07 | SameSite cookie semantics (`Strict`, `Lax`, `None`), cookie prefixes (`__Host-`, `__Secure-`), and layered cookie architecture bounding ambient authority. | Active draft subject to revision and draft churn; does not replace CSRF tokens or transport security; browser implementations vary. | **CURRENT / FRONTIER** | IETF Trust Legal Provisions (TLP) Section 4/5; Code Components under BSD 3-Clause. |
-| **W3C CSP Level 3** | Working Draft | 13 August 2026 | W3C Working Draft (Active Current Source) | 2026-09-07 | Nonce-based Content Security Policy (`'strict-dynamic'`) for script execution. | Does not prevent server-side template injection or DOM clobbering; working draft subject to ongoing refinement. | **CURRENT / FRONTIER** | W3C Document License; freely citeable. |
+| **draft-ietf-httpbis-layered-cookies-02** | Internet-Draft (Revision 02) | **21 May 2026** | Active Internet-Draft (IETF HTTPbis WG) | 2026-09-07 | SameSite cookie semantics (`Strict`, `Lax`, `None`), cookie prefixes (`__Host-`, `__Secure-`), and layered cookie architecture bounding ambient authority. | Active draft subject to revision and draft churn; does not replace CSRF tokens or transport security; browser implementations vary. | **CURRENT / FRONTIER** | IETF Trust Legal Provisions (TLP) Section 4/5; Code Components under BSD 3-Clause. |
+| **W3C CSP Level 3** | Working Draft | 29 July 2026 | W3C Working Draft (Active Current Source) | 2026-09-07 | Nonce-based Content Security Policy (`'strict-dynamic'`) for script execution. | Does not prevent server-side template injection or DOM clobbering; working draft subject to ongoing refinement. | **CURRENT / FRONTIER** | W3C Document License; freely citeable. |
 | **RFC 9106** | Informational | September 2021 | IETF Informational (Argon2) | 2026-09-07 | Memory-hard password hashing algorithm (Argon2id). | Does not replace transport encryption or database security. | **STABLE** | RFC Editor / IETF TLP Section 4/5. |
 | **OpenSSF SLSA v1.2** | Specification v1.2 | **24 November 2025** | Approved (v1.0 retired) | 2026-09-07 | Supply chain levels for software artifacts; verifiable build provenance attestations. | Does not guarantee that source code is free of developer-authored bugs. | **CURRENT** | Community Specification License 1.0; open attribution. |
 | **PyCA cryptography** | v50.0.1 (candidate) | August 25, 2026 | Production Python Package | 2026-09-07 | Candidate reference Python cryptographic library with capability detection. | Package is an optional candidate enhancement; not required for Required Core baseline pass. | **CURRENT** | Dual-licensed Apache 2.0 / BSD 3-Clause. |
@@ -2114,7 +2114,7 @@ Every gate required by the Issue #114 Task Contract has been audited and evaluat
 | **28** | M24 evidence→claim on actual system / changed constraints | **PASS** | Sections 21, 22, 23, 27.4 ground defense on learner's actual system (no fabricated Raft/consensus); scenario cards conditional on architecture; parameterized API contracts replace AST mandates; rollback / roll-forward / migration reversal / canary treated as conditional strategies; stated data-loss bounds. |
 | **29** | Design owns final assessment contract but no universal scoring formula | **PASS** | Section 23 establishes the binary criteria-gated assessment rubric; rejects point formulas. |
 | **30** | STABLE/CURRENT/FRONTIER classification | **PASS** | Section 28 classifies every source into STABLE, CURRENT, or FRONTIER. |
-| **31** | Exact current source revisions/dates/statuses recorded | **PASS** | Section 28.1 records exact dates and statuses: NIST SP 800-63B-4 July 2025 Final; NIST SP 800-132 Dec 2010 Final (revision planned); FIPS 198-1 July 2008 Final (supersedes March 2002 FIPS 198; NIST withdrawal proposal 23 June 2025); NIST SP 800-224 Initial Public Draft 28 June 2024; RFC 9846 July 2026; RFC 9525 Nov 2023; RFC 9700 Jan 2025; draft-ietf-oauth-v2-1-15 March 2026; draft-ietf-httpbis-layered-cookies-02 May 2026; W3C CSP3 Working Draft 13 August 2026; RFC 9106 Sept 2021; SLSA v1.2 24 Nov 2025. |
+| **31** | Exact current source revisions/dates/statuses recorded | **PASS** | Section 28.1 records exact dates and statuses: NIST SP 800-63B-4 July 2025 Final; NIST SP 800-132 Dec 2010 Final (revision planned); FIPS 198-1 July 2008 Final (supersedes March 2002 FIPS 198; NIST withdrawal proposal 23 June 2025); NIST SP 800-224 Initial Public Draft 28 June 2024; RFC 9846 July 2026; RFC 9525 Nov 2023; RFC 9700 Jan 2025; draft-ietf-oauth-v2-1-15 March 2026; draft-ietf-httpbis-layered-cookies-02 21 May 2026; W3C CSP3 Working Draft 29 July 2026; RFC 9106 Sept 2021; SLSA v1.2 24 Nov 2025. |
 | **32** | Rights/license/provenance recorded | **PASS** | Section 28.1 records rights under IETF TLP Section 4/5 (Code Components under BSD 3-Clause), US Gov works not subject to US copyright protection with foreign rights preserved per D-016 (unqualified worldwide public domain eliminated), W3C Document License, Community Specification License 1.0 (SLSA), and PyCA dual Apache-2.0/BSD-3-Clause. |
 | **33** | OQ-BP-001/003/006 remain OPEN in substance | **PASS** | Section 24 and 32.2 specify runtime capabilities, configurable policy inputs, and candidate packages with capability detection, removing frozen constants or versions. |
 | **34** | Issue #34 remains OPEN / DEFERRED / NON-BLOCKING | **PASS** | Section 32.2 preserves Issue #34 as non-blocking per Decision D-027. |
