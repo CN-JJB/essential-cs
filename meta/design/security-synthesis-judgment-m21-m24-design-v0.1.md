@@ -79,15 +79,15 @@ The 10 canonical lessons of Stage 7, their direct predecessor links, and their d
 | Module | Lesson ID | Lesson Title / Driving Learner Question | Direct Predecessor Lessons | Core Pedagogical Focus |
 |---|---|---|---|---|
 | **M21** | `L21-01` | Where are the boundaries I must protect? | `L11-01` (TLS/HTTP), `L07-01` (Isolation), `L12-03` (Same-Origin) | Attack surfaces, threat modeling (STRIDE/dataflow), least privilege, ambient authority vs capability, system boundary inventory. |
-| **M21** | `L21-02` | What do I use crypto for? | `L21-01` | Cryptographic primitives (Hash, MAC, Digital Signature, AEAD), key lifecycle, salt/nonce invariants, password hashing (NIST SP 800-63B-4), PKI 6-layer model. Strictly crypto use, no primitive implementation. |
-| **M22** | `L22-01` | How do I know who is calling? | `L21-02`, `L11-02` (HTTP Protocol) | Authn vs Authz, credentials vs identities, sessions vs bearer tokens, RBAC vs ABAC vs capability models, token validation invariants, OAuth 2.1 & OIDC architecture (RFC 9700). |
-| **M22** | `L22-02` | Why is my web app vulnerable? | `L22-01`, `L12-03` (Browser Execution) | Code vs data injection (SQL, OS), context-aware escaping, XSS taxonomy & CSP Level 3, CSRF mechanics & defense (SameSite, tokens, Origin), SSRF anatomy & egress socket binding. |
-| **M22** | `L22-03` | Why do I trust my dependencies? | `L22-02` | Software supply chain risks, dependency trees, typosquatting & malicious updates, 6-layer supply-chain separation (pinning, digests, reproducibility, signatures, identity, SLSA v1.2 provenance). |
-| **M23** | `L23-01` | How do I measure honestly? | `L20-01` (Observability), `L04-02` (Empirical Measurement) | Question-driven measurement, workload models (open vs closed), coordinated omission, warm-up criteria, distribution reporting (percentiles, median/IQR), monotonic clocks. |
+| **M21** | `L21-02` | What do I use crypto for? | `L21-01` | Cryptographic primitives (Hash, MAC, Digital Signature, AEAD), symmetric vs asymmetric roles, key lifecycles, salt/nonce invariants, why plain fast hashes fail as password verifiers, PKI 6-layer model. Strictly crypto use, no primitive implementation. |
+| **M22** | `L22-01` | How do I know who is calling? | `L21-02`, `L11-02` (HTTP Protocol) | Authn vs Authz, credentials vs identities, password hashing & verifiers (NIST SP 800-63B-4, RFC 9106, compute-hard PBKDF2), sessions vs bearer tokens, TeachingProfile-BearerV1 validation invariants, out-of-band token invalidation, OAuth 2.1 & OIDC architecture (RFC 9700 BCP). |
+| **M22** | `L22-02` | Why is my web app vulnerable? | `L22-01`, `L12-03` (Browser Execution) | Code vs data injection (SQL, OS), parameterized API/driver contract, context-aware escaping, XSS taxonomy & CSP Level 3, CSRF mechanics & scenario-specific defense, SSRF anatomy & egress socket binding. |
+| **M22** | `L22-03` | Why do I trust my dependencies? | `L22-02` | Software supply chain risks, dependency trees, typosquatting & malicious updates, 9-layer supply-chain separation (pinning, digest ownership, fetched-byte integrity, reproducibility, signatures, identity, SLSA v1.2 provenance). |
+| **M23** | `L23-01` | How do I measure honestly? | `L20-01` (Observability), `L04-02` (Empirical Measurement) | Question-driven measurement, workload models (open vs closed), coordinated omission, warm-up criteria, distribution reporting (percentiles, median/IQR, mean/std when appropriate), monotonic clocks. |
 | **M23** | `L23-02` | How do I pick a technology? | `L23-01` | Decision D-015 12 dimensions, evaluating vendor claims, technology rejection as passing outcome, bounded stable trade-offs (caching/Redis case), AI outputs as untrusted hypotheses. |
 | **M23** | `L23-03` | What is the cost of my design? | `L23-02` | Systems cost modeling, compute/storage/memory/egress scaling, Fermi back-of-the-envelope estimation, latency vs dollar trade-offs, bottleneck identification & sensitivity analysis. |
-| **M24** | `L24-01` | Can I defend an architecture? | `L23-02` | Capstone architecture defense, 16 core architectural traces, 12 evidence areas, structured defense template, handling changed-constraint challenges, trade-off justification. |
-| **M24** | `L24-02` | What should I measure before I ship? | `L24-01` | Pre-ship evidence planning, risk-prioritized verification matrix, defining what must be measured vs tested vs inspected vs explicit unknown, failure & rollback readiness. |
+| **M24** | `L24-01` | Can I defend an architecture? | `L23-02` | Capstone architecture defense conditional on actual system, 16 core architectural traces, 12 evidence areas, structured defense template, handling changed-constraint challenges, trade-off justification. |
+| **M24** | `L24-02` | What should I measure before I ship? | `L24-01` | Pre-ship evidence planning, risk-prioritized verification matrix, defining what must be measured vs tested vs inspected vs explicit unknown, failure & rollback readiness with scenario cards. |
 
 ---
 
@@ -95,36 +95,40 @@ The 10 canonical lessons of Stage 7, their direct predecessor links, and their d
 
 ### 3.1 Adopted Research Findings
 
-The architectural design incorporates all validated findings from `research/security-synthesis-judgment-m21-m24-v0.1.md`:
+The architectural design incorporates all validated findings from `research/security-synthesis-judgment-m21-m24-v0.1.md` with strict normative grounding:
 
 1. **NIST SP 800-63B-4 Password Storage Standard (Adopted):**
-   Adopted the July 2025 Final recommendations:
-   - Passwords SHALL be salted with a salt of at least 32 bits (4 bytes) and hashed using an approved one-way function.
-   - Passwords SHOULD be hashed using a memory-hard function (Argon2id per RFC 9106, scrypt per RFC 7914, or PBKDF2 per RFC 8018 / SP 800-132).
+   Adopted the July 2025 Final recommendations with strict adherence to normative keyword levels:
+   - Passwords SHALL be salted with an unguessable salt of at least 32 bits (4 bytes, generated via a cryptographically secure random source) and hashed using an approved one-way function.
+   - Passwords SHOULD be hashed using a memory-hard function (Argon2id per RFC 9106, scrypt per RFC 7914). Note: PBKDF2 (RFC 8018 / SP 800-132) is compute-hard / time-hard, **NOT memory-hard**.
    - Minimum length requirements: Single-factor passwords SHALL be at least 15 characters; MFA-backed passwords MAY be shorter but SHALL be at least 8 characters. Truncation is forbidden; maximum length SHALL be at least 64 characters.
    - Traditional composition rules (mandatory uppercase, lowercase, numbers, symbols) and periodic forced password rotation are discarded as counter-productive.
+   - Normative separation: Design maintains clear boundaries between the NIST baseline (normative SHALL/SHOULD requirements), RFC 9106 algorithm specifications, time-sensitive OWASP point-in-time practice recommendations, and library default settings. Iteration counts and memory costs are treated as configurable policy inputs with environment/cost rationale, removing any frozen universal design constant (e.g., 600,000 iterations).
 
 2. **RFC 9846 TLS 1.3 Standards Track (Adopted):**
-   Adopted RFC 9846 (published July 2026, Standards Track Proposed Standard), which obsoletes RFC 8446, 5246, 5077, 6961, 7627, and 8422. It codifies TLS 1.3 as the definitive modern secure channel, incorporating mandatory forward secrecy, removal of broken static RSA key exchange and obsolete ciphers, encrypted handshakes, and strict certificate validation.
+   Adopted RFC 9846 (published July 2026, Standards Track Proposed Standard), which obsoletes six RFCs (RFC 5077, RFC 5246, RFC 6961, RFC 7627, RFC 8422, and RFC 8446) and updates two RFCs (RFC 5705 and RFC 6066). It codifies TLS 1.3 as the modern secure channel:
+   - Forward secrecy is scoped strictly to asymmetric key exchange modes (DHE / ECDHE) and PSK with (EC)DHE (`psk_dhe_ke`); PSK-only mode (`psk_ke`) does **not** provide forward secrecy, and 0-RTT early data does not provide general forward secrecy.
+   - Removal of static RSA key exchange and obsolete ciphers, encrypted handshakes, and AEAD-only ciphersuites.
+   - Strict certificate path validation when certificates are used (distinguishing certificate-based handshakes from pre-shared key handshakes).
 
 3. **RFC 9525 Service Identity Verification (Adopted):**
-   Adopted RFC 9525 (published May 2024), establishing that TLS service identity validation MUST check Subject Alternative Names (`SAN: dNSName` or `SAN: iPAddress`) and MUST NOT fall back to Common Name (`CN`) in the Subject field.
+   Adopted RFC 9525 (published **November 2023**, Standards Track Proposed Standard, obsoletes RFC 6125), establishing that TLS service identity validation MUST check Subject Alternative Names (`SAN: dNSName` or `SAN: iPAddress`) and MUST NOT fall back to Common Name (`CN`) in the Subject field.
 
 4. **RFC 9700 / BCP 240 & OAuth 2.1 Specification Baseline (Adopted):**
    Adopted RFC 9700 (Best Current Practice 240, published January 2025) and `draft-ietf-oauth-v2-1-15` (March 2026 active Working Group draft):
    - PKCE (Proof Key for Code Exchange, RFC 7636) is a MUST for public clients and RECOMMENDED for confidential clients.
    - Resource Owner Password Credentials Grant (ROPC) is deprecated and MUST NOT be used.
-   - Implicit Grant is deprecated and MUST NOT be used.
-   - Redirect URI exact string matching is mandatory.
+   - Clients **SHOULD NOT** use the Implicit Grant except under the specific mitigation conditions outlined in BCP 240. (This preserves the exact BCP normative strength, distinguishing it from the draft OAuth 2.1 specification which completely omits the Implicit Grant).
+   - Exact redirect URI string matching is mandatory.
 
 5. **W3C Content Security Policy Level 3 Baseline (Adopted):**
    Adopted W3C CSP3 (Working Draft 13 August 2026):
    - Modern CSP deployment centers on nonce-based policies (`'nonce-{random}'`) and strict-dynamic (`'strict-dynamic'`) for script execution, rather than brittle domain allowlists.
 
 6. **SLSA v1.2 Supply Chain Security Baseline (Adopted):**
-   Adopted OpenSSF SLSA v1.2 specification (Approved, September 2024; v1.0 retired), establishing verifiable build provenance, tamper-evident signing, and the separation of source, build, and distribution integrity.
+   Adopted OpenSSF SLSA v1.2 specification (Approved, **24 November 2025**; v1.0 retired), establishing verifiable build provenance, tamper-evident signing, and the separation of source, build, and distribution integrity.
 
-7. **Six-Layer Separation Models (Adopted):**
+7. **Multi-Layer Separation Models (Adopted):**
    - **PKI Architecture:** Explicitly separated into 6 distinct conceptual layers:
      1. *Certificate Credential* (data structure holding public key and subject metadata);
      2. *Path Validation* (cryptographic verification of certificate chain against trust roots per RFC 5280);
@@ -132,13 +136,17 @@ The architectural design incorporates all validated findings from `research/secu
      4. *Proof of Private-Key Possession* (cryptographic challenge-response in TLS handshake proving possession of the private key);
      5. *Authentication* (determining the confirmed identity of the endpoint);
      6. *Authorization* (determining whether the confirmed identity has permission to perform the requested operation).
-   - **Software Supply Chain:** Explicitly separated into 6 distinct integrity layers:
-     1. *Version Pinning* (specifying semantic versions);
-     2. *Cryptographic Hash Pinning* (pinning exact artifact byte hashes);
-     3. *Build Reproducibility* (verifying independent byte-for-byte build outputs);
-     4. *Signature Verification* (verifying cryptographic signatures over packages);
-     5. *Signer Identity Binding* (binding cryptographic keys to authorized human or service identities);
-     6. *Provenance Attestation* (verifying authenticated build records under SLSA v1.2).
+   - **Software Supply Chain:** Explicitly separated into 9 distinct integrity layers:
+     1. *Resolution Pinning* (freezing dependency graph version ranges);
+     2. *Expected Digest Ownership* (governing and storing trusted hashes in course or project lockfiles);
+     3. *Fetched-Byte Integrity* (verifying downloaded payload hashes against trusted expected digests);
+     4. *Signing Key Verification* (verifying cryptographic signatures over package archives);
+     5. *Signer Identity Binding* (binding signing keys to authorized maintainer identities);
+     6. *Build/Source Provenance* (recording the exact repository commit and builder identity);
+     7. *Attestation Predicate* (evaluating the structured SLSA provenance attestation);
+     8. *Trusted Builder* (evaluating the isolation and integrity of the build platform);
+     9. *Verifier Policy* (determining whether an artifact meets deployment release gates).
+     *Critical Boundary:* A cryptographic hash only detects mismatch against a trusted expected digest. If the expected digest or lockfile itself is maliciously modified, hash checking does not prevent package substitution.
 
 ### 3.2 Rejected Claims & Universal Truth Traps
 
@@ -148,7 +156,7 @@ This design formally rejects the following oversimplifications, false equivalenc
    HTTPS provides confidentiality and integrity for data in transit across network hops. It provides zero protection against application-layer injection (SQLi), cross-site scripting (XSS), cross-site request forgery (CSRF), broken object-level authorization (BOLA), server-side request forgery (SSRF), or compromised server-side databases.
 
 2. **"Encryption and Hashing are interchangeable" (Rejected):**
-   Encryption is a two-way transform intended to preserve confidentiality with reversible recovery via a secret key. Hashing is a one-way irreversible compression function intended to produce a fixed-size digest for integrity verification or password verification. Confusing them leads to fatal vulnerabilities (e.g., attempting to "decrypt" a hash or using unkeyed hashes where signatures or MACs are required).
+   Encryption is a two-way transform intended to preserve confidentiality with reversible recovery via a secret key. Hashing is a one-way irreversible compression function intended to produce a fixed-size digest for integrity verification against a trusted expected digest. An unkeyed hash does not provide authenticity against an active adversary who can recompute the hash. Confusing them leads to fatal vulnerabilities (e.g., attempting to "decrypt" a hash or using unkeyed hashes where signatures or MACs are required).
 
 3. **"Base64 is encryption" (Rejected):**
    Base64 is an open, reversible byte-to-text encoding format providing zero confidentiality, zero integrity, and zero security.
@@ -162,6 +170,12 @@ This design formally rejects the following oversimplifications, false equivalenc
 6. **"AI-generated code is authoritative or production-ready" (Rejected):**
    AI models generate plausibly structured text based on probabilistic patterns, not verified correctness or invariant preservation. AI-generated code, architectural recommendations, and security advice must be treated as untrusted hypotheses requiring rigorous empirical testing, static inspection, and formal verification.
 
+7. **"Digital signatures provide absolute non-repudiation" (Rejected):**
+   A digital signature only proves mathematical verification under a specific public key. Identity binding, key custody, host security, verifier policy, and operational context are required to make legal or procedural claims. Treating signature verification as equivalent to human identity attribution is a security flaw.
+
+8. **"Software timer benchmarks prove constant-time code execution" (Rejected):**
+   Hosted software timers on preemptible, cached, speculative operating systems cannot reliably prove constant-time execution or absence of micro-architectural side channels. The design mandates algorithmic early-exit mitigation (e.g. `hmac.compare_digest`), not unverified claims of physical constant-time proof.
+
 ---
 
 ## 4. Recommended S7 Implementation Batches
@@ -172,17 +186,17 @@ To ensure focused execution, auditable review boundaries, and minimal blast radi
 ┌────────────────────────────────────────────────────────────────────────┐
 │ Batch S7-B1: Module M21 (Security Synthesis I: Trust & Crypto Use)     │
 │ - L21-01 (Threat Modeling & Boundaries)                                │
-│ - L21-02 (Crypto Primitives & Password Hashing)                        │
-│ - Activity fixture: activity_l21_02.py (Localhost Crypto/Password)     │
+│ - L21-02 (Crypto Primitives & Roles: Hash, MAC, Signature, AEAD)       │
+│ - Activity fixture: activity_l21_02.py (Localhost Crypto Roles & Misuse)│
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │ Batch S7-B2: Module M22 (Security Synthesis II: Authn & Web Security)  │
-│ - L22-01 (Authn vs Authz, Sessions & OAuth 2.1)                        │
+│ - L22-01 (Authn vs Authz, Password Hashing & Verifiers, Sessions, OAuth)│
 │ - L22-02 (Web Vulnerabilities: Injection, XSS, CSRF, SSRF)             │
 │ - L22-03 (Software Supply Chain Security)                              │
-│ - Activity fixture: activity_l22_02.py (Localhost Web Security Fix)   │
+│ - Activity fixtures: activity_l22_01.py & activity_l22_02.py           │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
                                     ▼
@@ -206,15 +220,15 @@ To ensure focused execution, auditable review boundaries, and minimal blast radi
 ### Rationale for Four Batches
 
 1. **Natural Architectural Separation:**
-   - S7-B1 and S7-B2 form the security synthesis block. Splitting them between cryptographic foundations (M21) and application/web/supply-chain composition (M22) keeps the security review surface manageable.
-   - S7-B3 introduces the empirical measurement, technology judgment, and cost modeling frameworks. It requires zero network security fixtures and focuses on quantitative reasoning.
+   - S7-B1 and S7-B2 form the security synthesis block. Splitting them between cryptographic foundations and primitive roles (M21) and credential verifiers, sessions, web composition, and supply chain (M22) keeps the security review surface manageable.
+   - S7-B3 introduces empirical measurement, technology judgment, and cost modeling frameworks. It requires zero network security fixtures and focuses on quantitative reasoning.
    - S7-B4 integrates all preceding stages (S1–S7) into the final capstone defense. It introduces no new code or mechanisms, focusing entirely on synthesis, assessment rubrics, and the reviewer contract.
 
 2. **Reviewable PR Sizes:**
    Dividing S7 into 4 batches prevents massive, unreviewable multi-thousand-line PRs, ensuring that the Web Lead can thoroughly audit code fixtures, test suites, and pedagogical prose at each boundary.
 
 3. **Progressive Test & Fixture Isolation:**
-   Each batch delivers exactly its own unit test suite (`test_m21.py`, `test_m22.py`, `test_m23.py`, and `test_m24.py`), ensuring that CI remains green and regress-free across incremental deliveries.
+   Each batch delivers exactly its own standard library `unittest` suite (`test_m21.py`, `test_m22.py`, `test_m23.py`, and `test_m24.py`), ensuring that CI remains green and regress-free across incremental deliveries.
 
 ---
 
@@ -255,13 +269,29 @@ To ensure strict compliance with Decision D-012, Candidate B is refined with the
    - **Checkpoint P8 (RPC & Network Boundary Review):** Audit transport encryption, endpoint authentication, request size limits, and timeout protections.
    - **Checkpoint P9 (Deployment & Supply Chain Review):** Audit environment variable secrets handling, dependency version pinning, and container execution privileges.
 
-5. **Lab Counts Invariance:**
-   Lab counts remain strictly:
-   - **Required Labs:** 5 (`LAB-01` M04, `LAB-02` M08, `LAB-03` M10, `LAB-04` M13, `LAB-05` M15)
-   - **Optional Labs:** 5 (`LAB-OPT-01` M05, `LAB-OPT-02` M16, `LAB-OPT-03` M11, `LAB-OPT-04` M20, `LAB-OPT-05` M14)
-   - **Source Expeditions:** 5 (`EXP-01` M06, `EXP-02` M09, `EXP-03` M12, `EXP-04` M20, `EXP-05` M17)
-   **Exactly ZERO new Required Labs are created in Stage 7.**
+5. **Canonical Lab and Expedition Map Invariance:**
+   Lab and Expedition selections strictly audit against and preserve the accepted canonical architecture in `meta/blueprint/lab-source-selection-map-v0.1.md`:
+   - **Required Labs (5):**
+     - `LAB-REQ-01` — HTTP interface, origin, and intermediary trace — Module M11
+     - `LAB-REQ-02` — xv6 `sleep`: user program through syscall entry — Module M06
+     - `LAB-REQ-03` — POSIX threads race, rendezvous, and progress boundaries — Module M15
+     - `LAB-REQ-04` — SQLite query plans, indexing, and workload evidence — Module M13
+     - `LAB-REQ-05` — SQLite transactions, isolation, rollback, and recovery boundary — Module M14
+   - **Optional Labs (5):**
+     - `LAB-OPT-01` — CS:APP Data Lab, narrowed bit-representation slice — Module M01
+     - `LAB-OPT-02` — Stanford CS144 Checkpoint 2, TCP receiver slice — Module M10
+     - `LAB-OPT-03` — PostgreSQL `EXPLAIN` and transaction-isolation comparison — Modules M13/M14
+     - `LAB-OPT-04` — Local OpenTelemetry trace and signal comparison — Module M20
+     - `LAB-OPT-05` — OSTEP semaphore rendezvous, learner-directed external exercise — Module M15
+   - **Source Expeditions (5):**
+     - `EXP-01` — MIT PDOS xv6 utility-to-kernel path — Module M06
+     - `EXP-02` — PostgreSQL planner and buffer route — Modules M13/M14
+     - `EXP-03` — Chromium process and site-isolation path — Module M12
+     - `EXP-04` — OpenTelemetry trace object path — Module M20
+     - `EXP-05` — MIT 6.033 replication, transactions, and logging case — Modules M17/M18 (revisit M23)
+   **Exactly ZERO new Required Labs are created in Stage 7.** Candidate B activities are strictly standard lesson hands-on exercises and Mini Cloud App review checkpoints.
 
+---
 
 ## 6. Module M21 Architecture — Security Synthesis I: Trust & Crypto Use
 
@@ -275,8 +305,8 @@ The core capability transition of M21 is:
 
 ### 6.2 Module Constraints & Invariants
 
-1. **Crypto-Use Only (Zero Primitive Implementation):**
-   Under no circumstances do learners implement cryptographic primitives (e.g., writing custom AES, RSA, SHA-256, or HMAC algorithms). Learners use standard, vetted cryptographic libraries (`hashlib`, `hmac`, `secrets`, and optionally PyCA `cryptography` where available) to compose secure protocols.
+1. **Crypto-Use Only (Zero Primitive Implementation & Zero Mock Stubs):**
+   Under no circumstances do learners implement cryptographic primitives (e.g., writing custom AES, RSA, SHA-256, or HMAC algorithms). Learners use standard, vetted cryptographic libraries (`hashlib`, `hmac`, `secrets`, `ssl`, and optionally PyCA `cryptography` where available) to compose secure protocols. The design strictly prohibits educational mock RSA stubs or toy cipher implementations; where high-level primitives are unavailable, lessons rely on reference evidence and conceptual tracing.
 2. **Concept Invariance:**
    `EC-CON-017 Trust Boundary` and `EC-CON-013 Isolation` maintain their first home in **M07 `L07-01`**. M21 conducts an adversarial revisit and synthesis across network, OS, and application boundaries.
 3. **No Network Exploits:**
@@ -294,294 +324,325 @@ A computer system is not a monolith with a single perimeter; it is a composition
 - Soft: `L09-01` (Filesystem Storage & Durability).
 
 ### 3. Primary Competencies
-- `Trace`: Trace data and control flows across hardware, kernel, network, and application boundaries.
-- `Diagnose`: Identify missing input validation, implicit trust assumptions, and privilege leaks across boundaries.
-- `Judge`: Evaluate system attack surfaces and select appropriate isolation mechanisms (process, container, VM, cryptographic boundary).
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Judge, Explain, Diagnose`
+- `Judge`: Evaluate system attack surfaces, privilege levels, and appropriate isolation mechanisms (process, container, VM, cryptographic boundary).
+- `Explain`: Articulate the concept of a trust boundary and explain why security mechanisms must align with boundaries where authority, trust assumptions, or enforcement responsibility changes.
+- `Diagnose`: Identify unvalidated inputs crossing boundaries, implicit trust assumptions, and privilege leakage.
 
 ### 4. Canonical Concept First-Home vs. Revisit
-- `EC-CON-017 Trust Boundary`: Revisit (First home: M07 `L07-01`). Extended from kernel/user-space memory boundaries to network endpoints, inter-process communication, and API request boundaries.
-- `EC-CON-013 Isolation`: Revisit (First home: M07 `L07-01`). Extended from virtual address spaces to multi-tenant service isolation and least privilege.
+- `EC-CON-017 Trust Boundary`: Revisit (First home: M07 `L07-01`). Extended from OS memory isolation to network endpoints, inter-process communication, and multi-tenant applications.
+- `EC-CON-013 Isolation`: Revisit (First home: M07 `L07-01`). Defense-in-depth mechanisms enforcing separation.
 
 ### 5. Learning Outcomes
-- Define and locate trust boundaries across a multi-tier client-server architecture.
-- Construct a data-flow threat model identifying untrusted sources, validation checkpoints, and assets.
-- Contrast ambient authority (privileges granted automatically by context) with explicit capability-based delegation.
-- Apply the principle of least privilege to process execution, filesystem access, and network interfaces.
+- Identify and map trust boundaries across a multi-tier systems architecture (Hardware, OS Kernel, User Process, Network Transport, Application Logic, Browser Client).
+- Classify threats using the STRIDE model (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) at specific boundary crossings.
+- Contrast Ambient Authority with Capability-Based Security and Least Privilege.
+- Audit data flow across a boundary and identify unvalidated inputs, canonicalization errors, and confused-deputy vulnerabilities.
 
 ### 6. Stable Principle
-Every byte received across a trust boundary is untrusted input until explicitly parsed, validated, and sanitized against a strict schema. Security boundaries cannot rely on client cooperation.
+Never trust data across an authority boundary without explicit cryptographic or structural validation. Security resides in boundaries, not perimeters.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** Formal isolation boundaries defined by CPU privilege rings (Ring 0 vs Ring 3), OS syscall interfaces, POSIX file permissions, and network protocol specifications.
-- **Implementation:** Kernel page table enforcement, namespace isolation in Linux, TLS socket termination, and input validation schemas.
-- **Current Practice:** Zero-trust architecture, defense-in-depth, STRIDE threat modeling, and micro-segmentation.
+- **Specification:** Saltzer and Schroeder's *The Protection of Information in Computer Systems* (1975); Principle of Least Privilege, Economy of Mechanism, Complete Mediation, Open Design.
+- **Implementation:** Linux process boundaries, file permission bits (`mode_t`), system call argument sanitization, POSIX `chroot` vs. Linux namespaces/cgroups.
+- **Current Practice:** Zero Trust Architecture (NIST SP 800-207), Threat Modeling (STRIDE), Attack Surface Minimization, Sandboxing (gVisor, Firecracker, WebAssembly).
 
 ### 8. Required Distinctions / Misconceptions
-- *Misconception:* A firewall or TLS connection makes an entire application secure.
-  *Reality:* TLS only secures the network transport hop; the application endpoint must still validate all parsed data, enforce authorization, and protect internal state.
-- *Misconception:* Internal network traffic (behind the firewall) is inherently trusted.
-  *Reality:* Lateral movement and insider threats exploit perimeter-only defenses; modern systems enforce zero-trust verification at internal service boundaries.
+- *Misconception:* Trust boundaries are identical to physical network boundaries (e.g., the firewall perimeter).
+  *Reality:* Modern systems contain dozens of internal trust boundaries within the same physical machine, process, or local network (e.g., user space vs. kernel space, different microservices in the same subnet, tenant data in a shared database).
+- *Misconception:* Authenticating an endpoint means all data from that endpoint is inherently safe.
+  *Reality:* Authentication verifies identity; it does not validate that incoming payloads are semantically correct, un-tampered, or non-malicious. Validation must occur at every boundary crossing regardless of authentication status.
+- *Misconception:* Encryption creates an impassable trust boundary on its own.
+  *Reality:* Encryption protects confidentiality and integrity across untrusted transports, but endpoints possessing decryption keys must still enforce boundary validation on decrypted plaintext.
 
 ### 9. Worked Example
-A web application accepts a user profile update containing `{"username": "alice", "avatar_path": "/etc/passwd"}`.
-The learner traces how the request crosses:
-1. The Network Boundary (TLS terminated at reverse proxy);
-2. The Process Boundary (HTTP payload parsed by web worker process);
-3. The Filesystem Boundary (Worker attempts to open `avatar_path` using operating system privileges).
-The example illustrates that even though the TLS boundary was secure, the application failed to validate the path at the storage boundary, allowing an attacker to breach the isolation boundary via path traversal.
+Learners examine a file storage service:
+```
+Client (Browser) ──[HTTP POST]──► API Gateway ──[Internal RPC]──► Storage Daemon ──[POSIX I/O]──► Disk
+```
+1. *Boundary Identification:*
+   - Boundary 1: Client to API Gateway (Untrusted public network to DMZ).
+   - Boundary 2: API Gateway to Storage Daemon (DMZ to internal service network).
+   - Boundary 3: Storage Daemon to OS Kernel (User space to kernel space).
+2. *Vulnerability Analysis:* The API Gateway authenticates the client but passes the filename parameter verbatim: `filename = request.json['path']`.
+3. *Adversarial Payload:* A malicious client submits `filename = "../../etc/shadow"`.
+4. *Failure Mode:* The Storage Daemon opens the path directly using POSIX `open()`. A path traversal vulnerability occurs because the trust boundary between the API Gateway and the Storage Daemon lacked input canonicalization and path confinement (`os.path.realpath` checking against an allowed base directory).
 
 ### 10. Bounded Hands-On / Observation
-Learners inspect a mini architecture specification consisting of a web front-end, a background worker, and a local SQLite database. Using a structured questionnaire, learners trace three distinct flows (user signup, file upload, admin report generation), mark every trust boundary, list the ambient privileges present at each stage, and identify at least two unvalidated boundary crossings.
+Learners analyze an architectural diagram and corresponding skeleton code in `labs/foundations/m21/activity_l21_01.py`:
+1. Trace data flow from untrusted client input down to persistent storage.
+2. Identify missing trust boundary enforcement points.
+3. Add a path sanitization and boundary-check function that strictly rejects directory traversal (`../`), null-byte injection, and symlink escapes.
+4. Run automated test cases asserting that attempts to escape the designated data directory raise handled security violations.
 
 ### 11. Evidence to Record
-- System Boundary Inventory Table (Source component, Destination component, Boundary type, Authority mechanism).
-- Dataflow Trace Log identifying the exact line/function where untrusted data is converted to trusted internal domain objects.
+- Threat Model & Boundary Map: A Markdown table inventorying all system boundaries, data crossing each boundary, associated STRIDE threats, and mitigating controls.
+- Trace log of path validation showing rejection of traversal payloads.
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** The learner correctly identifies all trust boundaries, traces dataflow through validation checkpoints, and flags missing boundary validations.
-- **BLOCKED:** The learner cannot identify operating system or network privilege distinctions.
-- **NOT RUN:** Hands-on review skipped or incomplete.
+- **PASS:** Learner produces a complete boundary map and all automated test assertions in `activity_l21_01.py` pass.
+- **BLOCKED:** Missing Python runtime or file permission errors in the temporary test directory.
+- **NOT RUN:** Activity file not executed.
 
 ### 13. Progressive Support
-- **Question:** How does a web server determine whether a file path provided in an HTTP query parameter is safe to open?
-- **Hint 1:** Consider what happens if the query string contains relative directory navigation characters like `../`.
-- **Hint 2:** Examine where the trust boundary lies: the HTTP query is outside the boundary; the local filesystem is inside.
-- **Expected Observation:** The learner recognizes that resolving relative paths against an untrusted parameter allows accessing arbitrary filesystem files unless canonically resolved and strictly restricted to an allowed base directory.
-- **Full Explanation:** To protect the filesystem boundary, the application must canonically resolve the target path (e.g., using `os.path.realpath` or `pathlib.Path.resolve()`), verify that the resolved path is an exact prefix child of the designated root directory, and reject any path outside that sandbox.
+- **Question:** If the API Gateway validates that `filename` does not contain `../`, why might the Storage Daemon still access an unauthorized file if the filesystem contains a symbolic link?
+- **Hint 1:** When does symbolic link resolution happen?
+- **Hint 2:** Does string validation on the filename detect what the underlying filesystem points to?
+- **Expected Observation:** String checks only inspect syntax; `os.path.realpath()` resolves the actual target inode, revealing if a symlink escapes the boundary.
+- **Full Explanation:** Syntactic validation of strings does not protect against filesystem-level indirection. Resolving paths to their canonical form (`realpath`) and ensuring the canonical path starts with the authorized base prefix is required to prevent symlink traversal attacks.
 
 ### 14. Required Visuals
-- *Visual M21-V1:* Trust Boundary & Authority Map across Network, OS, and Application layers.
+- *Visual M21-V1:* Trust Boundary & Authority Map across Layers (Hardware, Kernel, Process, Network, Application, Storage).
 
 ### 15. Failure Modes
-- Confusing data encoding (e.g., JSON parsing) with security validation.
-- Assuming an internal microservice or helper function can implicitly trust its callers.
+- Relying on client-side validation alone.
+- Blacklisting specific malicious characters instead of whitelisting strict character sets.
 
 ### 16. Non-Goals
-- Performing network penetration testing, port scanning, or using vulnerability assessment tools.
-- Implementing low-level kernel security modules (e.g., writing SELinux/AppArmor policies).
+- Performing penetration testing against live networks or remote servers.
+- Writing kernel exploit code or binary buffer overflows.
 
 ### 17. Machine-Checkable vs. Reviewer-Required Gates
-- Machine-Checkable: Automated test verifying that path validation utility rejects traversal sequences (`../`, null bytes, absolute paths outside root).
-- Reviewer-Required: Manual evaluation of learner's architectural boundary inventory and threat model diagrams.
+- Machine-Checkable: Standard library `unittest` suite checking that path sanitization blocks traversal attempts.
+- Reviewer-Required: Inspection of learner's completed Threat Model & Boundary Map table.
 
 ### 18. Source Grounding with Currentness Classification
-- **NIST SP 800-207 (Zero Trust Architecture):** STABLE. Core principles of explicit verification, least privilege, and assumed breach.
-- **RFC 9846 (TLS 1.3):** STABLE / CURRENT (July 2026). Definitive transport security standard.
+- **Saltzer & Schroeder (1975):** STABLE. Foundational principles of information protection.
+- **NIST SP 800-207 (Zero Trust Architecture):** STABLE / CURRENT (August 2020). Core concepts of implicit trust zone elimination.
+- **OWASP Threat Modeling Guidance:** CURRENT. STRIDE methodology.
 
 ---
 
 ## 8. Lesson L21-02 Design — "What do I use crypto for?"
 
 ### 1. Target Mental Model
-Cryptography is a toolbox of mathematically rigorous primitives designed to enforce specific security properties: **Integrity** (Hash), **Authenticity & Integrity with Shared Secret** (MAC), **Authenticity & Non-Repudiation with Asymmetric Keys** (Digital Signature), and **Confidentiality with Authenticity** (AEAD Symmetric Encryption). Developers must never invent cryptographic algorithms or protocols; their responsibility is to select the correct standard primitive for the required security property, manage key lifecycles securely, ensure nonce/salt uniqueness, and avoid side-channel leaks.
+Cryptography is not magic pixie dust that "makes data secure"; it is a set of specialized mathematical tools with precise, narrow guarantees. Encryption provides **confidentiality** (hiding plaintext from unauthorized observers). Cryptographic hashes provide **data integrity detection against a trusted expected digest** (detecting accidental corruption or verified against an out-of-band digest; plain unkeyed hashes do NOT authenticate against an active attacker who can recompute the hash). MACs provide **message authenticity and integrity** under a shared secret. Digital signatures provide **verification under a specific public key** (with identity attribution and non-repudiation depending on key custody, binding, and verifier policy). AEAD combines confidentiality and authenticity. Misusing cryptography (e.g., using fast unkeyed hashes for passwords, encrypting without authenticating, or reusing nonces) introduces catastrophic vulnerabilities.
 
 ### 2. Prerequisites
 - Hard: `L21-01` (Trust Boundaries & Threat Modeling).
+- Soft: `L11-01` (TLS & Transport Layer Security).
 
 ### 3. Primary Competencies
-- `Explain`: Contrast the security properties and operational requirements of Hashes, MACs, Digital Signatures, and AEAD.
-- `Trace`: Trace a cryptographic verification workflow (e.g., verifying a signed token or password hash) and identify failure modes.
-- `Correctness`: Select and configure appropriate standard library cryptographic primitives without creating security vulnerabilities.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Explain, Judge, Learn-New-Tech`
+- `Explain`: Differentiate the fundamental roles and guarantees of Hash, MAC, Digital Signature, and AEAD; explain why plain hashes lack authenticity and why unkeyed fast hashes fail as password verifiers.
+- `Judge`: Select the correct cryptographic primitive for a given security requirement and reject dangerous misuse patterns (e.g., encrypt-without-authenticate, unkeyed hash for tamper detection against an active attacker, symmetric secret in client distribution).
+- `Learn-New-Tech`: Navigate and evaluate modern cryptographic APIs (standard library `hashlib`, `hmac`, `secrets`, PyCA `cryptography`) adhering strictly to crypto-use and standard parameters.
 
 ### 4. Canonical Concept First-Home vs. Revisit
-- `EC-CON-008 Invariant`: Revisit (First home: M02 `L02-03`). Cryptographic invariants (e.g., collision resistance, pre-image resistance, nonce uniqueness in AEAD).
-- `EC-CON-009 Correctness`: Revisit (First home: M02 `L02-03`). Correctness under active adversarial manipulation.
+- `EC-CON-017 Trust Boundary`: Revisit (First home: M07 `L07-01`). Cryptographic mechanisms as transportable trust boundaries across untrusted channels.
+- `EC-CON-007 Specification`: Revisit (First home: M02 `L02-03`). Cryptographic algorithms as mathematical specifications requiring exact adherence.
 
 ### 5. Learning Outcomes
-- Distinguish between Hash, MAC, Digital Signature, and Symmetric/Asymmetric Encryption based on keys involved and security properties provided.
-- Implement secure password storage complying with NIST SP 800-63B-4 using salted, memory-hard hashing functions.
-- Explain why constant-time comparison (`hmac.compare_digest`) is required to prevent timing side-channel attacks.
-- Deconstruct the 6-layer PKI architecture and explain how digital certificates establish trust in TLS.
+- Classify cryptographic primitives into Hash, MAC, Digital Signature, and AEAD, defining the exact guarantees, inputs, keys, and failure modes of each.
+- Explain why a cryptographic hash only detects corruption against a trusted expected digest, and prove that an active in-path adversary can recompute both data and unkeyed hash unless protected by a secret key (MAC) or private key (Digital Signature).
+- Contrast symmetric cryptography (shared secret, fast, key distribution challenge) with asymmetric cryptography (keypair, public verification, private signing/decryption), analyzing forward secrecy per RFC 9846 (achieved in DHE/ECDHE handshake modes; absent in PSK-only modes).
+- Explain why unkeyed fast hashes (e.g. SHA-256) are fundamentally inappropriate for password verification (rapid parallel evaluation on GPU/ASIC hardware) and explain why password verifiers require salts and compute/memory hardness, establishing the foundation for L22-01.
+- Explain the role of `hmac.compare_digest` in eliminating early-exit branching to reduce timing-analysis risks.
 
 ### 6. Stable Principle
-Never roll your own crypto. Use standard, peer-reviewed primitives from reputable cryptographic libraries; treat primitives as black boxes with strict preconditions (e.g., never reuse a nonce with the same key in AES-GCM; always salt passwords).
+Never roll your own crypto. Use standard, peer-reviewed primitives from reputable cryptographic libraries, and ensure every encrypted message is authenticated.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** Mathematical specifications and RFCs: FIPS 180-4 (SHA-2), FIPS 198-1 (HMAC), RFC 9106 (Argon2id), RFC 8439 (ChaCha20-Poly1305), NIST SP 800-38D (AES-GCM), RFC 9846 (TLS 1.3).
-- **Implementation:** Standard library implementations: Python `hashlib`, `hmac`, `secrets`, PyCA `cryptography`.
-- **Current Practice:** Memory-hard password hashing (Argon2id / scrypt / PBKDF2), deprecation of SHA-1 / MD5 for integrity, requirement of AEAD (unauthenticated CBC mode deprecated).
+- **Specification:** FIPS 180-4 (SHA-2), FIPS 198-1 (HMAC, noting active NIST conversion/withdrawal plan to SP 800-224 draft), FIPS 186-5 (Digital Signatures), SP 800-38D (AES-GCM), RFC 9846 (TLS 1.3).
+- **Implementation:** Python standard library `hashlib`, `hmac`, `secrets`, `ssl`; optional candidate package PyCA `cryptography`.
+- **Current Practice:** Universal migration to AEAD (AES-GCM, ChaCha20-Poly1305), ephemeral Diffie-Hellman key exchange for forward secrecy, deprecation of SHA-1 for signatures (NIST SP 800-131A Rev 2/3).
 
 ### 8. Required Distinctions / Misconceptions
-- *Misconception:* Hashing a password with SHA-256 makes it secure.
-  *Reality:* SHA-256 is designed to be fast on hardware; attackers can test billions of SHA-256 hashes per second using GPUs/ASICs. Passwords require salted, computationally expensive, memory-hard hash algorithms (Argon2id, scrypt, PBKDF2) per NIST SP 800-63B-4.
-- *Misconception:* Encryption provides integrity.
-  *Reality:* Unauthenticated encryption (e.g., plain AES-CTR or AES-CBC) allows attackers to tamper with ciphertexts (bit-flipping attacks) without detection. Modern cryptography requires Authenticated Encryption with Associated Data (AEAD, e.g., AES-GCM, ChaCha20-Poly1305).
-- *Misconception:* Base64 is encryption.
-  *Reality:* Base64 is an encoding format for binary data in ASCII text; it has zero secret keys and zero security.
+- *Misconception:* An unkeyed SHA-256 hash proves that a message came from a trusted sender.
+  *Reality:* An unkeyed hash provides zero sender authenticity. An attacker intercepting a message can modify the payload, recompute the SHA-256 digest, and send both to the recipient. Authenticity requires a secret: symmetric (HMAC) or asymmetric (Digital Signature).
+- *Misconception:* Encryption guarantees that data has not been modified in transit.
+  *Reality:* Unauthenticated ciphers (e.g., CBC or CTR mode without HMAC) are malleable; an attacker can manipulate ciphertext bits to alter plaintext without knowing the key. Authenticity requires AEAD (AES-GCM) or Encrypt-then-MAC.
+- *Misconception:* Digital signatures provide unconditional non-repudiation.
+  *Reality:* A digital signature proves mathematical verification under a specific public key. Proving who held the private key depends on key custody, binding, verifier trust policy, and system security.
+- *Misconception:* Fast hashes like SHA-256 are suitable for storing passwords if salted.
+  *Reality:* SHA-256 is designed for high-throughput stream processing; dedicated hardware (GPUs/ASICs) can evaluate billions of candidate digests. Passwords require specialized slow functions with compute and memory hardness (detailed in L22-01).
 
 ### 9. Worked Example
-Learners compare password verification implementations:
-1. Vulnerable: `stored_hash == hashlib.sha256(password.encode()).hexdigest()` (Fast hash, unsalted, vulnerable to rainbow tables and fast offline dictionary attacks, timing attack on string comparison `==`).
-2. Robust: Using a standard password hashing library with random salt generation (`secrets.token_bytes(16)`), memory-hard Argon2id or PBKDF2-HMAC-SHA256 with 600,000 iterations, and constant-time digest comparison via `hmac.compare_digest`.
+Learners evaluate integrity and authenticity mechanisms for an audit log pipeline:
+1. *Unkeyed Hash:* The client computes `hashlib.sha256(log_entry).hexdigest()`. Vulnerability: An adversary modifying the log simply recomputes the digest. The receiver's hash check passes, falsely indicating integrity.
+2. *Keyed MAC:* The client and server share a secret key; the client transmits `log_entry` along with `hmac.new(key, log_entry, hashlib.sha256).hexdigest()`. The adversary cannot forge a valid MAC without the key.
+3. *Asymmetric Signature:* When multiple independent verifiers must validate log integrity without possessing the ability to create logs, the client signs with a private key (e.g., Ed25519) and verifiers check against the corresponding public key.
 
 ### 10. Bounded Hands-On / Observation
-Learners interact with `labs/foundations/m21/activity_l21_02.py`:
-1. Benchmark SHA-256 vs. PBKDF2 / Argon2 on localhost to observe the computational and memory cost difference.
-2. Demonstrate how unsalted hashes result in identical hash values for identical passwords across different user records.
-3. Fix a vulnerable authentication function by adding per-user unique random salts and constant-time comparison.
+Learners run `labs/foundations/m21/activity_l21_02.py`:
+1. Execute an unkeyed hash check; demonstrate that modifying the message and updating the digest passes verification, proving unkeyed hashes lack authenticity against active adversaries.
+2. Verify message authenticity with HMAC; observe that tampering with the message or the MAC causes `verify_hmac()` to fail.
+3. Inspect `hmac.compare_digest` usage for timing-safe comparison, observing that standard library APIs avoid early-exit comparison loops without relying on noisy hosted software timers to claim physical constant-time proof.
 
 ### 11. Evidence to Record
-- Cryptographic Primitive Selection Matrix (Problem scenario, Required property, Correct primitive, Incorrect primitive trap).
-- Execution timing measurements demonstrating why constant-time comparison prevents timing discrepancies.
+- Cryptographic Primitive Selection Matrix (Scenario, Required security property, Correct primitive, Incorrect primitive trap, Non-guarantees).
+- Adversary Model Trace comparing unkeyed Hash vs. HMAC under an active man-in-the-middle modification scenario.
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** Activity test suite passes; learner refactors password storage to use unique random salts, standard slow hashing, and constant-time verification.
+- **PASS:** Activity test suite passes; learner correctly classifies primitive roles and demonstrates HMAC authentication over unkeyed hashes.
 - **BLOCKED:** Missing standard library cryptographic modules.
 - **NOT RUN:** Hands-on activity not executed.
 
 ### 13. Progressive Support
-- **Question:** Why does `hmac.compare_digest(a, b)` take the same amount of time regardless of where the first mismatch occurs, whereas `a == b` returns immediately on the first differing character?
-- **Hint 1:** Think about how a standard string equality loop is implemented in C or Python.
-- **Hint 2:** An early-return optimization leaks information through execution duration.
-- **Expected Observation:** Standard equality `==` terminates as soon as a byte differs, allowing an attacker to deduce the correct signature byte-by-byte by measuring microsecond-level timing differences.
-- **Full Explanation:** Early-exit comparisons create a timing side-channel. `hmac.compare_digest` iterates over all bytes unconditionally, accumulating differences using bitwise OR operations, ensuring that the execution time is independent of byte values and early mismatches.
+- **Question:** If Alice sends Bob a file along with its SHA-256 hash, under what exact conditions does Bob know the file was NOT modified in transit?
+- **Hint 1:** Can Mallory modify both the file and the hash if they travel over the same untrusted channel?
+- **Hint 2:** What if Bob received the expected hash over an authenticated out-of-band channel (e.g., in person or via HTTPS to a verified site)?
+- **Expected Observation:** The hash only detects modification if Bob possesses a trusted expected digest obtained over an authenticated channel that Mallory could not modify.
+- **Full Explanation:** An unkeyed cryptographic hash provides integrity detection strictly relative to a trusted expected digest. If the digest travels over the same untrusted channel as the message without authentication, an active attacker can replace both. Proving authenticity across an untrusted channel requires a keyed primitive (MAC or Digital Signature).
 
 ### 14. Required Visuals
-- *Visual M21-V2:* Cryptographic Primitives Taxonomy: Hash vs. MAC vs. Digital Signature vs. AEAD.
-- *Visual M21-V3:* The 6-Layer PKI Trust and Verification Architecture.
+- *Visual M21-V2:* Cryptographic Primitives Taxonomy: Hash vs. MAC vs. Digital Signature vs. AEAD (Axes: Keys, Transform, Security Guarantees, Non-Guarantees).
+- *Visual M21-V3:* The 6-Layer PKI Trust and Verification Architecture (annotating scoped forward secrecy under RFC 9846).
 
 ### 15. Failure Modes
 - Attempting to implement custom XOR encryption or custom hashing algorithms.
-- Reusing initialization vectors (IVs) or nonces in symmetric encryption.
+- Reusing nonces in symmetric AEAD encryption.
 
 ### 16. Non-Goals
 - Implementing mathematical number theory for RSA, elliptic curves, or lattice cryptography.
 - Conducting live cryptanalysis or side-channel power analysis.
 
 ### 17. Machine-Checkable vs. Reviewer-Required Gates
-- Machine-Checkable: `pytest labs/foundations/m21/test_m21.py` validating salt generation, slow hash execution, and constant-time comparison.
-- Reviewer-Required: Inspection of learner's cryptographic primitive selection rationales.
+- Machine-Checkable: Standard library `unittest` suite (`test_m21.py`) validating HMAC tamper detection, unkeyed hash tamper demonstration, and `compare_digest` integration.
+- Reviewer-Required: Inspection of learner's Cryptographic Primitive Selection Matrix.
 
 ### 18. Source Grounding with Currentness Classification
-- **NIST SP 800-63B-4 §3.1.1.2:** CURRENT (Final July 2025). Normative password storage rules: minimum 15 chars single-factor, 8 chars MFA; salt >= 32 bits; memory-hard functions recommended.
-- **RFC 9106 (Argon2):** STABLE. Standard memory-hard password hashing.
-- **RFC 9846 (TLS 1.3):** STABLE / CURRENT (July 2026). Mandatory forward secrecy, AEAD ciphers only.
+- **FIPS 198-1 / NIST SP 800-224 (draft):** STABLE / CURRENT. The Keyed-Hash Message Authentication Code (HMAC), noting NIST's active conversion/withdrawal plan to SP 800-224.
 - **FIPS 186-5 / SP 800-38D:** STABLE. Digital signatures and AES-GCM authenticated encryption.
+- **RFC 9846 (TLS 1.3):** STABLE / CURRENT (July 2026). Obsoletes RFC 8446, 5246, 5077, 6961, 7627, 8422; updates RFC 5705, 6066. Forward secrecy scoped to DHE/ECDHE key exchange.
 
 ---
 
-## 9. M21 Hands-On Fixture Contract — Localhost Password Hashing & Crypto Primitives (`activity_l21_02.py`)
+## 9. M21 Hands-On Fixture Contract — Localhost Cryptographic Roles & Misuse Boundaries (`activity_l21_02.py`)
 
 ### 9.1 Purpose & Execution Scope
-The fixture `activity_l21_02.py` provides an isolated, localhost-only environment to experiment with cryptographic primitives, password hashing invariants, and timing-safe comparisons. It contains zero external network dependencies and uses standard Python standard library modules (`hashlib`, `hmac`, `secrets`, `time`). If PyCA `cryptography` or `argon2-cffi` is present in the environment, the fixture optionally exposes them via clean capability detection without failing if they are absent.
+The fixture `activity_l21_02.py` provides an isolated, localhost-only environment to experiment with cryptographic primitive roles (Hash vs. MAC vs. Signature vs. AEAD) and timing-safe comparisons. It contains zero external network dependencies and uses standard Python standard library modules (`hashlib`, `hmac`, `secrets`). (Password hashing storage schemas and verifiers are owned by M22 `L22-01`).
 
 ### 9.2 Fixture File Structure
 - Implementation: `labs/foundations/m21/activity_l21_02.py`
-- Verification Suite: `labs/foundations/m21/test_m21.py`
+- Verification Suite: `labs/foundations/m21/test_m21.py` (Standard library `unittest` suite; capability-gates `pytest`)
 
 ### 9.3 Invariants & Interface Contract
-1. **Password Storage Schema:**
-   The fixture defines a clean, extensible password storage representation:
+1. **Cryptographic Roles Contract:**
+   The fixture provides explicit verification helpers:
    ```python
-   # Format: algorithm$iterations_or_params$salt_hex$hash_hex
-   # Example: pbkdf2_sha256$600000$a1b2c3d4...$e5f6...
-   ```
-2. **Deterministic Capability Detection:**
-   ```python
-   HAS_ARGON2 = False
-   try:
-       import argon2
-       HAS_ARGON2 = True
-   except ImportError:
-       pass
-   ```
-   If `HAS_ARGON2` is False, the fixture gracefully falls back to standard library `hashlib.pbkdf2_hmac` (SHA-256, >= 600,000 iterations), ensuring 100% test pass rates in stock Python environments.
-3. **Safety & Zero-State Guarantees:**
-   - Fixture runs in-memory or in an ephemeral `tempfile.TemporaryDirectory()`.
-   - All generated mock user records are wiped on teardown.
-   - Zero hardcoded real passwords or cryptographic private keys.
+   def compute_unkeyed_hash(data: bytes) -> str:
+       return hashlib.sha256(data).hexdigest()
 
+   def verify_unkeyed_tamper(data: bytes, expected_hash: str) -> bool:
+       return compute_unkeyed_hash(data) == expected_hash
+
+   def compute_hmac(key: bytes, data: bytes) -> str:
+       return hmac.new(key, data, hashlib.sha256).hexdigest()
+
+   def verify_hmac(key: bytes, data: bytes, expected_mac: str) -> bool:
+       computed = compute_hmac(key, data)
+       return hmac.compare_digest(computed, expected_mac)
+   ```
+2. **Timing-Safe Comparison Contract:**
+   The fixture uses `hmac.compare_digest` to eliminate early-exit branching in MAC comparisons. It explicitly notes that software benchmarks on shared OS kernels cannot prove physical constant-time execution; the learning goal is algorithmic defense.
+3. **Safety & Ephemeral Guarantees:**
+   - Operates entirely in memory with synthetic test byte strings.
+   - Zero hardcoded real secrets, private keys, or certificates.
+
+---
 
 ## 10. Module M22 Architecture — Security Synthesis II: Authn/Authz & Secure Composition
 
 ### 10.1 Module Purpose & Capability Transition
 
 Module M22 addresses the complex challenge of composition in multi-tier applications, web environments, and external dependency ecosystems. Where M21 established trust boundaries and cryptographic tools, M22 applies them to the operational realities of software systems:
-- Verifying who is calling and what they are allowed to do (Authentication and Authorization);
+- Verifying who is calling and what they are allowed to do (Authentication, Password Verifiers, and Authorization);
 - Preventing application-layer composition failures across disparate parsers and interpreters (Injection, XSS, CSRF, SSRF);
 - Verifying the integrity and provenance of third-party dependencies composing the modern software supply chain.
 
 The core capability transition of M22 is:
 - **From:** Treating authentication as a single login check, assuming client input matches expected formats, and blindly trusting installed third-party libraries.
-- **To:** Designing decoupled, defense-in-depth authorization pipelines, eliminating injection vulnerabilities at the AST/syntax boundary, implementing robust web security controls, and auditing dependency graphs with cryptographic pinning and provenance.
+- **To:** Designing decoupled, defense-in-depth authorization pipelines, eliminating injection vulnerabilities at the API/driver interface layer, implementing robust web security controls, and auditing dependency graphs with cryptographic pinning and provenance.
 
 ### 10.2 Module Constraints & Invariants
 
 1. **Strict Defense-First Fix-and-Verify Stance (Decision D-012):**
    Zero exploit development, zero weaponized payload distribution, and zero offensive scanning. Exercises present bounded, reproducible code vulnerabilities on localhost; learners inspect the failure, apply the structural defensive fix, and verify immunity using automated tests.
-2. **Safe Localhost Execution:**
-   All web server and client interactions run exclusively on `127.0.0.1` using ephemeral ports.
+2. **Safe Localhost Execution & Fail-Closed Teardown:**
+   All web server and client interactions run exclusively on `127.0.0.1` using ephemeral ports. Fixture teardowns must explicitly join threads and verify that listener sockets are released.
 3. **Normative Source Grounding:**
-   Adhere strictly to RFC 9700 (BCP 240, OAuth 2.0 Security Best Current Practice), `draft-ietf-oauth-v2-1-15` (OAuth 2.1), W3C CSP Level 3, and OpenSSF SLSA v1.2.
+   Adhere strictly to NIST SP 800-63B-4, RFC 9700 (BCP 240, OAuth 2.0 Security Best Current Practice: ROPC MUST NOT, Implicit SHOULD NOT), `draft-ietf-oauth-v2-1-15` (OAuth 2.1), W3C CSP Level 3, and OpenSSF SLSA v1.2.
 
 ---
 
 ## 11. Lesson L22-01 Design — "How do I know who is calling?"
 
 ### 1. Target Mental Model
-Security requires separating **Authentication** (Authn: proving *who* an entity is) from **Authorization** (Authz: determining *what* that entity is permitted to do). A credential is an authenticating artifact; an identity is the entity associated with that credential; an authorization policy evaluates the identity, the target resource, and the requested action. In distributed and multi-tier systems, authorization must be verified at every hop, distinguishing between stateful server-side sessions, stateless cryptographically signed bearer tokens, and mutual TLS identity assertions.
+Security requires separating **Authentication** (Authn: proving *who* an entity is) from **Authorization** (Authz: determining *what* that entity is permitted to do). A credential is an authenticating artifact; an identity is the entity associated with that credential; an authorization policy evaluates the identity, the target resource, and the requested action. In application systems, credentials begin with password verifiers (where servers verify secret knowledge without storing plaintext passwords) and transition to session identifiers or cryptographically signed bearer tokens. Authorization must be verified independently at every resource boundary, distinguishing between stateful server-side sessions, stateless bearer tokens, and OAuth authorization delegations.
 
 ### 2. Prerequisites
 - Hard: `L21-02` (Cryptographic Primitives & Digital Signatures), `L11-02` (HTTP Protocol & State).
 
 ### 3. Primary Competencies
-- `Explain`: Differentiate Authn from Authz, stateful sessions from stateless bearer tokens, and RBAC from ABAC.
-- `Trace`: Trace an authentication and authorization request decision path through an API gateway, session/token validator, and resource server.
-- `Diagnose`: Identify authentication bypasses, broken object-level authorization (BOLA/IDOR), and token validation vulnerabilities.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Judge, Explain`
+- `Judge`: Evaluate authentication and authorization architectures (password storage policies, stateful sessions vs. signed bearer tokens, RBAC vs. ABAC) against operational complexity, revocation latency, and security trade-offs.
+- `Explain`: Clearly explain the distinction between Authentication (verifying identity) and Authorization (evaluating authority); explain the mechanics of password verifier storage, token validation profiles, and OAuth 2.1 authorization flows.
 
 ### 4. Canonical Concept First-Home vs. Revisit
-- `EC-CON-017 Trust Boundary`: Revisit (First home: M07 `L07-01`). Examined at API endpoints, identity providers (IdPs), and resource servers.
-- `EC-CON-007 Specification`: Revisit (First home: M02 `L02-03`). Token schemas, claims validation, and access control policies.
+- `EC-CON-017 Trust Boundary`: Revisit (First home: M07 `L07-01`). Examined at credential verifiers, API gateways, identity providers (IdPs), and resource servers.
+- `EC-CON-007 Specification`: Revisit (First home: M02 `L02-03`). Token schemas, claims validation profiles, and password storage standards.
 
 ### 5. Learning Outcomes
-- Distinguish Authentication from Authorization across real-world API request lifecycles.
-- Contrast stateful server-managed sessions (cookies + database/cache lookup) with stateless cryptographically signed bearer tokens (JWTs), articulating the revocation trade-offs of each.
-- Implement comprehensive token validation invariants: signature verification, expiration check (`exp`), issuer check (`iss`), audience check (`aud`), and algorithm restriction (preventing `alg: "none"`).
-- Diagram the OAuth 2.1 authorization code flow with PKCE (Proof Key for Code Exchange) per RFC 9700 and explain why PKCE is required for public clients.
+- Distinguish Authentication from Authorization across real-world request lifecycles.
+- Design and evaluate secure password verifiers complying with NIST SP 800-63B-4: enforce unique salts (>= 32 bits, unguessable), evaluate memory-hard functions (Argon2id per RFC 9106, scrypt per RFC 7914) vs. compute-hard functions (PBKDF2 per RFC 8018 / SP 800-132), format verifier records (`algo$params$salt$hash`), and mitigate timing attacks using `hmac.compare_digest`.
+- Contrast stateful server-managed sessions (cookies + database/cache lookup) with stateless cryptographically signed bearer tokens, articulating why stateless token invalidation requires out-of-band state changes (short lifespans, revocation lists, epoch bumping, session store lookup).
+- Implement token validation against a named profile (`TeachingProfile-BearerV1`): enforce required claims (`alg`, `exp`, `sub`), reject `alg: "none"`, verify signatures under configured verifier policy, and validate `aud` to prevent token substitution across services.
+- Diagram the OAuth 2.1 authorization code flow with PKCE per RFC 9700 (BCP 240) and explain why PKCE is required for public clients.
 
 ### 6. Stable Principle
 Never confuse possessing a credential with possessing authority. Every protected endpoint must independently verify both identity and specific resource authorization on every request.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** RFC 6749 (OAuth 2.0 core), RFC 7636 (PKCE), RFC 7519 (JWT), RFC 8725 (JWT BCP), RFC 9700 (BCP 240), `draft-ietf-oauth-v2-1-15` (OAuth 2.1).
-- **Implementation:** Python `jwt` / `itsdangerous`, session middleware, API gateway auth interceptors.
-- **Current Practice:** OAuth 2.1 deprecation of ROPC (Resource Owner Password Credentials) and Implicit Grant; mandatory PKCE; short-lived access tokens paired with revocable refresh tokens; fine-grained ABAC / Zanzibar-style relationship-based access control.
+- **Specification:** NIST SP 800-63B-4 (Password Storage), RFC 9106 (Argon2), RFC 8018 / SP 800-132 (PBKDF2), RFC 6749 (OAuth 2.0 core), RFC 7636 (PKCE), RFC 7519 (JWT), RFC 8725 (JWT BCP), RFC 9700 (BCP 240), `draft-ietf-oauth-v2-1-15` (OAuth 2.1).
+- **Implementation:** Python standard library `hashlib`, `hmac`, `secrets`, `base64`, `json`; session middleware, API gateway auth interceptors.
+- **Current Practice:** OAuth 2.1 deprecation of ROPC (MUST NOT) and Implicit Grant (BCP 240: SHOULD NOT; OAuth 2.1 draft: removed); mandatory PKCE; memory-hard password hashing (Argon2id); short-lived access tokens paired with revocable refresh tokens; fine-grained ABAC / Zanzibar-style relationship-based access control.
 
 ### 8. Required Distinctions / Misconceptions
-- *Misconception:* A valid JWT signature guarantees the user is authorized to perform the action.
-  *Reality:* The signature only proves the token was issued by a trusted identity provider; the application must still check if that specific user ID is authorized to access the requested resource (preventing IDOR/BOLA).
-- *Misconception:* JWTs are encrypted and secret.
-  *Reality:* Standard JWTs (JWS) are signed, not encrypted. The header and payload are Base64URL-encoded JSON, fully readable by anyone who inspects the token. Sensitive data must never be placed in unencrypted JWT payloads.
+- *Misconception:* Hashing a password with SHA-256 makes it secure for storage.
+  *Reality:* SHA-256 is an unkeyed fast hash designed for throughput. Dedicated hardware can evaluate billions of digests per second. Passwords require salted, compute- and memory-hard functions (Argon2id, scrypt, or PBKDF2) to slow down dictionary attacks.
+- *Misconception:* PBKDF2 is a memory-hard password hashing function.
+  *Reality:* PBKDF2 is compute-hard (iteration-hard), but requires minimal memory, allowing parallelized ASIC implementation. True memory-hard functions (Argon2id per RFC 9106, scrypt per RFC 7914) require significant RAM per evaluation, resisting hardware acceleration.
+- *Misconception:* A valid JWT signature proves the token was issued by a trusted IdP and that the user is authorized.
+  *Reality:* A valid signature only proves mathematical verification under a key selected by verifier policy. Trust and issuer identity binding require explicit verifier validation (`iss`, `aud`, key-pinning policy). Furthermore, the application must still check resource authorization (preventing IDOR/BOLA).
 - *Misconception:* Stateless JWTs can be revoked instantly without server-side state.
-  *Reality:* True stateless tokens cannot be revoked before their expiration time without maintaining a centralized revocation list or blocklist, which reintroduces distributed state.
+  *Reality:* Stateless tokens cannot be revoked before expiration without out-of-band verification state (revocation lists, epoch bumping, or session store lookups).
 
 ### 9. Worked Example
-Learners trace an API request: `GET /api/documents/1042` with header `Authorization: Bearer <jwt>`.
-The learner analyzes the 5-step validation pipeline:
-1. Parse JWT header and payload;
-2. Verify that `alg` strictly matches expected algorithm (e.g., `RS256`), rejecting `none` or unexpected symmetric algorithms (`HS256` key confusion);
-3. Cryptographically verify signature against IdP public key;
-4. Validate temporal claims (`nbf <= now < exp`), issuer (`iss == trusted_idp`), and audience (`aud == my_api_service`);
-5. Authorize action: check whether `jwt.sub` (user ID) has read permission for document `1042` in the database, rejecting access if document `1042` belongs to a different tenant.
+Learners trace two authentication and authorization mechanisms:
+1. *Password Verifier Lifecycle:*
+   - Registration: System generates an unguessable salt (`secrets.token_bytes(16)`) and derives hash via slow KDF; stores formatted string: `pbkdf2_sha256$iterations=200000$salt_hex$hash_hex`.
+   - Authentication: Server extracts salt and iterations from stored verifier, computes hash of candidate password, and compares using `hmac.compare_digest`.
+2. *Token Profile Validation (`TeachingProfile-BearerV1`):*
+   - Incoming request: `GET /api/documents/1042` with header `Authorization: Bearer <token>`.
+   - Pipeline:
+     1. Unpack token; reject if `alg == "none"` or mismatched from expected profile algorithm (`HS256` reference or `RS256`);
+     2. Cryptographically verify signature against verifier's trusted key;
+     3. Validate temporal claim: `exp > now`;
+     4. Validate audience: `aud == "document-service"`;
+     5. Authorization check: Query authorization policy to verify whether `sub` (authenticated user) has `read` permission on document `1042`.
 
 ### 10. Bounded Hands-On / Observation
-Learners inspect a mock API gateway authentication handler in Python. The handler initially accepts unsigned tokens or fails to validate the `aud` claim, allowing tokens intended for another service to grant access. Learners modify the validator to enforce all RFC 8725 JWT BCP checks and write assertions verifying that forged, expired, and mis-targeted tokens are rejected.
+Learners interact with `labs/foundations/m22/activity_l22_01.py`:
+1. Implement a password verifier formatting and validation routine with unique salt generation and `hmac.compare_digest`.
+2. Implement `TeachingProfile-BearerV1` validator in pure Python standard library (`hmac`, `hashlib`, `json`, `base64`), enforcing required claims (`alg`, `exp`, `sub`, `aud`).
+3. Verify that forged signatures, expired tokens, wrong audiences, and `alg: "none"` are deterministically rejected.
 
 ### 11. Evidence to Record
-- Authentication vs. Authorization Pipeline Trace Table.
-- JWT Validation Invariants Checklist showing test outcomes for 5 failure cases (tampered payload, wrong algorithm, expired timestamp, incorrect audience, revoked subject).
+- Password Storage Compliance Record (Salt source, Salt length >= 32 bits, Hash algorithm, Cost parameter rationale, Timing comparison API).
+- Token Profile Validation Matrix (`TeachingProfile-BearerV1`: claim name, required vs. optional, validation rule, failure status code).
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** Validator passes all automated unit tests, rejecting all invalid/forged/expired tokens and correctly authorizing valid requests.
-- **BLOCKED:** Missing cryptographic dependencies for signature verification.
+- **PASS:** Validator passes automated unit tests, rejecting all invalid/forged/expired tokens and password verifier mismatches.
+- **BLOCKED:** Missing standard library cryptographic modules.
 - **NOT RUN:** Hands-on code exercise omitted.
 
 ### 13. Progressive Support
-- **Question:** If an attacker intercepts a signed JWT issued for `service-billing.example.com`, why might they be able to use it against `service-internal-admin.example.com` if audience verification is omitted?
-- **Hint 1:** Both services trust the same company Identity Provider (IdP) public key.
-- **Hint 2:** The signature is completely valid because the IdP signed it. What claim specifies which service the token was issued for?
-- **Expected Observation:** Because the signature verifies successfully against the shared IdP key, the admin service accepts the token unless it explicitly verifies that `aud` matches its own service identifier.
-- **Full Explanation:** Digital signatures prove that an IdP generated the token, but not that the token was intended for the recipient service. Omitting the `aud` (Audience) check allows token substitution attacks across microservices. The recipient must enforce `aud == expected_service_id`.
+- **Question:** If an attacker intercepts a signed token issued for `service-billing.example.com`, why might they be able to use it against `service-admin.example.com` if audience verification is omitted?
+- **Hint 1:** Both services trust the same identity provider signing key.
+- **Hint 2:** The signature is mathematically valid. What claim specifies which service the token was issued for?
+- **Expected Observation:** Because the signature verifies successfully under the shared key, the admin service accepts the token unless it explicitly verifies that `aud` matches its own service identifier.
+- **Full Explanation:** Signature verification only proves that the token was signed by the holder of the private/shared key. Omitting the `aud` (Audience) check allows token substitution attacks across services. The recipient must enforce `aud == expected_service_id`.
 
 ### 14. Required Visuals
 - *Visual M22-V1:* Authentication vs. Authorization Request Decision Path.
@@ -589,18 +650,20 @@ Learners inspect a mock API gateway authentication handler in Python. The handle
 
 ### 15. Failure Modes
 - Checking user permissions based solely on user-supplied URL parameters without validating against the authenticated identity.
-- Treating bearer tokens as confidential secrets inside client-side JavaScript without `HttpOnly` or secure storage safeguards.
+- Storing unsalted password hashes or using fast unkeyed hashes for password verification.
 
 ### 16. Non-Goals
 - Deploying a live identity provider such as Keycloak, Okta, or Active Directory.
 - Implementing biometric or hardware FIDO2/WebAuthn authenticators.
 
 ### 17. Machine-Checkable vs. Reviewer-Required Gates
-- Machine-Checkable: Unit tests asserting token rejection for signature tampering, expiration, wrong audience, and `alg: "none"`.
-- Reviewer-Required: Inspection of learner's explanation of stateless token revocation trade-offs.
+- Machine-Checkable: Standard library `unittest` suite asserting password verifier correctness, salt uniqueness, constant-time comparison, and token profile rejection for tampering, expiration, wrong audience, and `alg: "none"`.
+- Reviewer-Required: Inspection of learner's explanation of stateless token revocation trade-offs and password storage policy rationale.
 
 ### 18. Source Grounding with Currentness Classification
-- **RFC 9700 / BCP 240:** CURRENT (January 2025). OAuth 2.0 Security Best Current Practice: PKCE MUST for public, RECOMMENDED for confidential; ROPC MUST NOT; redirect URI exact matching.
+- **NIST SP 800-63B-4 §3.1.1.2:** CURRENT (Final July 2025). Normative password storage rules: minimum 15 chars single-factor, 8 chars MFA; salt >= 32 bits; memory-hard functions recommended.
+- **RFC 9106 (Argon2):** STABLE. Standard memory-hard password hashing.
+- **RFC 9700 / BCP 240:** CURRENT (January 2025). OAuth 2.0 Security BCP: PKCE MUST for public, RECOMMENDED for confidential; ROPC MUST NOT; Implicit Grant SHOULD NOT; redirect URI exact matching.
 - **draft-ietf-oauth-v2-1-15:** CURRENT (March 2026 active draft). Consolidated OAuth 2.1 specification.
 - **RFC 7519 / RFC 8725:** STABLE. JSON Web Token (JWT) specification and Security Best Current Practices.
 
@@ -615,16 +678,17 @@ Web applications bridge disparate execution environments (browsers, network prot
 - Hard: `L22-01` (Authentication & Authorization), `L12-03` (Web & Same-Origin Policy).
 
 ### 3. Primary Competencies
-- `Diagnose`: Identify code-versus-data mixing in SQL queries, HTML rendering, and network requests.
-- `Trace`: Trace the execution path of untrusted input through sanitization, templating, and database queries.
-- `Correctness`: Refactor vulnerable code into secure implementations using parameterized APIs, context-aware encoding, and egress socket binding.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Diagnose, Judge, Explain`
+- `Diagnose`: Identify code-versus-data mixing in SQL queries, HTML rendering, and network egress calls.
+- `Judge`: Evaluate trade-offs between mitigation strategies (parameterized queries vs. ORMs; CSP nonces vs. hashes; SameSite cookie attributes vs. anti-CSRF synchronizer tokens; network egress socket binding vs. proxy allowlists).
+- `Explain`: Explain why string concatenation across composition boundaries fails, and explain how structural separation prevents injection at the API/driver interface layer.
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - `EC-CON-017 Trust Boundary`: Revisit (First home: M07 `L07-01`). The boundary between application business logic and underlying interpreters (SQL engine, HTML parser, OS shell, network stack).
 - `EC-CON-009 Correctness`: Revisit (First home: M02 `L02-03`). Correctness under active adversarial payload injection.
 
 ### 5. Learning Outcomes
-- Explain how SQL Injection occurs via string concatenation and prove why parameterized queries (prepared statements) structurally eliminate SQLi at the Abstract Syntax Tree (AST) layer.
+- Explain how SQL Injection occurs via string concatenation and prove why parameterized queries (prepared statements) structurally eliminate SQLi by using driver/API contracts that treat parameters strictly as value literals, separating data from syntax (noting that specific AST and bytecode compilation mechanics depend on the database engine).
 - Classify Cross-Site Scripting (XSS) into Stored, Reflected, and DOM-based types, and specify defenses using context-aware encoding and W3C CSP Level 3 nonce policies.
 - Contrast Cross-Site Request Forgery (CSRF) ambient cookie authority with explicit bearer token authority, and implement multi-layered defenses: `SameSite` cookies, Origin/Referer verification, and anti-CSRF synchronizer tokens.
 - Deconstruct Server-Side Request Forgery (SSRF) and design a secure HTTP client enforcing URL parsing, IP destination allowlists, DNS rebinding mitigation, and connection socket address binding before sending request bytes.
@@ -639,7 +703,7 @@ Never concatenate untrusted input into an interpreter stream. Maintain strict st
 
 ### 8. Required Distinctions / Misconceptions
 - *Misconception:* Escaping single quotes with regex makes SQL queries safe against injection.
-  *Reality:* Ad-hoc blacklists and string replacing fail against alternative encodings, numeric injections, and second-order injections. Only parameterized prepared statements guarantee structural AST separation.
+  *Reality:* Ad-hoc blacklists and string replacing fail against alternative encodings, numeric injections, and second-order injections. Only parameterized prepared statements guarantee that user input is handled strictly as data literals by the driver and database engine.
 - *Misconception:* An application using `SameSite=Lax` cookies is completely immune to CSRF.
   *Reality:* `SameSite=Lax` allows cookies on top-level GET navigations. If a server performs state mutations on GET requests, it remains vulnerable to CSRF. Furthermore, older browsers or misconfigured subdomains can bypass `Lax`. Defense-in-depth requires checking `Origin`/`Referer` headers or using anti-CSRF tokens.
 - *Misconception:* Validating that a URL begins with `https://api.example.com` protects against SSRF.
@@ -713,9 +777,9 @@ Modern software applications are composed predominantly of third-party libraries
 - Hard: `L22-02` (Web Application Security & Composition).
 
 ### 3. Primary Competencies
-- `Explain`: Articulate the risks of transitive dependencies, typosquatting, dependency confusion, and compromised maintainer accounts.
-- `Trace`: Trace a dependency resolution tree and identify lockfile pinning mechanisms.
-- `Judge`: Evaluate a third-party library's maintenance posture, license obligations, and security attack surface before adoption.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Learn-New-Tech, Judge`
+- `Learn-New-Tech`: Master dependency management tools, lockfile specifications, cryptographic hash pinning, and SLSA v1.2 provenance formats.
+- `Judge`: Evaluate risk-versus-utility of external dependencies, assess supply-chain attack surfaces, and formulate dependency adoption/retention policies.
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - `EC-CON-017 Trust Boundary`: Revisit (First home: M07 `L07-01`). The boundary between developer code and external third-party open-source code.
@@ -768,7 +832,7 @@ Learners analyze a small project directory containing a `requirements.txt` and a
 - **Hint 1:** Where does the binary package get built and uploaded?
 - **Hint 2:** Can a developer's laptop or CI runner build something different from what was committed to Git?
 - **Expected Observation:** Source signatures only attest to the text in Git; they do not attest to the integrity of the build pipeline, the build dependencies, or the uploaded artifact.
-- **Full Explanation:** This is the core insight behind SLSA (Supply-chain Levels for Software Artifacts). To establish trust from source to deployment, a system requires verifiable build provenance attestations generated by an isolated, authenticated build platform (SLSA v1.2), binding the specific git commit hash directly to the resulting binary artifact hash.
+- **Full Explanation:** This is the core insight behind SLSA (Supply-chain Levels for Software Artifacts). To establish trust from source to deployment, a system requires verifiable build provenance attestations generated by an isolated, authenticated build platform (SLSA v1.2), binding the specific source revision and builder identity to the resulting artifact digest. Note that cryptographic hashes only verify integrity against trusted expected digests; if the expected digest in a lockfile is itself compromised, hash checks cannot detect the malicious origin.
 
 ### 14. Required Visuals
 - *Visual M22-V5:* The 6-Layer Software Supply Chain Integrity Model (Pinning → Digests → Reproducibility → Signatures → Identities → Provenance).
@@ -786,31 +850,41 @@ Learners analyze a small project directory containing a `requirements.txt` and a
 - Reviewer-Required: Inspection of learner's dependency risk evaluation methodology.
 
 ### 18. Source Grounding with Currentness Classification
-- **OpenSSF SLSA v1.2 Specification:** CURRENT (Approved, September 2024; v1.0 retired). Verifiable build provenance and supply chain maturity.
+- **OpenSSF SLSA v1.2 Specification:** CURRENT (Approved, **24 November 2025**; v1.0 retired). Verifiable build provenance and supply chain maturity.
 - **PEP 508 / PEP 440:** STABLE. Python packaging specifications.
 - **NIST SP 800-218 (SSDF):** STABLE. Secure Software Development Framework.
 
 ---
 
-## 14. M22 Hands-On Fixture Contract — Safe Localhost Web Security & Fix-and-Verify Harness (`activity_l22_02.py`)
+## 14. M22 Hands-On Fixture Contract — Safe Localhost Auth & Web Security Harness (`activity_l22_01.py`, `activity_l22_02.py`)
 
 ### 14.1 Purpose & Execution Scope
-The fixture `activity_l22_02.py` implements a self-contained, course-owned localhost web security test harness. It demonstrates code vs. data injection, CSRF validation, and SSRF socket egress controls entirely on `127.0.0.1` using Python's built-in `http.server` and `sqlite3`.
+Module M22 delivers two bounded, course-owned localhost fixtures:
+1. `activity_l22_01.py`: Password verifier formatting (`algo$params$salt$hash`), `hmac.compare_digest` validation, and `TeachingProfile-BearerV1` token validation (pure standard library).
+2. `activity_l22_02.py`: Web security harness demonstrating SQL parameterization, CSRF token verification, and SSRF socket egress binding entirely on `127.0.0.1` using Python's built-in `http.server` and `sqlite3`.
 
 ### 14.2 Fixture File Structure
-- Implementation: `labs/foundations/m22/activity_l22_02.py`
-- Verification Suite: `labs/foundations/m22/test_m22.py`
+- Implementation: `labs/foundations/m22/activity_l22_01.py` & `labs/foundations/m22/activity_l22_02.py`
+- Verification Suite: `labs/foundations/m22/test_m22.py` (Standard library `unittest` suite; capability-gates `pytest`)
 
-### 14.3 Safety Guarantees & Network Isolation
+### 14.3 Safety Guarantees, Fail-Closed Teardown & Lifecycle Contract
 1. **Loopback Only:**
-   The server binds exclusively to `("127.0.0.1", 0)`, allowing the OS to allocate an ephemeral free port. It NEVER binds to `0.0.0.0` or public network interfaces.
+   The web server binds exclusively to `("127.0.0.1", 0)`, allowing the OS to allocate an ephemeral free port. It NEVER binds to `0.0.0.0` or external network interfaces.
 2. **Ephemeral In-Memory Database:**
    All SQL demonstrations use an in-memory SQLite database (`:memory:`) populated with synthetic records (`alice`, `bob`, `charlie`).
-3. **SSRF Safe Testing Sandbox:**
-   The SSRF exercise tests against a mock internal target running on loopback, demonstrating how IP blocklist checks intercept and abort requests to `127.0.0.1`, `10.0.0.0/8`, `169.254.169.254`, and `192.168.0.0/16`.
-4. **Deterministic Teardown & Watchdog:**
-   The server runs in a daemon thread and is terminated cleanly via `server.shutdown()` and `server.server_close()` in test teardown blocks. A 5.0-second watchdog timer prevents hanging tests.
+3. **SSRF Bounded Testing Sandbox:**
+   The SSRF exercise tests against bounded loopback endpoints, evaluating destination validation, DNS rebinding mitigations, and post-resolution socket connection binding.
+4. **Deterministic Fail-Closed Thread Teardown & Listener Verification:**
+   To guarantee deterministic cleanup and prevent lingering background processes:
+   - Server threads are explicitly owned (non-daemon thread with dedicated stop event).
+   - Teardown sequence executes:
+     1. `server.shutdown()` to halt the request processing loop;
+     2. `server.server_close()` to close the underlying socket;
+     3. `thread.join(timeout=cleanup_timeout)` where `cleanup_timeout` is a configurable fixture policy parameter (default 2.0s);
+     4. **Post-cleanup listener verification:** The test harness immediately attempts a probe connection or socket bind to verify the port has been released and no listener remains active.
+     5. **Fail-Closed Disposition:** If the thread fails to join within the timeout or the port remains active, the fixture emits `FAIL / BLOCKED: Teardown verification failed; lingering listener detected`. It NEVER silently passes.
 
+---
 
 ## 15. Module M23 Architecture — Systems Thinking & Judgment
 
@@ -836,95 +910,96 @@ The core capability transition of M23 is:
 ## 16. Lesson L23-01 Design — "How do I measure honestly?"
 
 ### 1. Target Mental Model
-Benchmarking is a scientific experiment, not a marketing exercise. A benchmark that reports only average throughput or mean latency is actively misleading because real-world systems exhibit heavy-tailed, multimodal latency distributions caused by garbage collection, queueing delays, cache misses, and network jitter. Honest measurement requires: starting with a clear question; defining a realistic workload model (open vs. closed); warming up the system to reach steady-state; capturing full distributions using high-resolution monotonic clocks (`time.monotonic_ns()`); and eliminating **coordinated omission** (where client blocking hides server queuing delays).
+Benchmarking is a scientific experiment, not a marketing exercise. Measurement must always be **question-driven**: the choice of workload model, sample size, warm-up criteria, and summary statistics depends on the specific engineering question being asked. A benchmark that reports only average throughput or mean latency can be misleading for skewed distributions, but mean and standard deviation remain essential for resource capacity and cost modeling. Real-world systems exhibit multimodal, heavy-tailed latency distributions caused by background pauses, queueing, cache effects, and network variance. Honest measurement requires: matching the workload model (open vs. closed) to the system question; understanding when coordinated omission matters (when arrivals occur independently of completion); choosing appropriate summary metrics (percentiles, histograms, or moments); and using monotonic clocks while understanding that integer nanosecond units do not guarantee nanosecond hardware clock resolution.
 
 ### 2. Prerequisites
 - Hard: `L20-01` (Observability & Metrics), `L04-02` (Empirical Measurement & Profiling).
 
 ### 3. Primary Competencies
-- `Observe`: Collect high-resolution, unskewed latency distributions using monotonic timers.
-- `Diagnose`: Identify measurement artifacts, coordinated omission, warm-up bias, and misleading statistical summaries.
-- `Judge`: Select appropriate statistical representations (percentiles, histograms, median/IQR) matching the workload's empirical distribution.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Estimate, Judge, Diagnose`
+- `Estimate`: Estimate latency and throughput characteristics across workloads and calculate confidence bounds for empirical observations.
+- `Judge`: Select question-driven measurement methodologies, appropriate workload models (open vs. closed), and suitable summary statistics matching the data distribution and inference goal.
+- `Diagnose`: Identify measurement artifacts, coordinated omission, warm-up transients, and misleading statistical summaries.
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - `EC-CON-009 Correctness`: Revisit (First home: M02 `L02-03`). Correctness of empirical data collection and statistical inference.
-- `EC-CON-010 Failure`: Revisit (First home: M03 `L03-03`). Latency spikes and tail-latency failures under load.
+- `EC-CON-010 Failure`: Revisit (First home: M03 `L03-03`). Latency degradation and tail-latency failures under load.
 
 ### 5. Learning Outcomes
 - Formulate a falsifiable measurement hypothesis and define the exact independent and dependent variables.
-- Contrast open workload models (requests arrive independently of system completion) with closed workload models (requests wait for prior responses), and explain why closed models mask saturation.
-- Identify and eliminate coordinated omission in load generation harnesses.
-- Implement steady-state detection, discarding warm-up transients (JIT compilation, cache warming, connection pooling).
-- Analyze latency data using percentiles (p50, p90, p99, p99.9) and histograms, demonstrating why mean and standard deviation fail for skewed systems.
+- Contrast open workload models (requests arrive according to an independent arrival process) with closed workload models (fixed concurrent clients waiting for prior responses before issuing new requests), articulating which question each model legitimately answers.
+- Explain coordinated omission and identify scenarios where synchronous client generators distort latency measurements by coupling arrival generation to service completion.
+- Evaluate warm-up criteria based on mechanism and question (e.g., JIT compilation or cache warming vs. cold-start CLI benchmarking).
+- Select summary statistics matched to data distributions and engineering goals: percentiles and histograms for tail latencies and SLOs; mean and total counts for capacity planning and cloud cost calculations.
 
 ### 6. Stable Principle
-If you do not measure the time requests spend waiting in the client queue, you are not measuring system latency; you are measuring your benchmark's throttling.
+Select measurement methods and statistical representations that directly answer your engineering question; never let your benchmark harness inadvertently reshape the workload you intend to measure.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
 - **Specification:** IEEE 754 floating point arithmetic, POSIX `CLOCK_MONOTONIC`.
-- **Implementation:** Python `time.monotonic_ns()`, HdrHistogram, latency tracking data structures.
-- **Current Practice:** Continuous benchmarking in CI, distributed tracing span latencies, latency SLOs (p99/p99.9), Gil Tene's coordinated omission corrections in modern load generators (wrk2, k6, Locust).
+- **Implementation:** Python `time.monotonic_ns()` (returns integer nanoseconds, but underlying OS timer tick resolution may be microseconds or milliseconds), latency histograms.
+- **Current Practice:** Continuous benchmarking in CI, distributed tracing span latencies, latency SLOs (p99/p99.9), coordinated omission correction in open load generators (wrk2, k6, Locust).
 
 ### 8. Required Distinctions / Misconceptions
-- *Misconception:* The mean (average) latency accurately represents what typical users experience.
-  *Reality:* Latency distributions are heavily skewed. If 99 requests take 1ms and 1 request takes 1000ms, the mean is 10.99ms—a number that describes neither the fast requests nor the slow request. Percentiles (p50, p99) accurately depict the user experience.
-- *Misconception:* Running a test 30 times guarantees statistical validity (Central Limit Theorem).
-  *Reality:* The Central Limit Theorem applies to the distribution of sample means, not individual latencies. Heavy-tailed distributions require non-parametric methods, high sample counts, and percentile analysis.
-- *Misconception:* `time.time()` is suitable for benchmarking.
-  *Reality:* `time.time()` measures wall-clock time and is subject to NTP adjustments, daylight saving steps, and system clock drift. Benchmarking must exclusively use monotonic clocks (`time.monotonic_ns()`).
+- *Misconception:* Mean and standard deviation are universally "wrong" for systems measurement.
+  *Reality:* Mean is inappropriate as a sole proxy for typical user experience in skewed distributions (where percentiles like p50/p99 excel). However, mean is indispensable for calculating total work, aggregated throughput, energy consumption, and cloud infrastructure costs. Summary statistics must be chosen based on the inference goal.
+- *Misconception:* Closed workload models are inherently invalid or "mask saturation."
+  *Reality:* Closed workload models accurately represent systems with a fixed, bounded client population (e.g., a fixed pool of batch worker threads or interactive desktop users waiting for a response). Open workload models represent independent arrivals (e.g., public web traffic). Neither is universally superior; each answers a different engineering question.
+- *Misconception:* `time.time()` jumps whenever daylight saving time changes.
+  *Reality:* Unix epoch `time.time()` measures seconds since the epoch and is not affected by local civil-time daylight saving offset changes. However, it is subject to NTP slews, steps, and manual system clock adjustments. Benchmarking uses `time.monotonic_ns()` because monotonic clocks guarantee non-decreasing counts.
+- *Misconception:* `time.monotonic_ns()` provides true nanosecond precision.
+  *Reality:* `monotonic_ns()` returns integer nanosecond units, but the underlying clock resolution is bounded by the host OS kernel and hardware timer frequency (e.g., HPET, TSC, or Windows interrupt tick).
 
 ### 9. Worked Example
-Learners analyze a benchmark comparing two queue implementations.
-The load generator sends 100 requests in a synchronous loop:
-```python
-for item in items:
-    t0 = time.monotonic_ns()
-    process(item)  # When item blocks for 500ms, next request is delayed
-    record(time.monotonic_ns() - t0)
-```
-The learner observes that when `process()` stalls for 500ms, the loop waits. The 50 requests that *should* have arrived during that 500ms window are never generated. Consequently, the benchmark reports a low average latency, completely missing the severe queuing delay that real users would experience (Coordinated Omission).
-Learners refactor the harness to use schedule-based arrival times, recording both service time and queuing time.
+Learners evaluate a benchmark comparing queue processing under a specified arrival process:
+- Scenario: Target arrival rate is set to 100 requests/second (scheduled inter-arrival time = 10 ms).
+- Execution trace:
+  - The load generator issues requests in a synchronous loop.
+  - A synthetic 500 ms processing stall occurs on request #10.
+  - In an uncoordinated synchronous generator, the loop blocks for 500 ms. The subsequent 50 requests that were scheduled to arrive during that 500 ms window (at 100 req/s) are delayed at the generator.
+  - The uncoordinated benchmark records only service time for completed requests, reporting an artificially low latency profile.
+  - In an arrival-scheduled generator, the arrival timestamp $T_{\text{sched}}$ is tracked independently; the total latency is recorded as $T_{\text{complete}} - T_{\text{sched}}$, accurately capturing queuing delay under this open arrival assumption.
 
 ### 10. Bounded Hands-On / Observation
 Learners run `labs/foundations/m23/activity_l23_01.py`:
-1. Run a load test against a server that simulates a periodic 200ms garbage collection pause.
-2. Compare the output of an uncoordinated synchronous generator versus an arrival-schedule generator; observe how the uncoordinated generator reports a misleadingly optimistic p99.
-3. Plot/inspect the full histogram showing the bimodal distribution.
+1. Run a load test against a server with an injected synthetic 200 ms stall (explicitly designated as a synthetic pause, not claimed to be actual GC observation unless GC is instrumented).
+2. Compare the output of an uncoordinated synchronous generator versus an arrival-scheduled generator under a specified target arrival rate.
+3. Inspect the resulting latency distributions and summary statistics. Note: The fixture does not promise "Zero Flakiness"; variability and noise are documented as empirical realities.
 
 ### 11. Evidence to Record
-- Measurement Protocol Card (Hypothesis, Workload model, Warm-up criteria, Duration, Clock source).
-- Comparative Latency Summary Table (Arrival-scheduled vs Synchronous: min, p50, p90, p99, max).
+- Measurement Protocol Card (Hypothesis, Workload model open/closed rationale, Warm-up criteria, Arrival schedule assumptions, Clock source and observed resolution).
+- Comparative Latency Summary Table (Min, Mean, p50, p90, p99, Max, along with stated sample size and inference limits).
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** Learner correctly identifies coordinated omission in a benchmark script and refactors it to record true scheduled arrival latency.
-- **BLOCKED:** Insufficient timer resolution on host environment.
+- **PASS:** Learner designs a valid measurement protocol, explains open vs. closed workload applicability, and demonstrates arrival-scheduled latency recording under stated arrival assumptions.
+- **BLOCKED:** Host environment lacks monotonic timer support.
 - **NOT RUN:** Hands-on exercise not executed.
 
 ### 13. Progressive Support
-- **Question:** If an e-commerce page makes 50 distinct microservice requests to render a single user page, why is the page's 99th percentile latency much worse than the 99th percentile latency of an individual microservice?
-- **Hint 1:** What is the probability that all 50 requests complete within their respective 99th percentile?
-- **Hint 2:** Calculate $(0.99)^{50}$.
-- **Expected Observation:** $(0.99)^{50} pprox 0.605$. Only 60.5% of page loads will experience all calls under p99.
-- **Full Explanation:** This is the fan-out tail-at-scale effect. When a top-level operation depends on the completion of multiple concurrent operations, the slowest dependency dictates the overall latency. A user making 50 requests has nearly a 40% chance of hitting at least one request in the 99th percentile.
+- **Question:** If an e-commerce page makes 50 serial or parallel microservice calls to render a single page, what assumptions are required before you can calculate the probability of all calls completing within p99 using $(0.99)^{50} \approx 0.605$?
+- **Hint 1:** What does $(P_1 \times P_2 \times \dots \times P_n)$ assume about the statistical relationship between the events?
+- **Hint 2:** Are microservice calls in a shared cluster truly independent if they share database instances or network switches?
+- **Expected Observation:** The $(0.99)^{50}$ calculation strictly assumes that all 50 calls are statistically independent and that their latency distributions are identically bounded.
+- **Full Explanation:** The formula demonstrates the fan-out tail effect under the explicit assumption of independent, uncorrelated latencies. In real production systems, requests often share common bottlenecks (database locks, network links, or host CPU), meaning latencies are correlated and the true failure probability may be higher or lower depending on cascade dynamics. Learners must always state independence assumptions when presenting probabilistic tail estimates.
 
 ### 14. Required Visuals
-- *Visual M23-V1:* Measurement Architecture: Hypothesis → Workload Generator → Monotonic Timers → Histogram vs Percentiles.
-- *Visual M23-V2:* Coordinated Omission: How Synchronous Clients Hide Queuing Delays.
+- *Visual M23-V1:* Scientific Systems Measurement Architecture (Question/Hypothesis → Workload Model Selection → Monotonic Timing → Multimodal Distribution Analysis).
+- *Visual M23-V2:* Coordinated Omission: Comparing Service Time vs. Scheduled Arrival Latency under Open Workload Assumptions.
 
 ### 15. Failure Modes
-- Reporting benchmark results from the first 5 seconds of execution before caches or thread pools warm up.
-- Comparing benchmarks run on different hardware or background system load.
+- Universalizing rules of thumb (e.g., claiming all benchmarks must use p99 or that mean is never useful).
+- Ignoring background system activity during local performance benchmarks.
 
 ### 16. Non-Goals
-- Complex statistical proofs of heavy-tailed Pareto distributions.
+- Formal statistical proofs of heavy-tailed Pareto distributions.
 - Kernel-level CPU performance counter tuning (perf/eBPF hardware counters).
 
 ### 17. Machine-Checkable vs. Reviewer-Required Gates
-- Machine-Checkable: Unit test verifying that arrival-scheduled timer accounts for queued wait time.
-- Reviewer-Required: Inspection of learner's measurement protocol and experimental design.
+- Machine-Checkable: Standard library `unittest` suite verifying that arrival-scheduled timer accounts for scheduled wait time under simulated stalls.
+- Reviewer-Required: Web Lead review of learner's Measurement Protocol Card, stated assumptions, and metric selection rationale.
 
 ### 18. Source Grounding with Currentness Classification
-- **Gil Tene (Coordinated Omission):** STABLE. Foundational methodology for latency measurement in distributed systems.
+- **Gil Tene (Coordinated Omission):** STABLE. Foundational methodology for latency measurement in open systems.
 - **Brendan Gregg (Systems Performance, 2nd Ed.):** STABLE. Methodologies for USE (Utilization, Saturation, Errors) and benchmark evaluation.
 
 ---
@@ -939,9 +1014,10 @@ Engineering is the art of trade-offs under constraints. There are no universally
 - Soft: `L22-01` (Authn/Authz), `L17-01` (Replication & Consistency).
 
 ### 3. Primary Competencies
-- `Judge`: Evaluate competing technologies across the 12 dimensions of Decision D-015.
-- `Learn-New-Tech`: Rapidly dissect an unfamiliar technology by analyzing its data model, consistency semantics, failure modes, and operational costs.
-- `Explain`: Articulate the explicit trade-offs and rejection criteria for a candidate technology.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Judge, Learn-New-Tech, Explain`
+- `Judge`: Evaluate candidate technologies against the 12 dimensions of Decision D-015, weigh architectural trade-offs, and defend technology rejection as a valid engineering outcome.
+- `Learn-New-Tech`: Rapidly dissect new technology claims, inspect architectural documentation, and separate stable principles from marketing buzzwords.
+- `Explain`: Articulate the operational, consistency, and maintenance costs of introducing a new dependency.
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - `EC-CON-007 Specification`: Revisit (First home: M02 `L02-03`). System requirements vs. vendor specifications.
@@ -1045,9 +1121,9 @@ Every architectural design incurs costs across multiple non-fungible currencies:
 - Hard: `L23-02` (Technology Selection & Judgment).
 
 ### 3. Primary Competencies
-- `Estimate`: Perform Fermi back-of-the-envelope calculations for storage, memory, bandwidth, and compute requirements.
-- `Judge`: Evaluate trade-offs between hardware costs, software complexity, and engineering maintenance time.
-- `Diagnose`: Identify system scaling bottlenecks and perform sensitivity analysis on changing workload assumptions.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Estimate, Judge`
+- `Estimate`: Perform Fermi back-of-the-envelope calculations for compute, memory, storage, and network egress; track units precisely (bits vs Bytes, decimal vs binary prefixes) and make all assumptions explicit.
+- `Judge`: Balance monetary costs against latency, reliability, and operational complexity trade-offs; identify critical cost bottlenecks and evaluate sensitivity to scaling assumptions.
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - `EC-CON-010 Failure`: Revisit (First home: M03 `L03-03`). Resource exhaustion and scaling cliffs as failure modes.
@@ -1132,20 +1208,23 @@ Learners run a capacity modeling script in Python:
 ## 19. M23 Hands-On Fixture & Technology Evaluation Contract (`activity_l23_01.py`, `activity_l23_02.py`)
 
 ### 19.1 Purpose & Execution Scope
-Module M23 provides two focused, non-network-dependent hands-on tools:
-1. `activity_l23_01.py`: An empirical measurement and latency distribution workbench. Demonstrates coordinated omission, steady-state detection, and percentiles vs. histograms.
-2. `activity_l23_02.py`: A structured Decision D-015 evaluation harness and ADR generator. Validates that proposed architectures are evaluated across all 12 dimensions and checks for explicit trade-off justifications.
+Module M23 provides two hands-on artifacts:
+1. `activity_l23_01.py`: An empirical latency measurement harness comparing uncoordinated synchronous loops against arrival-scheduled generators under question-driven open arrival models.
+2. `activity_l23_02.py`: A structured Decision D-015 Technology Evaluation validation schema and evaluator that audits Technology Decision Records for completeness across all 12 dimensions.
 
 ### 19.2 Fixture File Structure
-- Measurement Harness: `labs/foundations/m23/activity_l23_01.py`
-- Evaluation Harness: `labs/foundations/m23/activity_l23_02.py`
-- Verification Suite: `labs/foundations/m23/test_m23.py`
+- Implementation: `labs/foundations/m23/activity_l23_01.py`, `labs/foundations/m23/activity_l23_02.py`
+- Verification Suite: `labs/foundations/m23/test_m23.py` (Standard library `unittest` suite; capability-gates `pytest`)
 
 ### 19.3 Invariants & Interface Contract
-- **High-Resolution Timing:** All benchmarks exclusively use `time.monotonic_ns()`.
-- **Zero Flakiness:** Benchmarks use controlled synthetic work loops (simulated processing delays) rather than relying on noisy operating system scheduling.
-- **Machine-Checkable ADR Schema:** `activity_l23_02.py` exports a JSON schema validator ensuring that learner-submitted ADRs contain non-empty entries for all 12 dimensions of Decision D-015.
+1. **Timing Accuracy & Units:**
+   Uses `time.monotonic_ns()` for duration measurements, explicitly documenting that integer nanosecond units do not imply nanosecond hardware clock resolution.
+2. **Synthetic Pause Injections:**
+   Harness tests use explicitly labeled synthetic pause injections rather than claiming uninstrumented garbage collection observation. (The fixture does not overpromise "zero flakiness"; platform variance and jitter are treated as empirical realities).
+3. **Structured ADR Schema:**
+   The D-015 evaluator validates that all 12 dimensions are addressed and specifically checks for substantive justifications in Dimension 10 (Operational Burden) and Dimension 12 (When Not to Use).
 
+---
 
 ## 20. Module M24 Architecture — Final System Defense (Integration & Judgment Capstone)
 
@@ -1178,21 +1257,21 @@ Defending an architecture is not an exercise in persuasion or polished slides; i
 - Integrative: Complete mastery of Stages 1–6 (OS, Networks, Storage, Distributed Systems, Web, Security).
 
 ### 3. Primary Competencies
-- `Explain`: Articulate the end-to-end architecture across all layers of the computing stack.
-- `Trace`: Trace request, data, state, and authority paths through the integrated system.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Judge, Explain, Diagnose, Estimate`
 - `Judge`: Defend architectural trade-offs, justify rejected alternatives, and adapt to changed constraints.
+- `Explain`: Articulate end-to-end request, state, control, and failure traces across the actual system architecture.
+- `Diagnose`: Identify points of failure, unmitigated risks, and broken invariants under adversarial challenge.
+- `Estimate`: Quantify the resource, capacity, and cost limits of the proposed architecture.
 
 ### 4. Canonical Concept First-Home vs. Revisit
-- Revisit of all 18 Canonical Concepts, with primary focus on:
-  - `EC-CON-007 Specification` (First home: M02 `L02-03`)
-  - `EC-CON-008 Invariant` (First home: M02 `L02-03`)
-  - `EC-CON-009 Correctness` (First home: M02 `L02-03`)
-  - `EC-CON-010 Failure` (First home: M03 `L03-03`)
-  - `EC-CON-013 Isolation` (First home: M07 `L07-01`)
-  - `EC-CON-014 Consistency` (First home: M14 `L14-02`)
-  - `EC-CON-015 Concurrency` (First home: M15 `L15-01`)
-  - `EC-CON-016 Durability` (First home: M09 `L09-01`)
-  - `EC-CON-017 Trust Boundary` (First home: M07 `L07-01`)
+Revisit strictly those canonical concepts that have an active, demonstrable evidence role in the learner's actual system architecture:
+- `EC-CON-007 Specification` (First home: M02 `L02-03`): Stated invariants and API contracts.
+- `EC-CON-008 Invariant` (First home: M02 `L02-03`): Safety and liveness invariants maintained under failure.
+- `EC-CON-009 Correctness` (First home: M02 `L02-03`): Test verification and assertion evidence.
+- `EC-CON-010 Failure` (First home: M03 `L03-03`): Crash recovery boundaries and unhandled failure modes.
+- `EC-CON-013 Isolation` (First home: M07 `L07-01`): Process, memory, and database isolation.
+- `EC-CON-016 Durability` (First home: M09 `L09-01`): Filesystem `fsync` and database WAL durability boundaries.
+- `EC-CON-017 Trust Boundary` (First home: M07 `L07-01`): Transport, endpoint, and process authority perimeters.
 
 ### 5. Learning Outcomes
 - Construct the 16 Core Architectural Traces and Artifacts for the capstone system.
@@ -1214,15 +1293,14 @@ An architectural claim without verifiable evidence is merely an opinion. A real 
 - *Misconception:* Evidence sufficiency means every single claim requires a live benchmark.
   *Reality:* Evidence takes multiple valid forms: formal specifications, authoritative RFCs, automated test assertions, mathematical capacity models, and explicit documented assumptions.
 
-### 9. Worked Example
-A learner presents their Mini Cloud App architecture, claiming it provides "high availability and durable storage."
-The reviewer challenges this claim with a Changed-Constraint:
-*Challenge:* "Your primary database server experiences an ungraceful power loss while writing an append-only log entry. A client receives an HTTP 500 error, retries the request, and connects to your failover replica. What does the client see, and is data corrupted?"
+### 9. Worked Example (Scenario Card Conditional on Actual Architecture)
+A learner defends their actual single-node Mini Cloud App architecture (utilizing an embedded SQLite database in WAL mode on a local filesystem):
+*Claim:* The application provides durable storage for committed user records and recovers cleanly from sudden process termination.
+*Reviewer Changed-Constraint Challenge:* "The host process crashes abruptly (e.g. `kill -9` or power loss) while executing an HTTP transaction that updates two related tables. On restart, what state does a querying client observe, what happens to the uncommitted transaction, and does your single-node design provide any availability guarantee while the host is down?"
 *Learner Defense:*
-1. *State Trace:* Traces write-ahead log (WAL) sync semantics (`fsync` vs OS write cache per M09);
-2. *Protocol Trace:* Traces idempotency keys used in client retries (M16);
-3. *Consistency Proof:* Cites raft/replication log state (M17), demonstrating that the uncommitted entry was either truncated cleanly or replayed deterministically;
-4. *Conclusion:* The client receives the correctly committed response on retry with zero state duplication.
+1. *State & Durability Trace:* Traces SQLite Write-Ahead Logging (WAL) and `fsync` boundaries per M09/M14. If `PRAGMA synchronous = NORMAL` or `FULL` was configured, committed transactions prior to the crash are durable in the WAL file; uncommitted frames in the transaction are not committed.
+2. *Recovery Mechanics:* On restart, SQLite's recovery routine inspects the WAL header, detects that the interrupted transaction lacked a commit frame, and rolls it back, leaving the database in a consistent pre-transaction state without partial corruption.
+3. *Availability Boundary:* The learner explicitly acknowledges that their single-node architecture does **NOT** provide high availability or automatic failover. While the process is down, availability is zero. The learner defends this trade-off: for the target scale and operational complexity budget, single-node simplicity was chosen over the massive operational burden of a distributed consensus cluster (M17/M18). No fake failover replicas or fabricated Raft state are claimed.
 
 ### 10. Bounded Hands-On / Observation
 Learners complete their comprehensive Capstone System Defense Dossier, detailing the 16 Architectural Traces:
@@ -1290,19 +1368,19 @@ Shipping software to production is a controlled release of risk. An engineer doe
 - Hard: `L24-01` (Architectural Defense).
 
 ### 3. Primary Competencies
-- `Diagnose`: Identify pre-ship operational blind spots, unmonitored failure modes, and untested rollback paths.
-- `Judge`: Prioritize verification effort based on risk severity and blast radius.
-- `Correctness`: Establish automated pre-flight release gates and rollback criteria.
+Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`): `Judge, Diagnose`
+- `Judge`: Prioritize pre-ship verification effort based on risk severity, blast radius, and system criticality; define explicit boundaries for acceptable unknowns.
+- `Diagnose`: Identify pre-ship operational blind spots, unmonitored failure modes, and compatibility risks in deployment/rollback paths.
 
 ### 4. Canonical Concept First-Home vs. Revisit
 - `EC-CON-010 Failure`: Revisit (First home: M03 `L03-03`). Failure mitigation, graceful degradation, and disaster recovery.
 - `EC-CON-009 Correctness`: Revisit (First home: M02 `L02-03`). Verification gates before production deployment.
 
 ### 5. Learning Outcomes
-- Construct a Risk-Prioritized Evidence Matrix classifying release checks into: Must Measure, Must Test, Must Inspect, and Acceptable Unknown.
+- Construct a Risk-Prioritized Evidence Matrix classifying release checks into: Must Measure, Must Test, Must Inspect, and Acceptable Unknown, grounded in the system's actual architecture and risk profile.
 - Verify production operational readiness: telemetry signals (M20), transport security and input sanitization (M21/M22), and resource cost boundaries (M23).
-- Design and dry-run a zero-data-loss rollback and database migration reversal procedure.
-- Formulate precise Service Level Objectives (SLOs) and Error Budgets governing deployment safety.
+- Design and dry-run a deployment compatibility and rollback/roll-forward strategy, stating explicit data-loss bounds rather than assuming universal zero loss.
+- Formulate precise Service Level Objectives (SLOs) and Error Budgets governing release criteria.
 
 ### 6. Stable Principle
 If you do not have a tested rollback plan and observable health signals, you are not shipping software; you are gambling with your users' data.
@@ -1318,20 +1396,20 @@ If you do not have a tested rollback plan and observable health signals, you are
 - *Misconception:* Rollback simply means redeploying the previous git commit.
   *Reality:* If the new version performed destructive database schema migrations or wrote data in an incompatible format, rolling back code will crash the previous version or corrupt data. Backward-compatible schema evolution is required.
 
-### 9. Worked Example
-Learners review a proposed release of a new billing microservice.
-The pre-ship verification plan classifies checks:
-1. *Must Measure:* Latency distribution under simulated peak load (must satisfy p99 < 50ms); memory stability over a 2-hour soak test (zero memory leaks).
-2. *Must Test:* Automated regression suite (100% pass on financial calculation invariants); idempotent transaction retry on network drop.
-3. *Must Inspect:* Security review of database connection credentials (must not be committed to Git; must use least-privilege DB user); code review of error handlers (must not leak stack traces to clients).
-4. *Acceptable Unknown:* Behavior under a simultaneous total loss of two data centers (accepted business risk for current scale).
-5. *Rollback Verification:* Verify that database column additions are nullable so that previous code runs without error if rollback occurs.
+### 9. Worked Example (Scenario Card: Web Service Release)
+Learners evaluate a pre-ship verification plan using explicit scenario-card parameters (numbers represent scenario-specific targets, not universal course rules):
+- *Scenario Card Context:* Internal document-indexing service release (target throughput 500 req/s, single database instance).
+- *Must Measure (Scenario Card Targets):* Latency distribution under simulated steady-state arrival load (scenario target: p95 < 150 ms under 500 req/s open arrival); process RSS memory growth during a 30-minute test run to verify bounded memory usage.
+- *Must Test:* Automated regression suite (100% pass on document parsing and access control invariants); idempotent retry handling on client disconnect.
+- *Must Inspect:* Credential handling (environment variables vs. committed secrets); structured error response sanitization (preventing stack trace leakage to clients).
+- *Acceptable Unknown:* System behavior under an unannounced multi-hour cloud zone network partition (explicitly documented as an unmitigated operational risk outside current project scope).
+- *Deployment Compatibility Strategy:* Analyze migration trade-offs: if a column addition is backward-compatible (nullable), a rollback to previous code is safe; if a migration is destructive, a roll-forward or snapshot recovery strategy is required, with stated data-loss bounds.
 
 ### 10. Bounded Hands-On / Observation
-Learners execute a pre-ship verification simulation against their Mini Cloud App:
-1. Run automated lint, unit, and integration suites.
-2. Trigger an automated chaos injection (e.g., simulated slow database queries) and verify that the system emits the expected structured warning logs and degrades gracefully without crashing.
-3. Perform a simulated database schema migration forward and execute a verified rollback without losing synthetic user data.
+Learners execute a pre-ship verification audit against their Mini Cloud App:
+1. Run automated test suites (`test_m21.py`, `test_m22.py`, `test_m23.py`, `test_m24.py`) ensuring 100% pass on core invariant gates.
+2. Verify observability and error-handling readiness: simulate a missing database or unresponsive loopback port and verify that structured error logs with context are emitted.
+3. Audit the database schema migration plan for the project's actual database (e.g., SQLite table alter or schema version bump), verifying whether the planned change is backward-compatible and documenting the rollback or recovery procedure.
 
 ### 11. Evidence to Record
 - Pre-Ship Risk-Prioritized Evidence Checklist.
@@ -1410,21 +1488,22 @@ To achieve a **PASS** in M24, the learner's capstone defense must provide adequa
 ## 24. S7 Shared Preflight & Environment Capabilities Matrix (Preserving OQ-BP-006 OPEN)
 
 ### 24.1 Governance & Open Question Invariant
-In accordance with repository governance, **Open Question `OQ-BP-006` (Canonical Tooling and Library Versions) remains OPEN**. Specific package versions are pinned at implementation time within activity lockfiles. Stage 7 design mandates that all core educational and verification workflows must function completely within a standard Python 3.10+ runtime, treating optional third-party packages strictly via dynamic capability detection and non-breaking fallbacks.
+In accordance with repository governance, **Open Question `OQ-BP-006` (Canonical Tooling and Library Versions) remains OPEN in substance and policy**. Rather than freezing arbitrary language versions or package ranges in Design (e.g. mandating `cryptography >= 42.0.0`), Stage 7 specifies required **language and runtime capabilities**. All Required Core educational and verification workflows must function completely using standard library capabilities (`hashlib`, `hmac`, `secrets`, `socket`, `http.server`, `sqlite3`, `unittest`), treating third-party packages strictly as optional candidates detected at implementation time with exact version recheck.
 
 ### 24.2 Environment Capabilities Matrix
 
-| Capability Category | Component / Module | Required Core Baseline | Optional Enhancement | Fallback / Degradation Behavior |
+| Capability Category | Component / Module | Required Core Baseline Capability | Optional Candidate Enhancement | Fallback / Degradation Behavior |
 |---|---|---|---|---|
-| **Runtime Environment** | Python Interpreter | Python 3.10+ (Standard CPython) | Python 3.12+ / 3.13+ | Abort preflight if < 3.10; emit `BLOCKED: Unsupported Python version`. |
-| **Networking** | Loopback Interface | OS loopback socket (`127.0.0.1`) with ephemeral port allocation | None required | If loopback binding fails, emit `BLOCKED: Socket bind permission denied`. |
-| **Timer / Clock** | Monotonic Clock | POSIX / Windows `time.monotonic_ns()` (nanosecond resolution) | OS high-resolution hardware counters | Fallback to `time.monotonic()` if nanosecond clock is unavailable. |
-| **Cryptographic Hashing** | Hash & MAC Primitives | `hashlib` (SHA-256, SHA-512), `hmac`, `secrets` | None required | Standard library is universally present; zero external dependencies. |
-| **Password Hashing** | Slow Hashing Functions | `hashlib.pbkdf2_hmac` (SHA-256, >= 600,000 iterations) | `argon2-cffi` (Argon2id per RFC 9106) | If `argon2-cffi` is missing, seamlessly fall back to PBKDF2; test passes. |
-| **Symmetric / Asymmetric** | Advanced Crypto | Educational mock primitives using HMAC & RSA stubs | PyCA `cryptography` (>= 42.0.0) | Capability detection: if absent, skip hardware-accelerated AES-GCM tests. |
-| **Database** | Relational Storage | `sqlite3` in-memory (`:memory:`) or ephemeral temp files | External PostgreSQL/MySQL | Built-in SQLite requires zero external server processes. |
-| **Web Server** | Localhost HTTP | `http.server`, `urllib.parse`, `urllib.request` | FastAPI, Flask, Starlette | Standard library server requires zero pip packages. |
-| **Process / Isolation** | Ephemeral Sandboxing | `tempfile.TemporaryDirectory()`, standard process context | Docker / Podman containers | Zero assumption of container runtimes or root privileges. |
+| **Runtime Environment** | Python Interpreter | Standard CPython with modern typing, `dataclasses`, and `secrets` support | Latest stable CPython release | Preflight checks required module capabilities; emits `BLOCKED` if capability missing. |
+| **Test Verification** | Test Framework | Python standard library `unittest` (Required Core test runner) | `pytest` test runner | Capability detection: if `pytest` is present, it may be used; otherwise `unittest` executes. Tests must not claim equivalent pass if an underlying mechanism is skipped. |
+| **Networking** | Loopback Interface | OS loopback socket (`127.0.0.1`) with ephemeral dynamic port allocation | None required | If loopback binding fails, emit `BLOCKED: Socket bind permission denied`. |
+| **Timer / Clock** | Monotonic Clock | `time.monotonic_ns()` (integer nanosecond units) | OS high-resolution hardware counters | Fallback to `time.monotonic()` if `monotonic_ns` is absent. Integer nanosecond units do not imply nanosecond clock resolution. |
+| **Cryptographic Hashing** | Hash & MAC Primitives | `hashlib` (SHA-256), `hmac`, `secrets` | None required | Standard library universally present; zero external dependencies. |
+| **Password Verifier** | Slow Hashing Functions | `hashlib.pbkdf2_hmac` (compute-hard, configurable iterations per policy) | `argon2-cffi` (Argon2id memory-hard per RFC 9106) | If `argon2-cffi` is missing, tests evaluate compute-hard PBKDF2; test reports truthful mechanism used. No fallback may claim memory-hard verification occurred if PBKDF2 was run. |
+| **Token Profiles** | Token Validation | Course-owned bounded reference fixture using `hmac` + `hashlib` + `base64` + `json` for `TeachingProfile-BearerV1` | `pyjwt`, PyCA `cryptography` (e.g. current 50.0.1 candidate) | Capability detection: advanced asymmetric token tests run only when package is present; otherwise reported as `NOT RUN / CAPABILITY ABSENT`. |
+| **Database** | Relational Storage | Built-in `sqlite3` in-memory (`:memory:`) or ephemeral temp files | External database server | Standard library SQLite requires zero external server processes. |
+| **Web Server** | Localhost HTTP | Built-in `http.server`, `urllib.parse`, `urllib.request` | External ASGI/WSGI servers | Standard library server requires zero third-party packages. |
+| **Process / Isolation** | Ephemeral Sandboxing | `tempfile.TemporaryDirectory()`, standard process context | Container runtimes | Zero assumption of container runtimes or root privileges. |
 
 ### 24.3 Prohibited Environmental Assumptions
 Under no circumstances may any S7 activity or test suite assume:
@@ -1440,7 +1519,7 @@ Every test runner in S7 executes a lightweight preflight probe before test execu
 ```python
 def run_s7_preflight() -> dict:
     capabilities = {
-        "python_version": sys.version_info >= (3, 10),
+        "python_capabilities": hasattr(hashlib, "pbkdf2_hmac") and hasattr(secrets, "token_bytes"),
         "loopback_bind": False,
         "monotonic_ns": hasattr(time, "monotonic_ns"),
         "has_argon2": False,
@@ -1456,7 +1535,7 @@ def run_s7_preflight() -> dict:
     except Exception:
         pass
 
-    # Detect optional packages
+    # Detect optional candidate packages
     try:
         import argon2
         capabilities["has_argon2"] = True
@@ -1609,14 +1688,18 @@ To guide visual asset production without generating raw binary files prematurely
 - **Axes:** Keys Involved (None vs Shared Secret vs Keypair) vs Operational Goal (Integrity vs Authenticity vs Confidentiality).
 - **Layout Blueprint:**
 ```
-┌──────────────────┬─────────────────┬─────────────────┬────────────────────────────────┐
-│ Primitive Class  │ Key Required    │ Math Transform  │ Security Guarantees            │
-├──────────────────┼─────────────────┼─────────────────┼────────────────────────────────┤
-│ Hash (SHA-256)   │ None            │ One-Way Digest  │ Integrity (Tamper Detection)   │
-│ MAC (HMAC-SHA256)│ 1 Shared Secret │ Keyed Hash      │ Integrity + Authenticity       │
-│ Signature (RSA/Ed)│ Keypair (Priv/Pub) Asymmetric Math │ Authenticity + Non-Repudiation │
-│ AEAD (AES-GCM)   │ 1 Shared Secret │ Cipher + AuthTag│ Confidentiality + Authenticity │
-└──────────────────┴─────────────────┴─────────────────┴────────────────────────────────┘
+┌──────────────────┬─────────────────┬─────────────────┬────────────────────────────────┬────────────────────────────────┐
+│ Primitive Class  │ Key Required    │ Math Transform  │ Security Guarantees            │ Non-Guarantees / Boundaries    │
+├──────────────────┼─────────────────┼─────────────────┼────────────────────────────────┼────────────────────────────────┤
+│ Hash (SHA-256)   │ None            │ One-Way Digest  │ Integrity vs Expected Digest   │ No authenticity against active │
+│                  │                 │                 │ (Detects accidental corruption)│ adversary (attacker recomputes)│
+│ MAC (HMAC-SHA256)│ 1 Shared Secret │ Keyed Hash      │ Integrity + Authenticity       │ Both parties share secret;     │
+│                  │                 │                 │ (Proves key holder created it) │ cannot distinguish sender/recv │
+│ Signature (Ed/EC)│ Keypair (Priv/Pub) Asymmetric Math │ Verifiable under Public Key    │ Non-repudiation depends on key │
+│                  │                 │                 │ (Only private key can sign)    │ custody, binding & verifier pol│
+│ AEAD (AES-GCM)   │ 1 Shared Secret │ Cipher + AuthTag│ Confidentiality + Authenticity │ Nonce must NEVER be reused;    │
+│                  │                 │                 │ (Plaintext hidden & untampered)│ no public verification         │
+└──────────────────┴─────────────────┴─────────────────┴────────────────────────────────┴────────────────────────────────┘
 ```
 
 #### Visual M21-V3: The 6-Layer PKI Trust and Verification Architecture
@@ -1632,7 +1715,7 @@ To guide visual asset production without generating raw binary files prematurely
 [ Layer 3: Service Identity Binding ]  SAN check: hostname matches certificate subject (RFC 9525)
               │
               ▼
-[ Layer 4: Proof of Possession ] ──── Client verifies server possesses private key (TLS Handshake)
+[ Layer 4: Proof of Possession ] ──── Client verifies server possesses private key (TLS Handshake; RFC 9846 forward secrecy via DHE/ECDHE)
               │
               ▼
 [ Layer 5: Authentication ] ───────── Verified identity of endpoint confirmed
@@ -1689,46 +1772,59 @@ CONCATENATION:
   AST Parsed AFTER Concatenation:
   Query ──► WHERE ──► OR ──► BinaryOp (=) ──► True! (Syntax Altered!)
 
-PARAMETERIZED:
+PARAMETERIZED (Driver / API Contract Separation):
   SQL: "SELECT * FROM users WHERE name = ?"  Param: "admin' OR '1'='1"
-  AST Parsed BEFORE Parameter Binding:
-  Query ──► WHERE ──► Equals (Column: name, LiteralString: "admin' OR '1'='1")
-  (Syntax Invariant Preserved; Input Treated Exclusively as Value Data)
+  API Contract Enforces Separation:
+  Driver/Engine compiles query structure treating '?' strictly as a parameter value placeholder.
+  User input is bound directly as data literal, never evaluated as SQL syntax.
+  (Exact mechanism is engine-specific: SQLite compiles bytecode placeholders; PostgreSQL uses server-side prepared statements).
 ```
 
 #### Visual M22-V4: Browser Vulnerabilities & Defensive Boundaries (XSS, CSRF, SSRF)
 - **Purpose:** Map the three browser-mediated vulnerabilities and their exact architectural mitigation boundaries.
 - **Layout Blueprint:**
 ```
-┌──────────────┬─────────────────────────┬────────────────────────┬─────────────────────────────┐
-│ Threat Class │ Execution Boundary      │ Attack Mechanism       │ Definitive Architectural Fix│
-├──────────────┼─────────────────────────┼────────────────────────┼─────────────────────────────┤
-│ XSS          │ Browser DOM / Engine    │ Script injected in HTML│ Context Encoding + CSP Nonce│
-│ CSRF         │ Cross-Origin HTTP Hop   │ Ambient Cookie Hijack  │ SameSite=Lax + Anti-CSRF Tok│
-│ SSRF         │ Server Outbound Egress  │ Server tricked into LAN│ URL Policy + Socket Binding │
-└──────────────┴─────────────────────────┴────────────────────────┴─────────────────────────────┘
+┌──────────────┬─────────────────────────┬────────────────────────┬─────────────────────────────┬─────────────────────────────┐
+│ Threat Class │ Execution Boundary      │ Attack Mechanism       │ Mechanism & Enforcement Pt  │ Non-Guarantees / Limits     │
+├──────────────┼─────────────────────────┼────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ XSS          │ Browser DOM / Parser    │ Script injected in HTML│ Context-aware autoencoding; │ Does not stop server-side   │
+│              │                         │ execution context      │ W3C CSP3 strict nonces      │ template injection or clobbr│
+│ CSRF         │ Cross-Origin HTTP Hop   │ Ambient credential     │ SameSite cookies; explicit  │ SameSite=Lax allows GET nav;│
+│              │                         │ (cookie) auto-attach   │ Authorization headers; token│ mutation on GET remains vul │
+│ SSRF         │ Server Outbound Egress  │ Server coerced to fetch│ Parsed IP destination check;│ URL regex allowlists fail;  │
+│              │                         │ internal resource      │ post-resolve socket bind    │ DNS rebinding bypasses check│
+└──────────────┴─────────────────────────┴────────────────────────┴─────────────────────────────┴─────────────────────────────┘
 ```
 
-#### Visual M22-V5: The 6-Layer Software Supply Chain Integrity Model
-- **Purpose:** Structure software supply chain defense into six progressive layers from version to provenance.
-- **The 6 Layers:**
+#### Visual M22-V5: The 9-Layer Software Supply Chain Integrity Model
+- **Purpose:** Structure software supply chain defense into nine progressive concerns from resolution to verifier policy.
+- **The 9 Layers:**
 ```
-[ Layer 1: Version Pinning ] ───────── Semantic version lock (`==2.31.0`)
+[ Layer 1: Resolution Pinning ] ────── Semantic version ranges frozen in lockfile
              │
              ▼
-[ Layer 2: Cryptographic Hash Pinning ] SHA-256 artifact digest lock (`--require-hashes`)
+[ Layer 2: Expected Digest Ownership ] Trusted lockfile/repository governing expected hashes
              │
              ▼
-[ Layer 3: Build Reproducibility ] ── Byte-for-byte independent build verification
+[ Layer 3: Fetched-Byte Integrity ] ── Cryptographic SHA-256 check against expected digest
              │
              ▼
-[ Layer 4: Signature Verification ] ── Cryptographic signature check on package artifact
+[ Layer 4: Build Reproducibility ] ── Byte-for-byte independent build verification
              │
              ▼
-[ Layer 5: Signer Identity Binding ] ─ Verifying signing key belongs to trusted maintainer
+[ Layer 5: Signature Verification ] ── Cryptographic signature check on package archive
              │
              ▼
-[ Layer 6: Provenance Attestation ] ── SLSA v1.2 authenticated build pipeline record
+[ Layer 6: Signer Identity Binding ] ─ Verifying signing key belongs to authorized maintainer
+             │
+             ▼
+[ Layer 7: Build/Source Provenance ] ─ Binding git commit and builder identity
+             │
+             ▼
+[ Layer 8: Trusted Builder ] ───────── Evaluating isolated, authenticated build platform
+             │
+             ▼
+[ Layer 9: Verifier Policy ] ───────── Enforcing that attestation satisfies deployment gates
 ```
 
 ### 27.3 Module M23 Visual Specifications
@@ -1840,16 +1936,17 @@ All normative claims in Stage 7 are grounded in authoritative technical specific
 
 | Source Identifier | Version / Revision | Publication Date | Formal Status | Checked Date | Claim Supported | Boundary / What Source Does Not Prove | Drift Classification | Rights & Licensing Boundary |
 |---|---|---|---|---|---|---|---|---|
-| **NIST SP 800-63B-4** | Final Revision 4 | July 2025 | Official US Gov Standard | 2026-09-07 | Password storage: salt >= 32 bits, memory-hard recommended; single-factor >= 15 chars, MFA >= 8 chars; composition rules abolished. | Does not endorse specific commercial password managers or hardware tokens. | **CURRENT** | US Gov work; attribution required; non-US copyright protections may apply per D-016. |
+| **NIST SP 800-63B-4** | Final Revision 4 | July 2025 | Official US Gov Standard | 2026-09-07 | Password storage: salt >= 32 bits (SHALL), memory-hard recommended (SHOULD); single-factor >= 15 chars, MFA >= 8 chars; composition rules abolished. | Does not endorse specific commercial password managers or hardware tokens. | **CURRENT** | US Gov work; public domain in US; attribution required per D-016. |
+| **FIPS 198-1 / NIST SP 800-224 (draft)** | FIPS 198-1 (active) / SP 800-224 (draft) | March 2002 (FIPS) / Active SP draft | Official Federal Standard / Active NIST Conversion | 2026-09-07 | Keyed-Hash Message Authentication Code (HMAC) specification. Notes NIST's active conversion/withdrawal plan moving FIPS 198-1 to SP 800-224. | Does not prove confidentiality or non-repudiation. | **STABLE / CURRENT** | US Gov work; public domain. |
 | **NIST SP 800-131A Rev. 2 / Rev. 3 IPD** | Rev. 2 (active) / Rev. 3 (Initial Public Draft) | Oct 21, 2024 (draft) | Active Standard / Draft in progress | 2026-09-07 | Transitioning cryptographic algorithms; SHA-1 disallowed for signatures; 112-bit security deprecated. | Rev. 3 is a draft and not yet final normative policy. | **CURRENT / FRONTIER** | US Gov work; subject to public comment revisions. |
-| **RFC 9846** | Standards Track | July 2026 | Proposed Standard (Obsoletes RFC 8446, 5246, 5077) | 2026-09-07 | TLS 1.3 protocol specification; mandatory forward secrecy, AEAD only, encrypted handshakes. | Does not prove application-layer security above the TLS transport. | **STABLE / CURRENT** | IETF Trust Legal Provisions (TLP); Code Components under Revised BSD. |
-| **RFC 9525** | Standards Track | May 2024 | Proposed Standard (Obsoletes RFC 6125) | 2026-09-07 | Service identity verification in TLS; MUST check SAN, MUST NOT use CN fallback. | Does not validate web application authorization policies. | **STABLE / CURRENT** | IETF TLP; Code Components under Revised BSD. |
-| **RFC 9700 / BCP 240** | Best Current Practice 240 | January 2025 | IETF Best Current Practice | 2026-09-07 | OAuth 2.0 Security BCP: PKCE MUST for public, RECOMMENDED for confidential; ROPC MUST NOT; exact redirect matching. | Does not define identity assertion schemas (handled by OpenID Connect). | **CURRENT** | IETF TLP; non-commercial educational citation. |
-| **draft-ietf-oauth-v2-1-15** | Working Group Draft | March 2026 | Active Internet-Draft | 2026-09-07 | Consolidated OAuth 2.1 authorization framework incorporating BCP 240. | Draft status; subject to minor text revisions before final RFC publication. | **CURRENT / FRONTIER** | IETF Trust copyright; educational citation only. |
+| **RFC 9846** | Standards Track | July 2026 | Proposed Standard (Obsoletes RFC 5077, 5246, 6961, 7627, 8422, 8446; updates RFC 5705, 6066) | 2026-09-07 | TLS 1.3 protocol specification; forward secrecy scoped to DHE/ECDHE key exchange; AEAD only; encrypted handshakes. | Does not provide forward secrecy in PSK-only mode (`psk_ke`) or 0-RTT early data. | **STABLE / CURRENT** | IETF Trust Legal Provisions (TLP) Section 4/5; Code Components under BSD 3-Clause. |
+| **RFC 9525** | Standards Track | **November 2023** | Proposed Standard (Obsoletes RFC 6125) | 2026-09-07 | Service identity verification in TLS; MUST check SAN, MUST NOT use CN fallback. | Does not validate application-layer authorization policies. | **STABLE / CURRENT** | IETF TLP Section 4/5; Code Components under BSD 3-Clause. |
+| **RFC 9700 / BCP 240** | Best Current Practice 240 | January 2025 | IETF Best Current Practice | 2026-09-07 | OAuth 2.0 Security BCP: PKCE MUST for public, RECOMMENDED for confidential; ROPC MUST NOT; Implicit Grant SHOULD NOT; exact redirect matching. | Does not define identity assertion schemas (handled by OpenID Connect). | **CURRENT** | IETF TLP Section 4/5; Code Components under BSD 3-Clause. |
+| **draft-ietf-oauth-v2-1-15** | Working Group Draft | March 2026 | Active Internet-Draft | 2026-09-07 | Consolidated OAuth 2.1 authorization framework incorporating BCP 240; removes Implicit Grant. | Draft status; subject to minor text revisions before final RFC publication. | **CURRENT / FRONTIER** | IETF Trust copyright under TLP. |
 | **W3C CSP Level 3** | Working Draft | 13 August 2026 | W3C Working Draft | 2026-09-07 | Nonce-based Content Security Policy (`'strict-dynamic'`) for script execution. | Does not prevent server-side template injection or DOM clobbering. | **CURRENT** | W3C Document License; freely citeable. |
-| **RFC 9106** | Informational | September 2021 | IETF Informational (Argon2) | 2026-09-07 | Memory-hard password hashing algorithm (Argon2id). | Does not replace transport encryption or database security. | **STABLE** | RFC Editor / IETF TLP. |
-| **OpenSSF SLSA v1.2** | Specification v1.2 | September 2024 | Approved (v1.0 retired) | 2026-09-07 | Supply chain levels for software artifacts; verifiable build provenance attestations. | Does not guarantee that source code is free of developer-authored bugs. | **CURRENT** | Community Specification License 1.0; open attribution. |
-| **PyCA cryptography** | v50.0.1 | August 25, 2026 | Production Python Package | 2026-09-07 | Reference Python cryptographic primitives implementation. | Package is an optional enhancement; not required for Core baseline pass. | **CURRENT** | Dual-licensed Apache 2.0 / BSD 3-Clause. |
+| **RFC 9106** | Informational | September 2021 | IETF Informational (Argon2) | 2026-09-07 | Memory-hard password hashing algorithm (Argon2id). | Does not replace transport encryption or database security. | **STABLE** | RFC Editor / IETF TLP Section 4/5. |
+| **OpenSSF SLSA v1.2** | Specification v1.2 | **24 November 2025** | Approved (v1.0 retired) | 2026-09-07 | Supply chain levels for software artifacts; verifiable build provenance attestations. | Does not guarantee that source code is free of developer-authored bugs. | **CURRENT** | Community Specification License 1.0; open attribution. |
+| **PyCA cryptography** | v50.0.1 (candidate) | August 25, 2026 | Production Python Package | 2026-09-07 | Candidate reference Python cryptographic library with capability detection. | Package is an optional candidate enhancement; not required for Required Core baseline pass. | **CURRENT** | Dual-licensed Apache 2.0 / BSD 3-Clause. |
 
 ---
 
@@ -1872,34 +1969,43 @@ All concept first-home assignments remain inviolate:
 - `EC-CON-018 Process` (进程): First home remains **M06 `L06-01`**.
 - `Consensus`: Registry ID remains deliberately deferred per Decision D-025.
 
-### 29.3 Canonical Competency Vocabulary
+### 29.3 Canonical Competency Vocabulary & Per-Lesson Mapping
 Stage 7 exclusively utilizes the 8 canonical competency verbs defined in `meta/COMPETENCY_MATRIX.md`:
-1. `Trace` (跟踪)
-2. `Explain` (解释)
-3. `Observe` (观察)
-4. `Diagnose` (诊断)
-5. `Correctness` (正确性证明/保障)
-6. `Judge` (权衡与判断)
-7. `Estimate` (数量级估算)
-8. `Learn-New-Tech` (新技术学习)
-Zero non-standard competency terms are used.
+`Trace`, `Explain`, `Observe`, `Diagnose`, `Correctness`, `Judge`, `Estimate`, `Learn-New-Tech`.
+
+Every lesson's primary competency assignment matches the accepted canonical Blueprint row (`meta/blueprint/core-stage-module-lesson-map-v0.1.md`):
+
+| Lesson ID | Module | Lesson Title / Driving Question | Canonical Blueprint Primary Competencies |
+|---|---|---|---|
+| `L21-01` | M21 | "Where are the boundaries I must protect?" | `Judge, Explain, Diagnose` |
+| `L21-02` | M21 | "What do I use crypto for?" | `Explain, Judge, Learn-New-Tech` |
+| `L22-01` | M22 | "How do I know who is calling?" | `Judge, Explain` |
+| `L22-02` | M22 | "Why is my web app vulnerable?" | `Diagnose, Judge, Explain` |
+| `L22-03` | M22 | "Why do I trust my dependencies?" | `Learn-New-Tech, Judge` |
+| `L23-01` | M23 | "How do I measure honestly?" | `Estimate, Judge, Diagnose` |
+| `L23-02` | M23 | "How do I pick a technology?" | `Judge, Learn-New-Tech, Explain` |
+| `L23-03` | M23 | "What is the cost of my design?" | `Estimate, Judge` |
+| `L24-01` | M24 | "Can I defend an architecture?" | `Judge, Explain, Diagnose, Estimate` |
+| `L24-02` | M24 | "What should I measure before I ship?" | `Judge, Diagnose` |
 
 ---
 
 ## 30. Machine-Checkable vs. Reviewer-Required Verification Matrix
 
-| Module | Lesson | Machine-Checkable Gates (Automated Test Suites) | Reviewer-Required Gates (Web Lead / Peer Review) |
-|---|---|---|---|
-| **M21** | `L21-01` | Path sanitization test (rejecting `../` traversal, null bytes, out-of-sandbox targets). | Evaluation of threat model boundary diagram and asset inventory. |
-| **M21** | `L21-02` | `pytest test_m21.py`: Salt randomness, slow hash iterations, constant-time `hmac.compare_digest`. | Review of primitive selection rationale (Hash vs MAC vs Signature vs AEAD). |
-| **M22** | `L22-01` | JWT signature verification, expiration check, audience check, rejection of `alg: "none"`. | Review of stateful vs stateless token revocation trade-off analysis. |
-| **M22** | `L22-02` | `pytest test_m22.py`: SQL parameterization, CSRF token validation, SSRF IP blocklist checks. | Architectural review of SSRF DNS rebinding socket egress defense. |
-| **M22** | `L22-03` | Lockfile parser test validating SHA-256 hash checks and rejecting tampered digests. | Inspection of third-party dependency adoption evaluation criteria. |
-| **M23** | `L23-01` | Unit test proving arrival-scheduled benchmark records queued latency under stalls. | Review of measurement protocol, warm-up criteria, and distribution plots. |
-| **M23** | `L23-02` | Schema validation of JSON/Markdown ADR ensuring all 12 dimensions are completed. | Qualitative evaluation of technology trade-off reasoning and rejection defense. |
-| **M23** | `L23-03` | Numeric calculation verification of storage growth, egress bandwidth, and memory sizing. | Review of stated assumptions, unit conversions, and bottleneck identification. |
-| **M24** | `L24-01` | Automated validation of 16-trace completeness in capstone defense document. | In-depth defense review, evidence sufficiency audit, and changed-constraint challenge. |
-| **M24** | `L24-02` | Pre-flight test suite pass, schema rollback test execution, health endpoint response. | Review of risk-prioritized pre-ship verification checklist and operational readiness. |
+Verification gates map directly to canonical primary competencies across all 10 lessons. Machine-checkable suites run via Python standard library `unittest` for Required Core (capability-gating `pytest` when present):
+
+| Module | Lesson | Primary Competencies | Machine-Checkable Gates (Automated Test Suites: `unittest`) | Reviewer-Required Gates (Web Lead / Peer Review) |
+|---|---|---|---|---|
+| **M21** | `L21-01` | `Judge, Explain, Diagnose` | Path sanitization assertion (rejecting `../` traversal, null bytes, out-of-sandbox targets). | Evaluation of threat model boundary diagram, privilege assessment, and asset inventory (`Judge`, `Explain`). |
+| **M21** | `L21-02` | `Explain, Judge, Learn-New-Tech` | `python -m unittest labs/foundations/m21/test_m21.py`: HMAC authentication failure on tamper, unkeyed hash tamper demonstration, `compare_digest` usage. | Review of Primitive Selection Matrix and explanation of crypto roles/misuse boundaries (`Explain`, `Judge`). |
+| **M22** | `L22-01` | `Judge, Explain` | `python -m unittest labs/foundations/m22/test_m22.py`: Password verifier salt uniqueness and slow hash execution; token profile rejection for forged signature, expired timestamp, wrong audience, and `alg: "none"`. | Review of password storage policy rationale, token profile boundaries, and stateful vs stateless revocation trade-offs (`Judge`, `Explain`). |
+| **M22** | `L22-02` | `Diagnose, Judge, Explain` | Parameterized query execution verifying syntax preservation; CSRF token validation; SSRF post-resolve socket destination check. | Architectural review of code vs data separation, context-aware escaping, and egress socket binding (`Diagnose`, `Judge`). |
+| **M22** | `L22-03` | `Learn-New-Tech, Judge` | Lockfile parser test validating SHA-256 hash checks and rejecting tampered digests. | Inspection of 9-layer supply chain evaluation and third-party dependency adoption policy (`Learn-New-Tech`, `Judge`). |
+| **M23** | `L23-01` | `Estimate, Judge, Diagnose` | Unit test proving arrival-scheduled benchmark records scheduled queuing delay under synthetic stalls. | Review of Measurement Protocol Card, stated arrival assumptions, and question-driven metric selection (`Estimate`, `Judge`). |
+| **M23** | `L23-02` | `Judge, Learn-New-Tech, Explain` | Schema validation of ADR ensuring all 12 dimensions of Decision D-015 are completed. | Qualitative evaluation of technology trade-off reasoning and defense of technology rejection (`Judge`, `Explain`). |
+| **M23** | `L23-03` | `Estimate, Judge` | Numeric calculation verification of storage growth, egress bandwidth, and memory sizing. | Review of stated Fermi assumptions, unit consistency (b vs B), and bottleneck sensitivity analysis (`Estimate`, `Judge`). |
+| **M24** | `L24-01` | `Judge, Explain, Diagnose, Estimate` | Automated validation of 16-trace completeness in capstone defense document. | In-depth architectural defense evaluation, evidence sufficiency audit, and response to changed-constraint challenge on actual system (`Judge`, `Explain`, `Diagnose`, `Estimate`). |
+| **M24** | `L24-02` | `Judge, Diagnose` | Pre-flight test suite pass, schema migration compatibility check, structured health check response. | Review of scenario-card release criteria, stated data-loss bounds, and operational readiness (`Judge`, `Diagnose`). |
 
 ---
 
@@ -1912,24 +2018,34 @@ To protect host hardware, ensure reliable CI test runs, and strictly adhere to t
    - Logging and metrics exercises enforce memory buffers with periodic flush intervals (minimum debounce >= 2000ms in interactive tools).
    - Zero physical disk thrashing or repeated full-disk scans.
 
-2. **Deterministic Process & Socket Teardown:**
-   - All localhost servers (`http.server` instances in M22) run in daemon threads and are wrapped in Python `try...finally` context managers:
+2. **Deterministic Fail-Closed Process & Socket Teardown:**
+   - All localhost servers (`http.server` instances in M22) run in explicitly owned, non-daemon threads with dedicated lifecycle management:
      ```python
      server = HTTPServer(("127.0.0.1", 0), SafeHandler)
+     server_thread = threading.Thread(target=server.serve_forever)
+     server_thread.start()
      try:
-         threading.Thread(target=server.serve_forever, daemon=True).start()
          yield server
      finally:
          server.shutdown()
          server.server_close()
+         server_thread.join(timeout=2.0)
+         if server_thread.is_alive():
+             raise RuntimeError("FAIL: Server thread failed to terminate cleanly")
+         # Post-cleanup listener verification
+         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+             probe.settimeout(0.2)
+             if probe.connect_ex(("127.0.0.1", server.server_address[1])) == 0:
+                 raise RuntimeError("FAIL: Lingering listener detected on test port")
      ```
    - All client socket connections enforce explicit timeouts (`timeout=2.0`).
+   - Cleanup failure surfaces as `FAIL / BLOCKED`, never silent pass.
 
-3. **5.0-Second Watchdog Timers:**
-   - Every network activity and benchmark harness includes a 5.0-second safety watchdog thread that forcibly closes sockets and triggers test failure if an unhandled deadlock or infinite loop occurs.
+3. **Bounded Configurable Watchdogs:**
+   - Network activities and benchmark harnesses include configurable, bounded watchdog timers (justified as fixture policy, not hidden universal constants) that terminate blocking sockets and fail closed if a deadlock occurs.
 
 4. **Zero State Pollution:**
-   - Ephemeral files, mock lockfiles, and temporary database files are wiped deterministically in pytest fixture teardown routines.
+   - Ephemeral files, mock lockfiles, and temporary database files are wiped deterministically in fixture teardown routines.
 
 ---
 
@@ -1962,7 +2078,7 @@ Rather than treating security as an isolated theoretical topic, Stage 7 integrat
 
 ## 33. 40-Gate Verification Audit Table
 
-Every gate required by the Issue #114 Task Contract has been evaluated and recorded:
+Every gate required by the Issue #114 Task Contract has been audited and evaluated truthfully against the Round 1 rework:
 
 | Gate # | Verification Gate Description | Status | Evidence / Architectural Location |
 |---|---|---|---|
@@ -1977,34 +2093,34 @@ Every gate required by the Issue #114 Task Contract has been evaluated and recor
 | **09** | No new Concept IDs | **PASS** | Section 29.1 confirms total canonical concepts remain exactly 18. |
 | **10** | No Concept first-home moves | **PASS** | Section 29.2 confirms all first-home assignments remain strictly unaltered. |
 | **11** | Trust Boundary remains M07/L07-01 | **PASS** | `EC-CON-017 Trust Boundary` first home is preserved in M07 `L07-01`; M21/M22 are revisits. |
-| **12** | Only canonical competency vocabulary | **PASS** | Section 29.3 uses exclusively the 8 canonical verbs from `COMPETENCY_MATRIX.md`. |
-| **13** | M21 crypto-use / no crypto-implementation boundary | **PASS** | Section 6.2 and 8 mandate standard library primitives; zero custom crypto implementations. |
-| **14** | PKI/authn/authz layers separated | **PASS** | Section 3.1 and 27.1 define the 6-layer PKI model separating credentials, identity, authn, authz. |
-| **15** | M22 authn/authz/session/token/OAuth/OIDC boundaries | **PASS** | Section 11 separates credentials from identities and sessions from bearer tokens. |
-| **16** | Password currentness/normative strength source-bounded | **PASS** | Section 3.1 and 8 ground password rules strictly in NIST SP 800-63B-4. |
-| **17** | Web-security composition boundaries | **PASS** | Section 12 details structural AST separation for SQLi, CSP3 for XSS, SameSite/tokens for CSRF, socket binding for SSRF. |
-| **18** | Supply-chain provenance boundaries | **PASS** | Section 13 and 27.2 establish the 6-layer supply-chain integrity model based on SLSA v1.2. |
-| **19** | Safe-target Candidate B explicitly accept/refine/reject | **PASS** | Section 5 explicitly **ACCEPTS AND REFINES Candidate B**. |
-| **20** | No new Required Lab ID/count | **PASS** | Section 5.2 confirms Required Labs remain exactly 5, Optional 5, Expeditions 5. Zero new labs. |
+| **12** | Only canonical competency vocabulary & exact Blueprint primaries | **PASS** | Section 29.3 and Section 30 restore exact canonical Blueprint primary mappings across all 10 lessons (L21-01: Judge/Explain/Diagnose; L21-02: Explain/Judge/Learn-New-Tech; L22-01: Judge/Explain; L22-02: Diagnose/Judge/Explain; L22-03: Learn-New-Tech/Judge; L23-01: Estimate/Judge/Diagnose; L23-02: Judge/Learn-New-Tech/Explain; L23-03: Estimate/Judge; L24-01: Judge/Explain/Diagnose/Estimate; L24-02: Judge/Diagnose). Evidence mapped directly to primaries. |
+| **13** | M21 crypto-use / no crypto-implementation boundary | **PASS** | Sections 6.2, 8, 9 strictly enforce crypto-use with standard library primitives (`hashlib`, `hmac`, `secrets`); educational mock RSA stubs eliminated; password hashing implementation moved to M22 L22-01. |
+| **14** | PKI/authn/authz layers separated & scoped forward secrecy | **PASS** | Section 3.1 and 27.1 define 6-layer PKI model; RFC 9846 forward secrecy properly scoped to DHE/ECDHE key exchange; PSK-only lack of forward secrecy stated. |
+| **15** | M22 authn/authz/session/token/OAuth/OIDC boundaries | **PASS** | Section 11 separates credentials from identities and sessions from bearer tokens; defines `TeachingProfile-BearerV1`; preserves RFC 9700 BCP strength (ROPC MUST NOT, Implicit SHOULD NOT); frames invalidation out-of-band. |
+| **16** | Password currentness/normative strength source-bounded | **PASS** | Sections 3.1, 11, 24 ground password rules in NIST SP 800-63B-4 (SHALL salt >= 32 bits, SHOULD memory-hard); distinguishes compute-hard PBKDF2 from memory-hard Argon2id (RFC 9106); frozen 600,000 constant removed; prohibits fake equivalent fallback. |
+| **17** | Web-security composition boundaries | **PASS** | Section 12 establishes parameterized API/driver contract separating data from syntax; scenario-specific CSRF credential models; bounded SSRF socket egress controls. |
+| **18** | Supply-chain provenance boundaries | **PASS** | Sections 13, 27.2 establish 9-layer supply-chain separation; clarifies hash checks verify against expected digest but do not defeat compromised lockfile; SLSA v1.2 date corrected to 24 November 2025. |
+| **19** | Safe-target Candidate B explicitly accept/refine/reject | **PASS** | Section 5 explicitly **ACCEPTS AND REFINES Candidate B** with loopback, non-sensitive data, and fix-and-verify stance. |
+| **20** | Canonical Lab architecture truth preserved | **PASS** | Section 5.2 audits against canonical `meta/blueprint/lab-source-selection-map-v0.1.md` preserving exact 5 Required Labs (`LAB-REQ-01` M11, `LAB-REQ-02` M06, `LAB-REQ-03` M15, `LAB-REQ-04` M13, `LAB-REQ-05` M14), 5 Optional Labs, and 5 Source Expeditions. |
 | **21** | No public/real target/offensive dependency | **PASS** | Strictly localhost `127.0.0.1` ephemeral testing; zero offensive scanners or remote targets. |
-| **22** | Fixture candidate has preflight/reset/cleanup/evidence/safety | **PASS** | Sections 9, 14, 19, 24, 31 define preflight, isolation, watchdogs, and deterministic cleanup. |
-| **23** | M23 question-driven measurement / no universal constants | **PASS** | Section 16 rejects dogmatic "n=30" and "p99" rules; establishes question-driven workload design. |
+| **22** | Fixture candidate has preflight/reset/cleanup/evidence/safety | **PASS** | Sections 9, 14, 19, 24, 31 establish fail-closed teardown, owned-thread lifecycle, bounded join, post-cleanup listener verification, and configurable watchdogs. |
+| **23** | M23 question-driven measurement / no universal constants | **PASS** | Section 16 restores question-driven methodology; open vs closed workloads both valid; metric selection matched to inference goal; `monotonic_ns` integer units vs clock resolution; synthetic stall designation; zero-flakiness overpromise removed. |
 | **24** | D-015 exact 12 dimensions | **PASS** | Section 17 details all 12 dimensions of Decision D-015 for technology evaluation. |
 | **25** | AI handling does not resolve OQ-BP-001 | **PASS** | Section 15.2 and 17 treat AI outputs as unverified candidate hypotheses; OQ-BP-001 remains OPEN. |
-| **26** | M23 estimate/cost units/assumptions/inference limits | **PASS** | Section 18 details Fermi estimation, units (b vs B), assumptions, and bottleneck sensitivity. |
+| **26** | M23 estimate/cost units/assumptions/inference limits | **PASS** | Section 18 details Fermi estimation, units (b vs B), explicit assumptions, and bottleneck sensitivity. |
 | **27** | M24 integration only / no new mechanism | **PASS** | Section 20 confirms M24 is purely an integrative evaluation capstone introducing zero new mechanisms. |
-| **28** | M24 evidence→claim and changed-constraint design | **PASS** | Section 21 and 23 define the 16 architectural traces, 12 evidence areas, and constraint challenges. |
+| **28** | M24 evidence→claim on actual system / changed constraints | **PASS** | Sections 21, 23 ground defense on learner's actual system (no fabricated Raft/consensus); scenario cards conditional on architecture; evidence-relevant concepts only; stated rollback/data-loss bounds. |
 | **29** | Design owns final assessment contract but no universal scoring formula | **PASS** | Section 23 establishes the binary criteria-gated assessment rubric; rejects point formulas. |
 | **30** | STABLE/CURRENT/FRONTIER classification | **PASS** | Section 28 classifies every source into STABLE, CURRENT, or FRONTIER. |
-| **31** | Exact current source revisions/dates/statuses recorded | **PASS** | Section 28 records exact publication dates, formal statuses, and checked dates. |
-| **32** | Rights/license/provenance recorded | **PASS** | Section 28 details rights and licensing boundaries (NIST, IETF TLP BSD, OpenSSF, PyCA). |
-| **33** | OQ-BP-001/003/006 remain OPEN | **PASS** | Section 32.2 explicitly confirms all three open questions remain OPEN and RFC-gated. |
+| **31** | Exact current source revisions/dates/statuses recorded | **PASS** | Section 28 records exact publication dates and statuses: RFC 9525 Nov 2023; SLSA v1.2 24 Nov 2025; RFC 9846 obsoleting 6 RFCs and updating 2 RFCs; FIPS 198-1 NIST conversion plan to SP 800-224 draft. |
+| **32** | Rights/license/provenance recorded | **PASS** | Section 28 records rights under IETF TLP Section 4/5 (Code Components under BSD 3-Clause), US Gov public domain, and OpenSSF licenses. |
+| **33** | OQ-BP-001/003/006 remain OPEN in substance | **PASS** | Section 24 and 32.2 specify runtime capabilities, configurable policy inputs, and candidate packages with capability detection, removing frozen constants or versions. |
 | **34** | Issue #34 remains OPEN / DEFERRED / NON-BLOCKING | **PASS** | Section 32.2 preserves Issue #34 as non-blocking per Decision D-027. |
 | **35** | Consensus Registry ID remains deferred | **PASS** | Section 29.2 confirms Consensus Registry ID remains deferred per Decision D-025. |
 | **36** | No unrelated S1–S6 churn | **PASS** | Working tree contains zero modifications to Stages 1–6 files. |
 | **37** | Implementation-batch recommendation present | **PASS** | Section 4 specifies 4 bounded implementation batches (S7-B1 through S7-B4). |
 | **38** | Evidence templates neutral / no fabricated volatile outcomes | **PASS** | Section 25.2 strictly prohibits prefilled volatile numbers, ports, timestamps, or fake PASS. |
-| **39** | Visuals specified / no copied third-party diagrams | **PASS** | Section 27 specifies 15 original visual layouts and ASCII blueprints. |
+| **39** | Visuals specified / no copied third-party diagrams | **PASS** | Section 27 specifies 15 original visual layouts with accurate boundaries. |
 | **40** | `git diff --check` passes cleanly | **PASS** | Verified zero whitespace errors, trailing spaces, or carriage return mismatches. |
 
 ---
