@@ -1,6 +1,6 @@
 # Stage 7 (S7) M21–M24 Security Synthesis, Systems Thinking & Final Defense Research Dossier v0.1
 
-Status: **READY FOR LEAD REVIEW**
+Status: **READY FOR LEAD REVIEW** (Round 1 Rework)
 Issue: #112 — `[Research] S7 M21–M24 Security Synthesis & Systems Judgment Research Dossier v0.1`
 Repository base researched: `main @ fe5cc5506d80b029f4a96004c2a6f66f72fed067`
 Checked date for current specifications, sources, and tools: **2026-09-07**
@@ -43,7 +43,7 @@ $$\begin{aligned}
 ### Key Findings and Governance Alignment
 
 1. **Exact DAG Reconstruction & Ancestry Discipline:**
-   - S7 is the capstone synthesis Stage of the Core spine, but “complete shared traversal” does **not** create undocumented Stage-wide hard edges.
+   - S7 is the capstone synthesis Stage of the Core spine, but "complete shared traversal" does **not** create undocumented Stage-wide hard edges.
    - The authoritative Module DAG from `meta/blueprint/dependency-graph-v0.1.md` is reconstructed exactly:
      - **M21:** Hard inputs `M11` (TLS/HTTP), `M07` (Virtual Memory/Isolation), `M12` (Web/Browser); Soft input `M09` (Storage/Durability).
      - **M22:** Hard inputs `M21`, `M11`, `M12`; Soft input `M19` (Containers/Deployment).
@@ -55,25 +55,26 @@ $$\begin{aligned}
    - **`EC-CON-017 Trust Boundary` (信任边界) remains first-introduced at M07 (`L07-01`).** In M21 and M22, Trust Boundary is synthesized across multi-layer systems (network, process, identity, web, dependencies), not redefined.
    - `EC-CON-013 Isolation` remains first-home M07 `L07-01` and is revisited to highlight where isolation mechanisms (e.g. process memory, containers, browser origins) enforce or fail to enforce trust boundaries.
    - All other canonical concepts (`EC-CON-007 Specification`, `EC-CON-008 Invariant`, `EC-CON-009 Correctness`, `EC-CON-010 Failure`, `EC-CON-016 Durability`, `EC-CON-014 Consistency`, `EC-CON-015 Concurrency`, `EC-CON-018 Process`) preserve their accepted first homes.
-   - Security terms (*threat model, hash, MAC, digital signature, certificate, authentication, authorization, session, JWT, CSRF, SSRF, least privilege, supply-chain provenance*) are domain mechanisms and patterns, **not** new Registry Concept IDs.
+   - Security terms (*threat model, attack surface, hash, MAC, digital signature, certificate, authentication, authorization, session, JWT, CSRF, SSRF, least privilege, supply-chain provenance*) are domain mechanisms and patterns, **not** new Registry Concept IDs.
    - Consensus Registry ID remains deliberately deferred.
 3. **Defense-First Security Stance & Safe Local Evidence (D-012):**
    - Strictly **zero offensive exploit tooling, zero penetration-testing training, zero public/live target interaction, and zero credential theft training**.
    - All security hands-on evidence uses safe, localhost-only, bounded, synthetic-data fixtures where the educational endpoint is **fix-and-verify** (e.g. signature verification failure, parameterized SQL vs string concatenation, allow/deny authorization policy checks, SameSite/Origin header validation).
 4. **Lab Selection Map Integrity (Zero New Required Labs):**
    - The accepted lab map contains exactly 5 Required Labs, 5 Optional Labs, and 5 Source Expeditions.
-   - **No new Required Lab is introduced.** The open question of a course-owned vulnerable app is resolved for Design by recommending **Candidate B: bounded, course-owned localhost security fixtures embedded directly in M21/M22 standard activity pairs**, accompanied by security/privacy reviews on the Mini Cloud App (P2/P8/P9), avoiding adding a 6th Required Lab or changing the 5/5/5 architecture.
-5. **Modern Authoritative Source Alignment (2026-09-07 Status):**
-   - Cryptographic claims: NIST SP 800-131A Rev. 2 (transitions), NIST SP 800-63B (passwords/authenticators), FIPS 186-5 (digital signatures), RFC 8446 / RFC 9846 (TLS 1.3), RFC 9525 (service identity in TLS), RFC 9106 (Argon2id).
-   - Web/Composition claims: W3C CSP Level 3, WHATWG Fetch/HTML (Origin, CORS), RFC 6265bis (Cookies / SameSite), RFC 7519 / RFC 8725 (JWT & BCP 225), RFC 6749 / RFC 9700 / OAuth 2.1 draft (OAuth delegation, deprecation of implicit/ROPC, mandatory PKCE), OWASP Top 10 (2021/2025 as empirical industry guidance).
-   - Supply-chain claims: SLSA v1.0, Sigstore / in-toto concepts, cryptographic lockfile digests.
+   - **No new Required Lab is introduced.** The open question of a course-owned vulnerable app is evaluated for Design: Research recommends **Candidate B: bounded, course-owned localhost security fixtures embedded directly in M21/M22 standard activity pairs**, accompanied by security/privacy reviews on the Mini Cloud App (P2/P8/P9). Research does not freeze Design; Design owns the final adoption, refinement, or rejection within canonical architecture.
+5. **Modern Authoritative Source Alignment (Checked 2026-09-07):**
+   - Cryptographic claims: NIST SP 800-131A Rev. 2 (current Final), NIST SP 800-131A Rev. 3 (Initial Public Draft, Oct 2024), NIST SP 800-63B-4 (Final, July 2025; supersedes SP 800-63B), FIPS 186-5 (digital signatures), FIPS 202 (SHA-3), RFC 8446 / RFC 9846 (TLS 1.3 Standards Track), RFC 9525 (service identity in TLS), RFC 9106 (Argon2id).
+   - Web/Composition claims: W3C CSP Level 3 (Working Draft, 13 August 2026), WHATWG Fetch/HTML Living Standards, RFC 6265bis (`draft-ietf-httpbis-rfc6265bis-22`, August 2026), RFC 7519 / RFC 8725 (JWT & BCP 225), RFC 6749 / RFC 9700 (OAuth 2.0 Security BCP 240, Jan 2025) / `draft-ietf-oauth-v2-1-16` (OAuth 2.1 Internet-Draft, Sept 2026), OWASP Top 10 (2021/2025 empirical industry guidance).
+   - Supply-chain claims: SLSA v1.2 (current Approved; v1.0 is retired), Community Specification License 1.0, Sigstore / in-toto concepts, cryptographic lockfile digests.
+   - Runtime tooling: PyCA `cryptography` v50.0.1 (released 2026-08-25).
 6. **M23 Systems Judgment & D-015 Framework Consolidation:**
-   - Consolidates the applied measurement-uncertainty toolkit (first assessed at M04 `L04-02`, productionized at M20 `L20-01`) into a rigorous measurement methodology: question, hypothesis, baseline, controlled change, environment/workload, repetitions, distribution metrics (p50/p95/p99), and inference limits.
+   - Consolidates the applied measurement-uncertainty toolkit (first assessed at M04 `L04-02`, productionized at M20 `L20-01`) into an open, question-driven measurement methodology: question, workload model, environment, mechanism-driven warm-up, justified sample size, distribution reporting (percentiles for skewed latency, median/IQR where robust, mean/std where appropriate), and explicit inference limits.
    - Preserves the 12-field D-015 Technology Evaluation Framework: *Problem → Constraints → Mechanism → Gains → Costs → Failure Modes → Alternatives → When-not-to-use → Scale Threshold → Evidence → Evolution → Stable Principle*. Explicitly recognizes **rejection** ("do not add this technology") as a valid passing judgment.
    - AI-generated claims are classified as **untrusted hypotheses** requiring source/test/measurement verification (Current Case under `L23-02`), preserving OQ-BP-001 as OPEN without creating an AI Core Module.
 7. **M24 Final System Defense as Integration & Articulation:**
    - M24 introduces no new mechanism scope. It provides the capstone assessment contract across all 8 canonical competencies: Trace, Explain, Observe, Diagnose, Correctness, Judge, Estimate, and Learn-New-Tech.
-   - Passing is evaluated on the defensibility of evidence-to-claim links and trade-off justification under constraints, not tool quantity or cloud deployment.
+   - Research outlines candidate research dimensions across 12 evidence areas; Design owns final scoring, pass thresholds, evidence sufficiency, and the learner/reviewer contract.
 8. **Open Questions and Governance Invariants Preserved:**
    - `OQ-BP-001` (bounded AI literacy): OPEN / RFC-gated (`RFC-CAND-001` candidate only).
    - `OQ-BP-003` (human-facing / accessibility scope): OPEN / RFC-gated (`RFC-CAND-002` candidate only).
@@ -214,7 +215,7 @@ In strict compliance with `meta/CONCEPT_REGISTRY.md`:
      - *Authentication, Authorization, Session, Bearer Token, JWT, OAuth, OIDC;*
      - *SQL Injection, Cross-Site Scripting (XSS), Cross-Site Request Forgery (CSRF), Server-Side Request Forgery (SSRF), Insecure Deserialization;*
      - *Same-Origin Policy (SOP), Content Security Policy (CSP), SameSite Cookie;*
-     - *Software Bill of Materials (SBOM), Dependency Pinning, Cryptographic Hash Lockfile, Provenance;*
+     - *Software Bill of Materials (SBOM), Dependency Pinning, Cryptographic Hash Lockfile, Provenance, Attestation;*
      - *Measurement Methodology, Benchmark Rigor, Napkin Math, Technology Evaluation Framework, Technology Card, System Defense.*
    - `Consensus` (共识) Registry ID remains deferred per Blueprint reconciliation (§8.5, R10).
 
@@ -236,12 +237,12 @@ Outcomes map strictly to the 8 canonical competencies (`meta/COMPETENCY_MATRIX.m
 ```
 
 - **Trace:** Trace how untrusted input flows across a trust boundary into a database query parser or template renderer (M21/M22); trace cryptographic key derivation and signature verification steps across parties (M21); trace an authentication/authorization decision path through session/token verification (M22); trace the complete request, data, and control flow through the Mini Cloud App in defense (M24).
-- **Explain:** Explain why encryption does not imply integrity or authentication (M21); explain why hashing is not encryption (M21); explain why `SameSite=Lax` cookies alone do not prevent all CSRF (M22); explain why SQL parameterization prevents injection at the AST level (M22); explain why average latency hides tail degradation and why monotonic clocks are mandatory for duration measurement (M23); explain and defend architectural choices and moved complexity under cross-examination (M24).
-- **Observe:** Observe signature verification failure on tampered data using standard tools (M21); observe HTTP request headers, cookie attributes, and preflight OPTIONS requests in localhost fixtures (M22); observe metric distributions, percentiles (p50/p95/p99), and variance across repeated benchmark runs (M23); observe system behavior under simulated resource or constraint changes (M24).
+- **Explain:** Explain why encryption does not imply integrity or authentication (M21); explain why hashing is not encryption (M21); explain why `SameSite=Lax` cookies alone do not prevent all CSRF (M22); explain why SQL parameterization separates data from syntax at the driver/API level (M22); explain why average latency hides tail degradation and why monotonic clocks are required for duration measurement (M23); explain and defend architectural choices and moved complexity under cross-examination (M24).
+- **Observe:** Observe signature verification failure on tampered data using standard tools (M21); observe HTTP request headers, cookie attributes, and preflight OPTIONS requests in localhost fixtures (M22); observe metric distributions, percentiles, and variance across repeated benchmark runs (M23); observe system behavior under simulated resource or constraint changes (M24).
 - **Diagnose:** Diagnose cryptographic API misuses (e.g. ECB mode, static nonces, unauthenticated encryption, broken password hashing) (M21); diagnose Broken Object Level Authorization (IDOR), reflected/stored XSS, and SSRF in course-owned local fixtures (M22); diagnose flawed measurement designs (e.g. missing warm-up, client-side bottleneck, coordinated omission, NTP clock step) (M23); diagnose architectural single-points-of-failure and invariant violations (M24).
-- **Correctness:** Formulate security invariants (e.g. "no request executes SQL without AST-isolated parameter binding"; "no privileged operation executes without explicit tenant authorization") (M21/M22); verify state invariants across concurrent and failing executions (M24).
+- **Correctness:** Formulate security invariants (e.g. "no request executes SQL without API-level parameter binding"; "no privileged operation executes without explicit tenant authorization") (M21/M22); verify state invariants across concurrent and failing executions (M24).
 - **Judge:** Judge whether a threat model requires asymmetric signatures or symmetric HMAC (M21); judge session-cookie vs stateless-JWT trade-offs under token revocation and secret leakage constraints (M22); evaluate and judge candidate technologies using the D-015 framework with explicit permission to reject (M23); defend overall system architecture, trade-offs, and residual risks (M24).
-- **Estimate:** Estimate password cracking work factors and brute-force entropy thresholds (M21); estimate storage overhead and bandwidth costs of token claims vs session lookups (M22); calculate napkin-math capacity, throughput, latency budgets, and multi-tenant resource costs (M23/M24).
+- **Estimate:** Estimate password cracking work factors and brute-force entropy thresholds under named scenario constraints (M21); estimate storage overhead and bandwidth costs of token claims vs session lookups (M22); calculate napkin-math capacity, throughput, latency budgets, and multi-tenant resource costs (M23/M24).
 - **Learn-New-Tech:** Read and evaluate an unfamiliar cryptographic library API or security specification to find safe usage guidance (M21); evaluate an unfamiliar package/dependency for provenance, maintenance health, and security posture (M22); systematically evaluate an unfamiliar technology product using authoritative documentation and produce a completed Technology Card (M23).
 
 ---
@@ -299,32 +300,39 @@ M21 extracts cryptography from the "black box of TLS" and establishes **what cry
    - **Symmetric Encryption (Confidentiality via Shared Secret):**
      - Algorithms: Modern ciphers operate as **AEAD (Authenticated Encryption with Associated Data)**, e.g., AES-GCM (NIST SP 800-38D) or ChaCha20-Poly1305 (RFC 8439).
      - Guarantees: Confidentiality of ciphertext + authenticity/integrity of ciphertext and unencrypted associated data (AAD).
-     - *Boundary:* Requires secure out-of-band secret key distribution. Never use ECB mode (leaks plaintext patterns). Never reuse a nonce/IV with the same key under GCM/Poly1305 (destroys authenticity guarantees).
+     - *Boundary:* Requires secure out-of-band secret key distribution. Never use ECB mode (leaks plaintext patterns; explicitly slated for retirement in draft NIST SP 800-131A Rev. 3). Never reuse a nonce/IV with the same key under GCM/Poly1305 (destroys authenticity guarantees).
    - **Asymmetric Cryptography (Public-Key / Private-Key):**
      - Key pair: Public key $K_{pub}$ (distributed freely) and Private key $K_{priv}$ (kept strictly secret).
-     - *Digital Signatures (Ed25519 / RSA-PSS / ECDSA):* Private key signs; public key verifies. Guarantees **Authenticity, Integrity, and Non-Repudiation**.
-     - *Asymmetric Key Exchange (ECDH / X25519):* Parties establish a shared symmetric secret over an untrusted channel without transmitting the secret itself.
+     - *Asymmetric Key Agreement (ECDH / X25519):* Parties establish a shared symmetric secret over an untrusted channel. **Boundary:** ECDH by itself provides key agreement without peer authentication; unless combined with digital signatures or pre-authenticated certificates, unauthenticated ECDH is vulnerable to Man-In-The-Middle (MITM) attacks.
+     - *Digital Signatures (Ed25519 / RSA-PSS / ECDSA):* Private key signs; public key verifies. Proves that the entity holding the corresponding private key generated the signature over the specified digest.
    - **Public Key Infrastructure (PKI) & Certificates (Revisit M11):**
-     - An X.509 certificate binds an identity (e.g. domain name via SAN per RFC 9525) to a public key, digitally signed by a trusted Certificate Authority (CA).
-     - *Boundary:* A valid certificate proves that the remote endpoint controls the private key matching the certified name. **A certificate does NOT prove that the endpoint is safe, non-malicious, or bug-free.**
+     - An X.509 certificate binds an identity (e.g. domain name via SAN per RFC 9525) to a public key, digitally signed by a Certificate Authority (CA).
+     - **Critical Layer Separation:**
+       1. *Certificate credential:* Binds public key to an identity/SAN. A certificate alone does NOT prove that the remote peer holds the private key in real time.
+       2. *Proof of private-key possession:* Performed during protocol execution (e.g. TLS handshake `CertificateVerify` message where the peer signs a transcript hash using the private key).
+       3. *Certificate-path validation:* RFC 5280 path validation verifying signatures up to a trusted trust anchor/root.
+       4. *Service-identity verification:* RFC 9525 matching of the expected domain name against Subject Alternative Names (SAN).
+       5. *Authorization decision:* Determining whether the authenticated service or user is permitted to perform the requested operation.
+     - *Boundary:* A valid certificate proves identity ownership of a domain name. **A certificate does NOT prove that the endpoint is safe, non-malicious, or bug-free.**
    - **Randomness, Nonces, and Entropy:**
      - Security requires a **Cryptographically Secure Pseudorandom Number Generator (CSPRNG)** backed by OS entropy (`/dev/urandom`, Windows `BCryptGenRandom`, Python `secrets` module / `os.urandom`).
-     - *Boundary:* PRNGs designed for simulation/benchmarking (e.g. Python `random`, C `rand()`) are completely predictable and must never be used for tokens, keys, IVs, or salts.
+     - *Boundary:* PRNGs designed for simulation or algorithmic randomized testing (e.g. Python `random`, C `rand()`) are **not cryptographically secure** and are completely unsuitable for security credentials, session tokens, nonces, or salts.
    - **Secret Management Basics:**
      - Secrets must never be committed to source code or baked into container images.
-     - Inject via environment variables or volume mounts from dedicated secret stores.
-     - In-memory lifetime: zeroization / rapid garbage collection where supported.
+     - Environment variables are one common operational mechanism, but have context-dependent exposure risks (e.g. inheritance by child processes, visibility in `/proc/$PID/environ` on Linux, inclusion in crash/error dumps). Alternatives include filesystem volume mounts from dedicated secret managers with bounded permissions.
+     - In-memory lifetime and zeroization guarantees are strictly **language- and runtime-dependent**; in managed environments (such as Python or Java), immutable strings and garbage collector relocation mean memory zeroization cannot be guaranteed at the application level.
 
 #### 3.1.3 Cryptographic Claim Boundaries (What NOT to Universalize)
 
 The research establishes strict boundaries to avoid common curriculum fallacies:
 - **Do not teach "hashing encrypts data":** Hashing is a one-way transformation that discards information; encryption is a two-way transformation with a secret key. Hashing cannot be decrypted.
 - **Do not teach "encryption proves identity":** Symmetric encryption only proves that whoever produced the ciphertext possessed the shared key; it does not identify which of the shared-key holders created it. Plain asymmetric encryption provides confidentiality, not authenticity, unless paired with a signature or authenticated exchange.
-- **Do not teach "signature means the content is trustworthy":** A digital signature only proves that the specific byte sequence was signed by the possessor of the corresponding private key without subsequent tampering. It says nothing about whether the content is true, safe, non-malicious, or well-written.
-- **Do not teach "certificate means the endpoint is safe":** A TLS certificate proves identity ownership of a domain name, not the ethical or technical safety of the software running behind it. Phishing sites routinely obtain valid TLS certificates.
-- **Do not teach "random UUID/token is automatically secure":** A standard UUIDv4 generated from an unseeded or non-cryptographic PRNG is predictable. Cryptographic credentials require CSPRNG entropy.
-- **Do not teach "one algorithm or key size is forever correct":** Cryptographic parameters have explicit lifetimes governed by cryptanalysis and computational advances (e.g., NIST SP 800-131A Rev. 2 deprecating SHA-1 and 2-key 3DES).
-- **Do not teach "don't roll your own crypto" as a thought-terminating slogan:** Explain the concrete engineering rationale: cryptographic algorithms have subtle implementation invariants (timing side channels, padding oracle attacks, nonce reuse catastrophic failure, cache attacks) that standard high-level libraries (e.g. PyCA `cryptography`, libsodium) handle, whereas ad-hoc implementations almost universally fail.
+- **Do not teach "signature means the content is trustworthy":** A digital signature proves only that the private key matching the public key signed the digest. It does not prove the content is accurate, safe, or benevolent.
+- **Do not present digital signatures as unconditional legal/business "non-repudiation":** Legal and business non-repudiation depends on extensive external assumptions: proof of sole key custody, hardware security module (HSM) guarantees, trusted timestamping, verifier revocation checking, and legal jurisdiction contracts. A mathematical signature alone does not establish legal non-repudiation.
+- **Do not teach "certificate means the endpoint is safe":** A TLS certificate proves identity ownership of a domain name, not the safety of the software running behind it. Phishing sites routinely obtain valid TLS certificates.
+- **Do not teach "random UUID/token is automatically secure":** A standard UUIDv4 generated from an unseeded or non-cryptographic PRNG lacks cryptographic unpredictability.
+- **Do not teach "one algorithm or key size is forever correct":** Cryptographic parameters have explicit lifetimes governed by cryptanalysis and computational advances (e.g., NIST SP 800-131A Rev. 2 current transitions, and Rev. 3 draft post-2030 proposals).
+- **Do not teach "don't roll your own crypto" as a thought-terminating slogan:** Explain the concrete engineering rationale: cryptographic algorithms have subtle implementation invariants (timing side channels, padding oracle attacks, nonce reuse catastrophic failure, cache attacks) that standard high-level libraries handle, whereas ad-hoc implementations almost universally fail.
 
 ---
 
@@ -349,76 +357,83 @@ The learner goal is **defense-first composition judgment**: understanding root c
 "Who are you & what can you do?"     "Is data escaping into code?"          "What third-party code runs?"
       │                                      │                                      │
   Authn vs Authz                         SQL Injection                          Lockfile Hashes
-  (Identity vs Permission)               (Bind parameters)                      (Integrity verification)
+  (Identity vs Permission)               (API parameter separation)             (Integrity verification)
       │                                      │                                      │
-  Password Hashing (Argon2id)            XSS (Context encoding + CSP)           Provenance & Attestation
-      │                                      │                                  (SLSA, signing)
-  Sessions vs Tokens (JWT misuse)        CSRF (SameSite + Anti-CSRF)                │
-      │                                      │                                  Minimal Dependencies
-  OAuth 2.1 / OIDC delegation            SSRF (Egress IP validation)            (Least authority)
+  Password Hashing                       XSS                                    Build & Source Provenance
+  (NIST SP 800-63B-4 / RFC 9106)         (Context encoding + CSP)               (SLSA v1.2, signing)
+      │                                      │                                      │
+  Sessions vs Tokens                     CSRF                                   Minimal Dependencies
+  (Revocation trade-offs)                (SameSite + Anti-CSRF)                 (Least authority)
+      │                                      │
+  OAuth 2.1 / OIDC delegation            SSRF (Connection-time IP filter)
 ```
 
 1. **Authentication (Authn) vs. Authorization (Authz):**
    - **Authentication:** Verifying the identity claim of an entity ("Who are you?"). Examples: password verification, public key challenge-response, multi-factor authenticator.
    - **Authorization:** Determining whether a verified identity has permission to perform a requested action on a specific resource ("What are you allowed to do?").
    - *Critical Boundary:* **Authentication never implies authorization.** Successfully logging in as User A does not authorize User A to read or edit User B's documents (Broken Object Level Authorization / IDOR).
-2. **Password Storage Guidance (NIST SP 800-63B & RFC 9106):**
-   - Passwords must **never** be stored in plaintext, encrypted with a reversible key, or hashed with fast general-purpose hash functions (MD5, SHA-1, SHA-256, SHA-512). Fast hashes allow billions of guesses per second on modern GPUs/ASICs.
-   - Use **memory-hard, tunable, salted password hashing functions**:
-     - **Argon2id (RFC 9106):** Current state-of-the-art recommendation (winner of Password Hashing Competition; memory-hard, resistant to GPU and side-channel attacks).
-     - **scrypt (RFC 7914) / bcrypt:** Acceptable established alternatives where Argon2id is unavailable.
-     - **PBKDF2 (RFC 8018):** CPU-bound only (no memory hardness); requires very high iteration counts (e.g. >= 600,000 for PBKDF2-HMAC-SHA256 per OWASP 2023/2025 guidance); considered legacy compared to Argon2id.
-   - *Salt Invariant:* A unique, CSPRNG-generated salt (minimum 128 bits) per password prevents precomputed rainbow table attacks and cross-user hash matching.
+2. **Password Storage Guidance (NIST SP 800-63B-4 & RFC 9106):**
+   - *NIST Normative Requirements (SP 800-63B-4, Final July 2025):*
+     - Passwords must be hashed using a salted, memory-hard, one-way hash function.
+     - Passwords must not be truncated arbitrarily; minimum length of at least 8 characters required (15+ recommended for higher assurance).
+     - Passwords must be checked against lists of compromised credentials.
+     - Periodic forced password rotation without evidence of compromise is explicitly discouraged.
+   - *Algorithm Distinctions:*
+     - **Argon2id (RFC 9106):** Current state-of-the-art memory-hard function (winner of the Password Hashing Competition; balances side-channel resistance with GPU cracking resistance).
+     - **scrypt (RFC 7914) / bcrypt:** Established memory-hard alternatives.
+     - **PBKDF2 (RFC 8018):** CPU-bound only (no memory hardness); vulnerable to accelerated GPU/ASIC attacks compared to memory-hard functions.
+   - *Work-Factor & Salt Policy (Distinguishing Invariant from Named Policy):*
+     - The universal invariant is that salts must be unique and unpredictable per password, and work factors must be tunable.
+     - Specific numbers (e.g. minimum 32-bit salt per NIST SP 800-63B vs 128-bit salt in RFC 9106; OWASP PBKDF2-HMAC-SHA256 guideline of 600,000 iterations) are **CURRENT / NAMED POLICY / ILLUSTRATIVE INPUTS**, not timeless mathematical theorems.
 3. **Session vs. Token Mechanics:**
-   - **Server-Side Session:** Client holds an opaque session identifier (stored in an `HttpOnly`, `Secure` cookie); server stores session state in memory/DB/Redis.
-     - *Gains:* Immediate revocation capability, low client storage complexity, minimal sensitive data exposed to client.
-     - *Costs:* Server state lookup required per request, state synchronization in distributed setups.
+   - **Server-Side Session:** Client holds an opaque session identifier (stored in an `HttpOnly`, `Secure` cookie); server stores session state in database/cache.
+     - *Gains:* Immediate, centralized revocation capability; minimal sensitive payload exposed to client.
+     - *Costs:* State lookup required on requests; state replication/synchronization across distributed hosts.
    - **Stateless Tokens (JWT - RFC 7519):** Client holds a self-contained token containing claims, digitally signed or MACed by the issuer.
-     - *Gains:* Decentralized verification without database lookup on every service.
-     - *Costs & Risks:* Token cannot be immediately revoked before expiration without maintaining a distributed revocation list (which recreates server state!); token size adds network overhead on every request; risk of sensitive data leakage if claims are unencrypted.
+     - *Gains:* Decentralized verification without synchronous database lookup on every service.
+     - *Revocation Boundary:* Stateless tokens do not support immediate out-of-band revocation without introducing state (e.g. token revocation lists, short expiration windows with refresh tokens, or reference token lookups). The choice is a deliberate engineering trade-off between latency and revocation immediacy.
 4. **JWT Security Best Current Practices (RFC 8725 / BCP 225):**
-   - **Algorithm Verification:** Explicitly reject `alg: "none"`. Whitelist expected algorithms on the server (do not let the client token header dictate the algorithm!).
-   - **Key Confusion Defense:** Prevent asymmetric public keys from being used to verify HMAC-SHA256 tokens (where the attacker signs with the server's public key treating it as HMAC secret).
-   - **Standard Claim Validation:** Always validate `exp` (expiration), `nbf` (not before), `iss` (issuer), and `aud` (audience).
+   - **Algorithm Whitelisting:** Explicitly reject `alg: "none"`. Server-side validation must enforce an explicit allowlist of acceptable algorithms, never allowing the client-controlled header to dictate verification logic.
+   - **Key Confusion Defense:** Prevent asymmetric public keys from being used as HMAC secrets when verifying symmetric tokens.
+   - **Claim Validation Contract:** Validation of standard claims (`exp`, `nbf`, `iss`, `aud`) depends on the profile and application contract; expired tokens must be rejected.
 5. **OAuth 2.0 / 2.1 & OpenID Connect (OIDC) Conceptual Boundaries:**
    - **OAuth 2.0 (RFC 6749):** An **authorization delegation framework** allowing a third-party application to obtain limited access to an HTTP service on behalf of a resource owner. **OAuth 2.0 is NOT an authentication protocol.**
    - **OpenID Connect (OIDC):** An identity layer built on top of OAuth 2.0 that provides authentication via an `id_token` (JWT).
-   - *Current Standards Update (OAuth 2.1 / Security BCP):*
-     - Authorization Code flow **must** use PKCE (Proof Key for Code Exchange, RFC 7636) for all clients (public and confidential).
-     - Implicit Grant (`response_type=token`) and Resource Owner Password Credentials (ROPC) grant are **deprecated and disallowed** due to credential leakage risks.
+   - *RFC 9700 (OAuth 2.0 Security BCP 240, Jan 2025) Normative Wording:*
+     - For Public Clients: PKCE (Proof Key for Code Exchange, RFC 7636) **MUST** be used.
+     - For Confidential Clients: PKCE is **RECOMMENDED** under BCP conditions (and required under code injection threat models).
+     - Resource Owner Password Credentials (ROPC) grant: **MUST NOT** be used.
+     - Implicit Grant: **SHOULD NOT** be used except under specific conditions outlined in the BCP.
+   - *OAuth 2.1 Status:* Currently an active Internet-Draft (`draft-ietf-oauth-v2-1-16`, Sept 2026); consolidates OAuth 2.0 and security BCPs into a single document.
 6. **Web Vulnerabilities & Safe Defense Patterns:**
    - **SQL Injection (SQLi):**
-     - *Root Cause:* Conflating code and data by dynamically concatenating untrusted strings into SQL query strings.
-     - *Safe Defense:* **Parameterized queries / Prepared statements.** The query structure is pre-parsed by the database into an Abstract Syntax Tree (AST); parameters are transmitted separately as literal data values and cannot alter query grammar.
-     - *Boundary:* Object-Relational Mappers (ORMs) prevent SQLi only when they use parameterized queries under the hood; raw SQL interpolation inside an ORM is still vulnerable. Parameterization does not protect dynamic table or column names (requires strict allowlist validation).
+     - *Root Cause:* Conflating code and data by dynamically interpolating untrusted strings into query syntax.
+     - *Safe Defense:* **API/Driver parameter separation (Prepared Statements / Parameterized Queries).** The driver or database protocol separates query syntax from literal data values.
+     - *Boundary:* AST pre-compilation is driver/database implementation-specific; parameterization does not protect dynamic table or column identifiers (requires strict allowlisting); parameterization does not enforce authorization.
    - **Cross-Site Scripting (XSS):**
-     - *Root Cause:* Rendering untrusted input into the browser DOM in a context where the browser interprets it as executable code (HTML, JavaScript, CSS, URL).
-     - *Safe Defense:* **Context-aware output encoding** (HTML entity, attribute, JS string encoding) + modern UI frameworks with automatic contextual escaping + Content Security Policy (CSP) + `HttpOnly` cookies to protect session identifiers.
+     - *Root Cause:* Rendering untrusted input into execution contexts in the browser DOM.
+     - *Safe Defense:* **Context-aware output encoding** (HTML body, attribute, JavaScript literal) + safe templating engines with auto-escaping + Content Security Policy (CSP Level 3).
+     - *Boundary:* CSP is a defense-in-depth mitigation against execution; it does not replace the requirement for context-aware escaping.
    - **Cross-Site Request Forgery (CSRF):**
-     - *Root Cause:* The browser automatically attaches ambient credentials (cookies, HTTP basic auth) to cross-site requests initiated by malicious third-party origins.
-     - *Safe Defense:* **Anti-CSRF Tokens** (Synchronizer Token Pattern: random cryptographically secure token bound to user session, validated on state-changing requests) + `SameSite=Lax` / `SameSite=Strict` cookies + custom request headers (`X-Requested-With`) + checking `Origin` / `Referer` headers.
+     - *Root Cause:* The browser automatically attaches ambient credentials (cookies, HTTP basic auth) to cross-site requests.
+     - *Safe Defense:* Anti-CSRF tokens (Synchronizer Token Pattern) + `SameSite` cookie attributes + verifying `Origin` / `Referer` headers + custom request headers (`X-Requested-With`).
+     - *Boundary:* Defense depends on the credential model, request method, and client architecture. `SameSite=Lax` allows cross-site top-level GET navigation; state-changing requests must enforce POST/PUT/DELETE with explicit anti-CSRF tokens.
    - **Server-Side Request Forgery (SSRF):**
-     - *Root Cause:* The application server fetches a remote URL provided by an untrusted user without restricting network destinations.
-     - *Safe Defense:* Parse URL, resolve IP address, and enforce an **egress firewall / allowlist** that blocks loopback (`127.0.0.0/8`), private networks (RFC 1918: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), cloud metadata services (`169.254.169.254`), and IPv6 analogues at socket connection time (preventing DNS rebinding).
+     - *Root Cause:* The server fetches a user-supplied URL without restricting internal network access.
+     - *Safe Defense:* Parse URL, resolve IP address, and enforce an **egress firewall/allowlist at socket connection time** (validating the socket remote address after connection or pinning the IP), blocking loopback (`127.0.0.0/8`), private networks (RFC 1918), and cloud metadata services (`169.254.169.254`).
+     - *Boundary:* Simple string parsing or pre-connection DNS checks do not prevent DNS rebinding or redirect-based bypasses unless connection-time enforcement and redirect restrictions are applied.
    - **Insecure Deserialization:**
-     - *Root Cause:* Passing untrusted byte streams into object reconstruction mechanisms (e.g. Python `pickle`, Java `ObjectInputStream`, PHP `unserialize`) that permit arbitrary code execution during object instantiation.
-     - *Safe Defense:* **Never use polymorphic/executable serializers on untrusted data.** Use pure data serialization formats (JSON, Protocol Buffers) with strict schema validation.
+     - *Root Cause:* Passing untrusted byte streams into object reconstruction engines that execute arbitrary constructors or gadget chains (e.g. Python `pickle`, Java `ObjectInputStream`).
+     - *Safe Defense:* Use structured data formats (JSON, Protocol Buffers) with strict schema validation.
+     - *Boundary:* JSON and Protocol Buffers eliminate polymorphic code execution during parsing, but do not guarantee application safety without validation (e.g. JSON prototype pollution, deeply nested entity expansion, or memory exhaustion).
 7. **Supply Chain & Dependency Provenance (Connecting M19 to M22):**
-   - *Dependency Risk:* Modern applications import thousands of third-party transitive dependencies. An attacker compromising a maintainer account or package repository can inject malicious code into production applications.
-   - *Defenses:*
-     - **Lockfiles with Cryptographic Hashes:** Pinning exact version numbers AND SHA-256 integrity hashes (e.g. `package-lock.json`, `poetry.lock`, `Cargo.lock`). Prevents silent package substitution.
-     - **Provenance & Attestation (SLSA / Sigstore):** Cryptographic verification that an artifact was built by an identified CI/CD pipeline from a specific Git commit, without tampering.
-     - *Boundary:* A signed package proves *who built it and from what commit*; it does **not** prove that the source code contains no bugs or backdoors. Dependency hygiene requires minimizing dependency counts and auditing high-privilege packages.
-
-#### 3.2.3 Web & Composition Claim Boundaries
-
-- **Do not collapse CORS into authentication:** CORS is a browser mechanism that relaxes the Same-Origin Policy to permit cross-origin reads; it does not protect server endpoints from direct requests (e.g. via `curl` or server-to-server).
-- **Do not collapse CSP into a complete XSS defense:** Content Security Policy is a defense-in-depth mitigation designed to restrict where scripts can be loaded from; it does not replace the requirement for correct output encoding.
-- **Do not collapse SameSite cookies into a universal CSRF proof:** `SameSite=Lax` allows top-level cross-site navigation GET requests. If state-changing actions are accessible via GET, or under specific subdomain compromise scenarios, `SameSite` alone is insufficient. State-changing requests must require POST/PUT/DELETE with explicit anti-CSRF validation.
-- **Do not collapse input validation into output encoding:** Validating input (e.g. ensuring an email matches an email format) does not prevent XSS if that input is rendered into HTML without encoding. Both are required: validate input for domain correctness; encode output for the rendering context.
-- **Do not collapse SQL parameterization into authorization:** Parameterized queries guarantee that input remains data; they do not check whether the current user is permitted to access the matched rows.
-- **Do not collapse SSRF into "just URL validation":** Validating a URL string with regex is vulnerable to URL parsing discrepancies (e.g. `@` symbols, encoded characters) and DNS rebinding (where the domain resolves to an external IP during validation, but resolves to `127.0.0.1` when fetched). Defense must validate the resolved IP at socket connect time.
-- **Do not collapse dependency pinning into provenance or trust:** Pinning a version string (`pkg == 1.2.3`) without cryptographic hashes does not prevent upstream registry tampering. Pinning with hashes ensures reproducibility and integrity, but does not guarantee the package is trustworthy.
+   - *Risk:* Modern applications import transitive third-party dependencies that can introduce vulnerabilities or malicious code.
+   - *Layered Defense (SLSA v1.2 Current Concepts):*
+     1. *Dependency Pinning:* Freezing exact version numbers in configuration.
+     2. *Digest Verification:* Recording SHA-256 hashes in lockfiles to ensure byte-for-byte artifact integrity.
+     3. *Build & Source Provenance:* Cryptographic attestations (e.g. SLSA Provenance predicates) recording the source repository, commit, and build environment.
+     4. *Attestation Verification Policy:* Client-side verification enforcing that artifacts were produced by authorized builders from trusted sources.
+   - *Boundary:* Lockfile hashes ensure reproducibility and detect modified artifacts, but do not prove the original source code is free of bugs, vulnerabilities, or malicious backdoors. Digital signatures prove who signed an artifact, not whether the code is safe to execute.
 
 ---
 
@@ -426,64 +441,72 @@ The learner goal is **defense-first composition judgment**: understanding root c
 
 #### 3.3.1 Purpose & Mental-Model Contribution
 
-The highest goal of Essential CS is **independent technical judgment** (Curriculum Invariant 1). A junior engineer memorizes product features and follows recipes; a senior systems engineer evaluates technologies by understanding constraints, mechanisms, trade-offs, and empirical evidence.
+The highest goal of Essential CS is **independent technical judgment** (Curriculum Invariant 1). Systems engineering requires evaluating technologies by understanding constraints, mechanisms, trade-offs, and empirical evidence, rather than adopting tools based on industry fashion.
 
-M23 is the **capstone judgment module**. It does not introduce heavy new mechanism stacks; instead, it synthesizes the entire course into three structured capabilities:
-1. **Honest, Reproducible Measurement:** Consolidating the experimental pattern (first introduced in M04 `L04-02`, productionized in M20 `L20-01`) into a formal measurement methodology that resists benchmark self-deception;
+M23 synthesizes the entire course into three structured capabilities:
+1. **Honest, Question-Driven Measurement:** Consolidating the experimental pattern into a rigorous methodology that resists benchmark self-deception;
 2. **The D-015 Technology Evaluation Framework:** A 12-dimension discipline for evaluating any computing technology objectively and deciding whether to adopt or reject it;
 3. **Cost & Resource Economics:** Order-of-magnitude napkin math, capacity estimation, and multidimensional cost modeling under explicit constraints.
 
-#### 3.3.2 Measurement Methodology & Benchmarking Rigor (L23-01)
+#### 3.3.2 Question-Driven Measurement Methodology (L23-01)
 
-```
-       ┌─────────────────────────────────────────────────────────────┐
-       │             RIGOROUS MEASUREMENT METHODOLOGY                │
-       └─────────────────────────────────────────────────────────────┘
-                                      │
-       ▼                              ▼                              ▼
- [EXPERIMENTAL]               [STATISTICAL]                  [CLOCK & SCALE]
- Question & Hypothesis        Distributions (not averages)   Monotonic vs Wall-Clock
- Baseline vs Change           Percentiles (p50, p95, p99)    Coordinated Omission
- Workload & Environment       Repetitions & Warm-up          Inference Limits
-```
+Instead of imposing rigid universal rules or arbitrary constant counts, measurement rigor is grounded in a **question-driven scientific methodology**:
 
-1. **The Universal Experimental Pattern:**
-   - **Question / Hypothesis:** What specific performance or resource claim is being tested?
-   - **Baseline:** What is the established, measured performance before the change?
-   - **Controlled Change:** Exactly one independent variable is varied (e.g. cache size, index presence, concurrency level).
-   - **Environment & Workload:** Exact hardware, OS, kernel, compiler, runtime versions, and synthetic workload characteristics recorded.
-   - **Repetitions & Distribution:** Single-run numbers are rejected. Multiple trials with warm-up cycles to eliminate JIT/caching transients.
-   - **Competing Explanations:** Actively seeking alternative causes (e.g. CPU frequency scaling, background OS processes, GC pauses, client-side saturation).
-   - **Bounded Conclusion:** Stating the exact conditions under which the conclusion holds, avoiding universal generalization.
-2. **Statistical and Metric Rigor:**
-   - **Reject Averages for Latency:** Latency distributions in computing systems are multimodal and heavy-tailed (skewed). Mean latency hides tail latency. Report median (p50), 95th percentile (p95), 99th percentile (p99), and min/max.
-   - **Coordinated Omission Awareness:** If a client pauses while waiting for a slow response before issuing the next request, the worst delays are omitted from the sample count. Benchmark tools must generate requests independently of service response times to measure true wait time under load.
-3. **Clock Semantics Bridge (Revisit M04 / M20):**
-   - **Monotonic Clock (`time.monotonic_ns()` / `CLOCK_MONOTONIC`):** Unaffected by system clock updates (NTP, manual adjustments, leap seconds). **Mandatory for all duration, latency, and timeout measurements.**
-   - **Wall-Clock (`time.time()` / `CLOCK_REALTIME`):** Tracks human calendar time. Subject to NTP jumps, steps, and drift. Used strictly for logging, event correlation, and certificate validity expiration, **never for benchmarking elapsed duration**.
+1. **Define the Measurement Question:** What specific performance, capacity, or resource claim is being evaluated? (e.g. "Does adding an index on `notes.user_id` reduce p95 query latency under a 90% read / 10% write workload?").
+2. **Select Workload & System Model:**
+   - *Closed Workload Model:* Client sends a request, waits for a response, then sends the next. Vulnerable to **Coordinated Omission** (slow server responses artificially delay future requests, hiding tail latency).
+   - *Open Workload Model:* Requests arrive at a schedule independent of system completion times (e.g. Poisson arrival process). Accurately measures queueing delays and service degradation under load.
+3. **Record Environment & Baseline:** Exact CPU model, clock frequency, RAM, OS kernel, background processes, compiler/runtime versions, and baseline measurements before the change.
+4. **Decide Warm-Up Strategy Based on Mechanism:**
+   - Determine whether the evaluated mechanism involves transients (JIT compilation, CPU frequency ramping, buffer pool warming, filesystem page cache population).
+   - Discard warm-up iterations when evaluating steady-state performance; retain them when evaluating cold-start latency.
+5. **Justify Sample Size & Repetitions:**
+   - Sample size must be chosen based on the observed variance and required confidence bounds, rather than a fixed universal constant.
+6. **Report Distribution Summaries Appropriate to the Question:**
+   - For skewed, multimodal, or heavy-tailed distributions (common in network, disk, and concurrent systems): report median ($p50$), $p90$, $p95$, $p99$, and interquartile range ($IQR$). Mean and standard deviation are misleading on skewed latency distributions.
+   - For symmetric, normal micro-operations: report mean, standard deviation, and confidence intervals.
+7. **Enforce Monotonic Clock Semantics (Revisit M04 / M20):**
+   - **Monotonic Clocks (`time.monotonic_ns()` / `CLOCK_MONOTONIC`):** Guaranteed never to jump backwards due to NTP synchronization, leap seconds, or manual clock adjustments. **Mandatory for elapsed duration, timeout, and latency measurements.**
+   - **Wall Clocks (`time.time()` / `CLOCK_REALTIME`):** Track human calendar time. Subject to NTP adjustments and leap seconds. Used strictly for wall-clock logging, event correlation across systems, and certificate validity checks.
+8. **State Explicit Inference Limits:** Clearly state the boundary conditions of the conclusion (e.g. "This measurement reflects single-core in-memory lookups on x86-64 Linux 6.8; it does not predict distributed network performance under disk contention").
 
 #### 3.3.3 The D-015 Technology Evaluation Framework (L23-02)
 
-D-015 is canonical curriculum architecture. The 12-dimension Technology Card structure must be applied to evaluate any unfamiliar technology:
+D-015 is canonical curriculum architecture. The 12-dimension Technology Card structure must be applied to evaluate candidate technologies:
 
 | Dimension | Core Question | What Learner Evidence Must Establish |
 |---|---|---|
-| **1. Problem** | What exact engineering problem does this solve? | Specific failure mode, bottleneck, or coordination issue, not vague hype. |
-| **2. Constraints** | Under what physical/architectural constraints does it operate? | Network latency, memory bounds, durability requirements, trust model. |
+| **1. Problem** | What exact engineering problem does this solve? | Specific failure mode, bottleneck, or coordination issue, not vague marketing. |
+| **2. Constraints** | Under what physical/architectural constraints does it operate? | Latency bounds, memory limits, durability requirements, trust boundaries. |
 | **3. Mechanism** | What underlying computing mechanism makes it work? | Data structure, protocol invariant, hardware capability, or OS abstraction. |
-| **4. Gains** | What does the system tangibly gain? | Quantified latency, throughput, availability, or developer velocity gain. |
+| **4. Gains** | What does the system tangibly gain? | Quantified latency, throughput, availability, or operational simplification. |
 | **5. Costs** | What new complexity, resource footprint, or operational cost is paid? | Memory overhead, disk writes, serialization delay, maintenance burden. |
 | **6. Failure Modes** | How does this technology fail when overloaded or broken? | Cascade failure, split-brain, OOM, silent corruption, deadlock. |
 | **7. Alternatives** | What simpler or existing mechanisms solve a comparable problem? | In-memory cache vs DB index; local SQLite vs distributed Postgres; cron vs queue. |
 | **8. When-Not-To-Use** | In what scenarios is adopting this technology a mistake? | Low traffic, single-node simplicity, strict ACID needs, small dataset. |
 | **9. Scale Threshold** | At what quantitative threshold does this become justified? | Request rate ($QPS$), data volume (GB/TB), concurrency, latency budget. |
-| **10. Evidence** | What reproducible measurements or proofs back the claims? | Benchmark results with workloads, formal specifications, source verification. |
+| **10. Evidence** | What reproducible measurements or proofs back the claims? | Benchmark results with stated workloads, formal specifications, source verification. |
 | **11. Evolution** | How has this technology evolved, and where is it heading? | STABLE core vs CURRENT tooling vs FRONTIER experimental status. |
 | **12. Stable Principle** | What timeless computing principle outlives this specific product? | Big Idea or Registry Concept instantiated by this temporary product. |
 
 **Technology Rejection as a Passing Outcome:** A vital principle of D-015 is that **deciding NOT to adopt a technology** (e.g. rejecting Kafka in favor of a local SQLite queue; rejecting Kubernetes in favor of a single Linux systemd service; rejecting microservices in favor of a modular monolith) is often the most mature engineering choice. Learner assessment must reward defensible rejection equally with defensible adoption.
 
-#### 3.3.4 Handling AI-Generated Claims (Interim State under OQ-BP-001)
+#### 3.3.4 Named Current Case Study & Bounded Stable Principle: Redis
+
+To illustrate how current technologies are examined under D-015 without turning product implementation details into universal theorems:
+
+- **Named Current Case:** Redis (e.g. Redis 7.x/8.x architecture).
+- **Product & Implementation Authority:** Redis documentation and source architecture.
+- **Specific Implementation Context:**
+  - Redis serves commands in an in-memory data store using an event-driven multiplexed I/O architecture (`epoll`/`kqueue`). While threaded I/O was introduced in Redis 6.0 for network socket reading/writing, the core command execution engine remains single-threaded to avoid multi-thread lock synchronization over in-memory data structures.
+  - Persistence options include point-in-time snapshots (RDB via `fork()`) and append-only logging (AOF with tunable `fsync` policies).
+- **Observed Trade-offs (Not Universal Claims):**
+  - Storing state entirely in memory provides low microsecond-range access latency, but capacity is bounded by available physical RAM, and cost per gigabyte is higher than block storage.
+  - Asynchronous background snapshotting or non-blocking AOF writes provide high request throughput, but introduce data loss exposure windows during sudden power loss or process termination (`EC-CON-016 Durability`).
+- **Derived Bounded Stable Principle:**
+  *"Moving work off a critical request path (e.g. to in-memory buffers, memory-mapped data structures, or asynchronous background queues) may reduce one latency component, but moves cost, state management, memory constraints, and durability obligations elsewhere."*
+
+#### 3.3.5 Handling AI-Generated Claims (Interim State under OQ-BP-001)
 
 In strict conformance with `meta/OPEN_QUESTIONS.md` (OQ-BP-001 safe interim state) and Curriculum Invariant 6:
 - **AI is not a factual authority.**
@@ -495,23 +518,20 @@ In strict conformance with `meta/OPEN_QUESTIONS.md` (OQ-BP-001 safe interim stat
   4. **Security Review:** Verify trust boundaries, credential handling, and input validation.
 - This policy satisfies 2026 technical literacy requirements without resolving OQ-BP-001 or creating an AI Core Module.
 
-#### 3.3.5 Napkin Math & Cost Economics (L23-03)
+#### 3.3.6 Napkin Math & Cost Economics (L23-03)
 
-- **Order-of-Magnitude Estimation:**
-  - Jeff Dean Latency Numbers (updated to 2026 hardware baseline):
+- **Order-of-Magnitude Estimation (Illustrative Hardware Baseline):**
+  - Jeff Dean Latency Numbers (updated to representative modern hardware context):
     - L1 cache reference: $\sim 1 \text{ ns}$
     - Main memory (RAM) access: $\sim 100 \text{ ns}$
-    - NVMe SSD read (random): $\sim 10\text{--}50 \ \mu\text{s}$
+    - NVMe SSD read (random 4KB): $\sim 10\text{--}50 \ \mu\text{s}$
     - Datacenter round-trip (same DC): $\sim 0.5 \text{ ms}$
     - WAN round-trip (continental): $\sim 30\text{--}80 \text{ ms}$
     - WAN round-trip (trans-oceanic): $\sim 150\text{--}250 \text{ ms}$
-  - Storage/Bandwidth conversions: $1 \text{ Byte} = 8 \text{ bits}$; $1 \text{ MB} = 10^6 \text{ B}$ (decimal) vs $1 \text{ MiB} = 2^{20} \text{ B}$ (binary).
-  - Rule of 72 / Doubling / Compounding intuition.
+  - Stating units, explicit assumptions, and bounding uncertainty.
 - **Multidimensional Cost Model:**
-  - Total Cost of Ownership ($TCO$) is not just server hosting bills:
-    $$\text{Total Cost} = \text{Compute} + \text{Storage} + \text{Network Egress} + \text{Operational Overhead} + \text{Cognitive Complexity}$$
-  - Network egress is frequently the steepest scaling cost in cloud environments.
-  - Operational overhead (on-call burden, debugging distributed state, schema migration friction) often dwarfs raw infrastructure cost at moderate scale.
+  - Total Cost of Ownership ($TCO$) includes compute, storage, network egress, and operational complexity.
+  - Scenario-specific cost models rather than memorizing vendor price sheets.
 
 ---
 
@@ -521,54 +541,29 @@ In strict conformance with `meta/OPEN_QUESTIONS.md` (OQ-BP-001 safe interim stat
 
 M24 is the **capstone assessment of the entire Essential CS curriculum**. It introduces **zero new mechanism scope**. Its sole purpose is **integration, articulation, and rigorous defense**: the learner presents and defends the architecture, trade-offs, invariants, failure modes, security posture, and measurement evidence of the Mini Cloud App (Milestones P0–P9) or an assigned scenario system.
 
-The assessment model is derived from `meta/blueprint/assessment-architecture-v0.1.md` and `meta/COMPETENCY_MATRIX.md`. Passing requires demonstrating genuine computing-system judgment: the ability to connect empirical evidence to architectural claims, explain where complexity moved, and justify decisions under changed constraints.
+Passing requires demonstrating genuine computing-system judgment: the ability to connect empirical evidence to architectural claims, explain where complexity moved, and justify decisions under changed constraints.
 
-#### 3.4.2 Candidate Reviewer Evidence Structure (12-Part Artifact)
+#### 3.4.2 Candidate Research Assessment Dimensions (12 Evidence Areas)
 
-The learner's Final System Defense dossier is evaluated across 12 structured dimensions:
+Research outlines the following 12 candidate assessment dimensions to guide Design in creating the formal learner/reviewer contract:
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                 SYSTEM DEFENSE EVIDENCE PACKET (12 PARTS)               │
-├─────────────────────────────────────────────────────────────────────────┤
-│  1. Request / Data / Control Trace (End-to-end execution path)          │
-│  2. State Inventory (Where state lives, memory vs disk, durability)     │
-│  3. Explicit Invariants & Specifications (Safety & correctness bounds)  │
-│  4. Failure & Risk Walkthrough (Single points of failure, partitions)   │
-│  5. Security & Privacy Decisions (Threat model, trust boundaries)       │
-│  6. Measurements & Evidence (Benchmarks, percentiles, inference limits)  │
-│  7. Latency, Resource & Cost Estimates (Napkin math, capacity bounds)   │
-│  8. Architecture Alternatives & Moved Complexity (What was rejected)    │
-│  9. Technology Cards (D-015 evaluations for core components)            │
-│ 10. Operational & Recovery Evidence (SLOs, logs/metrics, rollback)      │
-│ 11. Unknowns & Learning Plan (What is not known, how to investigate)    │
-│ 12. Defense Under Changed Constraints (Scale 10x, untrusted network)    │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-1. **Request / Data / Control Trace:** End-to-end trace of a user request from browser client, across network transport, through HTTP parsing, authentication, authorization, business logic, database queries, disk persistence, and response serialization.
-2. **State Inventory:** Exhaustive accounting of where all mutable state lives (browser cookies/localStorage, OS page cache, database tables, indexes, write-ahead logs, configuration files) and the durability guarantee of each.
-3. **Explicit Invariants & Specifications:** Clear mathematical/logical statements of what properties must never be violated (e.g. "account balance cannot drop below zero", "unauthorized users cannot view private notes", "committed data survives clean process restart").
-4. **Failure & Risk Walkthrough:** Identification of all component failure modes (network timeout, database lock contention, server crash, disk full, process kill) and how the system detects, bounds, and recovers from each.
-5. **Security & Privacy Boundary Decisions:** Explicit trust boundary map, threat model, authentication/authorization enforcement points, password hashing mechanism, session handling, injection defense, and data retention policies.
-6. **Measurements with Environment & Limits:** Empirical performance data backed by the M23 measurement methodology: baseline, controlled change, p50/p95/p99 latencies, workload characteristics, and stated inference limits.
-7. **Latency, Resource, and Cost Estimates:** Napkin-math estimates for memory footprint, storage growth per year, network bandwidth, and monthly cost at target scale.
-8. **Architecture Alternatives & Moved Complexity:** Justification of why chosen architectures were selected over alternatives (e.g. SQLite vs PostgreSQL, server-rendered vs SPA, single process vs microservices), explicitly stating what complexity was accepted and what was avoided.
-9. **Technology Cards:** Formal D-015 evaluations for every significant technology choice.
-10. **Operational & Recovery Evidence:** Definition of service SLIs/SLOs, logging/metrics strategy, health checks, backup/restore procedures, and incident recovery runbooks.
-11. **Unknowns & Learning Plan:** Truthful identification of architectural uncertainties, untested edge cases, and a concrete plan for resolving them. (Intellectual honesty outranks false confidence).
-12. **Defense Under Changed Constraints:** The candidate is challenged with an unexpected constraint modification (e.g., "traffic increases 50x", "network becomes high-latency and unreliable", "storage must be encrypted at rest on untrusted hosts", "budget is cut in half") and must defend necessary architectural adaptations using stable principles.
+1. **Request / Data / Control Trace:** End-to-end trace of a request through system layers.
+2. **State Inventory:** Accounting of where mutable state lives and the durability guarantee of each store.
+3. **Explicit Invariants & Specifications:** Clear statements of invariants that must never be violated.
+4. **Failure & Risk Walkthrough:** Identification of component failure modes and recovery boundaries.
+5. **Security & Privacy Boundary Decisions:** Explicit trust boundary map, threat model, and defense-first validation.
+6. **Measurements & Evidence:** Empirical performance data backed by question-driven measurement methodology.
+7. **Latency, Resource, and Cost Estimates:** Order-of-magnitude estimates for capacity, throughput, and costs.
+8. **Architecture Alternatives & Moved Complexity:** Justification of chosen architectures over alternatives.
+9. **Technology Cards:** Formal D-015 evaluations for significant technology choices.
+10. **Operational & Recovery Evidence:** Service SLIs/SLOs, logging/metrics, and recovery runbooks.
+11. **Unknowns & Learning Plan:** Truthful identification of architectural uncertainties and investigation plans.
+12. **Defense Under Changed Constraints:** Adaptation of architectural trade-offs under modified external constraints.
 
 #### 3.4.3 Defense Mechanics & Rubric Guidelines
 
-- **Evaluation Basis:** Defensible reasoning and evidence outrank fluent prose or software framework complexity.
-- **Anti-Patterns that FAIL the Defense:**
-  - Recommending technologies based on industry buzzwords without justifying mechanism or gains.
-  - Inability to trace a request through the system layers.
-  - Conflating authentication with authorization or encryption with integrity.
-  - Presenting average latency without distributions or percentiles.
-  - Claiming "zero downtime" or "perfect security" without stating failure and threat assumptions.
-  - Adding cloud infrastructure (Kubernetes, Kafka, Redis, microservices) when a simpler architecture satisfies the constraints.
+- **Authority Boundary:** Research outlines candidate assessment dimensions and evidence types; **Design owns the final scoring model, pass/fail thresholds, evidence sufficiency criteria, and the formal learner/reviewer contract.**
+- **Evaluation Principles:** Defensible reasoning and evidence outrank fluent prose or software framework quantity. Evidence may take multiple forms: explicit assumptions, analytical models, authoritative specification citations, empirical measurements, automated tests, and scenario constraint proofs.
 
 ---
 
@@ -583,30 +578,31 @@ The following matrix categorizes all primary technical and architectural claims 
 | **M21** | Crypto | Cryptographic hash functions provide one-way mapping and collision resistance, not encryption. | **PRINCIPLE** | NIST FIPS 180-4 (SHA-2), FIPS 202 (SHA-3); Katz & Lindell | **ESTABLISHED** |
 | **M21** | Crypto | A hash alone does not protect against an active adversary who can recompute the hash. | **PRINCIPLE** | Katz & Lindell *Introduction to Modern Cryptography* | **ESTABLISHED** |
 | **M21** | Crypto | MAC / HMAC provides integrity AND authenticity between shared-key holders. | **SPECIFICATION** | IETF RFC 2104, RFC 4231 (HMAC); NIST FIPS 198-1 | **ESTABLISHED** |
-| **M21** | Crypto | AEAD (e.g. AES-GCM, ChaCha20-Poly1305) provides confidentiality and integrity in one primitive. | **SPECIFICATION** | NIST SP 800-38D (GCM); IETF RFC 8439 (ChaCha20-Poly1305) | **ESTABLISHED** |
+| **M21** | Crypto | AEAD (e.g. AES-GCM, ChaCha20-Poly1305) provides confidentiality and authenticity in one primitive. | **SPECIFICATION** | NIST SP 800-38D (GCM); IETF RFC 8439 (ChaCha20-Poly1305) | **ESTABLISHED** |
 | **M21** | Crypto | Nonce reuse under AES-GCM or ChaCha20-Poly1305 catastrophically destroys authenticity. | **SPECIFICATION** | NIST SP 800-38D §8; Ferguson, Schneier, Kohno | **ESTABLISHED** |
-| **M21** | Crypto | Digital signatures (Ed25519, RSA-PSS) provide authenticity and non-repudiation via asymmetric keys. | **SPECIFICATION** | IETF RFC 8032 (Ed25519); NIST FIPS 186-5 | **ESTABLISHED** |
-| **M21** | Crypto | SHA-1 and 2-key 3DES are disallowed for digital signatures and data protection. | **CURRENT PRACTICE** | NIST SP 800-131A Rev. 2 (algorithm transitions, current 2026) | **CURRENT-PRACTICE** |
-| **M21** | PKI | TLS certificates bind domain identity (SAN) to public keys, but do not prove endpoint safety. | **SPECIFICATION** | IETF RFC 5280, RFC 9525 (Service Identity); RFC 8446 | **ESTABLISHED** |
-| **M21** | Randomness | PRNGs for simulation (e.g. Python `random`) are insecure; tokens require CSPRNGs. | **SPECIFICATION** | NIST SP 800-90A Rev. 1; Python docs `secrets` module | **ESTABLISHED** |
-| **M22** | Authn/Authz | Authentication (identity verification) is orthogonal to authorization (permission decision). | **PRINCIPLE** | Saltzer & Schroeder; NIST SP 800-63-3 / SP 800-162 | **ESTABLISHED** |
-| **M22** | Passwords | Passwords must use salted, memory-hard hashing (Argon2id); fast hashes (MD5/SHA) are insecure. | **SPECIFICATION** | NIST SP 800-63B §5.1.1.2; IETF RFC 9106 (Argon2); OWASP Cheat Sheet | **CURRENT-PRACTICE** |
-| **M22** | Sessions | Server sessions provide immediate revocation; stateless tokens require revocation state to revoke. | **PRINCIPLE** | RFC 6749, RFC 7519; Kleppmann *DDIA* | **ESTABLISHED** |
-| **M22** | Tokens | JWTs must reject `alg: "none"` and validate `exp`, `iss`, `aud` claims. | **SPECIFICATION** | IETF RFC 7519, RFC 8725 (JWT BCP 225) | **ESTABLISHED** |
+| **M21** | Crypto | Digital signatures (Ed25519, RSA-PSS) provide authenticity and integrity verification via asymmetric keys. | **SPECIFICATION** | IETF RFC 8032 (Ed25519); NIST FIPS 186-5 | **ESTABLISHED** |
+| **M21** | Crypto | Unauthenticated ECDH provides key agreement but is MITM-vulnerable without authentication. | **PRINCIPLE** | Katz & Lindell; RFC 8446 | **ESTABLISHED** |
+| **M21** | Crypto | SHA-1 and 2-key 3DES are disallowed for signatures and data protection; ECB mode slated for retirement. | **CURRENT PRACTICE** | NIST SP 800-131A Rev. 2 (Final) & Rev. 3 (Initial Public Draft Oct 2024) | **CURRENT-PRACTICE** |
+| **M21** | PKI | TLS certificates bind domain identity to public keys; private-key possession is proven in handshake. | **SPECIFICATION** | IETF RFC 5280, RFC 9525 (Service Identity), RFC 8446 / RFC 9846 | **ESTABLISHED** |
+| **M21** | Randomness | PRNGs for simulation (e.g. Python `random`, C `rand`) are not cryptographically secure credentials. | **SPECIFICATION** | NIST SP 800-90A Rev. 1; Python docs `secrets` module | **ESTABLISHED** |
+| **M22** | Authn/Authz | Authentication (identity verification) is orthogonal to authorization (permission decision). | **PRINCIPLE** | Saltzer & Schroeder; NIST SP 800-63-4 / SP 800-162 | **ESTABLISHED** |
+| **M22** | Passwords | Passwords must use salted, memory-hard hashing (Argon2id); fast hashes (MD5/SHA) are insecure. | **SPECIFICATION** | NIST SP 800-63B-4 §5.1.1.2 (Final July 2025); IETF RFC 9106 (Argon2) | **CURRENT-PRACTICE** |
+| **M22** | Sessions | Stateless tokens trade off immediate out-of-band revocation against decentralized verification. | **PRINCIPLE** | RFC 6749, RFC 7519; Kleppmann *DDIA* | **ESTABLISHED** |
+| **M22** | Tokens | JWTs must reject `alg: "none"`; claim validation is governed by application/profile contracts. | **SPECIFICATION** | IETF RFC 7519, RFC 8725 (JWT BCP 225) | **ESTABLISHED** |
 | **M22** | OAuth | OAuth 2.0 is an authorization delegation framework, not an authentication protocol. | **SPECIFICATION** | IETF RFC 6749, RFC 6750; OpenID Connect Core 1.0 | **ESTABLISHED** |
-| **M22** | OAuth | OAuth 2.1 mandates PKCE for all clients; implicit and password grants are deprecated. | **CURRENT PRACTICE** | IETF draft-ietf-oauth-v2-1-11; RFC 9700 / OAuth Security BCP | **CURRENT-PRACTICE** |
-| **M22** | Injection | Parameterized queries prevent SQLi by parsing query structure before binding data values. | **SPECIFICATION** | ANSI SQL / ISO/IEC 9075; SQLite / PostgreSQL query protocols | **ESTABLISHED** |
-| **M22** | Web XSS | Context-aware output encoding prevents XSS; CSP provides defense-in-depth mitigation. | **SPECIFICATION** | W3C CSP Level 3; WHATWG HTML; OWASP XSS Prevention Cheat Sheet | **ESTABLISHED** |
-| **M22** | Web CSRF | `SameSite=Lax` mitigates top-level CSRF, but state-changing requests require explicit tokens. | **SPECIFICATION** | IETF RFC 6265bis; OWASP CSRF Prevention Cheat Sheet | **CURRENT-PRACTICE** |
-| **M22** | Web SSRF | SSRF defense requires validating the resolved IP address at connection time to defeat DNS rebinding. | **CURRENT PRACTICE** | OWASP SSRF Prevention Cheat Sheet; CWE-918 | **CURRENT-PRACTICE** |
+| **M22** | OAuth | RFC 9700 (BCP 240) mandates PKCE for public clients, recommends for confidential; ROPC disallowed. | **SPECIFICATION** | IETF RFC 9700 (BCP 240, Jan 2025); draft-ietf-oauth-v2-1-16 (Sept 2026) | **CURRENT-PRACTICE** |
+| **M22** | Injection | Parameterized queries separate data values from query syntax at the driver/API level. | **SPECIFICATION** | ANSI SQL / ISO/IEC 9075; database client protocols | **ESTABLISHED** |
+| **M22** | Web XSS | Context-aware output encoding prevents XSS; CSP provides defense-in-depth mitigation. | **SPECIFICATION** | W3C CSP Level 3 (WD Aug 2026); WHATWG HTML | **ESTABLISHED** |
+| **M22** | Web CSRF | CSRF defense depends on credential model; SameSite=Lax allows top-level GET navigation. | **SPECIFICATION** | IETF RFC 6265bis (draft-22, Aug 2026); OWASP Cheat Sheet | **CURRENT-PRACTICE** |
+| **M22** | Web SSRF | SSRF defense requires validating resolved IP addresses at connection time to mitigate DNS rebinding. | **CURRENT PRACTICE** | OWASP SSRF Prevention Cheat Sheet; CWE-918 | **CURRENT-PRACTICE** |
 | **M22** | Composition | Insecure deserialization of polymorphic executable objects (Python `pickle`) causes RCE. | **IMPLEMENTATION** | Python standard library `pickle` documentation; CWE-502 | **IMPLEMENTATION-SPECIFIC** |
-| **M22** | Supply Chain | Dependency lockfiles with SHA-256 hashes ensure artifact integrity, not code trustworthiness. | **CURRENT PRACTICE** | SLSA v1.0 specification; Sigstore / in-toto architecture | **CURRENT-PRACTICE** |
-| **M23** | Measurement | Average latency misleads on heavy-tailed distributions; reporting p50/p95/p99 is necessary. | **PRINCIPLE** | Dean & Barroso *The Datacenter as a Computer*; Gil Tene (Coordinated Omission) | **ESTABLISHED** |
+| **M22** | Supply Chain | Lockfile digests verify byte integrity; provenance attestations verify builder and source context. | **CURRENT PRACTICE** | SLSA v1.2 specification (Approved); Sigstore architecture | **CURRENT-PRACTICE** |
+| **M23** | Measurement | Average latency misleads on skewed distributions; distribution percentiles reveal tail behavior. | **PRINCIPLE** | Dean & Barroso *The Datacenter as a Computer*; Gil Tene (Coordinated Omission) | **ESTABLISHED** |
 | **M23** | Measurement | Elapsed duration measurement requires monotonic clocks; wall clocks jump on NTP adjustments. | **IMPLEMENTATION** | POSIX `CLOCK_MONOTONIC`; Linux `clock_gettime(2)`; Python `time.monotonic` | **ESTABLISHED** |
 | **M23** | Judgment | Every added architectural abstraction must justify what it buys and where complexity moves. | **PRINCIPLE** | Curriculum Invariant 8; D-015 Framework | **ESTABLISHED** |
 | **M23** | Judgment | Rejecting a candidate technology is a fully valid, often superior engineering decision. | **PRINCIPLE** | D-015 Technology Evaluation Framework; Curriculum Invariant 1 | **ESTABLISHED** |
 | **M23** | AI Claims | AI-generated outputs are untrusted hypotheses requiring empirical verification. | **PRINCIPLE** | Curriculum Invariant 6; OQ-BP-001 safe interim state | **ESTABLISHED** |
-| **M23** | Economics | Cloud infrastructure cost includes compute, storage, egress, and operational complexity. | **CURRENT PRACTICE** | AWS/GCP/Azure pricing models; Dean latency hierarchy | **CURRENT-PRACTICE** |
+| **M23** | Economics | Cloud infrastructure cost includes compute, storage, egress, and operational complexity. | **CURRENT PRACTICE** | Cloud pricing models; Dean latency hierarchy | **CURRENT-PRACTICE** |
 | **M24** | Assessment | System Defense passing evidence is a defensible claim-to-evidence link, not tool count. | **PRINCIPLE** | Curriculum Invariants 1, 3, 7; Assessment Architecture | **ESTABLISHED** |
 
 ---
@@ -619,24 +615,24 @@ In accordance with the Living Curriculum Policy (`meta/LIVING_CURRICULUM_POLICY.
 |---|---|---|---|---|
 | **Trust Boundary & Threat Model** | M21 | **STABLE** | 24–36 months | Foundational computing invariants (Saltzer & Schroeder 1975). Core principles do not drift with software versions. |
 | **Cryptographic Primitives (Hash, MAC, Symmetric, Asymmetric, Signatures)** | M21 | **STABLE** | 24–36 months | Mathematical and algorithmic foundations (Katz & Lindell). Core properties and use models remain invariant. |
-| **Approved Crypto Algorithms & Key Sizes (NIST SP 800-131A Rev. 2)** | M21 | **CURRENT** | 12–18 months | Specific key sizes (e.g. RSA 2048 vs 3072, ECC curves) and deprecated algorithms (SHA-1 sunset) evolve with computing power. |
-| **Password Hashing Algorithms (Argon2id, bcrypt, scrypt, PBKDF2)** | M22 | **CURRENT** | 12–18 months | Argon2id is current state of the art (RFC 9106); memory/time cost parameters must be rechecked against GPU advances. |
+| **Approved Crypto Algorithms & Key Transitions (NIST SP 800-131A Rev. 2 / Rev. 3 draft)** | M21 | **CURRENT** | 12–18 months | Specific key sizes (RSA 2048 vs 3072, ECC curves) and deprecated algorithms (SHA-1, 3DES, ECB) evolve with cryptanalysis. |
+| **Password Hashing Guidelines (NIST SP 800-63B-4, RFC 9106 Argon2id)** | M22 | **CURRENT** | 12–18 months | SP 800-63B-4 (Final July 2025) and RFC 9106 Argon2id; memory/time parameters evolve with hardware capabilities. |
 | **Authentication vs. Authorization Separation** | M22 | **STABLE** | 24–36 months | Conceptual boundary invariant across all multi-user computing systems. |
-| **Session Cookies (`HttpOnly`, `Secure`, `SameSite`)** | M22 | **CURRENT** | 12–18 months | RFC 6265bis evolution; browser defaults for `SameSite` and third-party cookie restrictions evolve. |
-| **JWT Specification & Best Current Practices (RFC 7519, RFC 8725)** | M22 | **CURRENT** | 12–18 months | BCP guidelines on algorithm restrictions, key confusion, and claim validation require regular verification. |
-| **OAuth 2.1 & OIDC Delegation Models** | M22 | **CURRENT** | 12–18 months | Transition from OAuth 2.0 (RFC 6749) to OAuth 2.1 (mandatory PKCE, deprecation of implicit/ROPC flows). |
-| **SQL Injection & AST Parameterization** | M22 | **STABLE** | 24–36 months | AST parser separation of code and data is a timeless computing mechanism. |
+| **Session Cookies (`HttpOnly`, `Secure`, `SameSite` / RFC 6265bis)** | M22 | **CURRENT** | 12–18 months | RFC 6265bis evolution (`draft-22`, Aug 2026); browser defaults for `SameSite` and third-party cookie restrictions evolve. |
+| **JWT Specification & Best Current Practices (RFC 7519, RFC 8725 / BCP 225)** | M22 | **CURRENT** | 12–18 months | BCP guidelines on algorithm restrictions, key confusion, and claim validation require regular verification. |
+| **OAuth 2.0 Security BCP 240 (RFC 9700) & OAuth 2.1 draft** | M22 | **CURRENT** | 12–18 months | RFC 9700 (BCP 240, Jan 2025) and `draft-ietf-oauth-v2-1-16` (Sept 2026); PKCE requirements and grant deprecations. |
+| **SQL Injection & Driver Parameter Separation** | M22 | **STABLE** | 24–36 months | API-level separation of code and data values is a timeless computing mechanism. |
 | **XSS Context-Aware Output Encoding** | M22 | **STABLE** | 24–36 months | Browser execution context escaping invariant remains stable. |
-| **Content Security Policy (W3C CSP Level 3)** | M22 | **CURRENT** | 12–18 months | W3C specification draft updates and browser support for strict nonce-based CSP directives. |
-| **SSRF Egress Filtering & DNS Rebinding Defenses** | M22 | **CURRENT** | 12–18 months | Cloud metadata endpoints (`169.254.169.254`, IMDSv2) and container network egress patterns evolve. |
+| **Content Security Policy (W3C CSP Level 3)** | M22 | **CURRENT** | 12–18 months | W3C Working Draft (13 August 2026) updates and browser support for strict nonce-based CSP directives. |
+| **SSRF Connection-Time Egress Defenses** | M22 | **CURRENT** | 12–18 months | Cloud metadata endpoints (IMDSv2), IPv6 mappings, and container network egress patterns evolve. |
 | **Dependency Lockfiles & SHA-256 Digest Verification** | M22 | **CURRENT** | 12–18 months | Package manager lockfile formats and hash enforcement mechanisms (pip, npm, cargo). |
-| **Supply Chain Attestation (SLSA v1.0, Sigstore)** | M22 | **FRONTIER** | 6–12 months | Rapidly evolving standards for build provenance, binary transparency, and signing pipelines. |
-| **Experimental Measurement Pattern & Percentile Statistics** | M23 | **STABLE** | 24–36 months | Scientific experimental design and statistical rigor outlive all benchmarking software. |
+| **Supply Chain Provenance & Attestation (SLSA v1.2, Sigstore)** | M22 | **FRONTIER** | 6–12 months | Fast-moving standards for build provenance (SLSA v1.2 Approved, v1.0 retired) and attestation verification. |
+| **Question-Driven Measurement Methodology & Percentiles** | M23 | **STABLE** | 24–36 months | Scientific experimental design and statistical rigor outlive all benchmarking software. |
 | **Clock Semantics (Monotonic vs. Wall-Clock)** | M23 | **STABLE** | 24–36 months | Hardware timer and OS kernel clock abstraction invariant across POSIX and Windows. |
 | **D-015 Technology Evaluation Framework** | M23 | **STABLE** | 24–36 months | Core curriculum architecture policy; evaluation dimensions remain constant. |
 | **Napkin Math Latency Numbers (Jeff Dean hierarchy)** | M23 | **CURRENT** | 12–18 months | Hardware-dependent orders of magnitude (NVMe SSD, RAM, network latencies) update with hardware generations. |
 | **AI Output Verification as Untrusted Hypothesis** | M23 | **CURRENT** | 6–12 months | Fast-moving generative AI tooling capabilities; evaluation principles remain steady while model behaviors shift. |
-| **System Defense Evidence Rubric** | M24 | **STABLE** | 24–36 months | Core assessment architecture based on 8 canonical competencies. |
+| **Candidate System Defense Assessment Dimensions** | M24 | **STABLE** | 24–36 months | Core assessment architecture based on 8 canonical competencies. |
 
 ---
 
@@ -663,14 +659,14 @@ All hands-on security learning must be demonstrable through **controlled, local,
 | Vulnerability / Mechanism | Prohibited Offensive Approach | Required Safe Defensive Evidence Class |
 |---|---|---|
 | **Cryptographic Integrity** | Attempting to forge signatures or break ciphers using brute force | Programmatic check verifying that a single altered byte causes `InvalidSignature` / `InvalidTag` exception in standard library API. |
-| **Password Storage** | Running Hashcat or John the Ripper against dumped password hashes | Measuring the execution time and memory cost of Argon2id with varying parameters to prove work factor vs SHA-256 speed. |
+| **Password Storage** | Running Hashcat or John the Ripper against dumped password hashes | Measuring the execution duration of Argon2id under named illustrative parameters to observe work factor vs un-salted fast hashes. |
 | **Authentication / JWT** | Attacking public JWT tokens or brute-forcing secret signing keys | Unit tests verifying that tokens with altered payloads, expired `exp`, or modified `alg` are deterministically rejected by the verifier. |
 | **Authorization (IDOR)** | Writing an automated scraper to enumerate user IDs on external sites | Writing an automated allow/deny policy test asserting that a request by User A to fetch `/notes/user-b-id` returns HTTP 403 Forbidden. |
 | **SQL Injection** | Using `sqlmap` or complex UNION-based extraction against a database | Comparing string formatting (`f"SELECT ... WHERE id = '{id}'"`) vs bind parameters (`execute("... WHERE id = ?", (id,))`) to observe query failure vs safe handling. |
 | **Cross-Site Scripting (XSS)** | Injecting weaponized keylogger or cookie-stealing payloads into a site | Inspecting raw HTTP response bodies and DOM nodes to verify that `<script>` tags are encoded as `&lt;script&gt;` and that `HttpOnly` cookies are inaccessible to JavaScript. |
 | **CSRF** | Hosting an offensive phishing page on a public domain | Verifying on localhost that an HTTP POST request lacking a valid anti-CSRF token receives HTTP 403, and observing `SameSite=Lax` browser cookie transmission behavior. |
 | **SSRF** | Scanning internal cloud metadata services (`169.254.169.254`) | Unit testing an IP address validator function against loopback (`127.0.0.1`), RFC 1918 private ranges, and cloud metadata IPs to prove it blocks connection attempts. |
-| **Dependency Integrity** | Injecting typosquatted malicious packages into a public registry | Verifying that modifying a single byte in a downloaded wheel/package causes `pip install --require-hashes` or lockfile verification to abort with an integrity error. |
+| **Dependency Integrity** | Injecting typosquatted malicious packages into a public registry | Verifying that modifying a single byte in a downloaded wheel/package causes lockfile hash verification to abort with an integrity error. |
 
 ---
 
@@ -681,31 +677,29 @@ The accepted Lab Selection Map (`meta/blueprint/lab-source-selection-map-v0.1.md
 
 ### 7.1 Evaluation of Hands-On Candidates for Stage 7
 
-| Option | Description | Alignment with Lab Architecture | Safety Model | Dependency & Operational Risk | Recommendation |
+| Option | Description | Alignment with Lab Architecture | Safety Model | Dependency & Operational Risk | Evaluation Outcome |
 |---|---|---|---|---|---|
 | **Candidate A: Standalone Vulnerable App as a 6th Required Lab** | Create a new formal Required Lab (`LAB-REQ-06`) containing a complete multi-tier vulnerable web application. | **POOR.** Violates the accepted 5 Required Lab constraint; requires major architectural escalation and Lead approval. | Moderate risk of learners misinterpreting the app as an offensive playground. | High setup overhead; requires multi-process orchestration, background DB, and complex preflight/reset fixtures. | **REJECTED.** (Violates Blueprint Lab count without justification). |
-| **Candidate B: Bounded Local Security Fixtures in Standard Lessons + Mini Cloud App Reviews** | Embed small, bounded, defense-first Python/HTTP fixtures directly inside M21 and M22 standard activities (e.g. `activity_l21_02.py`, `activity_l22_02.py`), paired with P2/P8/P9 security reviews on the existing Mini Cloud App. | **EXCELLENT.** Perfectly preserves the 5 Required Lab, 5 Optional Lab, 5 Source Expedition architecture. No new lab ID needed. | Localhost-only, synthetic-only, defense-first, zero deployment. All tests automated via pytest. | Zero external infrastructure. Uses Python standard library + optional `cryptography` package. Bounded reset and deterministic cleanup. | **RECOMMENDED.** (Optimal pedagogical alignment and governance compliance). |
+| **Candidate B: Bounded Local Security Fixtures in Standard Lessons + Mini Cloud App Reviews** | Embed small, bounded, defense-first Python/HTTP fixtures directly inside M21 and M22 standard activities (e.g. `activity_l21_02.py`, `activity_l22_02.py`), paired with P2/P8/P9 security reviews on the existing Mini Cloud App. | **EXCELLENT.** Perfectly preserves the 5 Required Lab, 5 Optional Lab, 5 Source Expedition architecture. No new lab ID needed. | Localhost-only, synthetic-only, defense-first, zero deployment. All tests automated. | Zero external infrastructure. Uses Python standard library + candidate packages. Bounded reset and deterministic cleanup. | **RECOMMENDED FOR DESIGN EVALUATION.** (Optimal alignment with repository policy). |
 | **Candidate C: Pure Conceptual Case Analysis (Zero Runnable Code)** | Teach security synthesis purely through code reading, architecture diagrams, and paper cases without runnable activities. | **FAILS INVARIANT 3 & 5.** Deprives learners of hands-on mechanism observation and verification habits. | Zero runtime risk. | Zero tool dependencies. | **REJECTED.** (Accessible and rigorous systems judgment requires empirical observation). |
 
-### 7.2 Detailed Specification of Recommended Candidate B
+### 7.2 Research Recommendation for Design Evaluation (Candidate B Baseline)
 
-To be formally developed during Stage 7 Design:
+Research presents Candidate B as its **evaluated recommendation** to Design. Design retains full authority to accept, refine, or reject Candidate B, provided that canonical constraints (exact DAG, safety rules, 5 Required Lab count, and Concept Registry first homes) are maintained:
 
-1. **M21 Hands-On Activity (`activity_l21_02`):**
-   - **Mechanism:** Cryptographic primitive usage using Python standard library (`hashlib`, `hmac`, `secrets`) and high-level `cryptography` primitives.
-   - **Tasks:**
+1. **M21 Hands-On Activity Candidate (`activity_l21_02`):**
+   - **Mechanism:** Cryptographic primitive usage using Python standard library (`hashlib`, `hmac`, `secrets`) and candidate high-level cryptographic libraries.
+   - **Candidate Tasks:**
      - Task 1: Compare fast hash (SHA-256) vs HMAC-SHA256 on message tampering (observe that hash alone allows recalculation, while HMAC detects unauthorized modification).
-     - Task 2: Digital signature generation and verification with Ed25519; observe `InvalidSignature` when a single payload byte is altered.
-     - Task 3: Inspect an X.509 certificate on localhost using Python `ssl` / `cryptography`, verifying SAN and expiration dates.
-   - **Evidence:** Automated pytest suite asserting cryptographic failure dispositions on tampered data.
-2. **M22 Hands-On Activity (`activity_l22_02`):**
-   - **Mechanism:** Defense against injection, broken authorization, and token misuse on a tiny, bounded, course-owned localhost HTTP/SQLite fixture (e.g. 150 lines of Python `http.server` + `sqlite3`).
-   - **Tasks:**
-     - Task 1: Given a vulnerable query, replace string interpolation with parameterized SQL; run automated tests proving SQLi payloads are neutralized.
+     - Task 2: Digital signature verification with Ed25519; observe signature rejection when a single payload byte is altered.
+     - Task 3: Inspect an X.509 certificate on localhost, verifying SAN matching and validity intervals.
+2. **M22 Hands-On Activity Candidate (`activity_l22_02`):**
+   - **Mechanism:** Defense against injection, broken authorization, and token misuse on a tiny, bounded, course-owned localhost HTTP/SQLite fixture (e.g. bounded Python `http.server` + `sqlite3`).
+   - **Candidate Tasks:**
+     - Task 1: Given an un-parameterized query, apply driver-level parameter binding; run automated tests proving injection inputs remain literal data.
      - Task 2: Implement and verify tenant-isolated authorization checks (`WHERE user_id = ?`) preventing IDOR horizontal privilege escalation.
      - Task 3: Validate JWT token signature and expiration claims, proving that forged or expired tokens receive HTTP 401/403.
-     - Task 4: Validate IP address filter against SSRF inputs (loopback, private ranges, metadata IP).
-   - **Evidence:** Automated pytest suite verifying all defenses pass and no exploit payloads execute.
+     - Task 4: Validate IP address filter against SSRF inputs (loopback, private ranges, metadata IP) with connection-time socket validation.
 3. **Mini Cloud App Synthesis (Milestones P2, P8, P9):**
    - P2: Explicit multi-user ownership, tenant-isolated queries, and session authorization.
    - P8: Security logging (failed auth attempts, authorization denials) without credential leakage.
@@ -715,20 +709,21 @@ To be formally developed during Stage 7 Design:
 
 ## 8. Lab, Source, Rights & Licensing Findings
 
-### 8.1 Candidate External Sources Audit
+### 8.1 Candidate External Sources & Rights Audit
 
 In strict compliance with `meta/blueprint/lab-source-selection-map-v0.1.md` §7 and Decision D-016:
 
-| Source / Reference | Author / Standards Body | Version / Checked Date | Upstream License / Rights Status | Permitted Usage in Essential CS | Mandatory Attribution / Action |
+| Source / Reference | Author / Standards Body | Version / Checked Date | Upstream License / Rights Status | Permitted Usage in Essential CS | Mandatory Attribution / Boundary Note |
 |---|---|---|---|---|---|
-| **NIST SP 800 Series (800-131A, 800-63B, 800-38D, FIPS 186-5, FIPS 202)** | NIST (US Department of Commerce) | SP 800-131A Rev. 2; SP 800-63B; FIPS 186-5 (checked 2026-09-07) | US Government Work (Public Domain worldwide under 17 U.S.C. § 105) | Full quoting, linking, paraphrasing, and algorithmic specification derivation. | Attribute NIST publication title, document number, and date. |
-| **IETF RFCs (RFC 2104, 5280, 6265bis, 6749, 7519, 8032, 8439, 8446, 8725, 9106, 9525, 9846)** | Internet Engineering Task Force (IETF) | RFC 9525 (2023); RFC 9846 (2025/2026); RFC 9106 (2021); checked 2026-09-07 | IETF Trust Legal Provisions (TLP 5.0) | Normative citation, linking, paraphrasing. Code extracts require BSD-3-Clause notice. | Link to official RFC Editor URLs; attribute RFC numbers and authors. |
-| **W3C Standards (CSP Level 3, Fetch, WebAppSec)** | World Wide Web Consortium (W3C) | CSP Level 3 Working Draft (checked 2026-09-07) | W3C Document License (Permissive citation and linking) | Normative citation, conceptual exposition, linking. | Cite W3C specification URL and draft date. |
-| **WHATWG Standards (HTML, Fetch, URL)** | WHATWG | Living Standard (checked 2026-09-07) | CC BY 4.0 | Normative citation, linking, paraphrasing. | Attribute WHATWG Living Standard and URL. |
+| **NIST SP 800 Series (800-131A Rev 2, Rev 3 draft; 800-63B-4; 800-38D; FIPS 186-5; FIPS 202)** | NIST (US Dept. of Commerce) | SP 800-63B-4 (Final July 2025); SP 800-131A Rev 2 (Final); Rev 3 IPD (Oct 2024); checked 2026-09-07 | US Government Work (17 U.S.C. § 105; public domain in the US; foreign rights may be reserved by DOC/NIST) | Full quoting, linking, paraphrasing, and algorithmic specification derivation. | Attribute NIST publication title, document number, and date. Does not imply worldwide public domain. |
+| **IETF RFCs (RFC 2104, 5280, 6749, 7519, 8032, 8439, 8446, 8725, 9106, 9525, 9700, 9846; drafts 6265bis, oauth-v2-1)** | Internet Engineering Task Force (IETF) | RFC 9700 (BCP 240, Jan 2025); RFC 9846; draft-ietf-oauth-v2-1-16 (Sept 2026); draft-ietf-httpbis-rfc6265bis-22; checked 2026-09-07 | IETF Trust Legal Provisions (TLP 5.0) | Normative citation, linking, paraphrasing. Code Components extracted are subject to the IETF Trust Revised BSD License. | Link to official RFC Editor / Datatracker URLs; attribute authors and RFC/draft numbers. Distinguish citation from code extraction. |
+| **W3C Standards (CSP Level 3, WebAppSec)** | World Wide Web Consortium (W3C) | CSP Level 3 Working Draft (13 August 2026, checked 2026-09-07) | W3C Document License | Normative citation, conceptual exposition, linking. | Cite W3C specification URL and draft date. |
+| **WHATWG Standards (HTML, Fetch, URL)** | WHATWG | Living Standards (checked 2026-09-07) | CC BY 4.0 | Normative citation, linking, paraphrasing. | Attribute WHATWG Living Standard and URL. |
 | **OWASP Top 10 & Cheat Sheet Series** | Open Worldwide Application Security Project (OWASP) | Top 10 2021 / 2025 update; Cheat Sheets (checked 2026-09-07) | CC BY-SA 4.0 | Citation, empirical industry reference, conceptual guidance. Zero mass vendoring. | Cite OWASP; adhere to CC BY-SA 4.0 attribution if text is adapted. |
-| **SLSA Framework** | OpenSSF (Linux Foundation) | SLSA v1.0 (checked 2026-09-07) | CC BY 4.0 | Conceptual citation and model exposition. | Attribute OpenSSF / SLSA project. |
-| **PyCA `cryptography` Library** | Python Cryptographic Authority | Current stable release (>= 44.x, checked 2026-09-07) | Apache-2.0 / BSD-3-Clause dual license | Standard runtime dependency in virtualenv; link to official documentation. | If bundled code appears, include Apache-2.0 / BSD notice. |
-| **Passlib / Argon2-cffi** | Hynek Schlawack / Community | Current stable releases | MIT / Apache-2.0 | Optional runtime dependency for Argon2id. | Include MIT/Apache attribution notices. |
+| **SLSA Specification** | OpenSSF (Linux Foundation) | SLSA v1.2 (Approved, checked 2026-09-07; v1.0 retired) | Community Specification License 1.0 | Conceptual citation, model exposition, and implementation of specification concepts. | Attribute OpenSSF / SLSA project under Community Specification License 1.0. |
+| **PyCA `cryptography` Library** | Python Cryptographic Authority | Current stable release (v50.0.1, released 2026-08-25, checked 2026-09-07) | Apache-2.0 / BSD-3-Clause dual license | Standard runtime candidate in virtualenv; link to official documentation. | If bundled code appears, include Apache-2.0 / BSD notice. |
+| **Passlib** | Eli Collins | Version 1.7.4 | BSD-3-Clause license | Optional candidate utility for password hashing compatibility. | Include BSD-3-Clause attribution notice. |
+| **argon2-cffi** | Hynek Schlawack | Current stable release | MIT license | Candidate wrapper around reference Argon2 C library. | Requires C compiler or pre-compiled wheel; include MIT attribution. |
 | **MIT 6.033 Case Studies (EXP-05 Revisit)** | MIT OCW | Spring 2018 | CC BY-NC-SA 4.0 | Link-and-paraphrase only. Zero copied text or handouts. | Revisit link only per EXP-05 governance. |
 
 ---
@@ -742,91 +737,57 @@ In strict compliance with `meta/blueprint/lab-source-selection-map-v0.1.md` §7 
    - Web & Networking: `http.server`, `urllib.parse`, `ssl`, `socket`.
    - Data & State: `sqlite3`, `json`.
    - Time & Clocks: `time.monotonic_ns()`, `time.time_ns()`.
-   - *Advantage:* A substantial fraction of S7 activities (hash comparison, HMAC integrity, CSPRNG vs PRNG, SQL parameterization, cookie header inspection, monotonic clock benchmarking) can run on **pure Python stdlib** with zero pip installation requirements.
-2. **Optional / Supplemental Packages:**
-   - `cryptography` (PyCA): Required if asymmetric digital signatures (Ed25519) or X.509 certificate generation are exercised in code rather than via CLI tools. Mature, cross-platform wheels available on Linux/macOS/Windows.
-   - `argon2-cffi`: Recommended for modern password hashing demonstrations. Pure Python fallbacks exist if compilation is blocked.
-   - `pytest`: Standard course-wide test runner.
-3. **Host Tooling Availability:**
-   - `openssl` CLI: Useful for certificate inspection (`openssl x509 -text -noout -in ...`) and cipher benchmarking (`openssl speed`). Pre-installed on standard Linux/macOS and readily available in Windows Dev Containers / WSL.
-   - `curl`: Standard HTTP testing tool (previously gated in LAB-REQ-01).
+   - *Advantage:* A substantial fraction of S7 activities (hash comparison, HMAC integrity, CSPRNG vs PRNG, SQL parameterization, cookie header inspection, monotonic clock benchmarking) can execute on **pure Python stdlib** with zero package installation requirements.
+2. **Candidate Supplemental Packages & Probing Requirements:**
+   - `cryptography` (PyCA, v50.0.1 checked): Candidate for asymmetric digital signatures (Ed25519) and X.509 certificate parsing. Requires binary wheels or Rust/C toolchain for source builds.
+   - `argon2-cffi`: Candidate for modern Argon2id password hashing. **Important:** `argon2-cffi` wraps the reference C library using CFFI; it does NOT feature an automatic pure-Python fallback. Environments lacking pre-compiled wheels or a C compiler require fallback strategies (such as testing PBKDF2 via stdlib `hashlib.pbkdf2_hmac` while studying Argon2id conceptually).
+   - Test Runner: Test execution in exercises must be adaptable to standard runners (e.g. `pytest` where available, or standard library `unittest` where external tools are restricted).
+3. **Host Tooling Availability & Fallback Boundaries:**
+   - `openssl` CLI: Useful for certificate inspection and cipher benchmarking, but cannot be assumed universally installed on all minimal Linux/macOS environments. Preflight checks must probe for its presence and provide scripted stdlib alternatives if absent.
+   - `curl`: Standard HTTP verification tool (gated in LAB-REQ-01).
 
 ### 9.2 OQ-BP-006 Resolution Status: Preserved as OPEN
 
 In strict compliance with repository policy:
 - **`OQ-BP-006` (canonical software/environment versions) remains OPEN.**
-- Tool observations recorded in this dossier (e.g. Python 3.12/3.13, GCC 14, OpenSSL 3.0/3.2, Debian 12/13) represent **dated empirical research observations (2026-09-07)**, not frozen curriculum-wide architecture pins.
-- Specific dependency versions for S7 will be evaluated during S7 Design and pinned in implementation preflights.
+- Tool and library observations recorded in this dossier (e.g. Python 3.12/3.13, PyCA `cryptography` v50.0.1, OpenSSL 3.x, Linux 6.x) represent **dated empirical research observations (2026-09-07)**, not frozen curriculum-wide architecture pins.
+- Specific dependency pins for S7 will be evaluated during S7 Design and pinned in implementation preflights.
 
 ---
 
 ## 10. Measurement & Technology-Evaluation Research Findings
 
-### 10.1 Minimum Measurement Design to Prevent Benchmark Self-Deception
+### 10.1 Question-Driven Measurement Methodology to Prevent Self-Deception
 
-To satisfy M23 `L23-01` learning outcomes, research identifies the six mandatory controls of an honest computing measurement:
+To satisfy M23 `L23-01` learning outcomes, research identifies the core elements of honest computing measurement:
 
-1. **Warm-Up Runs:** Computing systems feature JIT compilation, disk cache warming, dynamic CPU frequency scaling (P-states/C-states), and memory page faulting. Measurements must discard initial warm-up iterations and measure steady-state execution.
-2. **Sufficient Sample Size & Repetitions:** A single timing run is meaningless. Minimum 30 to 100 repetitions for microbenchmarks; multiple independent trials for workload benchmarks.
-3. **Distribution Reporting:** Always report percentiles: $p50$ (median), $p90$, $p95$, $p99$, and interquartile range ($IQR$). Report standard deviation only when the distribution is demonstrably normal.
-4. **Isolated & Controlled Environment:** Document CPU model, core count, RAM, OS kernel, background processes, power profiles, and runtime flags.
-5. **Independent Workload Generation (Avoiding Coordinated Omission):** Client generators must emit requests on a fixed schedule (open system model) rather than waiting for previous requests to return (closed system model), so server delays do not artificially suppress the recorded arrival rate.
-6. **Explicit Inference Limits:** Clearly state what the measurement proves and what it does *not* prove (e.g., "This microbenchmark measures single-thread in-memory SQLite B-tree lookups; it does not predict multi-tenant write throughput under disk fsync bottlenecks").
-
-### 10.2 Deriving "Stable Principle" from Ephemeral Products
-
-When applying the D-015 framework to modern technology cases (e.g. Redis, Kafka, Docker, JWT, Kubernetes, Vector DBs):
-- **Product Claim:** "Redis is fast because it is in-memory."
-- **Mechanism Analysis:** Redis achieves low latency through single-threaded event loop execution avoiding lock contention, in-memory data structures with direct pointer traversal, non-blocking asynchronous multiplexed I/O (`epoll`), and pipelined wire framing.
-- **Stable Principle:** Removing lock synchronization and disk I/O from the critical request path maximizes memory-bandwidth throughput, but bounds capacity to RAM size and trade-offs durability to asynchronous snapshot/WAL flush intervals (`EC-CON-016 Durability` vs `EC-CON-006 Trade-off`).
-- **Pedagogical Outcome:** The learner gains an invariant mental model that remains valid long after Redis is replaced by another tool.
+1. **Measurement Question:** State the exact question and hypothesis being tested before collecting data.
+2. **Workload Model:** Differentiate between open and closed workload arrival models; understand how closed-loop generators introduce coordinated omission under queueing delays.
+3. **Warm-Up Decisions Based on Mechanism:** Identify whether JIT compilation, buffer pool loading, or dynamic CPU frequency transitions affect the evaluated path, and explicitly record whether warm-up cycles are discarded or analyzed.
+4. **Justified Sample Size:** Base repetition counts on measured variance and required statistical power, avoiding arbitrary universal constants.
+5. **Appropriate Distribution Summaries:** Select metrics matching distribution characteristics (percentiles $p50$, $p90$, $p95$, $p99$ for skewed/tail-heavy latencies; median and $IQR$ for non-normal distributions; mean/std only where distributions are demonstrably normal).
+6. **Explicit Inference Limits:** Clearly bound conclusions to the stated hardware, OS, workload, and concurrency parameters.
 
 ---
 
 ## 11. Final Defense Evidence Research & Assessment Rubric
 
-### 11.1 Assessment Architecture Alignment
+### 11.1 Candidate Research Assessment Dimensions
 
-The Final System Defense (M24) serves as the capstone evaluation for the entire Essential CS curriculum. Aligned with `meta/COMPETENCY_MATRIX.md` and `meta/blueprint/assessment-architecture-v0.1.md`:
+Aligned with `meta/COMPETENCY_MATRIX.md` and `meta/blueprint/assessment-architecture-v0.1.md`, research outlines candidate dimensions across the 8 canonical competencies:
 
-```
-                 ESSENTIAL CS DEFENSE EVALUATION RUBRIC
+1. **Mechanism Mastery (Explain & Trace):** Explaining the underlying system mechanism (e.g. AST parameter binding, monotonic hardware timers, page cache write-paths) rather than reciting product marketing.
+2. **Evidence-to-Claim Alignment (Correctness & Observe):** Backing architectural claims with test outputs, measurement distributions, or formal specification citations.
+3. **Boundary Rigor (Judge & Diagnose):** Rigorously separating authentication from authorization, isolation from trust boundaries, and encryption from integrity.
+4. **Trade-off Articulation (Judge & Estimate):** Explicitly stating operating constraints, resource costs, and moved complexity.
+5. **Measurement Honesty (Estimate & Diagnose):** Using question-driven measurement methodology, reporting percentiles, and identifying explicit inference limits.
+6. **Failure Preparedness (Diagnose & Correctness):** Walking through partial failures, crashes, restart recovery, and invariant preservation.
+7. **Constraint Adaptability (Judge):** Defending coherent architectural trade-offs when constraints are modified under cross-examination.
 
-  CAPABILITY DIMENSION         EXEMPLARY (PASS)                UNACCEPTABLE (FAIL)
- ──────────────────────────────────────────────────────────────────────────────────
-  1. Mechanism Mastery        Explains low-level mechanism    Recites product buzzwords
-                              (e.g. AST, page cache, epoll)   without mechanism depth.
- ──────────────────────────────────────────────────────────────────────────────────
-  2. Evidence-to-Claim        Backs every claim with test,    Makes unverified claims
-                              metric, or formal spec link.    ("it is fast", "it scales").
- ──────────────────────────────────────────────────────────────────────────────────
-  3. Boundary Rigor           Clearly distinguishes authn     Conflates encryption with
-                              vs authz, isolation vs trust.   integrity or CORS with auth.
- ──────────────────────────────────────────────────────────────────────────────────
-  4. Trade-off Articulation   States constraints, costs,      Presents designs as "free"
-                              and moved complexity.           or universally best.
- ──────────────────────────────────────────────────────────────────────────────────
-  5. Measurement Honesty      Reports distributions, p99,     Reports single averages;
-                              and explicit limitations.       ignores warm-up / noise.
- ──────────────────────────────────────────────────────────────────────────────────
-  6. Failure Preparedness     Walks through crash/recovery    Assumes systems never fail;
-                              and state invariants.           ignores partial failure.
- ──────────────────────────────────────────────────────────────────────────────────
-  7. Adaptability             Defends coherent trade-offs     Collapses when constraints
-                              when constraints change.        are modified.
- ──────────────────────────────────────────────────────────────────────────────────
-```
+### 11.2 Authority Boundary
 
-### 11.2 The Defense Process Model
-
-1. **Written System Architecture Dossier:** Prepared by the learner covering the 12 evidence parts for their Mini Cloud App (P0–P9) or assigned scenario.
-2. **Oral / Interactive Defense:** Structured review session where the examiner (or AI evaluator) asks probing questions across:
-   - Request and state tracing;
-   - Fault injection walkthroughs ("What happens if the disk fills during a transaction?");
-   - Security challenge ("How does your authorization logic prevent User A from reading User B's notes?");
-   - Measurement challenge ("Why did you report average latency, and what was your p99 under load?");
-   - Changed constraint challenge ("If your application must now run across two datacenters with 50ms latency, what breaks and what must change?").
-3. **Assessment Authority Boundary:** Research defines the evidence requirements and candidate rubrics; **Design owns the final learner and reviewer contract**.
+- **Research Scope:** Research outlines candidate evidence areas and evaluation criteria.
+- **Design Authority:** **Design owns the final scoring rubrics, pass/fail thresholds, evidence sufficiency rules, and the formal learner/reviewer contract.**
 
 ---
 
@@ -873,7 +834,7 @@ For the subsequent **Stage 7 Design Dossier (`design/security-synthesis-judgment
 1. **Preserve Exact DAG:** Maintain M21 (H: M11, M07, M12; S: M09), M22 (H: M21, M11, M12; S: M19), M23 (H: M20, M21; S: M22, M17), and M24 (H: M23; S: M20). Do not invent new hard edges.
 2. **Preserve 10 Preliminary Lesson IDs & Questions:** All 10 lessons (`L21-01` through `L24-02`) must be retained with their exact canonical questions and competencies.
 3. **Preserve Concept Registry:** Zero new Concept IDs. Trust Boundary first home remains M07 `L07-01`.
-4. **Zero New Required Labs:** Implement hands-on security learning through Candidate B (bounded localhost exercises inside standard lesson activities + Mini Cloud App reviews).
+4. **Zero New Required Labs:** Evaluate Candidate B as the recommended hands-on baseline during Design; Design may accept, refine, or reject Candidate B provided that already-canonical constraints (exact DAG, safety rules, 5 Required Lab count, and Concept Registry first homes) are maintained.
 5. **Defense-First Hands-On:** Every hands-on activity must be localhost-only, synthetic-only, and focused on defensive verification (fix-and-verify), with zero penetration testing or offensive exploit mechanics.
 6. **Separation of Authn and Authz:** M22 lessons must explicitly separate identity verification from permission evaluation.
 7. **Strict D-015 Adherence:** M23 must use the full 12-dimension Technology Evaluation Framework and treat technology rejection as a first-class passing outcome.
@@ -889,105 +850,129 @@ All authoritative sources researched for Stage 7 were verified as of **2026-09-0
 
 1. **NIST SP 800-131A Rev. 2** — *Transitioning the Use of Cryptographic Algorithms and Key Lengths*
    - Author/Organization: National Institute of Standards and Technology (NIST), US Dept. of Commerce
-   - Publication Date: March 2019 (Current in 2026)
+   - Publication Date: March 2019 (Current Final in force)
    - URL: `https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final`
    - Status: **STABLE / NORMATIVE SPECIFICATION**
-   - Key Content: Disallowance of SHA-1 for digital signatures; deprecation of 3DES; minimum RSA/ECC key size guidance.
-2. **NIST SP 800-63B** — *Digital Identity Guidelines: Authentication and Lifecycle Management*
+   - Rights: US Government Work (17 U.S.C. § 105; public domain in the US; foreign rights may be reserved).
+   - Key Content: Disallowance of SHA-1 for digital signatures; deprecation of 3DES; minimum 112-bit security strength.
+2. **NIST SP 800-131A Rev. 3 (Initial Public Draft)** — *Transitioning the Use of Cryptographic Algorithms and Key Lengths*
    - Author/Organization: NIST
-   - Publication Date: Current version with updates (checked 2026-09-07)
-   - URL: `https://pages.nist.gov/800-63-3/sp800-63b.html`
-   - Status: **CURRENT / NORMATIVE GUIDANCE**
-   - Key Content: Salted memory-hard password hashing recommendations; password complexity/rotation rules.
-3. **NIST FIPS 186-5** — *Digital Signature Standard (DSS)*
+   - Draft Release Date: October 21, 2024 (Checked 2026-09-07)
+   - URL: `https://csrc.nist.gov/publications/detail/sp/800-131a/rev-3/draft`
+   - Status: **CURRENT / INITIAL PUBLIC DRAFT (In-progress transition context)**
+   - Key Content: Proposed transition to 128-bit minimum security strength post-2030; retirement of ECB mode; alignment of asymmetric transitions with post-quantum standards.
+3. **NIST SP 800-63B-4** — *Digital Identity Guidelines: Authentication and Lifecycle Management*
+   - Author/Organization: NIST
+   - Publication Date: July 2025 (Final, supersedes SP 800-63B; checked 2026-09-07)
+   - URL: `https://csrc.nist.gov/pubs/sp/800/63/4/final`
+   - Status: **CURRENT / NORMATIVE GUIDELINE (Revision 4)**
+   - Rights: US Government Work (17 U.S.C. § 105; foreign rights reserved).
+   - Key Content: Requirements for password hashing using salted memory-hard functions; minimum length >= 8; checking compromised credential lists; disallowance of arbitrary truncation and forced periodic rotation without cause.
+4. **NIST FIPS 186-5** — *Digital Signature Standard (DSS)*
    - Author/Organization: NIST
    - Publication Date: February 2023
    - URL: `https://csrc.nist.gov/publications/detail/fips/186-5/final`
    - Status: **STABLE / NORMATIVE SPECIFICATION**
+   - Rights: US Government Work.
    - Key Content: Approved digital signature algorithms (RSA-PSS, ECDSA, Ed25519).
-4. **NIST SP 800-38D** — *Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC*
+5. **NIST SP 800-38D** — *Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC*
    - Author/Organization: NIST
    - Publication Date: November 2007
    - URL: `https://csrc.nist.gov/publications/detail/sp/800-38d/final`
    - Status: **STABLE / NORMATIVE SPECIFICATION**
+   - Rights: US Government Work.
    - Key Content: AEAD authenticated encryption specifications; nonce uniqueness invariants.
-5. **IETF RFC 9846** — *Deprecation of Obsolete TLS Versions and TLS 1.3 Updates*
+6. **IETF RFC 9846** — *Deprecation of Obsolete TLS Versions and TLS 1.3 Updates*
    - Author/Organization: IETF TLS Working Group
-   - Publication Date: 2025/2026 current track
+   - Publication Date: Standards Track (Checked 2026-09-07)
    - URL: `https://www.rfc-editor.org/rfc/rfc9846.html`
    - Status: **CURRENT / NORMATIVE STANDARD**
+   - Rights: IETF Trust Legal Provisions (TLP 5.0).
    - Key Content: TLS 1.3 protocol profiles and operational BCPs.
-6. **IETF RFC 9525** — *Service Identity in TLS*
+7. **IETF RFC 9525** — *Service Identity in TLS*
    - Author/Organization: IETF (P. Saint-Andre, J. Hodges)
    - Publication Date: November 2023
    - URL: `https://www.rfc-editor.org/rfc/rfc9525.html`
    - Status: **STABLE / NORMATIVE STANDARD (Replaces RFC 6125)**
+   - Rights: IETF Trust Legal Provisions (TLP 5.0).
    - Key Content: DNS-ID matching in Subject Alternative Name (SAN); deprecation of Common Name (CN).
-7. **IETF RFC 9106** — *Argon2 Memory-Hard Function for Password Hashing and Proof-of-Work Applications*
+8. **IETF RFC 9106** — *Argon2 Memory-Hard Function for Password Hashing and Proof-of-Work Applications*
    - Author/Organization: IETF (A. Biryukov, D. Dinu, D. Khovratovich, S. Josefsson)
    - Publication Date: September 2021
    - URL: `https://www.rfc-editor.org/rfc/rfc9106.html`
    - Status: **STABLE / INFORMATIONAL RFC**
-   - Key Content: Argon2d, Argon2i, and Argon2id specifications; recommended parameters for password hashing.
-8. **IETF RFC 8725** — *JSON Web Token Best Current Practices (BCP 225)*
+   - Rights: IETF Trust Legal Provisions (TLP 5.0).
+   - Key Content: Argon2d, Argon2i, and Argon2id algorithm specifications; memory-hard parameters.
+9. **IETF RFC 8725** — *JSON Web Token Best Current Practices (BCP 225)*
    - Author/Organization: IETF (Y. Sheffer, D. Hardt, M. Jones)
    - Publication Date: February 2020
    - URL: `https://www.rfc-editor.org/rfc/rfc8725.html`
-   - Status: **STABLE / BEST CURRENT PRACTICE (BCP)**
-   - Key Content: Reject `none` algorithm; validate all claims; mitigate key confusion attacks.
-9. **IETF RFC 7519** — *JSON Web Token (JWT)*
-   - Author/Organization: IETF (M. Jones, J. Bradley, N. Sakimura)
-   - Publication Date: May 2015
-   - URL: `https://www.rfc-editor.org/rfc/rfc7519.html`
-   - Status: **STABLE / PROPOSED STANDARD**
-   - Key Content: JWT claim structure, header encoding, signature mechanics.
-10. **IETF RFC 6749 & RFC 6750** — *The OAuth 2.0 Authorization Framework & Bearer Token Usage*
-    - Author/Organization: IETF (D. Hardt, M. Jones)
-    - Publication Date: October 2012
-    - URL: `https://www.rfc-editor.org/rfc/rfc6749.html`
+   - Status: **STABLE / BEST CURRENT PRACTICE (BCP 225)**
+   - Rights: IETF Trust Legal Provisions (TLP 5.0).
+   - Key Content: Explicit rejection of `none` algorithm; claim validation rules; mitigation of key confusion attacks.
+10. **IETF RFC 7519** — *JSON Web Token (JWT)*
+    - Author/Organization: IETF (M. Jones, J. Bradley, N. Sakimura)
+    - Publication Date: May 2015
+    - URL: `https://www.rfc-editor.org/rfc/rfc7519.html`
     - Status: **STABLE / PROPOSED STANDARD**
-    - Key Content: Authorization delegation flows, token issuance, scope management.
-11. **IETF OAuth 2.1 Draft / RFC 9700** — *The OAuth 2.1 Authorization Framework & OAuth Security BCP*
+    - Rights: IETF Trust Legal Provisions (TLP 5.0).
+    - Key Content: JWT claim structure, header encoding, signature mechanics.
+11. **IETF RFC 9700** — *Best Current Practice for OAuth 2.0 Security (BCP 240)*
+    - Author/Organization: IETF (T. Lodderstedt, J. Bradley, L. Labunets, D. Fett)
+    - Publication Date: January 2025 (Checked 2026-09-07)
+    - URL: `https://www.rfc-editor.org/rfc/rfc9700.html`
+    - Status: **CURRENT / BEST CURRENT PRACTICE (BCP 240)**
+    - Rights: IETF Trust Legal Provisions (TLP 5.0).
+    - Key Content: PKCE MUST for public clients, RECOMMENDED for confidential; ROPC MUST NOT; Implicit SHOULD NOT except under BCP conditions.
+12. **IETF OAuth 2.1 Draft** — *The OAuth 2.1 Authorization Framework (`draft-ietf-oauth-v2-1-16`)*
     - Author/Organization: IETF OAuth WG (D. Hardt, A. Parecki, T. Lodderstedt)
-    - Status: **CURRENT PRACTICE / IN-PROGRESS CONSOLIDATION (checked 2026-09-07)**
-    - Key Content: Mandatory PKCE; omission of Implicit and Resource Owner Password grants.
-12. **W3C Content Security Policy Level 3** — *W3C Working Draft*
+    - Draft Date: September 2026 (Work in progress / Internet-Draft, checked 2026-09-07)
+    - URL: `https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/`
+    - Status: **CURRENT PRACTICE / IN-PROGRESS INTERNET-DRAFT**
+    - Rights: IETF Trust Legal Provisions.
+    - Key Content: Consolidation of OAuth 2.0 core and security BCPs.
+13. **W3C Content Security Policy Level 3** — *W3C Working Draft (13 August 2026)*
     - Author/Organization: W3C WebAppSec Working Group
-    - Status: **CURRENT / WORKING DRAFT (checked 2026-09-07)**
-    - URL: `https://www.w3.org/TR/CSP3/`
-    - Key Content: CSP directives (`script-src`, `nonce-`, `object-src 'none'`).
-13. **WHATWG Fetch & HTML Standards** — *Living Standards*
+    - Publication Date: 13 August 2026 (Checked 2026-09-07)
+    - URL: `https://www.w3.org/TR/2026/WD-CSP3-20260813/`
+    - Status: **CURRENT / W3C WORKING DRAFT**
+    - Rights: W3C Document License.
+    - Key Content: Directives for script execution control, strict nonces, and object restriction.
+14. **IETF RFC 6265bis Draft** — *Cookies: HTTP State Management Mechanism (`draft-ietf-httpbis-rfc6265bis-22`)*
+    - Author/Organization: IETF HTTPbis WG (J. Yasskin, M. West)
+    - Draft Date: 13 August 2026 (Work in progress, checked 2026-09-07)
+    - URL: `https://datatracker.ietf.org/doc/draft-ietf-httpbis-rfc6265bis/`
+    - Status: **CURRENT / IN-PROGRESS INTERNET-DRAFT**
+    - Rights: IETF Trust Legal Provisions.
+    - Key Content: SameSite cookie semantics (`Lax`, `Strict`, `None`), cookie prefixes (`__Host-`, `__Secure-`).
+15. **WHATWG Fetch & HTML Standards** — *Living Standards*
     - Author/Organization: WHATWG
     - Status: **CURRENT / LIVING STANDARD (checked 2026-09-07)**
     - URL: `https://fetch.spec.whatwg.org/`, `https://html.spec.whatwg.org/`
+    - Rights: CC BY 4.0.
     - Key Content: Same-Origin Policy definition, CORS preflight mechanisms, cookie headers.
-14. **SLSA Specification v1.0** — *Supply-chain Levels for Software Artifacts*
+16. **SLSA Specification v1.2** — *Supply-chain Levels for Software Artifacts*
     - Author/Organization: OpenSSF / Linux Foundation
-    - Publication Date: April 2023 (checked 2026-09-07)
-    - URL: `https://slsa.dev/spec/v1.0/`
-    - Status: **CURRENT PRACTICE / SPECIFICATION**
-    - Key Content: Software build provenance levels, tamper-resistance criteria.
+    - Publication Date: Approved release (checked 2026-09-07; v1.0 retired)
+    - URL: `https://slsa.dev/spec/v1.2/`
+    - Status: **CURRENT PRACTICE / SPECIFICATION (Approved)**
+    - Rights: Community Specification License 1.0.
+    - Key Content: Build and source provenance levels, attestation models, tamper resistance.
 
 ### 15.2 Canonical Literature & Architecture References
 
-15. **Saltzer, J. H., & Schroeder, M. D. (1975)** — *The Protection of Information in Computer Systems*. Proceedings of the IEEE, 63(9), 1278–1308.
+17. **Saltzer, J. H., & Schroeder, M. D. (1975)** — *The Protection of Information in Computer Systems*. Proceedings of the IEEE, 63(9), 1278–1308.
     - Status: **CANONICAL FOUNDATION**
     - Key Principles: Economy of mechanism, Fail-safe defaults, Complete mediation, Open design, Separation of privilege, Least privilege, Least common mechanism, Psychological acceptability.
-16. **Anderson, R. (2020)** — *Security Engineering: A Guide to Building Dependable Distributed Systems* (3rd ed.). Wiley.
+18. **Anderson, R. (2020)** — *Security Engineering: A Guide to Building Dependable Distributed Systems* (3rd ed.). Wiley.
     - Status: **CANONICAL REFERENCE**
     - Key Content: Threat modeling, protocol analysis, failure modes, system composition.
-17. **Katz, J., & Lindell, Y. (2020)** — *Introduction to Modern Cryptography* (3rd ed.). CRC Press.
+19. **Katz, J., & Lindell, Y. (2020)** — *Introduction to Modern Cryptography* (3rd ed.). CRC Press.
     - Status: **CANONICAL REFERENCE**
     - Key Content: Formal definitions of secrecy, MAC security, collision resistance, public key encryption, and digital signatures.
-18. **Kleppmann, M. (2017)** — *Designing Data-Intensive Applications*. O'Reilly Media.
+20. **Kleppmann, M. (2017)** — *Designing Data-Intensive Applications*. O'Reilly Media.
     - Status: **CANONICAL REFERENCE**
     - Key Content: State distribution, replication, transactions, consistency models, and operational reliability.
-19. **Dean, J. (2010/2026)** — *Numbers Everyone Should Know / Interactive Latency Numbers*.
-    - Status: **CURRENT HARDWARE REFERENCE**
-    - Key Content: Hierarchy of latencies (L1 cache, RAM, SSD, network RTT).
-20. **Tene, G. (2015)** — *How NOT to Measure Latency (Coordinated Omission)*.
-    - Status: **CANONICAL METHODOLOGY REFERENCE**
-    - Key Content: Coordinated omission in benchmarking tools; heavy-tailed distributions and percentile reporting.
 
 ---
 
@@ -1009,24 +994,24 @@ The following table records the required technical, architectural, and governanc
 | 10 | **Trust Boundary First Home** | EC-CON-017 first home remains M07 L07-01 | Explicitly verified and preserved in §2.4 and §3.1. M21/M22 are synthesis and contextual revisits. | **PASS** |
 | 11 | **No Lesson Drafting** | No learner-facing lesson prose authored | Verified: This artifact is strictly a research and architectural dossier. | **PASS** |
 | 12 | **No Lab/Fixture Implementation** | Zero code fixtures written | Verified: No code files created in `labs/` or `project/`. | **PASS** |
-| 13 | **No New Required Lab** | Lab counts remain 5/5/5; zero new Required Labs | Evaluated in §7; Recommended Candidate B embeds safe exercises in standard activities without adding a 6th Required Lab. | **PASS** |
-| 14 | **Security Safe-Target Analysis** | Completed with safe localhost recommendation | Completed in §7; Candidate B chosen with concrete task outlines for M21 and M22. | **PASS** |
+| 13 | **No New Required Lab** | Lab counts remain 5/5/5; zero new Required Labs | Evaluated in §7; Recommended Candidate B evaluates embedding safe exercises in standard activities without adding a 6th Required Lab. | **PASS** |
+| 14 | **Security Safe-Target Analysis** | Completed with safe localhost recommendation | Completed in §7; Candidate B evaluated with concrete task outlines for M21 and M22. Design retains authority to accept/refine/reject. | **PASS** |
 | 15 | **No Offensive Training Escalation** | Zero penetration testing, exploit tools, or live targets | Enforced in §6: strictly defense-first, fix-and-verify evidence, no weaponized payloads or public scanning. | **PASS** |
-| 16 | **Crypto Claim Boundaries** | Authn/authz and crypto claims bounded | Detailed in §3.1.3: hashing != encryption, encryption != identity, signature != trustworthy content, etc. | **PASS** |
-| 17 | **Web Composition Bounded** | Web security claims bounded to specifications | Detailed in §3.2.3: CORS != auth, CSP != complete XSS defense, SameSite != universal CSRF proof, etc. | **PASS** |
-| 18 | **Password/Token/JWT Currentness** | Current specifications and BCPs reviewed | Reviewed in §3.2.2 & §15: Argon2id (RFC 9106), NIST SP 800-63B, JWT BCP (RFC 8725), OAuth 2.1 draft. | **PASS** |
-| 19 | **Supply-Chain Currentness** | Provenance and lockfile currentness reviewed | Reviewed in §3.2.2 & §15: SLSA v1.0, Sigstore, SHA-256 lockfile integrity verification. | **PASS** |
-| 20 | **M23 Measurement Boundaries** | Benchmarking rigor and clock semantics researched | Researched in §3.3.2: distributions (p50/p95/p99), warm-up, coordinated omission, monotonic clock requirement. | **PASS** |
-| 21 | **D-015 Framework Preserved** | 12-dimension Technology Evaluation Framework intact | Formulated in §3.3.3; explicit recognition of technology rejection as a passing outcome. | **PASS** |
-| 22 | **AI Claim Handling Policy** | AI outputs treated as untrusted hypotheses | Formulated in §3.3.4; satisfies 2026 literacy while leaving OQ-BP-001 OPEN without creating an AI module. | **PASS** |
-| 23 | **M24 Assessment Scope** | M24 is integration/assessment, not new mechanism | Established in §3.4: capstone defense connects evidence to claims across the 8 competencies. | **PASS** |
-| 24 | **Rights & Licensing Recorded** | Licenses recorded for all external sources | Detailed in §8: NIST (Public Domain), IETF (TLP 5.0), W3C, WHATWG, OWASP (CC BY-SA), PyCA (Apache-2.0/BSD). | **PASS** |
+| 16 | **Crypto Claim Boundaries** | Authn/authz and crypto claims bounded | Detailed in §3.1.3: hashing != encryption, encryption != identity, signature != trustworthy content, non-repudiation bounded, ECDH requires auth. | **PASS** |
+| 17 | **Web Composition Bounded** | Web security claims bounded to specifications | Detailed in §3.2.3: CORS != auth, CSP != complete XSS defense, SameSite != universal CSRF proof, SSRF requires connect-time filter. | **PASS** |
+| 18 | **Password/Token/JWT Currentness** | Current specifications and BCPs reviewed | Re-audited in §3.2.2 & §15: NIST SP 800-63B-4 (Final July 2025), Argon2id (RFC 9106), JWT BCP (RFC 8725), RFC 9700 (BCP 240, Jan 2025), draft-ietf-oauth-v2-1-16 (Sept 2026). | **PASS** |
+| 19 | **Supply-Chain Currentness** | Provenance and lockfile currentness reviewed | Re-audited in §3.2.2 & §15: SLSA v1.2 (Approved; v1.0 retired), Community Specification License 1.0, Sigstore, SHA-256 lockfile integrity. | **PASS** |
+| 20 | **M23 Measurement Boundaries** | Question-driven measurement methodology researched | Researched in §3.3.2: question-driven design, open vs closed models, coordinated omission, mechanism-driven warm-up, monotonic clock requirement. | **PASS** |
+| 21 | **D-015 Framework Preserved** | 12-dimension Technology Evaluation Framework intact | Formulated in §3.3.3; explicit recognition of technology rejection as a passing outcome; Redis analyzed as named CURRENT case with bounded principle (§3.3.4). | **PASS** |
+| 22 | **AI Claim Handling Policy** | AI outputs treated as untrusted hypotheses | Formulated in §3.3.5; satisfies 2026 literacy while leaving OQ-BP-001 OPEN without creating an AI module. | **PASS** |
+| 23 | **M24 Assessment Scope** | M24 is integration/assessment, not new mechanism | Established in §3.4: capstone defense connects evidence to claims across the 8 competencies; candidate research dimensions outlined. | **PASS** |
+| 24 | **Rights & Licensing Recorded** | Truthful licenses recorded for all external sources | Re-audited in §8: NIST (17 U.S.C. § 105; foreign rights reserved), IETF Trust (TLP 5.0 Revised BSD for code components), W3C, WHATWG, OWASP (CC BY-SA), SLSA (Community Specification License 1.0), PyCA `cryptography` (Apache-2.0/BSD), Passlib (BSD-3-Clause), argon2-cffi (MIT). | **PASS** |
 | 25 | **STABLE/CURRENT/FRONTIER Classified** | Fast-drifting claims explicitly categorized | Complete classification matrix provided in §5 in accordance with D-013. | **PASS** |
 | 26 | **Open Questions Preserved** | OQ-BP-001, OQ-BP-003, OQ-BP-006 remain OPEN | Formally recorded as OPEN in §13; zero unauthorized resolution. | **PASS** |
 | 27 | **Issue #34 Deferred** | Real learner validation remains DEFERRED per D-027 | Confirmed in §13; authoring authorized to proceed build-first. | **PASS** |
 | 28 | **Zero Unrelated Churn** | S1–S6 governance and historical files untouched | `git status` confirms zero modifications to existing S1–S6 files. | **PASS** |
-| 29 | **Source Index Recorded** | Complete source citations with dates and status | Comprehensive index of 20 standards and canonical sources provided in §15. | **PASS** |
-| 30 | **Git Diff Check** | `git diff --check` passes cleanly with zero whitespace issues | Verified via command line execution. | **PASS** |
+| 29 | **Source Index Recorded** | Complete source citations with dates and status | Comprehensive index of 20 standards and canonical sources with exact currentness dates and revisions provided in §15. | **PASS** |
+| 30 | **Git Diff Check** | `git diff --check` passes cleanly with zero whitespace issues | Verified via command line execution (code 0). | **PASS** |
 
 ---
 
@@ -1039,7 +1024,7 @@ The following table records the required technical, architectural, and governanc
 ### 17.2 Core Governance Affirmations
 - **DAG & Dependencies:** The accepted Module DAG from `meta/blueprint/dependency-graph-v0.1.md` is preserved without any additions, deletions, or reversals.
 - **Concept Registry:** The 18 canonical concepts in `meta/CONCEPT_REGISTRY.md` remain strictly intact. `EC-CON-017 Trust Boundary` remains first-home M07 `L07-01`. Zero new Concept IDs were created.
-- **Lab Selection:** The 5 Required Labs, 5 Optional Labs, and 5 Source Expeditions in `meta/blueprint/lab-source-selection-map-v0.1.md` are unchanged. No new Required Lab was introduced.
+- **Lab Selection:** The 5 Required Labs, 5 Optional Labs, and 5 Source Expeditions in `meta/blueprint/lab-source-selection-map-v0.1.md` are unchanged. No new Required Lab was introduced. Candidate B is evaluated and recommended to Design; Design owns the final choice.
 - **Safety Policy:** All proposed hands-on security learning is defense-first, localhost-only, synthetic-only, and focused on fix-and-verify. Offensive exploit tools and live target interactions are completely prohibited.
 - **Open Questions:** `OQ-BP-001`, `OQ-BP-003`, and `OQ-BP-006` remain OPEN. Issue #34 remains OPEN / DEFERRED / NON-BLOCKING.
 - **Phase Milestone:** This dossier marks the completion of the foundational Research phase for Stage 7. It does **not** imply Design acceptance, learner lesson implementation, learner validation, VERIFIED status, RELEASED status, or v1.0 course readiness.
