@@ -41,7 +41,7 @@ The curriculum design adheres strictly to the fundamental principles established
    - **Lab Counts Invariance:** Required Labs remain exactly 5, Optional Labs remain 5, and Source Expeditions remain 5. Exactly zero new Required Labs are created.
 
 5. **Scientific Systems Measurement & Honest Judgment (M23):**
-   Systems measurement is designed as a hypothesis-driven empirical discipline. It rejects all arbitrary universal constants (such as mandatory sample sizes of 30 or universal percentile mandates like p99). Workloads must be defined as either open or closed models; measurement runs require mechanism-grounded warm-up phases, explicit defense against coordinated omission, and strict utilization of monotonic clocks (`time.monotonic_ns()`).
+   Systems measurement is designed as a question-driven empirical discipline. It rejects all arbitrary universal constants (such as mandatory sample sizes of 30 or universal percentile mandates like p99). Workloads are matched to open or closed arrival models based on the specific engineering question; warm-up phases are applied conditionally only when the underlying mechanism or question requires it (e.g., cache or JIT warming vs. cold-start CLI benchmarking); coordinated-omission handling is evaluated when the arrival model specifies arrivals independent of service completion; and elapsed-duration measurement utilizes an appropriate monotonic or performance clock while recognizing that integer reporting units do not imply equivalent hardware clock resolution.
    Technology selection is governed by the 12 dimensions of Decision D-015. Recommending against adopting a technology ("do not add this technology") is explicitly designed as a fully valid, high-scoring engineering judgment.
 
 6. **Capstone Defense Contract & Evidence Sufficiency (M24):**
@@ -98,12 +98,14 @@ The 10 canonical lessons of Stage 7, their direct predecessor links, and their d
 The architectural design incorporates all validated findings from `research/security-synthesis-judgment-m21-m24-v0.1.md` with strict normative grounding:
 
 1. **NIST SP 800-63B-4 Password Storage Standard (Adopted):**
-   Adopted the July 2025 Final recommendations with strict adherence to normative keyword levels:
-   - Passwords SHALL be salted with an unguessable salt of at least 32 bits (4 bytes, generated via a cryptographically secure random source) and hashed using an approved one-way function.
-   - Passwords SHOULD be hashed using a memory-hard function (Argon2id per RFC 9106, scrypt per RFC 7914). Note: PBKDF2 (RFC 8018 / SP 800-132) is compute-hard / time-hard, **NOT memory-hard**.
-   - Minimum length requirements: Single-factor passwords SHALL be at least 15 characters; MFA-backed passwords MAY be shorter but SHALL be at least 8 characters. Truncation is forbidden; maximum length SHALL be at least 64 characters.
+   Adopted the July 2025 Final recommendations (§3.1.1.2) with strict adherence to normative keyword levels:
+   - Passwords SHALL be salted and hashed using a suitable password hashing scheme.
+   - Salt SHALL be at least 32 bits (4 bytes) in length and chosen to minimize collisions. (Per NIST SP 800-63B-4, ordinary per-password salts are required to minimize collisions; they are not normatively specified as "unguessable" secrets).
+   - Cost factor SHOULD be as high as practical without negatively impacting verifier performance and increased over time.
+   - An approved scheme in the latest SP 800-132 or updated NIST password-hashing guidance SHOULD be used. Note: Current NIST SP 800-132 remains the December 2010 Final and specifies PBKDF2 (RFC 8018 / SP 800-132), which is compute-hard / time-hard, **NOT memory-hard**. While NIST decided in 2023 to revise SP 800-132 to add an additional memory-hard scheme, that revision is not yet a Final standard; modern memory-hard functions (such as Argon2id per RFC 9106 and scrypt per RFC 7914) are classified as RFC/industry current-practice candidates rather than a finalized NIST SP 800-63B-4 normative SHOULD.
+   - Verifiers SHOULD permit a maximum password length of at least 64 characters (SHOULD, not SHALL). Truncation is forbidden. Single-factor passwords SHALL be at least 15 characters; MFA-backed passwords MAY be shorter but SHALL be at least 8 characters.
    - Traditional composition rules (mandatory uppercase, lowercase, numbers, symbols) and periodic forced password rotation are discarded as counter-productive.
-   - Normative separation: Design maintains clear boundaries between the NIST baseline (normative SHALL/SHOULD requirements), RFC 9106 algorithm specifications, time-sensitive OWASP point-in-time practice recommendations, and library default settings. Iteration counts and memory costs are treated as configurable policy inputs with environment/cost rationale, removing any frozen universal design constant (e.g., 600,000 iterations).
+   - Normative separation: Design maintains clear boundaries between the NIST baseline (normative SHALL/SHOULD requirements), RFC 9106 / RFC 7914 algorithm specifications and current-practice candidates, time-sensitive OWASP point-in-time practice recommendations, and library default settings. Iteration counts and memory costs are treated as configurable policy inputs with environment/workload rationale, eliminating any frozen universal design constant (e.g., 600,000 iterations).
 
 2. **RFC 9846 TLS 1.3 Standards Track (Adopted):**
    Adopted RFC 9846 (published July 2026, Standards Track Proposed Standard), which obsoletes six RFCs (RFC 5077, RFC 5246, RFC 6961, RFC 7627, RFC 8422, and RFC 8446) and updates two RFCs (RFC 5705 and RFC 6066). It codifies TLS 1.3 as the modern secure channel:
@@ -156,7 +158,7 @@ This design formally rejects the following oversimplifications, false equivalenc
    HTTPS provides confidentiality and integrity for data in transit across network hops. It provides zero protection against application-layer injection (SQLi), cross-site scripting (XSS), cross-site request forgery (CSRF), broken object-level authorization (BOLA), server-side request forgery (SSRF), or compromised server-side databases.
 
 2. **"Encryption and Hashing are interchangeable" (Rejected):**
-   Encryption is a two-way transform intended to preserve confidentiality with reversible recovery via a secret key. Hashing is a one-way irreversible compression function intended to produce a fixed-size digest for integrity verification against a trusted expected digest. An unkeyed hash does not provide authenticity against an active adversary who can recompute the hash. Confusing them leads to fatal vulnerabilities (e.g., attempting to "decrypt" a hash or using unkeyed hashes where signatures or MACs are required).
+   Encryption is a two-way cryptographic transform intended to preserve confidentiality with reversible plaintext recovery via a secret key. A cryptographic hash function is a deterministic one-way mapping designed to satisfy preimage resistance, second-preimage resistance, and collision resistance, producing a fixed-size digest for integrity verification against a trusted expected digest. An unkeyed hash does not provide authenticity against an active adversary who can recompute the hash. Confusing them leads to fatal vulnerabilities (e.g., attempting to "decrypt" a hash or using unkeyed hashes where signatures or MACs are required).
 
 3. **"Base64 is encryption" (Rejected):**
    Base64 is an open, reversible byte-to-text encoding format providing zero confidentiality, zero integrity, and zero security.
@@ -174,7 +176,7 @@ This design formally rejects the following oversimplifications, false equivalenc
    A digital signature only proves mathematical verification under a specific public key. Identity binding, key custody, host security, verifier policy, and operational context are required to make legal or procedural claims. Treating signature verification as equivalent to human identity attribution is a security flaw.
 
 8. **"Software timer benchmarks prove constant-time code execution" (Rejected):**
-   Hosted software timers on preemptible, cached, speculative operating systems cannot reliably prove constant-time execution or absence of micro-architectural side channels. The design mandates algorithmic early-exit mitigation (e.g. `hmac.compare_digest`), not unverified claims of physical constant-time proof.
+   Hosted software timers on preemptible, cached, speculative operating systems cannot reliably prove constant-time execution or absence of micro-architectural side channels. The design mandates algorithmic timing mitigation (e.g., Python `hmac.compare_digest`, which is designed to prevent timing analysis by avoiding content-based short-circuiting while recognizing that length or type differences may still theoretically leak), not unverified claims of physical constant-time proof.
 
 ---
 
@@ -436,16 +438,16 @@ Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-ma
 - Classify cryptographic primitives into Hash, MAC, Digital Signature, and AEAD, defining the exact guarantees, inputs, keys, and failure modes of each.
 - Explain why a cryptographic hash only detects corruption against a trusted expected digest, and prove that an active in-path adversary can recompute both data and unkeyed hash unless protected by a secret key (MAC) or private key (Digital Signature).
 - Contrast symmetric cryptography (shared secret, fast, key distribution challenge) with asymmetric cryptography (keypair, public verification, private signing/decryption), analyzing forward secrecy per RFC 9846 (achieved in DHE/ECDHE handshake modes; absent in PSK-only modes).
-- Explain why unkeyed fast hashes (e.g. SHA-256) are fundamentally inappropriate for password verification (rapid parallel evaluation on GPU/ASIC hardware) and explain why password verifiers require salts and compute/memory hardness, establishing the foundation for L22-01.
-- Explain the role of `hmac.compare_digest` in eliminating early-exit branching to reduce timing-analysis risks.
+- Explain why unkeyed fast hashes (e.g. SHA-256) are fundamentally inappropriate for password verification (rapid parallel evaluation on GPU/ASIC hardware) and explain why password verifiers require salts and tunable slow functions—separating compute-hard functions (like PBKDF2) from memory-hard functions (like Argon2id)—establishing the foundation for L22-01.
+- Explain the role of `hmac.compare_digest` in mitigating timing analysis by avoiding content-based short-circuiting, noting that type and length differences may still theoretically leak under the Python API contract.
 
 ### 6. Stable Principle
-Never roll your own crypto. Use standard, peer-reviewed primitives from reputable cryptographic libraries, and ensure every encrypted message is authenticated.
+Never roll your own crypto. Use standard, peer-reviewed primitives from reputable cryptographic libraries; in network protocol and application messaging contexts requiring confidentiality, pair encryption with authenticity (e.g., using AEAD or Encrypt-then-MAC) to prevent ciphertext malleability.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** FIPS 180-4 (SHA-2), FIPS 198-1 (HMAC, noting active NIST conversion/withdrawal plan to SP 800-224 draft), FIPS 186-5 (Digital Signatures), SP 800-38D (AES-GCM), RFC 9846 (TLS 1.3).
+- **Specification:** FIPS 180-4 (SHA-2), FIPS 198-1 (HMAC, July 2008 Final; noting active NIST proposal to withdraw dated 23 June 2025 and transition to SP 800-224 Initial Public Draft of 28 June 2024), FIPS 186-5 (Digital Signatures), SP 800-38D (AES-GCM), RFC 9846 (TLS 1.3).
 - **Implementation:** Python standard library `hashlib`, `hmac`, `secrets`, `ssl`; optional candidate package PyCA `cryptography`.
-- **Current Practice:** Universal migration to AEAD (AES-GCM, ChaCha20-Poly1305), ephemeral Diffie-Hellman key exchange for forward secrecy, deprecation of SHA-1 for signatures (NIST SP 800-131A Rev 2/3).
+- **Current Practice:** Widespread adoption of AEAD ciphersuites (such as AES-GCM and ChaCha20-Poly1305) for modern transport and application payload encryption, ephemeral Diffie-Hellman key exchange for forward secrecy, deprecation of SHA-1 for signatures (NIST SP 800-131A Rev 2/3).
 
 ### 8. Required Distinctions / Misconceptions
 - *Misconception:* An unkeyed SHA-256 hash proves that a message came from a trusted sender.
@@ -455,7 +457,7 @@ Never roll your own crypto. Use standard, peer-reviewed primitives from reputabl
 - *Misconception:* Digital signatures provide unconditional non-repudiation.
   *Reality:* A digital signature proves mathematical verification under a specific public key. Proving who held the private key depends on key custody, binding, verifier trust policy, and system security.
 - *Misconception:* Fast hashes like SHA-256 are suitable for storing passwords if salted.
-  *Reality:* SHA-256 is designed for high-throughput stream processing; dedicated hardware (GPUs/ASICs) can evaluate billions of candidate digests. Passwords require specialized slow functions with compute and memory hardness (detailed in L22-01).
+  *Reality:* SHA-256 is designed for high-throughput stream processing; specialized parallel hardware (GPUs/ASICs) can evaluate massive candidate search spaces at negligible per-hash cost. Passwords require specialized slow functions—either compute-hard (such as PBKDF2) or memory-hard (such as Argon2id)—to impose significant computational and resource costs on offline dictionary and brute-force attacks (detailed in L22-01).
 
 ### 9. Worked Example
 Learners evaluate integrity and authenticity mechanisms for an audit log pipeline:
@@ -467,7 +469,7 @@ Learners evaluate integrity and authenticity mechanisms for an audit log pipelin
 Learners run `labs/foundations/m21/activity_l21_02.py`:
 1. Execute an unkeyed hash check; demonstrate that modifying the message and updating the digest passes verification, proving unkeyed hashes lack authenticity against active adversaries.
 2. Verify message authenticity with HMAC; observe that tampering with the message or the MAC causes `verify_hmac()` to fail.
-3. Inspect `hmac.compare_digest` usage for timing-safe comparison, observing that standard library APIs avoid early-exit comparison loops without relying on noisy hosted software timers to claim physical constant-time proof.
+3. Inspect `hmac.compare_digest` usage for timing-safe comparison, observing that standard library APIs avoid content-based short-circuiting comparison loops without relying on noisy hosted software timers to claim physical constant-time proof.
 
 ### 11. Evidence to Record
 - Cryptographic Primitive Selection Matrix (Scenario, Required security property, Correct primitive, Incorrect primitive trap, Non-guarantees).
@@ -502,7 +504,7 @@ Learners run `labs/foundations/m21/activity_l21_02.py`:
 - Reviewer-Required: Inspection of learner's Cryptographic Primitive Selection Matrix.
 
 ### 18. Source Grounding with Currentness Classification
-- **FIPS 198-1 / NIST SP 800-224 (draft):** STABLE / CURRENT. The Keyed-Hash Message Authentication Code (HMAC), noting NIST's active conversion/withdrawal plan to SP 800-224.
+- **FIPS 198-1 (July 2008 Final) / NIST SP 800-224 (Initial Public Draft 28 June 2024):** STABLE / CURRENT. The Keyed-Hash Message Authentication Code (HMAC), noting NIST's 23 June 2025 proposal to withdraw FIPS 198-1 and transition HMAC to SP 800-224.
 - **FIPS 186-5 / SP 800-38D:** STABLE. Digital signatures and AES-GCM authenticated encryption.
 - **RFC 9846 (TLS 1.3):** STABLE / CURRENT (July 2026). Obsoletes RFC 8446, 5246, 5077, 6961, 7627, 8422; updates RFC 5705, 6066. Forward secrecy scoped to DHE/ECDHE key exchange.
 
@@ -535,7 +537,7 @@ The fixture `activity_l21_02.py` provides an isolated, localhost-only environmen
        return hmac.compare_digest(computed, expected_mac)
    ```
 2. **Timing-Safe Comparison Contract:**
-   The fixture uses `hmac.compare_digest` to eliminate early-exit branching in MAC comparisons. It explicitly notes that software benchmarks on shared OS kernels cannot prove physical constant-time execution; the learning goal is algorithmic defense.
+   The fixture uses `hmac.compare_digest` to avoid content-based short-circuiting in MAC comparisons. It explicitly notes that software benchmarks on shared OS kernels cannot prove physical constant-time execution and that type/length differences may still theoretically leak; the learning goal is adhering to the language runtime's timing-mitigation API contract.
 3. **Safety & Ephemeral Guarantees:**
    - Operates entirely in memory with synthetic test byte strings.
    - Zero hardcoded real secrets, private keys, or certificates.
@@ -585,7 +587,7 @@ Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-ma
 
 ### 5. Learning Outcomes
 - Distinguish Authentication from Authorization across real-world request lifecycles.
-- Design and evaluate secure password verifiers complying with NIST SP 800-63B-4: enforce unique salts (>= 32 bits, unguessable), evaluate memory-hard functions (Argon2id per RFC 9106, scrypt per RFC 7914) vs. compute-hard functions (PBKDF2 per RFC 8018 / SP 800-132), format verifier records (`algo$params$salt$hash`), and mitigate timing attacks using `hmac.compare_digest`.
+- Design and evaluate secure password verifiers complying with NIST SP 800-63B-4: enforce salts (>= 32 bits, chosen to minimize collisions per NIST SHALL), evaluate compute-hard functions (PBKDF2 per RFC 8018 / SP 800-132 Final 2010; revision planned) and memory-hard current-practice candidates (Argon2id per RFC 9106, scrypt per RFC 7914), format verifier records (`algo$params$salt$hash`), and mitigate timing attacks using `hmac.compare_digest` to avoid content-based short-circuiting.
 - Contrast stateful server-managed sessions (cookies + database/cache lookup) with stateless cryptographically signed bearer tokens, articulating why stateless token invalidation requires out-of-band state changes (short lifespans, revocation lists, epoch bumping, session store lookup).
 - Implement token validation against a named profile (`TeachingProfile-BearerV1`): enforce required claims (`alg`, `exp`, `sub`), reject `alg: "none"`, verify signatures under configured verifier policy, and validate `aud` to prevent token substitution across services.
 - Diagram the OAuth 2.1 authorization code flow with PKCE per RFC 9700 (BCP 240) and explain why PKCE is required for public clients.
@@ -594,13 +596,13 @@ Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-ma
 Never confuse possessing a credential with possessing authority. Every protected endpoint must independently verify both identity and specific resource authorization on every request.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** NIST SP 800-63B-4 (Password Storage), RFC 9106 (Argon2), RFC 8018 / SP 800-132 (PBKDF2), RFC 6749 (OAuth 2.0 core), RFC 7636 (PKCE), RFC 7519 (JWT), RFC 8725 (JWT BCP), RFC 9700 (BCP 240), `draft-ietf-oauth-v2-1-15` (OAuth 2.1).
+- **Specification:** NIST SP 800-63B-4 (Password Storage), NIST SP 800-132 (PBKDF2, Dec 2010 Final; revision planned), RFC 9106 (Argon2), RFC 7914 (scrypt), RFC 8018 (PKCS #5 / PBKDF2), RFC 6749 (OAuth 2.0 core), RFC 7636 (PKCE), RFC 7519 (JWT), RFC 8725 (JWT BCP), RFC 9700 (BCP 240), `draft-ietf-oauth-v2-1-15` (OAuth 2.1).
 - **Implementation:** Python standard library `hashlib`, `hmac`, `secrets`, `base64`, `json`; session middleware, API gateway auth interceptors.
-- **Current Practice:** OAuth 2.1 deprecation of ROPC (MUST NOT) and Implicit Grant (BCP 240: SHOULD NOT; OAuth 2.1 draft: removed); mandatory PKCE; memory-hard password hashing (Argon2id); short-lived access tokens paired with revocable refresh tokens; fine-grained ABAC / Zanzibar-style relationship-based access control.
+- **Current Practice:** OAuth 2.1 deprecation of ROPC (MUST NOT) and Implicit Grant (BCP 240: SHOULD NOT; OAuth 2.1 draft: removed); mandatory PKCE; industry adoption of memory-hard password hashing (Argon2id per RFC 9106) alongside compute-hard PBKDF2; short-lived access tokens paired with revocable refresh tokens; fine-grained ABAC / Zanzibar-style relationship-based access control.
 
 ### 8. Required Distinctions / Misconceptions
 - *Misconception:* Hashing a password with SHA-256 makes it secure for storage.
-  *Reality:* SHA-256 is an unkeyed fast hash designed for throughput. Dedicated hardware can evaluate billions of digests per second. Passwords require salted, compute- and memory-hard functions (Argon2id, scrypt, or PBKDF2) to slow down dictionary attacks.
+  *Reality:* SHA-256 is an unkeyed fast hash designed for high-throughput data integrity. Massively parallel GPU/ASIC hardware can compute billions of candidate hashes per second in offline dictionary attacks. Passwords require unique salts (>= 32 bits to minimize collisions) and tunable slow functions: compute-hard functions (such as PBKDF2 per SP 800-132) to force repeated computation, or memory-hard functions (such as Argon2id per RFC 9106) to resist ASIC/GPU parallelization.
 - *Misconception:* PBKDF2 is a memory-hard password hashing function.
   *Reality:* PBKDF2 is compute-hard (iteration-hard), but requires minimal memory, allowing parallelized ASIC implementation. True memory-hard functions (Argon2id per RFC 9106, scrypt per RFC 7914) require significant RAM per evaluation, resisting hardware acceleration.
 - *Misconception:* A valid JWT signature proves the token was issued by a trusted IdP and that the user is authorized.
@@ -611,7 +613,7 @@ Never confuse possessing a credential with possessing authority. Every protected
 ### 9. Worked Example
 Learners trace two authentication and authorization mechanisms:
 1. *Password Verifier Lifecycle:*
-   - Registration: System generates an unguessable salt (`secrets.token_bytes(16)`) and derives hash via slow KDF; stores formatted string: `pbkdf2_sha256$iterations=200000$salt_hex$hash_hex`.
+   - Registration: System generates a per-credential salt (at least 32 bits to minimize collisions, e.g., `secrets.token_bytes(16)`) and derives hash via slow KDF; stores formatted string: `pbkdf2_sha256$iterations=200000$salt_hex$hash_hex`.
    - Authentication: Server extracts salt and iterations from stored verifier, computes hash of candidate password, and compares using `hmac.compare_digest`.
 2. *Token Profile Validation (`TeachingProfile-BearerV1`):*
    - Incoming request: `GET /api/documents/1042` with header `Authorization: Bearer <token>`.
@@ -657,12 +659,13 @@ Learners interact with `labs/foundations/m22/activity_l22_01.py`:
 - Implementing biometric or hardware FIDO2/WebAuthn authenticators.
 
 ### 17. Machine-Checkable vs. Reviewer-Required Gates
-- Machine-Checkable: Standard library `unittest` suite asserting password verifier correctness, salt uniqueness, constant-time comparison, and token profile rejection for tampering, expiration, wrong audience, and `alg: "none"`.
+- Machine-Checkable: Standard library `unittest` suite asserting password verifier correctness, salt uniqueness, timing-mitigation comparison (`hmac.compare_digest`), and token profile rejection for tampering, expiration, wrong audience, and `alg: "none"`.
 - Reviewer-Required: Inspection of learner's explanation of stateless token revocation trade-offs and password storage policy rationale.
 
 ### 18. Source Grounding with Currentness Classification
-- **NIST SP 800-63B-4 §3.1.1.2:** CURRENT (Final July 2025). Normative password storage rules: minimum 15 chars single-factor, 8 chars MFA; salt >= 32 bits; memory-hard functions recommended.
-- **RFC 9106 (Argon2):** STABLE. Standard memory-hard password hashing.
+- **NIST SP 800-63B-4 §3.1.1.2:** CURRENT (Final July 2025). Passwords SHALL be salted (salt >= 32 bits chosen to minimize collisions) and hashed using an approved scheme per SP 800-132 (currently PBKDF2 compute-hard; revision planned) or updated NIST guidance; cost factor SHOULD be as high as practical and increased over time; verifiers SHOULD permit max length >= 64 characters without truncation; single-factor min 15 chars, MFA min 8 chars; Argon2id (RFC 9106) evaluated as an IETF/industry current-practice candidate.
+- **NIST SP 800-132:** CURRENT (December 2010 Final; revision planned). Recommendation for Password-Based Key Derivation (PBKDF2 compute-hard).
+- **RFC 9106 (Argon2):** STABLE. Standard memory-hard password hashing (current-practice candidate).
 - **RFC 9700 / BCP 240:** CURRENT (January 2025). OAuth 2.0 Security BCP: PKCE MUST for public, RECOMMENDED for confidential; ROPC MUST NOT; Implicit Grant SHOULD NOT; redirect URI exact matching.
 - **draft-ietf-oauth-v2-1-15:** CURRENT (March 2026 active draft). Consolidated OAuth 2.1 specification.
 - **RFC 7519 / RFC 8725:** STABLE. JSON Web Token (JWT) specification and Security Best Current Practices.
@@ -697,7 +700,7 @@ Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-ma
 Never concatenate untrusted input into an interpreter stream. Maintain strict structural separation between code instructions and user data at every architectural layer.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
-- **Specification:** SQL ISO/IEC 9075, W3C Content Security Policy Level 3 (Working Draft 13 August 2026), WHATWG HTML / Fetch Living Standards, RFC 6265bis / layered-cookies draft.
+- **Specification:** SQL ISO/IEC 9075, W3C Content Security Policy Level 3 (Working Draft 13 August 2026; active working draft), WHATWG HTML / Fetch Living Standards, RFC 6265bis / `draft-ietf-httpbis-layered-cookies-02` (May 2026 active Internet-Draft).
 - **Implementation:** Python `sqlite3` parameterized queries (`?`), Jinja2 autoescaping, HTTP response headers (`Content-Security-Policy`, `Set-Cookie: SameSite=Lax; Secure; HttpOnly`).
 - **Current Practice:** Nonce-based CSP (`'strict-dynamic'`), automated static analysis (SAST), ORM parameterized abstractions, defense against DNS rebinding via post-resolution socket connection inspection.
 
@@ -762,8 +765,8 @@ Learners run `labs/foundations/m22/activity_l22_02.py`, hosting an ephemeral loc
 - Reviewer-Required: Inspection of learner's architectural description of SSRF DNS rebinding defense.
 
 ### 18. Source Grounding with Currentness Classification
-- **W3C Content Security Policy Level 3:** CURRENT (Working Draft 13 August 2026). Modern nonce-based script execution.
-- **RFC 6265bis / layered-cookies draft:** CURRENT (draft-ietf-httpbis-layered-cookies-02, May 2026). SameSite cookie semantics and ambient authority limits.
+- **W3C Content Security Policy Level 3:** CURRENT / FRONTIER (Working Draft 13 August 2026; active working draft). Modern nonce-based script execution.
+- **draft-ietf-httpbis-layered-cookies-02 / RFC 6265bis:** CURRENT / FRONTIER (active Internet-Draft, May 2026). SameSite cookie semantics (`Strict`, `Lax`, `None`) and layered cookie boundaries limiting ambient authority; distinguishes draft churn from stable browser mechanisms.
 - **OWASP Top 10 (2021/2025):** STABLE / CURRENT. Injection, Broken Access Control, SSRF taxonomy.
 
 ---
@@ -1383,7 +1386,7 @@ Canonical Blueprint primary mapping (`meta/blueprint/core-stage-module-lesson-ma
 - Formulate precise Service Level Objectives (SLOs) and Error Budgets governing release criteria.
 
 ### 6. Stable Principle
-If you do not have a tested rollback plan and observable health signals, you are not shipping software; you are gambling with your users' data.
+If you do not have an explicit failure recovery or deployment compatibility strategy (whether rollback, roll-forward, or migration reversal) and observable health signals, you are not shipping software; you are gambling with your users' data.
 
 ### 7. Specification vs. Implementation vs. Current-Practice Boundaries
 - **Specification:** Service Level Agreements (SLAs), Service Level Objectives (SLOs), release criteria checklists.
@@ -1413,10 +1416,10 @@ Learners execute a pre-ship verification audit against their Mini Cloud App:
 
 ### 11. Evidence to Record
 - Pre-Ship Risk-Prioritized Evidence Checklist.
-- Rollback Verification Log proving that rolling back to the previous revision leaves data intact and services operational.
+- Deployment Compatibility & Reversal Strategy Record proving that failure during deployment or schema change leaves data intact and services operational (via rollback, roll-forward, or explicit migration reversal).
 
 ### 12. PASS / BLOCKED / NOT RUN Conditions
-- **PASS:** Pre-ship checklist completed; rollback verification passes; all critical invariants verified under automated regression tests.
+- **PASS:** Pre-ship checklist completed; deployment compatibility and reversal plan verified; all critical invariants verified under automated regression tests.
 - **BLOCKED:** Failing integration test suite.
 - **NOT RUN:** Pre-ship verification omitted.
 
@@ -1425,7 +1428,7 @@ Learners execute a pre-ship verification audit against their Mini Cloud App:
 - **Hint 1:** What happens if the database schema changes while the old version of the application is still running?
 - **Hint 2:** Think about a phased multi-step migration (Expand and Contract).
 - **Expected Observation:** Immediate renames break running application instances that expect the old column name.
-- **Full Explanation:** Safe schema evolution requires the Expand-and-Contract (Parallel Run) pattern:
+- **Full Explanation:** Under continuous-deployment or multi-instance rolling upgrade constraints where old and new application versions run concurrently against a shared database, safe schema evolution commonly employs the Expand-and-Contract (Parallel Run) pattern to maintain forward and backward compatibility (rather than as a universal requirement for single-instance or maintenance-window deployments):
   1. *Phase 1 (Expand):* Add `display_name` as a new nullable column; update application code to write to both columns and read from `display_name` if present, falling back to `full_name`.
   2. *Phase 2 (Backfill):* Run a background script copying existing data from `full_name` to `display_name`.
   3. *Phase 3 (Contract):* Deploy code reading and writing exclusively to `display_name`.
@@ -1443,8 +1446,8 @@ Learners execute a pre-ship verification audit against their Mini Cloud App:
 - Building complex multi-tenant billing systems.
 
 ### 17. Machine-Checkable vs. Reviewer-Required Gates
-- Machine-Checkable: Automated test suite passing 100%; static linting clean; schema migration rollback test exits 0.
-- Reviewer-Required: Peer/Lead review of the pre-ship risk prioritization and rollback readiness.
+- Machine-Checkable: Automated test suite passing for the target release; static linting clean; schema migration and rollback or roll-forward compatibility assertions pass.
+- Reviewer-Required: Peer/Lead review of the pre-ship risk prioritization and deployment recovery readiness.
 
 ### 18. Source Grounding with Currentness Classification
 - **Google SRE Book (Release Engineering & Canarying):** STABLE. Standard patterns for safe deployment and risk mitigation.
@@ -1558,7 +1561,7 @@ def run_s7_preflight() -> dict:
 ### 25.1 The Six-Layer Evidence Taxonomy
 To ensure rigorous epistemic hygiene, all architectural claims, student assignments, and evaluation artifacts in Stage 7 must explicitly categorize statements into one of six distinct evidence layers:
 
-1. **`[PRINCIPLE]`**: Fundamental mathematical, computer science, or system invariants that hold universally across technologies (e.g., "Code and data must be structurally separated to prevent injection", "Hashing is a one-way irreversible compression function").
+1. **`[PRINCIPLE]`**: Fundamental mathematical, computer science, or system invariants that hold universally across technologies (e.g., "Code and data must be structurally separated to prevent injection", "Cryptographic hash functions provide preimage resistance, second-preimage resistance, and collision resistance").
 2. **`[SPECIFICATION / OFFICIAL CONTRACT]`**: Explicit requirements, RFCs, and formal standards published by authoritative governance bodies (e.g., NIST SP 800-63B-4, RFC 9846, RFC 9700, W3C CSP3, OpenSSF SLSA v1.2).
 3. **`[IMPLEMENTATION]`**: Concrete code, libraries, syntax, and system interfaces realizing a specification (e.g., Python `hashlib.pbkdf2_hmac`, SQLite parameterized queries `?`, `hmac.compare_digest`).
 4. **`[CURRENT PRACTICE]`**: Prevailing industry consensus, threat landscape realities, and contemporary operational patterns (e.g., deprecating SMS 2FA, enforcing OAuth 2.1 PKCE for public clients, nonce-based CSP).
@@ -1580,13 +1583,13 @@ Evidence collection templates provided to learners must be **strictly neutral**.
 #### Template 1: Cryptographic Primitive & Invariant Audit
 ```markdown
 ### Primitive Audit Record: [Scenario Name]
-- **Required Security Property:** [Integrity | Authentication | Non-Repudiation | Confidentiality]
+- **Required Security Property:** [Integrity (detection against trusted expected digest) | Authenticity | Confidentiality | Contextual Non-Repudiation (requiring key custody, identity binding, and verifier policy assumptions)]
 - **Selected Standard Primitive:** [Hash | MAC | Digital Signature | AEAD Symmetric | Asymmetric]
 - **Normative Specification:** [RFC / NIST Standard]
 - **Chosen Implementation:** [Standard library module and function]
 - **Invariant Verification:**
-  - Nonce / Salt Strategy: [Description of randomness and uniqueness guarantees]
-  - Constant-Time Verification: [Function used for comparison]
+  - Nonce / Salt Strategy: [Description of randomness and collision-resistance / uniqueness guarantees]
+  - Timing Mitigation API: [Function used for comparison to avoid content-based short-circuiting, e.g. hmac.compare_digest]
   - Error Handling & Information Leak Defense: [Exceptions caught, generic error responses]
 ```
 
@@ -1595,17 +1598,13 @@ Evidence collection templates provided to learners must be **strictly neutral**.
 ### Measurement Protocol & Latency Record: [Workload Name]
 - **Experimental Hypothesis:** [Clear statement of expected behavior]
 - **Workload Model:** [Open Model (arrival schedule) | Closed Model (synchronous)]
-- **Clock Source:** [`time.monotonic_ns()`]
-- **Warm-Up Criteria:** [Duration or iterations discarded before recording]
-- **Coordinated Omission Mitigation:** [Description of arrival-time tracking]
+- **Clock Source:** [Appropriate monotonic or performance clock, e.g., `time.monotonic_ns()` with noted resolution]
+- **Warm-Up Criteria:** [Duration or iterations discarded before recording, or None if evaluating cold-start]
+- **Coordinated Omission Handling:** [Arrival-time tracking if open arrival model, or N/A if closed model]
 - **Empirical Results (Learner to Record):**
   - Sample Count ($n$): `[TO BE RECORDED]`
-  - Min Latency: `[TO BE RECORDED]`
-  - Median (p50): `[TO BE RECORDED]`
-  - 90th Percentile (p90): `[TO BE RECORDED]`
-  - 99th Percentile (p99): `[TO BE RECORDED]`
-  - Max Latency: `[TO BE RECORDED]`
-- **Distribution Shape:** [Unimodal | Bimodal | Heavy-Tailed | Multimodal]
+  - Summary Metrics (Percentiles, Mean/Std, or Histogram as appropriate to question): `[TO BE RECORDED]`
+- **Distribution Shape:** [Unimodal | Bimodal | Heavy-Tailed | Multimodal | Symmetric]
 - **Inference & Decision:** [Conclusions supported strictly by the data above]
 ```
 
@@ -1833,20 +1832,20 @@ PARAMETERIZED (Driver / API Contract Separation):
 - **Purpose:** Detail the pipeline from hypothesis to unskewed empirical distribution.
 - **Layout Blueprint:**
 ```
-[ Formal Hypothesis ] ──► [ Workload Generator (Open Arrival Model) ]
-                                    │
-                                    ▼
-                         [ System Under Test ]
-                                    │
-                         (High-Res Monotonic Clock)
-                                    ▼
-                         [ Discard Warm-Up Transients ]
-                                    │
-                                    ▼
-                         [ Full Latency Histogram ]
-                                    │
-                                    ▼
-                         [ Percentiles: p50, p90, p99, p99.9 ]
+[ Formal Hypothesis ] ──► [ Workload Generator (Open or Closed Model per Question) ]
+                                            │
+                                            ▼
+                                 [ System Under Test ]
+                                            │
+                                 (Monotonic / Performance Clock)
+                                            ▼
+                                 [ Discard Warm-Up Transients (When Applicable) ]
+                                            │
+                                            ▼
+                                 [ Latency Distribution & Histogram ]
+                                            │
+                                            ▼
+                                 [ Summary Metrics: Appropriate Percentiles, Moments, or Histograms ]
 ```
 
 #### Visual M23-V2: Coordinated Omission: How Synchronous Clients Hide Queuing Delays
@@ -1895,37 +1894,37 @@ REALITY: Req 2 waited 45ms in queue! Real p99 was devastated!
 - **Grid Categories:** Flow Traces (Request, Data, Control), Structural Inventories (State, Invariants, Boundaries), Resilience Analyses (Failures, Security, Performance), Decision Rationale (Costs, Alternatives, Unknowns).
 
 #### Visual M24-V2: The Evidence-to-Claim Mapping Framework
-- **Purpose:** Connect architectural claims directly to admissible evidence types, illustrating evidence sufficiency.
+- **Purpose:** Connect architectural claims directly to admissible evidence types, illustrating evidence sufficiency across scenario examples.
 - **Layout Blueprint:**
 ```
-Architectural Claim ──────────► Required Evidence Category ──► Admissible Artifacts
-──────────────────────────────────────────────────────────────────────────────────
-"High Availability"   ───────► Failure & Recovery Proof    ──► Crash Injection Log / WAL Proof
-"Sub-50ms p99 Latency" ──────► Empirical Measurement       ──► Monotonic Arrival Benchmark
-"Secure from Injection" ─────► Structural AST Separation   ──► Parameterized API + Tests
-"Low Operational Cost" ──────► Fermi Capacity Model        ──► Sizing Math + Cloud Pricing
+Architectural Claim (Example) ──► Required Evidence Category ──► Admissible Artifacts (Examples)
+─────────────────────────────────────────────────────────────────────────────────────────────
+"Crash-Resilient State"   ────► Failure & Recovery Proof    ──► Crash Injection Log / WAL Invariant Proof
+"Service SLO (Scenario Target)► Empirical Measurement       ──► Monotonic Arrival Benchmark & Distribution
+"Secure from Injection"   ────► Parameterized API Contract  ──► Prepared Statement Driver Calls + Tests
+"Cost / Resource Budget"  ────► Capacity / Cost Model       ──► Fermi Sizing Bounds + Hardware/Host Pricing
 ```
 
-#### Visual M24-V3: Pre-Ship Verification & Risk-Prioritized Release Pipeline
-- **Purpose:** Detail the multi-stage pre-flight release gates from regression testing to telemetry verification and rollback assurance.
+#### Visual M24-V3: Pre-Ship Verification & Risk-Prioritized Candidate Release Gate Pipeline
+- **Purpose:** Detail a risk-driven candidate structure for release verification whose specific checks depend on the actual learner system architecture and operational constraints.
 - **Layout Blueprint:**
 ```
-[ Code Commit ] ──► [ Gate 1: Invariant & Regression Tests (100% Pass) ]
-                                    │
-                                    ▼
-                    [ Gate 2: Security & Dependency Hash Audit ]
-                                    │
-                                    ▼
-                    [ Gate 3: Empirical Performance Baseline Check ]
-                                    │
-                                    ▼
-                    [ Gate 4: Database Migration Rollback Dry-Run ]
-                                    │
-                                    ▼
-                    [ Gate 5: Telemetry & Structured Logging Check ]
-                                    │
-                                    ▼
-                    [ PRODUCTION RELEASE (Canary Deployment) ]
+[ Candidate Code/System ] ──► [ Risk-Prioritized Candidate Gate 1: Core Invariant & Regression Tests ]
+                                            │
+                                            ▼
+                              [ Candidate Gate 2: Security Boundaries & Dependency Integrity Audit ]
+                                            │
+                                            ▼
+                              [ Candidate Gate 3: Empirical Workload / Baseline Check (When Required) ]
+                                            │
+                                            ▼
+                              [ Candidate Gate 4: Evolution & Reversal Strategy (Rollback / Roll-Forward Check) ]
+                                            │
+                                            ▼
+                              [ Candidate Gate 5: Telemetry, Observability & Structured Logging Check ]
+                                            │
+                                            ▼
+                              [ RELEASE DECISION (e.g., Staged/Canary Rollout or Direct Cutover per Architecture) ]
 ```
 
 
@@ -1936,14 +1935,17 @@ All normative claims in Stage 7 are grounded in authoritative technical specific
 
 | Source Identifier | Version / Revision | Publication Date | Formal Status | Checked Date | Claim Supported | Boundary / What Source Does Not Prove | Drift Classification | Rights & Licensing Boundary |
 |---|---|---|---|---|---|---|---|---|
-| **NIST SP 800-63B-4** | Final Revision 4 | July 2025 | Official US Gov Standard | 2026-09-07 | Password storage: salt >= 32 bits (SHALL), memory-hard recommended (SHOULD); single-factor >= 15 chars, MFA >= 8 chars; composition rules abolished. | Does not endorse specific commercial password managers or hardware tokens. | **CURRENT** | US Gov work; public domain in US; attribution required per D-016. |
-| **FIPS 198-1 / NIST SP 800-224 (draft)** | FIPS 198-1 (active) / SP 800-224 (draft) | March 2002 (FIPS) / Active SP draft | Official Federal Standard / Active NIST Conversion | 2026-09-07 | Keyed-Hash Message Authentication Code (HMAC) specification. Notes NIST's active conversion/withdrawal plan moving FIPS 198-1 to SP 800-224. | Does not prove confidentiality or non-repudiation. | **STABLE / CURRENT** | US Gov work; public domain. |
-| **NIST SP 800-131A Rev. 2 / Rev. 3 IPD** | Rev. 2 (active) / Rev. 3 (Initial Public Draft) | Oct 21, 2024 (draft) | Active Standard / Draft in progress | 2026-09-07 | Transitioning cryptographic algorithms; SHA-1 disallowed for signatures; 112-bit security deprecated. | Rev. 3 is a draft and not yet final normative policy. | **CURRENT / FRONTIER** | US Gov work; subject to public comment revisions. |
+| **NIST SP 800-63B-4** | Final Revision 4 (§3.1.1.2) | July 2025 | Official US Gov Standard | 2026-09-07 | Password storage: passwords SHALL be salted (salt >= 32 bits chosen to minimize collisions) and hashed; cost factor SHOULD be as high as practical without negatively impacting verifier performance and increased over time; approved scheme in latest SP 800-132 (currently PBKDF2; revision planned) or updated guidance SHOULD be used; verifier SHOULD permit max length >= 64 chars without truncation; single-factor >= 15 chars, MFA >= 8 chars; composition rules abolished. | Does not mandate Argon2id (RFC 9106 is IETF candidate); does not endorse commercial password managers or hardware tokens. | **CURRENT** | US Gov work; not subject to copyright protection within the United States; foreign rights may apply per D-016; attribution required. |
+| **NIST SP 800-132** | Recommendation for Password-Based Key Derivation | December 2010 | Official US Gov Standard (Revision Planned) | 2026-09-07 | Specifies PBKDF2 as an approved compute-hard / time-hard key derivation and password hashing scheme. NIST announced decision in 2023 to revise SP 800-132 to add an additional memory-hard scheme; current Final remains December 2010 PBKDF2. | PBKDF2 is compute-hard, NOT memory-hard; does not specify Argon2id (revision not yet finalized). | **CURRENT** | US Gov work; not subject to copyright protection within the United States; foreign rights may apply per D-016. |
+| **FIPS 198-1** | Federal Information Processing Standard 198-1 | **July 2008** (Supersedes FIPS 198, March 2002) | Active Federal Standard (NIST proposal to withdraw dated 23 June 2025) | 2026-09-07 | The Keyed-Hash Message Authentication Code (HMAC) specification. Notes NIST planning note (23 June 2025) proposing to withdraw FIPS 198-1 and transition HMAC to SP 800-224. | Does not prove confidentiality or contextual non-repudiation. | **STABLE / CURRENT** | US Gov work; not subject to copyright protection within the United States; foreign rights may apply per D-016. |
+| **NIST SP 800-224 (draft)** | Initial Public Draft | **28 June 2024** | Initial Public Draft (Draft successor to FIPS 198-1) | 2026-09-07 | Draft successor specification for HMAC and related keyed-hash mechanisms under NIST 23 June 2025 transition plan. | Initial public draft; not yet a final approved standard. | **CURRENT / FRONTIER** | US Gov work; not subject to copyright protection within the United States; foreign rights may apply per D-016. |
+| **NIST SP 800-131A Rev. 2 / Rev. 3 IPD** | Rev. 2 (active) / Rev. 3 (Initial Public Draft) | Oct 21, 2024 (draft) | Active Standard / Draft in progress | 2026-09-07 | Transitioning cryptographic algorithms; SHA-1 disallowed for signatures; 112-bit security deprecated. | Rev. 3 is a draft and not yet final normative policy. | **CURRENT / FRONTIER** | US Gov work; not subject to copyright protection within the United States; foreign rights may apply per D-016. |
 | **RFC 9846** | Standards Track | July 2026 | Proposed Standard (Obsoletes RFC 5077, 5246, 6961, 7627, 8422, 8446; updates RFC 5705, 6066) | 2026-09-07 | TLS 1.3 protocol specification; forward secrecy scoped to DHE/ECDHE key exchange; AEAD only; encrypted handshakes. | Does not provide forward secrecy in PSK-only mode (`psk_ke`) or 0-RTT early data. | **STABLE / CURRENT** | IETF Trust Legal Provisions (TLP) Section 4/5; Code Components under BSD 3-Clause. |
 | **RFC 9525** | Standards Track | **November 2023** | Proposed Standard (Obsoletes RFC 6125) | 2026-09-07 | Service identity verification in TLS; MUST check SAN, MUST NOT use CN fallback. | Does not validate application-layer authorization policies. | **STABLE / CURRENT** | IETF TLP Section 4/5; Code Components under BSD 3-Clause. |
 | **RFC 9700 / BCP 240** | Best Current Practice 240 | January 2025 | IETF Best Current Practice | 2026-09-07 | OAuth 2.0 Security BCP: PKCE MUST for public, RECOMMENDED for confidential; ROPC MUST NOT; Implicit Grant SHOULD NOT; exact redirect matching. | Does not define identity assertion schemas (handled by OpenID Connect). | **CURRENT** | IETF TLP Section 4/5; Code Components under BSD 3-Clause. |
 | **draft-ietf-oauth-v2-1-15** | Working Group Draft | March 2026 | Active Internet-Draft | 2026-09-07 | Consolidated OAuth 2.1 authorization framework incorporating BCP 240; removes Implicit Grant. | Draft status; subject to minor text revisions before final RFC publication. | **CURRENT / FRONTIER** | IETF Trust copyright under TLP. |
-| **W3C CSP Level 3** | Working Draft | 13 August 2026 | W3C Working Draft | 2026-09-07 | Nonce-based Content Security Policy (`'strict-dynamic'`) for script execution. | Does not prevent server-side template injection or DOM clobbering. | **CURRENT** | W3C Document License; freely citeable. |
+| **draft-ietf-httpbis-layered-cookies-02** | Internet-Draft (Revision 02) | **12 May 2026** | Active Internet-Draft (IETF HTTPbis WG) | 2026-09-07 | SameSite cookie semantics (`Strict`, `Lax`, `None`), cookie prefixes (`__Host-`, `__Secure-`), and layered cookie architecture bounding ambient authority. | Active draft subject to revision and draft churn; does not replace CSRF tokens or transport security; browser implementations vary. | **CURRENT / FRONTIER** | IETF Trust Legal Provisions (TLP) Section 4/5; Code Components under BSD 3-Clause. |
+| **W3C CSP Level 3** | Working Draft | 13 August 2026 | W3C Working Draft (Active Current Source) | 2026-09-07 | Nonce-based Content Security Policy (`'strict-dynamic'`) for script execution. | Does not prevent server-side template injection or DOM clobbering; working draft subject to ongoing refinement. | **CURRENT / FRONTIER** | W3C Document License; freely citeable. |
 | **RFC 9106** | Informational | September 2021 | IETF Informational (Argon2) | 2026-09-07 | Memory-hard password hashing algorithm (Argon2id). | Does not replace transport encryption or database security. | **STABLE** | RFC Editor / IETF TLP Section 4/5. |
 | **OpenSSF SLSA v1.2** | Specification v1.2 | **24 November 2025** | Approved (v1.0 retired) | 2026-09-07 | Supply chain levels for software artifacts; verifiable build provenance attestations. | Does not guarantee that source code is free of developer-authored bugs. | **CURRENT** | Community Specification License 1.0; open attribution. |
 | **PyCA cryptography** | v50.0.1 (candidate) | August 25, 2026 | Production Python Package | 2026-09-07 | Candidate reference Python cryptographic library with capability detection. | Package is an optional candidate enhancement; not required for Required Core baseline pass. | **CURRENT** | Dual-licensed Apache 2.0 / BSD 3-Clause. |
@@ -2097,29 +2099,29 @@ Every gate required by the Issue #114 Task Contract has been audited and evaluat
 | **13** | M21 crypto-use / no crypto-implementation boundary | **PASS** | Sections 6.2, 8, 9 strictly enforce crypto-use with standard library primitives (`hashlib`, `hmac`, `secrets`); educational mock RSA stubs eliminated; password hashing implementation moved to M22 L22-01. |
 | **14** | PKI/authn/authz layers separated & scoped forward secrecy | **PASS** | Section 3.1 and 27.1 define 6-layer PKI model; RFC 9846 forward secrecy properly scoped to DHE/ECDHE key exchange; PSK-only lack of forward secrecy stated. |
 | **15** | M22 authn/authz/session/token/OAuth/OIDC boundaries | **PASS** | Section 11 separates credentials from identities and sessions from bearer tokens; defines `TeachingProfile-BearerV1`; preserves RFC 9700 BCP strength (ROPC MUST NOT, Implicit SHOULD NOT); frames invalidation out-of-band. |
-| **16** | Password currentness/normative strength source-bounded | **PASS** | Sections 3.1, 11, 24 ground password rules in NIST SP 800-63B-4 (SHALL salt >= 32 bits, SHOULD memory-hard); distinguishes compute-hard PBKDF2 from memory-hard Argon2id (RFC 9106); frozen 600,000 constant removed; prohibits fake equivalent fallback. |
+| **16** | Password currentness/normative strength source-bounded | **PASS** | Sections 3.1, 11, 24, 28 ground password rules in NIST SP 800-63B-4 §3.1.1.2 (passwords SHALL be salted and hashed; salt SHALL be >= 32 bits chosen to minimize collisions; cost factor SHOULD be as high as practical and increased over time; approved scheme in latest SP 800-132 [PBKDF2 compute-hard; revision planned] or updated guidance SHOULD be used; verifier SHOULD permit max length >= 64 chars without truncation; single-factor >= 15 chars, MFA >= 8 chars; composition rules abolished); classifies Argon2id (RFC 9106) and scrypt (RFC 7914) as RFC/industry current-practice candidates rather than NIST SP 800-63B-4 normative SHOULD; removes unguessable secret claim for salts; eliminates frozen 600,000 constant; prohibits fake equivalent fallback. |
 | **17** | Web-security composition boundaries | **PASS** | Section 12 establishes parameterized API/driver contract separating data from syntax; scenario-specific CSRF credential models; bounded SSRF socket egress controls. |
 | **18** | Supply-chain provenance boundaries | **PASS** | Sections 13, 27.2 establish 9-layer supply-chain separation; clarifies hash checks verify against expected digest but do not defeat compromised lockfile; SLSA v1.2 date corrected to 24 November 2025. |
 | **19** | Safe-target Candidate B explicitly accept/refine/reject | **PASS** | Section 5 explicitly **ACCEPTS AND REFINES Candidate B** with loopback, non-sensitive data, and fix-and-verify stance. |
 | **20** | Canonical Lab architecture truth preserved | **PASS** | Section 5.2 audits against canonical `meta/blueprint/lab-source-selection-map-v0.1.md` preserving exact 5 Required Labs (`LAB-REQ-01` M11, `LAB-REQ-02` M06, `LAB-REQ-03` M15, `LAB-REQ-04` M13, `LAB-REQ-05` M14), 5 Optional Labs, and 5 Source Expeditions. |
 | **21** | No public/real target/offensive dependency | **PASS** | Strictly localhost `127.0.0.1` ephemeral testing; zero offensive scanners or remote targets. |
 | **22** | Fixture candidate has preflight/reset/cleanup/evidence/safety | **PASS** | Sections 9, 14, 19, 24, 31 establish fail-closed teardown, owned-thread lifecycle, bounded join, post-cleanup listener verification, and configurable watchdogs. |
-| **23** | M23 question-driven measurement / no universal constants | **PASS** | Section 16 restores question-driven methodology; open vs closed workloads both valid; metric selection matched to inference goal; `monotonic_ns` integer units vs clock resolution; synthetic stall designation; zero-flakiness overpromise removed. |
+| **23** | M23 question-driven measurement / no universal constants | **PASS** | Executive §1, Section 16, Section 25.3, Section 27.3 consistently enforce question-driven methodology; open vs closed workloads both valid per question; warm-up applied conditionally only when mechanism requires it; coordinated omission evaluated when arrival process is independent; monotonic clocks utilized without freezing a single Python API as universal; summary metrics matched to inference goal. |
 | **24** | D-015 exact 12 dimensions | **PASS** | Section 17 details all 12 dimensions of Decision D-015 for technology evaluation. |
 | **25** | AI handling does not resolve OQ-BP-001 | **PASS** | Section 15.2 and 17 treat AI outputs as unverified candidate hypotheses; OQ-BP-001 remains OPEN. |
 | **26** | M23 estimate/cost units/assumptions/inference limits | **PASS** | Section 18 details Fermi estimation, units (b vs B), explicit assumptions, and bottleneck sensitivity. |
 | **27** | M24 integration only / no new mechanism | **PASS** | Section 20 confirms M24 is purely an integrative evaluation capstone introducing zero new mechanisms. |
-| **28** | M24 evidence→claim on actual system / changed constraints | **PASS** | Sections 21, 23 ground defense on learner's actual system (no fabricated Raft/consensus); scenario cards conditional on architecture; evidence-relevant concepts only; stated rollback/data-loss bounds. |
+| **28** | M24 evidence→claim on actual system / changed constraints | **PASS** | Sections 21, 22, 23, 27.4 ground defense on learner's actual system (no fabricated Raft/consensus); scenario cards conditional on architecture; parameterized API contracts replace AST mandates; rollback / roll-forward / migration reversal / canary treated as conditional strategies; stated data-loss bounds. |
 | **29** | Design owns final assessment contract but no universal scoring formula | **PASS** | Section 23 establishes the binary criteria-gated assessment rubric; rejects point formulas. |
 | **30** | STABLE/CURRENT/FRONTIER classification | **PASS** | Section 28 classifies every source into STABLE, CURRENT, or FRONTIER. |
-| **31** | Exact current source revisions/dates/statuses recorded | **PASS** | Section 28 records exact publication dates and statuses: RFC 9525 Nov 2023; SLSA v1.2 24 Nov 2025; RFC 9846 obsoleting 6 RFCs and updating 2 RFCs; FIPS 198-1 NIST conversion plan to SP 800-224 draft. |
-| **32** | Rights/license/provenance recorded | **PASS** | Section 28 records rights under IETF TLP Section 4/5 (Code Components under BSD 3-Clause), US Gov public domain, and OpenSSF licenses. |
+| **31** | Exact current source revisions/dates/statuses recorded | **PASS** | Section 28.1 records exact dates and statuses: NIST SP 800-63B-4 July 2025 Final; NIST SP 800-132 Dec 2010 Final (revision planned); FIPS 198-1 July 2008 Final (supersedes March 2002 FIPS 198; NIST withdrawal proposal 23 June 2025); NIST SP 800-224 Initial Public Draft 28 June 2024; RFC 9846 July 2026; RFC 9525 Nov 2023; RFC 9700 Jan 2025; draft-ietf-oauth-v2-1-15 March 2026; draft-ietf-httpbis-layered-cookies-02 May 2026; W3C CSP3 Working Draft 13 August 2026; RFC 9106 Sept 2021; SLSA v1.2 24 Nov 2025. |
+| **32** | Rights/license/provenance recorded | **PASS** | Section 28.1 records rights under IETF TLP Section 4/5 (Code Components under BSD 3-Clause), US Gov works not subject to US copyright protection with foreign rights preserved per D-016 (unqualified worldwide public domain eliminated), W3C Document License, Community Specification License 1.0 (SLSA), and PyCA dual Apache-2.0/BSD-3-Clause. |
 | **33** | OQ-BP-001/003/006 remain OPEN in substance | **PASS** | Section 24 and 32.2 specify runtime capabilities, configurable policy inputs, and candidate packages with capability detection, removing frozen constants or versions. |
 | **34** | Issue #34 remains OPEN / DEFERRED / NON-BLOCKING | **PASS** | Section 32.2 preserves Issue #34 as non-blocking per Decision D-027. |
 | **35** | Consensus Registry ID remains deferred | **PASS** | Section 29.2 confirms Consensus Registry ID remains deferred per Decision D-025. |
 | **36** | No unrelated S1–S6 churn | **PASS** | Working tree contains zero modifications to Stages 1–6 files. |
 | **37** | Implementation-batch recommendation present | **PASS** | Section 4 specifies 4 bounded implementation batches (S7-B1 through S7-B4). |
-| **38** | Evidence templates neutral / no fabricated volatile outcomes | **PASS** | Section 25.2 strictly prohibits prefilled volatile numbers, ports, timestamps, or fake PASS. |
+| **38** | Evidence templates neutral / no fabricated volatile outcomes | **PASS** | Section 25.1 defines 6-layer taxonomy with rigorous cryptographic hash properties (preimage and collision resistance, not irreversible compression function); Section 25.2 strictly prohibits prefilled volatile numbers, ports, timestamps, or fake PASS; Section 25.3 templates frame non-repudiation as contextual assurance and timing mitigation per library API contracts. |
 | **39** | Visuals specified / no copied third-party diagrams | **PASS** | Section 27 specifies 15 original visual layouts with accurate boundaries. |
 | **40** | `git diff --check` passes cleanly | **PASS** | Verified zero whitespace errors, trailing spaces, or carriage return mismatches. |
 
