@@ -96,7 +96,7 @@ Learner Validation is deferred during authoring but remains mandatory before v1.
 
 ## Current priority
 
-1. **S7 Design for M21–M24 is next.** Convert the Lead-accepted Research dossier `research/security-synthesis-judgment-m21-m24-v0.1.md` into one implementation-ready Design dossier before any learner-facing M21 work.
+1. **Formal active task: Issue #114 — S7 M21–M24 Security Synthesis & Systems Judgment Design Dossier v0.1.** Convert the Lead-accepted Research dossier `research/security-synthesis-judgment-m21-m24-v0.1.md` into one implementation-ready Design dossier before any learner-facing M21 work.
 2. Preserve the exact S7 DAG: M21 hard M11+M07+M12 / soft M09; M22 hard M21+M11+M12 / soft M19; M23 hard M20+M21 / soft M22+M17; M24 hard M23 / soft M20. Do not add hidden Stage-wide hard edges.
 3. Preserve all 10 canonical preliminary Lesson IDs/questions: L21-01/L21-02; L22-01/L22-02/L22-03; L23-01/L23-02/L23-03; L24-01/L24-02. Design exact learner/activity/evidence contracts; do not draft final learner prose.
 4. Preserve Concept Registry first homes and canonical competency vocabulary. EC-CON-017 Trust Boundary remains first-home M07/L07-01; M21/M22 synthesize/revisit it. No new Concept IDs.
