@@ -10,7 +10,7 @@ This directory provides the authoritative, course-owned Python standard-library 
 
 | File | Purpose | Corresponding Lesson | Key Concepts & Invariants |
 | :--- | :--- | :--- | :--- |
-| **`activity_l23_01.py`** | Question-driven measurement & coordinated omission harness | `L23-01` | Compares uncoordinated synchronous loops with arrival-scheduled open arrival generators. Injects explicitly labeled synthetic pauses. Probes monotonic clock characteristics. |
+| **`activity_l23_01.py`** | Question-driven measurement & coordinated omission harness | `L23-01` | Compares uncoordinated synchronous loops with arrival-scheduled open-arrival accounting model. Injects explicitly labeled synthetic pauses. Probes monotonic clock characteristics; the preflight does not grade measurement methodology. |
 | **`activity_l23_02.py`** | Decision D-015 Technology Evaluation & ADR validator | `L23-02` | Validates candidate technologies across all 12 dimensions of Decision D-015. Treats **REJECT** as a first-class valid decision category while keeping decision quality reviewer-required. Audits AI recommendations as unverified hypotheses. |
 | **`fermi_cost.py`** | Bounded capacity planning, Fermi estimation & TCO modeling | `L23-03` | Enforces assumption-first arithmetic. Distinguishes bits vs Bytes (`b` vs `B`), decimal vs binary units (`KB` vs `KiB`), average vs peak egress, storage retention vs unbounded growth, and infra bill vs human operational TCO. |
 | **`reset.py`** | Fail-closed idempotent cleanup | Maintenance | Safely removes course-owned `.scratch/` observation files and Python cache without touching source code. |
@@ -40,7 +40,7 @@ python tests/preflight_security_synthesis.py --module M23
 ```bash
 python labs/foundations/m23/activity_l23_01.py
 ```
-Observe the comparative summary table between naive synchronous and arrival-scheduled generators under a 50ms synthetic pause.
+Observe the comparative summary table between naive service-time observation and the arrival-scheduled accounting model under a 50ms synthetic pause.
 
 ### Step 3: Run L23-02 Technology Evaluation
 ```bash

@@ -13,14 +13,14 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Exact runtime disposition for each command: `[Record PASS / FAIL / BLOCKED / NOT RUN; never infer PASS from capability absence]`
 - Host Operating System / kernel / platform: `[Record actual OS, release, architecture]`
 - Python Implementation & Version: `[Record actual Python implementation and version]`
-- Timing API Probed (`time.monotonic_ns`, `time.get_clock_info`): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
+- Timing API Probed (`time.monotonic_ns`, `time.get_clock_info`): `[Record REQUIRED CAPABILITY PASS / BLOCKED / NOT RUN]`
 - Actual Clock Characteristics Observed:
   - Monotonic clock implementation: `[Record actual clock info, e.g. QueryPerformanceCounter / clock_gettime(CLOCK_MONOTONIC)]`
   - Reported timer resolution: `[Record actual reported resolution in seconds, e.g. 1.00e-07 s]`
   - Monotonic flag: `[Record True/False]`
   - Adjustable flag: `[Record True/False]`
   - Note: `[Record: Integer nanosecond reporting units do not imply nanosecond hardware clock resolution]`
-- Course-Owned Scratch Writability (`labs/foundations/m23/.scratch`): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
+- Course-Owned Scratch Writability (only if a run actually creates persistent scratch): `[Record PASS / BLOCKED / NOT RUN / NOT APPLICABLE; scratch is not an M23 preflight hard dependency]`
 - OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED (Capability-based evaluation; no course-wide CPython pin frozen in learner truth)`
 
 ---
@@ -49,14 +49,14 @@ Record the comparative latency observations from `labs/foundations/m23/activity_
 - Synthetic Stall Parameter: `[Record synthetic pause duration in ms and request index where injected; explicitly mark as synthetic pause, not uninstrumented GC]`
 - Target Scheduled Arrival Rate: `[Record scheduled inter-arrival delta in ms or req/sec]`
 
-| Summary Metric | Naive Synchronous Loop (Service Time Only) | Arrival-Scheduled Generator (Queue + Service) | Omission Ratio (Sched / Naive) | What the Delta Proves |
+| Summary Metric | Naive Synchronous Loop (Service Time Only) | Arrival-Scheduled Accounting Model (Queue + Service) | Omission Ratio (Sched / Naive) | What Pattern the Delta Supports |
 | :--- | :--- | :--- | :--- | :--- |
 | **Sample Count** | `[Record N]` | `[Record N]` | `[Record ratio]` | `[Explain sample preservation]` |
 | **Minimum** | `[Record min ms]` | `[Record min ms]` | `[Record ratio]` | `[Explain baseline service latency]` |
 | **p50 (Median)** | `[Record p50 ms]` | `[Record p50 ms]` | `[Record ratio]` | `[Explain typical user experience under load]` |
 | **p90** | `[Record p90 ms]` | `[Record p90 ms]` | `[Record ratio]` | `[Explain queue backlog visibility in tail]` |
 | **p95** | `[Record p95 ms]` | `[Record p95 ms]` | `[Record ratio]` | `[Explain tail degradation]` |
-| **p99** | `[Record p99 ms]` | `[Record p99 ms]` | `[Record ratio]` | `[Explain catastrophic tail latency reveal]` |
+| **p99** | `[Record p99 ms]` | `[Record p99 ms]` | `[Record ratio]` | `[Explain tail/backlog visibility without universal severity language]` |
 | **Maximum** | `[Record max ms]` | `[Record max ms]` | `[Record ratio]` | `[Explain peak stall impact]` |
 | **Mean** | `[Record mean ms]` | `[Record mean ms]` | `[Record ratio]` | `[Explain aggregate work & energy]` |
 | **Standard Deviation** | `[Record stddev ms]` | `[Record stddev ms]` | `[Record ratio]` | `[Explain variance]` |
@@ -74,7 +74,7 @@ Analyze the appropriate use of summary metrics without dogmatic rules of thumb:
   - Question it answers: `[Explain user satisfaction or multi-tier fan-out risk]`
   - What it hides: `[Explain why p99 hides the shape of the remaining 1% and does not reveal total work done]`
 - Metric: `[e.g. Mean & Total Count]`
-  - Why chosen: `[Explain why mean is mandatory for capacity planning, energy consumption, and cloud billing]`
+  - Why chosen: `[Explain when mean/total counts are useful for aggregate capacity, energy, or billing questions; do not claim mean is universally mandatory]`
   - Question it answers: `[Explain throughput and aggregate resource consumption]`
   - What it hides: `[Explain why mean hides heavy-tailed degradation and bimodality]`
 - Dogmatism Rejection: `[Explicitly articulate why "always use p99" and "mean is always wrong" are engineering misconceptions]`
@@ -212,20 +212,25 @@ Evaluate architectural sensitivity under changed assumptions:
 ## L — Currentness, Provenance, Rights & Cleanup
 
 ### Authority Sources & Currentness Audit:
-- Python Timing Semantics (`time.monotonic_ns`, `time.get_clock_info`): Checked against official Python 3 documentation (PSF license).
-- Coordinated Omission: Gil Tene (Azul Systems). Foundational methodology for open workload measurement (STABLE).
-- Systems Performance Methodology: Brendan Gregg, *Systems Performance: Enterprise and the Cloud*, 2nd Ed. (STABLE).
-- Decision D-015: Essential CS Canonical Decision Registry (`meta/DECISIONS.md`).
-- Numbers Every Programmer Should Know: Classical distributed systems latency reference (Jeff Dean / Peter Norvig). Noted as classical hardware baseline, not timeless universal truth.
-- FinOps Framework: FinOps Foundation cloud cost governance methodology (CURRENT).
 
+| Source | Version / Status | Checked Date | Bounded Claim Used | Non-Proof / Inference Limit | Rights / Provenance |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Python `time` docs | Python 3.14.7 documentation; runtime remains capability-based | 2026-09-08 | `monotonic_ns()` returns integer nanosecond units; `get_clock_info()` reports implementation/monotonic/adjustable/resolution metadata | API units are not physical timer resolution; host scheduling/noise remains empirical | PSF documentation; linked/paraphrased |
+| Gil Tene coordinated-omission methodology | Foundational measurement reference | 2026-09-08 | Completion-coupled generation can omit waits when the modeled arrivals are independent of completion | Does not make open workloads universally superior; applicability depends on the engineering question/arrival process | Source referenced/paraphrased; no copied diagrams |
+| Brendan Gregg, *Systems Performance*, 2nd Ed. | Stable methodology reference | 2026-09-08 | Question-driven measurement and systems-method analysis | Book guidance does not supply host-specific benchmark truth | Bibliographic reference/fair-use paraphrase |
+| Essential CS D-015 | Canonical repository decision + accepted S7 design refinement | 2026-09-08 | 12-dimension technology-evaluation card; REJECT is a valid decision category | Machine structural coverage does not grade decision quality | Course-owned |
+| Redis official licensing | Redis 8+ tri-license: RSALv2 / SSPLv1 / AGPLv3 | 2026-09-08 | Version/license governance is a technology-evaluation input | Exact obligations depend on deployed version/license/use; not legal advice | Redis official licensing page; linked/paraphrased |
+| Apache Kafka official docs/releases | Kafka 4.x; current supported 4.3.1 | 2026-09-08 | Kafka 4.0+ is KRaft-only; no ZooKeeper-mode claim for current 4.x | No throughput/CPU/latency/topology constant is inferred | Apache Kafka official docs; linked/paraphrased |
+| IEEE 1541-2021 / IEC 80000-13:2025 | IEEE Active / IEC Edition 2.0 | 2026-09-08 | Binary-prefix and information-technology unit symbols | Course parser implements a bounded case-exact teaching subset | Standards identified/cited; no copied standard text |
+| FinOps Framework 2026 | Current 2026 framework | 2026-09-08 | Technology-value/cost accountability as a current-practice framework | Non-prescriptive; supplies no fixed cloud price or architecture answer | FinOps Foundation content is CC BY 4.0; linked/paraphrased |
+| Historical latency-number references | Classical/historical reference only | 2026-09-08 | Illustrates why order-of-magnitude thinking can be useful | No listed latency is treated as current universal hardware truth | Bibliographic/historical reference only |
 ### Provenance & Rights Caveat:
 - Curriculum prose, original diagrams, and evaluation rubrics: CC BY-SA 4.0.
 - Lab test fixtures, benchmarking harnesses, and modeling tools: Apache-2.0.
 - Zero copied third-party benchmark diagrams, proprietary pricing sheets, or external exercise text.
 
 ### Environment Cleanup Verification:
-- Reset script executed: `python labs/foundations/m23/reset.py`
-- Removed scratch artifacts count: `[Record count]`
+- Reset script execution: `[Record exact command actually run, or NOT RUN / NOT APPLICABLE]`
+- Removed owned scratch/cache artifacts count: `[Record actual count, or NOT APPLICABLE]`
 - Repository status clean: `[Confirm git status shows no uncommitted scratch/pycache artifacts]`
 - Unresolved Technical Uncertainties: `[Record any remaining questions]`

@@ -5,11 +5,11 @@ flowchart TB
         direction TB
         L4["Human Operational & Cognitive Friction<br/>On-call alert fatigue, debugging complexity, incident response, team cognitive load.<br/>(Operational impact varies by team scale, automation, and system stability)"]
 
-        L3["Network Egress & Inter-Region Bandwidth<br/>Cross-AZ data transfer, public internet egress fees, CDN egress charges.<br/>(Dominant bottleneck in media/content distribution and distributed microservices)"]
+        L3["Network Egress & Inter-Region Bandwidth<br/>Cross-AZ data transfer, public internet egress fees, CDN egress charges.<br/>(May dominate when payload volume, topology, cache behavior, and pricing make egress the limiting constraint)"]
 
-        L2["Compute (CPU) & Dynamic Memory (RAM)<br/>CPU core saturation, context switching, RAM cache working set sizing.<br/>(Dominant bottleneck in compute-heavy, cryptographic, and in-memory databases)"]
+        L2["Compute (CPU) & Dynamic Memory (RAM)<br/>CPU core saturation, context switching, RAM cache working set sizing.<br/>(May dominate when measured CPU demand or working-set pressure reaches host limits)"]
 
-        L1["Durable Storage & Block I/O (IOPS / Disk)<br/>Read/write IOPS, SSD write endurance, long-term archival growth, replication overhead.<br/>(Dominant bottleneck in transactional databases, event streaming, and append-only logs)"]
+        L1["Durable Storage & Block I/O (IOPS / Disk)<br/>Read/write IOPS, SSD write endurance, long-term archival growth, replication overhead.<br/>(May dominate when measured I/O, retention, endurance, or capacity reaches storage limits)"]
     end
 
     ANALYSIS["Bottleneck & TCO Analysis Principles:<br/>1. Total Cost of Ownership = Infrastructure Billing + Human Engineering Maintenance.<br/>2. No single resource is universally the highest or primary bottleneck.<br/>3. Bottlenecks shift under scaling (e.g. 10x traffic may shift system from CPU-bound to network-egress bound).<br/>4. Quantitative napkin-math Fermi models reveal the limiting resource before writing code."]
