@@ -104,7 +104,7 @@ class TestL22_01_AuthnAndTokens(unittest.TestCase):
         tampered_token = f"{parts[0]}.{activity_l22_01._b64url_encode(b'{\"sub\":\"admin\"}')}.{parts[2]}"
         result = authority.validate_token(tampered_token)
         self.assertFalse(result.valid)
-        self.assertIn("signature verification failed", result.error or "")
+        self.assertIn("authentication-tag verification failed", result.error or "")
 
     def test_token_authority_rejects_alg_none(self) -> None:
         secret = secrets.token_bytes(32)
@@ -133,6 +133,22 @@ class TestL22_01_AuthnAndTokens(unittest.TestCase):
         result = authority.validate_token(token_other_aud)
         self.assertFalse(result.valid)
         self.assertIn("Audience mismatch", result.error or "")
+
+    def test_token_authority_rejects_issuer_mismatch(self) -> None:
+        secret = secrets.token_bytes(32)
+        authority = activity_l22_01.TeachingTokenAuthority(
+            secret,
+            expected_audience="api.local",
+            issuer_id="trusted-idp.local",
+        )
+        token_wrong_issuer = authority.issue_token(
+            subject="alice",
+            custom_claims={"iss": "untrusted-idp.local"},
+        )
+
+        result = authority.validate_token(token_wrong_issuer)
+        self.assertFalse(result.valid)
+        self.assertIn("Issuer mismatch", result.error or "")
 
     def test_authn_separated_from_authz(self) -> None:
         user_roles = {"alice": ["analyst"], "bob": ["admin"]}

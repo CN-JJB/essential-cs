@@ -45,9 +45,9 @@ from typing import Any, Dict, List, Optional, Tuple
 # Part 1: Password Verifier Generation & Verification (NIST SP 800-63B-4)
 # -----------------------------------------------------------------------------
 
-DEFAULT_PBKDF2_ITERATIONS = 100_000  # Policy parameter; not a timeless constant!
+DEFAULT_PBKDF2_ITERATIONS = 100_000  # Bounded teaching-fixture policy only; NOT a production recommendation.
 MIN_SALT_BYTES = 4  # 32 bits minimum per NIST SP 800-63B-4
-DEFAULT_SALT_BYTES = 16  # 128 bits recommended for collision minimization
+DEFAULT_SALT_BYTES = 16  # 128-bit teaching choice; NIST minimum is 32 bits and salt should minimize collisions.
 
 
 def generate_password_verifier(
@@ -60,8 +60,8 @@ def generate_password_verifier(
 
     Format: pbkdf2_sha256$iterations=<N>$<salt_hex>$<hash_hex>
 
-    Guarantees:
-    - Unique per-credential salt (minimizes cross-credential collision and rainbow tables);
+    Fixture properties:
+    - Independently generated random salt (collisions are possible in principle; the goal is to minimize them);
     - Tunable iteration work factor (imposes cost on offline brute-force);
     - Salt length >= 32 bits per NIST SP 800-63B-4 §3.1.1.2.
     """
@@ -86,7 +86,8 @@ def verify_password(password: str, verifier_record: str) -> bool:
     """
     Verifies a candidate password against a stored verifier record.
 
-    Uses hmac.compare_digest to prevent timing-attack side channels.
+    Uses hmac.compare_digest as the documented mitigation for content-based short-circuit timing analysis.
+    This is not a physical constant-time proof.
     Returns True if valid, False otherwise.
     """
     parts = verifier_record.split("$")
@@ -117,7 +118,7 @@ def verify_password(password: str, verifier_record: str) -> bool:
         iterations=iterations,
     )
 
-    # Constant-time comparison to prevent timing leaks
+    # Documented timing-analysis mitigation; not a physical constant-time proof.
     return hmac.compare_digest(candidate_hash, expected_hash)
 
 
@@ -153,7 +154,7 @@ class TeachingTokenAuthority:
     Educational token profile invariants:
     - Fixed approved algorithm list (default ['HS256']);
     - Strictly rejects alg: 'none';
-    - Verifies signature using hmac.compare_digest;
+    - Verifies the HS256 HMAC authentication tag using hmac.compare_digest;
     - Enforces mandatory claims: alg, sub, aud, exp, iat;
     - Enforces audience matching to prevent token substitution across services.
     """
@@ -176,7 +177,7 @@ class TeachingTokenAuthority:
         custom_claims: Optional[Dict[str, Any]] = None,
         override_alg: Optional[str] = None,
     ) -> str:
-        """Issues a signed TeachingProfile-BearerV1 token."""
+        """Issues an HMAC-authenticated TeachingProfile-BearerV1 token."""
         alg = override_alg or "HS256"
         now = int(time.time())
         header = {
@@ -237,16 +238,16 @@ class TeachingTokenAuthority:
         if alg not in self.ALLOWED_ALGORITHMS:
             return TokenValidationResult(valid=False, error=f"Unsupported algorithm '{alg}'; expected one of {self.ALLOWED_ALGORITHMS}")
 
-        # 3. Verify cryptographic signature
+        # 3. Verify the HS256 HMAC authentication tag (not a public-key digital signature)
         signing_input = f"{header_b64}.{payload_b64}".encode("ascii")
         expected_sig = hmac.new(self._secret, signing_input, hashlib.sha256).digest()
         try:
             actual_sig = _b64url_decode(sig_b64)
         except Exception:
-            return TokenValidationResult(valid=False, error="Malformed signature base64url")
+            return TokenValidationResult(valid=False, error="Malformed HMAC authentication-tag base64url")
 
         if not hmac.compare_digest(expected_sig, actual_sig):
-            return TokenValidationResult(valid=False, error="Cryptographic signature verification failed (tampered token)")
+            return TokenValidationResult(valid=False, error="HMAC authentication-tag verification failed (tampered token)")
 
         # 4. Parse payload claims
         try:
@@ -256,17 +257,36 @@ class TeachingTokenAuthority:
             return TokenValidationResult(valid=False, error="Invalid payload encoding or JSON")
 
         # 5. Validate mandatory claims presence
-        for claim in ("sub", "aud", "exp", "iat"):
+        for claim in ("sub", "aud", "iss", "exp", "iat"):
             if claim not in payload:
                 return TokenValidationResult(valid=False, error=f"Missing mandatory claim '{claim}'")
 
-        # 6. Validate temporal claim (exp)
+        # 6. Validate profile/header binding before accepting a credential context
+        if header.get("typ") != "JWT" or header.get("profile") != self.PROFILE_NAME:
+            return TokenValidationResult(valid=False, error="Token does not match TeachingProfile-BearerV1 header/profile")
+
+        subject = payload["sub"]
+        if not isinstance(subject, str) or not subject:
+            return TokenValidationResult(valid=False, error="Subject claim must be a non-empty string")
+
+        issuer = payload["iss"]
+        if not isinstance(issuer, str) or issuer != self.issuer_id:
+            return TokenValidationResult(
+                valid=False,
+                error=f"Issuer mismatch: token issuer '{issuer}' is not trusted issuer '{self.issuer_id}'",
+            )
+
+        iat = payload["iat"]
+        if not isinstance(iat, (int, float)):
+            return TokenValidationResult(valid=False, error="Issued-at claim must be numeric")
+
+        # 7. Validate temporal claim (exp)
         now = current_time if current_time is not None else int(time.time())
         exp = payload["exp"]
         if not isinstance(exp, (int, float)) or now >= exp:
             return TokenValidationResult(valid=False, error=f"Token has expired (exp={exp}, now={now})")
 
-        # 7. Validate audience claim (aud)
+        # 8. Validate audience claim (aud)
         aud = payload["aud"]
         if aud != self.expected_audience:
             return TokenValidationResult(
@@ -274,7 +294,7 @@ class TeachingTokenAuthority:
                 error=f"Audience mismatch: token intended for '{aud}', but service requires '{self.expected_audience}'",
             )
 
-        return TokenValidationResult(valid=True, subject=str(payload["sub"]), claims=payload)
+        return TokenValidationResult(valid=True, subject=subject, claims=payload)
 
 
 # -----------------------------------------------------------------------------
@@ -295,7 +315,8 @@ def evaluate_resource_authorization(
     Authentication establishes 'who' (authenticated_subject).
     Authorization determines 'what' (permission rule: role has action:resource).
 
-    A valid token proves who is calling; it does NOT prove authority on the resource!
+    A token accepted under the configured teaching profile establishes a bounded subject context;
+    it does NOT prove authority on the resource, and HS256 does not uniquely identify which shared-secret holder created it.
     """
     roles = user_roles.get(authenticated_subject, [])
     if not roles:

@@ -21,11 +21,11 @@ sequenceDiagram
 
     Client->>AS: 9. POST /token (backchannel / direct)<br/>grant_type=authorization_code, code,<br/>redirect_uri, client_id, code_verifier
 
-    Note over AS: 10. PKCE Verification:<br/>Compute SHA256(code_verifier)<br/>Assert SHA256(code_verifier) == stored code_challenge<br/>(Binds code exchange to original client)
+    Note over AS: 10. PKCE Verification:<br/>Compute SHA256(code_verifier)<br/>Assert SHA256(code_verifier) == stored code_challenge<br/>(Binds exchange to possession of verifier from the original authorization transaction;<br/>does NOT authenticate client identity)
 
     AS->>Client: 11. Return JSON response:<br/>access_token, token_type=Bearer, expires_in, (refresh_token)
 
     Client->>RS: 12. GET /api/resource<br/>Authorization: Bearer <access_token>
     RS->>Client: 13. Verify token claims & return resource data
 
-    Note over Client,RS: Core Boundary: OAuth is authorization delegation, not authentication by itself!<br/>PKCE prevents authorization code interception on public clients (RFC 9700 / RFC 7636).
+    Note over Client,RS: Core Boundary: OAuth is authorization delegation, not authentication by itself!<br/>PKCE mitigates authorization-code interception/misuse when the attacker lacks code_verifier (RFC 9700 / RFC 7636);<br/>it does not protect a fully compromised client device or solve all OAuth threats.
