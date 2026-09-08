@@ -1,0 +1,21 @@
+%% FIG-M21-03 — PKI / TLS Verification Layers
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    C["1. Certificate Credential<br/>public key + identity claims / metadata"]
+    P["2. Path Validation<br/>validate chain to configured trust anchor"]
+    I["3. Service Identity<br/>match intended service identity"]
+    K["4. Live Private-Key Possession<br/>protocol proves possession during handshake"]
+    N["5. Authentication<br/>endpoint identity accepted under verifier policy"]
+    Z["6. Authorization<br/>separate decision: may this identity perform this action?"]
+
+    C --> P --> I --> K --> N --> Z
+
+    NC["Certificate alone != live private-key possession"]
+    NA["Authentication != authorization"]
+    FS["TLS 1.3 forward secrecy is handshake-mode dependent:<br/>DHE/ECDHE or PSK+DHE can provide it;<br/>PSK-only does not provide the same property;<br/>0-RTT has no forward-secrecy guarantee"]
+
+    C -.-> NC
+    K -.-> NC
+    N -.-> NA
+    Z -.-> NA
+    K -.-> FS

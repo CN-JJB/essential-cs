@@ -7,6 +7,8 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 ## A — Environment Capabilities & Preflight
 
 - Execution commit / ref: `[Record actual HEAD commit SHA]`
+- Exact command(s) actually run: `[Record command text exactly]`
+- Exact runtime disposition for each command: `[Record PASS / FAIL / BLOCKED / NOT RUN; never infer PASS from capability absence]`
 - Host Operating System / kernel / platform: `[Record actual OS, release, architecture]`
 - Python Implementation & Version: `[Record actual Python implementation and version]`
 - Standard Library Cryptography (`hashlib`, `hmac`, `secrets`): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
@@ -74,7 +76,7 @@ Fill in the primitive selection matrix evaluated in `labs/foundations/m21/activi
 | **3. Multi-verifier public log verification** | `[Record required property]` | `[Record chosen primitive]` | `[Record incorrect trap]` | `[Explain why signature != unconditional non-repudiation]` |
 | **4. Confidential payload on untrusted transport** | `[Record required property]` | `[Record chosen primitive]` | `[Record incorrect trap]` | `[Explain why encryption != authenticity; AEAD role]` |
 | **5. Ephemeral TLS traffic key establishment** | `[Record required property]` | `[Record chosen primitive]` | `[Record incorrect trap]` | `[Explain key agreement != peer authentication; FS mode scope]` |
-| **6. User credential storage verifier (M22 preview)** | `[Record required property]` | `[Record chosen primitive]` | `[Record incorrect trap]` | `[Explain why fast hashes fail as password verifiers]` |
+| **6. Password-verifier boundary (out of M21 implementation scope)** | `[Record why offline-guess resistance differs from a fast digest]` | `[Record: NOT IMPLEMENTED HERE — belongs to M22/L22-01]` | `[Record why fast unkeyed SHA-256 is a tempting but incorrect verifier choice]` | `[Explain that M21 freezes no password schema, algorithm choice, or work factor]` |
 
 ---
 
@@ -153,15 +155,25 @@ Explain the distinctions across the 6 verification layers in modern transport se
 ## J — Provenance, Currentness & Cleanup Audit
 
 ### Authoritative Normative Sources Inspected
-| Source Reference | Status / Date | Supported Claim | Non-Proof / Boundary |
-| :--- | :--- | :--- | :--- |
-| **Saltzer & Schroeder (1975)** | STABLE | Principles of Least Privilege & Complete Mediation | Does not specify modern OS system call implementations |
-| **NIST SP 800-207** | STABLE / CURRENT (Aug 2020) | Zero Trust Architecture (no implicit perimeter trust) | Does not specify code-level input sanitization algorithms |
-| **FIPS 198-1 / NIST SP 800-224** | CURRENT / UPDATING (June 2024 draft / June 2025 proposal) | HMAC algorithm specification and transition status | Mathematical spec; does not guarantee side-channel freedom |
-| **FIPS 186-5** | STABLE / CURRENT (Feb 2023) | Digital Signature Standard (Ed25519, ECDSA, RSA) | Signature verification does not prove human identity |
-| **NIST SP 800-38D** | STABLE | AES-GCM Authenticated Encryption with Associated Data | Nonce reuse catastrophically destroys authenticity |
-| **RFC 9846** | STABLE / CURRENT (July 2026) | TLS 1.3 protocol specification; obsoletes RFC 8446 | Forward secrecy scoped to DHE/ECDHE; PSK-only differs |
-| **Python hmac Docs** | CURRENT (v3.13/v3.14) | `compare_digest` timing mitigation contract | Mitigation API; not physical constant-time hardware proof |
+
+Record only sources actually inspected for the learner claim being made. Do not copy the sample source names into an assertion that was not checked.
+
+| Exact Source | Version / Revision | Publication / Update Date | Formal Status | Checked Date | Claim Supported | What It Does NOT Prove | Rights / Provenance |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `[Record source]` | `[Record exact version/revision]` | `[Record date]` | `[Record status]` | `[Record actual check date]` | `[Record bounded claim]` | `[Record non-proof]` | `[Record license/rights/attribution]` |
+| `[Record source]` | `[Record exact version/revision]` | `[Record date]` | `[Record status]` | `[Record actual check date]` | `[Record bounded claim]` | `[Record non-proof]` | `[Record license/rights/attribution]` |
+
+### Original / Editable Visual Audit
+- FIG-M21-01 source: `book/21-security-synthesis-trust-crypto/visuals/FIG-M21-01-trust-boundary-authority-map.mmd`
+- FIG-M21-02 source: `book/21-security-synthesis-trust-crypto/visuals/FIG-M21-02-crypto-primitive-roles.mmd`
+- FIG-M21-03 source: `book/21-security-synthesis-trust-crypto/visuals/FIG-M21-03-pki-tls-verification-layers.mmd`
+- Provenance: `[Confirm course-owned original source / record any modification provenance]`
+- Conceptual audit: `[Record reviewer observations; do not prefill PASS]`
+
+### Runtime Ownership Boundary
+- Machine verification result: `[Record exact command and PASS / FAIL / BLOCKED / NOT RUN]`
+- Learner competency evidence: `[Record separately; machine PASS is not competency PASS]`
+- Reviewer-required judgment: `[Record reviewer disposition only after inspecting learner explanation / boundary map / primitive selection]`
 
 ### Cleanup & Idempotence Verification
 - Execution of `python labs/foundations/m21/reset.py`: `[Record execution output and removed item count]`
