@@ -26,7 +26,7 @@ flowchart TB
     subgraph RECOVERY_STRATEGY ["Conditional Reversal & Recovery Strategy (Evaluated at Gate 4)"]
         direction TB
         C_CODE{"Is deployment backward-compatible with database schema?"}
-        R_ROLLBACK["Code Rollback Safe:<br/>Redeploy prior commit; database schema remains intact."]
+        R_ROLLBACK["Code Rollback Candidate:<br/>only after code + schema/data compatibility evidence"]
         R_ROLLFORWARD["Destructive Schema Change Detected:<br/>Code rollback alone causes crash/corruption.<br/>Strategy requires Roll-Forward, Migration Reversal, or Snapshot Recovery.<br/>State explicit, verifiable data-loss bound (e.g., zero loss for committed data, or bounded window)."]
         C_CODE -- Yes (Expand phase or additive) --> R_ROLLBACK
         C_CODE -- No (Contract phase or destructive alter) --> R_ROLLFORWARD

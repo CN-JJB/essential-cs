@@ -7,7 +7,7 @@ flowchart LR
         subgraph S1 ["Example Trace 1: Crash Resilience"]
             C1["Architectural Claim:<br/>'Committed records survive sudden process termination without corruption.'"]
             E1["Evidence Category (E05):<br/>Failure & Recovery Proof"]
-            A1["Admissible Artifact:<br/>SQLite WAL fsync assertion & crash-recovery injection test log"]
+            A1["Artifact Reference:<br/>actual code / config / test / measurement chosen by learner"]
             L1["Inference Limit:<br/>Guarantees single-host crash consistency; provides ZERO multi-region HA or automated failover."]
             CH1["Reviewer Challenge:<br/>'What happens if host OS crashes during multi-statement transaction write?'"]
             AD1["Coherent Adaptation:<br/>Recovery verifies WAL header rollback; acknowledges availability is 0 until process restarts."]
@@ -30,7 +30,7 @@ flowchart LR
             A3["Admissible Artifact:<br/>Arrival-scheduled latency histogram + monotonic timer logs + Fermi compute sizing"]
             L3["Inference Limit:<br/>Empirical result bounded to single-node test environment; not a universal cloud scale guarantee."]
             CH3["Reviewer Challenge:<br/>'What if client traffic increases 50x and network RTT jumps by 100ms?'"]
-            AD3["Coherent Adaptation:<br/>Identify thread pool saturation as new bottleneck; scope connection pooling and async dispatch."]
+            AD3["Adaptation Candidate:<br/>learner identifies whether a bottleneck shifts, trade-offs, and new evidence needed"]
             C3 --> E3 --> A3 --> L3 --> CH3 --> AD3
         end
     end
