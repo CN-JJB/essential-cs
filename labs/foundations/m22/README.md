@@ -10,10 +10,10 @@ This directory contains executable, course-owned fixtures and worked activities 
 - **Fail-Closed Teardown**: Server threads are explicitly joined and listener sockets verified released upon teardown. Teardown failures fail closed.
 - **Authentication != Authorization**: Authentication verifies *who* is calling; authorization verifies *what* the authenticated identity is permitted to do on a specific resource.
 - **Credential != Identity != Authority**: A credential is an authenticating artifact; an identity is the associated subject; authority is granted by resource policy evaluation.
-- **Password Verifiers != Fast General-Purpose Hashes**: Unkeyed fast hashes (e.g. SHA-256) are easily evaluated in parallel by GPUs/ASICs. Password verifiers require per-credential unique salts (>= 32 bits per NIST SP 800-63B-4) and tunable slow compute-hard functions (PBKDF2 per SP 800-132 / RFC 8018) or memory-hard candidates (Argon2id per RFC 9106).
+- **Password Verifiers != Fast General-Purpose Hashes**: Unkeyed fast hashes (e.g. SHA-256) are easily evaluated in parallel by GPUs/ASICs. Password verifiers require independently generated salts (>= 32 bits; chosen to minimize collisions per NIST SP 800-63B-4, not mathematically guaranteed unique) and tunable slow compute-hard functions (PBKDF2 per SP 800-132 / RFC 8018) or memory-hard candidates (Argon2id per RFC 9106).
 - **Cost Parameters Are Not Timeless Invariants**: KDF work factors and iteration counts are environment and policy-dependent parameters that must increase over time; they are not timeless constants.
-- **Constant-Time Comparison**: `hmac.compare_digest` is used to mitigate content-based short-circuiting timing attacks.
-- **TeachingProfile-BearerV1**: An educational token profile modeled on RFC 7519 / RFC 8725 BCP. Strictly rejects `alg: "none"`, enforces allowed algorithms, validates signature, temporal validity (`exp`), and audience (`aud`).
+- **Sensitive Comparison API**: `hmac.compare_digest` is used for its documented timing-analysis mitigation; Core makes no physical constant-time proof.
+- **TeachingProfile-BearerV1**: An educational token profile modeled on RFC 7519 / RFC 8725 BCP. Strictly rejects `alg: "none"`, enforces allowed algorithms, validates the HS256 HMAC authentication tag plus profile, issuer (`iss`), subject, temporal validity (`exp`), and audience (`aud`); HMAC is not a public-key signature.
 - **Stateless Bearer Token Invalidation Boundary**: Purely stateless tokens cannot be revoked before expiration without out-of-band state tracking (revocation lists, epoch bumping, session store lookups).
 - **Code != Data**: Vulnerabilities at composition boundaries occur when untrusted data alters the AST of an underlying interpreter.
 - **SQL Parameterization**: Driver/API parameter binding (`?` placeholders) compiles query structure before value binding, treating input strictly as literal values. It does not parameterize table or column names.
@@ -52,9 +52,9 @@ This directory contains executable, course-owned fixtures and worked activities 
    - Implements the 9-layer software supply chain integrity model for L22-03:
      - `verify_layer3_byte_integrity`: SHA-256 digest validation against trusted lockfile.
      - `verify_layer4_reproducibility`: Independent rebuild comparison.
-     - `verify_layer5_and_6_signature_and_identity`: Signature verification and maintainer registry binding.
-     - `verify_layer7_and_8_provenance_and_builder`: SLSA v1.2 provenance attestation verification.
-     - `audit_dependency_against_policy`: Verifier policy gate evaluating all 9 layers.
+     - `verify_layer5_and_6_teaching_authenticator_and_identity_policy`: HMAC stand-in + synthetic key-id policy, explicitly not digital-signature evidence.
+     - `verify_layer7_and_8_provenance_and_builder`: synthetic SLSA-style metadata + builder/source policy checks; no real attestation-envelope verification.
+     - `audit_dependency_against_policy`: verifier policy gate that integrates Layer 4 rebuild evidence and the other required synthetic gates.
 
 4. **`reset.py`**
    - Fail-closed, idempotent cleanup script removing `.scratch/` and local `__pycache__/`.

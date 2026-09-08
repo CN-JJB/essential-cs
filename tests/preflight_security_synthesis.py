@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-preflight_security_synthesis.py — Preflight Verification Script for S7 / M21
+preflight_security_synthesis.py — Preflight Verification Script for S7 / M21–M22
 =============================================================================
 
 Evaluates and records host capabilities empirically for Stage 7 (Security Synthesis
-& Systems Judgment), specifically Module M21 (Trust Boundaries & Crypto Use),
+& Systems Judgment), specifically M21 (Trust Boundaries & Crypto Use) and M22 (Authn/Authz & Secure Composition),
 without permanently pinning OQ-BP-006.
 
 Probes the required capabilities actually used:
@@ -14,7 +14,8 @@ Probes the required capabilities actually used:
 4. Temporary directory creation & path resolution (tempfile, Path.resolve, os.path.commonpath)
 5. Host filesystem symlink capability (truthfully records PASS or BLOCKED / NOT RUN)
 6. Course-owned scratch writability (labs/foundations/m21/.scratch)
-7. Optional candidate PyCA cryptography package (truthful capability gating)
+7. M22-only password-KDF, sqlite3, localhost-bind, M22 scratch and optional Argon2 capabilities when --module M22 is selected
+8. M21-only optional PyCA cryptography capability when M21 is selected
 
 OQ-BP-006 remains OPEN.
 Readiness is not lesson/lab PASS.
@@ -360,13 +361,12 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
                 "localhost_bind": probe_localhost_bind(),
                 "scratch_writability": probe_m22_scratch_writability(),
                 "optional_argon2": probe_optional_argon2(),
-                "optional_cryptography": probe_optional_cryptography(),
             },
             "policy_invariants": {
                 "OQ_BP_006": "OPEN / UNRESOLVED",
                 "safe_target_architecture": "CONFIRMED (Loopback only, zero live targets, zero offensive tools)",
                 "crypto_stance": "CONFIRMED (Crypto-use only, zero custom primitive implementation)",
-                "fail_closed_teardown": "CONFIRMED (Explicit thread join & port release verification)",
+                "fail_closed_teardown": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT (runtime verification belongs to activity/test)",
                 "ephemeral_storage": "CONFIRMED (Course-owned temporary scratch & in-memory DB only)",
             },
         }
@@ -439,7 +439,10 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
             ],
         )
         self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
-        self.assertEqual(report["policy_invariants"]["fail_closed_teardown"], "CONFIRMED (Explicit thread join & port release verification)")
+        self.assertEqual(
+            report["policy_invariants"]["fail_closed_teardown"],
+            "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT (runtime verification belongs to activity/test)",
+        )
 
 
 def main() -> None:

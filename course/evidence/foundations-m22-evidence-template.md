@@ -19,7 +19,6 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Loopback Networking Capability (`127.0.0.1:0` bind/listen): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
 - Course-Owned Scratch Writability (`labs/foundations/m22/.scratch`): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
 - Optional `argon2-cffi` Disposition: `[Record OPTIONAL PACKAGE AVAILABLE (with version) or OPTIONAL PACKAGE NOT INSTALLED / NOT RUN]`
-- Optional PyCA `cryptography` Disposition: `[Record OPTIONAL PACKAGE AVAILABLE (with version) or OPTIONAL PACKAGE NOT INSTALLED / NOT RUN]`
 - OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED (Capability-based evaluation; no course-wide CPython pin frozen in learner truth)`
 
 ---
@@ -46,9 +45,9 @@ Record the password verifier schema and parameters evaluated in `labs/foundation
 - Exact algorithm / profile used: `[Record algorithm, e.g. pbkdf2_sha256 per SP 800-132 / SP 800-63B-4]`
 - Salt source: `[Record salt generation API, e.g. secrets.token_bytes]`
 - Salt length: `[Record salt length in bytes/bits; must be >= 32 bits per NIST SP 800-63B-4]`
-- Cost parameter / iterations: `[Record iteration count used, e.g. 100,000]`
+- Cost parameter / iterations: `[Record the exact iteration count actually used by this run; do not copy an illustrative production recommendation]`
 - Cost parameter rationale: `[Explain why cost is environment/policy-dependent and must increase over time; reject timeless constants]`
-- Constant-time comparison API: `[Record comparison API, e.g. hmac.compare_digest, and explain timing attack mitigation]`
+- Sensitive-value comparison API: `[Record hmac.compare_digest and explain its documented timing-analysis mitigation; do not claim physical constant-time proof]`
 - Verifier record format: `[Record serialized string format: algo$params$salt$hash]`
 - What the record does NOT prove: `[Explain why possessing a verifier does not prove the presenter is authorized to perform arbitrary actions]`
 
@@ -62,11 +61,13 @@ Record the validation rules enforced for `TeachingProfile-BearerV1` in `labs/fou
 | :--- | :--- | :--- | :--- | :--- |
 | `alg` (Header) | Required | Must match approved whitelist (`HS256`); reject `alg: "none"` | Rejection / Invalid Token | `[Explain why accepting arbitrary alg header enables bypasses]` |
 | `typ` (Header) | Required | Must be `"JWT"` | Rejection / Invalid Token | `[Explain profile type disambiguation]` |
+| `profile` (Header) | Required | Must equal `TeachingProfile-BearerV1` | Rejection / Invalid Token | `[Explain why this is a course-owned verifier profile, not universal JWT policy]` |
 | `sub` (Payload) | Required | Non-empty string identifying the principal | Rejection / Invalid Token | `[Explain why knowing subject identity does not prove authorization]` |
 | `aud` (Payload) | Required | Must strictly match recipient service identifier | Rejection / Invalid Token | `[Explain token substitution across services if aud omitted]` |
+| `iss` (Payload) | Required | Must equal the issuer configured by this teaching verifier policy | Rejection / Invalid Token | `[Explain why issuer matching is policy binding, not resource authorization]` |
 | `exp` (Payload) | Required | Integer timestamp; must satisfy `exp > current_time` | Rejection / Expired Token | `[Explain why stateless tokens remain valid until exp unless out-of-band state exists]` |
 | `iat` (Payload) | Required | Integer timestamp of token creation | Rejection / Invalid Token | `[Explain issued-at ordering checks]` |
-| `signature` | Required | HMAC-SHA256 computed over `header.payload` matching expected | Rejection / Tampered Token | `[Explain why signature proves key possession, not author trustworthiness]` |
+| `HMAC authentication tag` | Required | HS256 HMAC over `header.payload` must match under the configured shared secret | Rejection / Tampered Token | `[Explain why HMAC is not a public-key digital signature and cannot uniquely attribute one shared-secret holder]` |
 
 ---
 
@@ -74,13 +75,13 @@ Record the validation rules enforced for `TeachingProfile-BearerV1` in `labs/fou
 
 Compare stateful sessions against stateless bearer tokens across operational and security dimensions:
 
-| Dimension | Stateful Server Sessions (Cookies + Store) | Stateless Signed Bearer Tokens (JWT / Profiles) | Architectural Trade-Off Analysis |
+| Dimension | Stateful Server Sessions (Cookies + Store) | Self-Contained Authenticated Bearer Tokens (JWT / Teaching Profiles) | Architectural Trade-Off Analysis |
 | :--- | :--- | :--- | :--- |
 | **State Ownership** | `[Record where state is stored, e.g. DB/Redis]` | `[Record where state is stored, e.g. client-held]` | `[Analyze storage overhead vs decentralization]` |
-| **Immediate Invalidation** | `[Record mechanism, e.g. delete row in session store]` | `[Record limitation: impossible without out-of-band state]`| `[Analyze revocation latency and risk exposure]` |
+| **Immediate Invalidation** | `[Record mechanism, e.g. delete row in session store]` | `[Record limitation: the self-contained token alone cannot learn new revocation state before exp; record any out-of-band mechanism]`| `[Analyze revocation latency and risk exposure]` |
 | **Cross-Domain Delegation** | `[Record ambient cookie domain scoping limits]` | `[Record explicit bearer authorization header dispatch]` | `[Analyze mobile / multi-API architecture fit]` |
 | **Ambient Authority Risk** | `[Record CSRF ambient cookie auto-attach vulnerability]`| `[Record explicit header requirement eliminating ambient CSRF]`| `[Explain CSRF vs XSS token theft trade-offs]` |
-| **Operational Scaling** | `[Record central store read/write bottlenecks]` | `[Record distributed verification without DB lookup]` | `[Evaluate operational complexity vs security trade-off]` |
+| **Operational Scaling** | `[Record central store read/write bottlenecks]` | `[Record whether this profile validates locally and what key/policy/revocation state still exists]` | `[Evaluate operational complexity vs security trade-off]` |
 
 ---
 
@@ -101,8 +102,8 @@ Record the architectural analysis of OAuth 2.1 Authorization Code Flow with PKCE
   - `code_challenge` derivation: `[Record S256 formula: BASE64URL(SHA256(code_verifier))]`
   - How PKCE binds code exchange: `[Explain why an attacker intercepting the authorization code cannot exchange it without the code_verifier]`
 - Exact Current Authority Citation:
-  - RFC 9700 / BCP 240 (OAuth 2.0 Security BCP, January 2025): `[Record key mandates: PKCE MUST for public, ROPC MUST NOT, Implicit SHOULD NOT]`
-  - OAuth 2.1 Active Draft: `[Record current active draft revision checked at implementation time, e.g. draft-ietf-oauth-v2-1-15]`
+  - RFC 9700 / BCP 240 (OAuth 2.0 Security BCP, January 2025): `[Record: public clients MUST use PKCE; confidential clients are RECOMMENDED to use PKCE with the RFC's scoped OIDC nonce alternative; ROPC MUST NOT; Implicit SHOULD NOT]`
+  - OAuth 2.1 Active Draft: `[Record current active draft revision checked for this evidence; implementation baseline on 2026-09-07 was draft-ietf-oauth-v2-1-16 (3 Sep 2026)]`
 
 ---
 
@@ -113,13 +114,13 @@ Record the SQL injection vs parameterized execution observations from `labs/foun
 - Unsafe Query Construction:
   - Concatenation template: `[Record raw SQL query string with formatting]`
   - Malicious payload used: `[Record injection string, e.g. admin' OR '1'='1]`
-  - Observed AST alteration: `[Explain how quotes closed early and OR turned user data into SQL boolean syntax]`
+  - Observed unsafe SQL-text change: `[Explain how concatenation allowed input characters to become SQL syntax in this fixture; do not claim a specific internal AST implementation unless separately observed]`
   - Observed result: `[Record leaked records count and data exposure]`
 - Parameterized Query Construction:
   - Parameterized statement: `SELECT id, username, role, email, account_balance FROM users WHERE username = ?`
   - Parameter binding: `(username_input,)`
-  - Observed result: `[Record result: 0 records returned; syntax structure remained immutable]`
-  - Architectural mechanism: `[Explain how the driver/API contract separates query compilation from value literal binding]`
+  - Observed result: `[Record actual result; explain that the SQLite ? value parameter remained separate from the SQL template]`
+  - Architectural mechanism: `[Explain the driver/API contract that separates the SQL statement template from bound value parameters; exact parser/bytecode phases are engine-specific]`
 - What Parameterization Protects: `[Explain that parameterization protects SQL value positions / data literals]`
 - What Parameterization Does NOT Protect: `[Explain that table names, column names, and SQL keywords cannot be parameterized; dynamic schemas require strict allowlisting]`
 
@@ -133,7 +134,7 @@ Record the defensive boundaries evaluated in `labs/foundations/m22/activity_l22_
 | :--- | :--- | :--- | :--- | :--- |
 | **XSS** | Browser HTML Parser & DOM | Untrusted text executed as active script in victim session | Context-aware autoencoding + W3C CSP Level 3 strict nonces | CSP does not eliminate DOM clobbering or server-side template injection |
 | **CSRF** | Cross-Origin HTTP Request Dispatch | Ambient session cookie auto-attached to state-mutating POST | `SameSite=Lax/Strict` cookies + `Origin` header check + Anti-CSRF synchronizer token | `SameSite=Lax` permits top-level GET navigations; state mutation on GET is vulnerable |
-| **SSRF** | Server Outbound Network Egress | Server coerced to fetch private/metadata resources (`169.254.x.x`, `10.x.x.x`) | URL parse + IP blocklist + post-resolution direct socket binding | URL regex string checks fail against DNS rebinding (TOCTOU) and open redirects |
+| **SSRF** | Server Outbound Network Egress | Server coerced to fetch prohibited destinations | URL parse + candidate-IP policy + HTTP-only direct connection to a validated IP in this local fixture | Direct binding here removes one second-DNS-lookup path; it does not cover redirects, proxies, HTTPS/TLS identity, connection pools, or other fetch paths |
 
 ---
 
@@ -145,12 +146,12 @@ Record the software supply chain verification observations from `labs/foundation
 | :--- | :--- | :--- | :--- | :--- |
 | **Layer 1** | Resolution Pinning | Exact semantic version frozen in lockfile | Range operators (`>=`) flagged as unpinned | Pinned version != Pinned digest (upstream can replace unpinned files) |
 | **Layer 2** | Expected Digest Ownership | Lockfile records expected cryptographic hash | Missing expected SHA-256 rejected by policy | Digest ownership does not verify whether source code is safe |
-| **Layer 3** | Fetched-Byte Integrity | Computed SHA-256 matches expected digest | Tampered byte rejected with `TAMPER DETECTED` | Digest verifies byte immutability, NOT publisher identity |
-| **Layer 4** | Build Reproducibility | Independent rebuilds produce bit-for-bit identical hashes | Non-deterministic build flagged as unverified | Reproducibility does NOT prove source code is non-malicious |
-| **Layer 5** | Signature Verification | Cryptographic signature over archive verified | Forged or invalid signature rejected | Valid signature proves key possession, NOT trustworthiness |
-| **Layer 6** | Signer Identity Binding | Public key mapped to authorized maintainer registry | Unauthorized key rejected by policy | Identity proves who signed, NOT that build was untampered |
-| **Layer 7** | Build/Source Provenance | SLSA v1.2 attestation binding git commit and builder | Subject hash mismatch rejected | Provenance without builder verification is merely unverified metadata |
-| **Layer 8** | Trusted Builder Assumptions| Builder identity checked against approved list | Untrusted / compromised builder rejected | Hardened builder cannot prevent compromised upstream source commits |
+| **Layer 3** | Fetched-Byte Integrity | Computed SHA-256 compared with a trusted expected digest | `[Record actual tamper/match observation]` | Digest match depends on expected-digest ownership and hash assumptions; it does NOT prove publisher identity |
+| **Layer 4** | Build Reproducibility | Policy compares artifact bytes with supplied independent-rebuild bytes | `[Record actual matching/mismatching rebuild observation]` | Matching rebuilds do not rule out malicious source, shared compromised toolchains, or non-independent builds |
+| **Layer 5** | Signature Verification (conceptual layer) | `[Record conceptual public-signature requirement; Core runtime uses a labeled HMAC stand-in only]` | `[Record HMAC stand-in result separately from any real signature evidence]` | HMAC is NOT a digital signature; neither authenticator nor signature proves code trustworthiness |
+| **Layer 6** | Signer Identity Binding | `[Record conceptual signer-identity policy; Core uses a synthetic key-id allowlist paired with the HMAC stand-in]` | `[Record actual synthetic policy result]` | Core key-id policy does not prove real-world signer identity |
+| **Layer 7** | Build/Source Provenance | Core checks a synthetic subset of SLSA-style metadata (statement/predicate/subject/source/builder) | `[Record actual metadata mismatch result]` | Core does NOT verify a real attestation envelope/signature or certify a SLSA level |
+| **Layer 8** | Trusted Builder Assumptions | Synthetic builder id checked against local allowlist | `[Record actual allowlist result]` | A string allowlist does NOT prove real builder isolation, hardening, ephemerality, or attestation authenticity |
 | **Layer 9** | Verifier Policy Enforcement| Gate rejects package failing any required layer | Overall verdict: `REJECT` on violation | Verifier policy requires explicit organizational risk judgment |
 
 ---
@@ -159,7 +160,7 @@ Record the software supply chain verification observations from `labs/foundation
 
 ### Primary Competencies
 - `Judge` (L22-01, L22-02, L22-03): `[Evaluate authentication vs authorization architectures, CSRF vs token trade-offs, and supply chain adoption risk]`
-- `Explain` (L22-01, L22-02): `[Explain why authentication != authorization, why SQL parameterization eliminates injection, and why stateless token revocation requires state]`
+- `Explain` (L22-01, L22-02): `[Explain why authentication != authorization, why parameterized value binding separates data from SQL syntax in supported value positions, and why stateless token revocation requires state]`
 - `Diagnose` (L22-02): `[Diagnose injection points at composition boundaries and identify ambient authority flaws]`
 - `Learn-New-Tech` (L22-03): `[Inspect lockfile specifications, SLSA v1.2 provenance formats, and hash-checking modes]`
 
@@ -181,23 +182,25 @@ Record the software supply chain verification observations from `labs/foundation
 
 Record the implementation-time authority audit for all standards cited:
 
-| Authority / Standard | Specification / Identifier | Date & Formal Status | Checked Date | Claim Bounded by Implementation | Non-Proof / Inference Limit |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Password Storage** | NIST SP 800-63B-4 §3.1.1.2 | July 2025 Final | 2026-09-07 | Salt >= 32 bits; approved KDF (PBKDF2 compute-hard); cost factor policy-dependent | Does not prove password cannot be cracked if short/predictable |
-| **PBKDF2** | NIST SP 800-132 / RFC 8018 | Dec 2010 Final (revision planned) | 2026-09-07 | Compute-hard iteration-based KDF | PBKDF2 is not memory-hard; ASIC acceleration possible |
-| **Argon2id** | RFC 9106 | STABLE | 2026-09-07 | Memory-hard password hashing (current-practice reference) | Not present in standard library; requires capability gating |
-| **OAuth 2.0 Security BCP** | RFC 9700 / BCP 240 | January 2025 Best Current Practice | 2026-09-07 | PKCE MUST for public; ROPC MUST NOT; exact redirect matching | OAuth authorization delegation != user authentication |
-| **OAuth 2.1 Draft** | draft-ietf-oauth-v2-1-15 | Active Internet-Draft (March 2026) | 2026-09-07 | Consolidated OAuth 2.1 specification | Internet-Draft is work in progress; not timeless invariant |
-| **PKCE** | RFC 7636 | STABLE Standards Track | 2026-09-07 | code_verifier and code_challenge S256 binding | Does not protect against client device compromise |
-| **JSON Web Token** | RFC 7519 / RFC 8725 | STABLE Standards Track / BCP | 2026-09-07 | Claims validation, reject alg: none, aud enforcement | Valid signature != issuer trust != resource authorization |
-| **Content Security Policy**| W3C CSP Level 3 | Working Draft (29 July 2026) | 2026-09-07 | Strict nonce-based script execution policy | CSP is defense-in-depth; not substitute for output encoding |
-| **Cookies** | draft-ietf-httpbis-layered-cookies-02 | Active Internet-Draft (21 May 2026) | 2026-09-07 | Layered cookie semantics; SameSite Lax/Strict | Internet-Draft work in progress; SameSite Lax allows GET nav |
-| **Supply Chain Levels** | OpenSSF SLSA v1.2 | Approved (24 November 2025) | 2026-09-07 | Verifiable build provenance schema binding commit & builder | Provenance does not verify source code is bug-free |
-| **Python stdlib** | CPython 3.13 stdlib (`hashlib`, `hmac`, `sqlite3`, `socket`) | Python Standard Library | 2026-09-07 | Parameterized queries, loopback socket binding, fail-closed teardown | Standard library behavior depends on host OS capabilities |
+| Authority / Standard | Specification / Identifier | Date & Formal Status | Checked Date | Claim Bounded by Implementation | Non-Proof / Inference Limit | Rights / Provenance |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Password Storage** | NIST SP 800-63B-4 §3.1.1.2 | July 2025 Final | 2026-09-07 | Salt >= 32 bits and chosen to minimize collisions; approved password hashing scheme; cost factor policy/environment dependent | Random salts are not mathematically guaranteed unique; the record does not make weak passwords unguessable | U.S. Government publication; repository foreign-rights caveat |
+| **PBKDF2** | NIST SP 800-132 / RFC 8018 | Dec 2010 Final; NIST revision planned | 2026-09-07 | PBKDF2 compute-hard KDF route used by stdlib teaching Core | PBKDF2 is not memory-hard; no universal iteration count or hardware rate | NIST U.S. Government publication + IETF Trust terms for RFC 8018 |
+| **Argon2id** | RFC 9106 | Informational RFC, July 2021 | 2026-09-07 | Memory-hard current-practice reference only | Not stdlib Required Core; absence is NOT RUN, not failure | IETF Trust Legal Provisions |
+| **OAuth 2.0 Security BCP** | RFC 9700 / BCP 240 | January 2025 Best Current Practice | 2026-09-07 | Public clients MUST use PKCE; confidential clients are recommended with scoped alternatives; ROPC MUST NOT | OAuth authorization delegation != user authentication | IETF Trust Legal Provisions |
+| **OAuth 2.1 Draft** | draft-ietf-oauth-v2-1-16 | Active Internet-Draft, 3 Sep 2026 | 2026-09-07 | Current work-in-progress OAuth 2.1 consolidation baseline | Internet-Draft is not a timeless invariant and revision number will drift | IETF Trust Legal Provisions |
+| **PKCE** | RFC 7636 | Standards Track | 2026-09-07 | code_verifier / S256 challenge binding under the specified threat model | Does not authenticate client identity or protect a fully compromised client device | IETF Trust Legal Provisions |
+| **OpenID Connect** | OpenID Connect Core 1.0 incorporating errata set 2 | Final / Errata, 15 Dec 2023 | 2026-09-07 | Identity layer on top of OAuth 2.0 used only to explain OAuth != authentication | Required Core does not run a live IdP/OIDC flow | OpenID Foundation specification/IPR terms; linked/paraphrased |
+| **JSON Web Token** | RFC 7519 / RFC 8725 | Standards Track / BCP | 2026-09-07 | Application-selected algorithms and claims validation; TeachingProfile-BearerV1 itself rejects alg:none | RFC 8725 does not make this course-profile alg:none rule a universal theorem; HS256 is HMAC, not digital signature | IETF Trust Legal Provisions |
+| **Content Security Policy** | W3C CSP Level 3 | Working Draft, 29 Jul 2026 | 2026-09-07 | Nonce-based script policy as defense in depth | CSP is not a substitute for context-correct output handling | W3C document license; linked/paraphrased |
+| **Cookies** | draft-ietf-httpbis-layered-cookies-02 | Active Internet-Draft, 21 May 2026 | 2026-09-07 | SameSite semantics used as current draft context | Draft may change; SameSite is not universal CSRF immunity | IETF Trust Legal Provisions |
+| **Supply Chain Levels** | OpenSSF SLSA v1.2 | Approved, 24 Nov 2025 | 2026-09-07 | Provenance v1 / Build Track concepts; Core only validates synthetic metadata/policy | Core does not verify a real attestation signature or certify a builder/SLSA level | Community Specification License 1.0; linked/paraphrased |
+| **Python stdlib** | Python `hashlib`, `hmac`, `sqlite3`, `socket` docs/APIs | Current API family; OQ-BP-006 remains OPEN | 2026-09-07 | Required Core mechanisms/capabilities only | Behavior and availability remain host/runtime dependent; no course-wide CPython pin | PSF License v2 for docs; examples additionally Zero-Clause BSD where applicable |
 
 ### Deterministic Reset Verification
-- Command Run: `python labs/foundations/m22/reset.py`
-- Scratch Cleaned: `labs/foundations/m22/.scratch/` deleted
-- Port Release Verified: Listener socket closed and probe connection refused
-- Idempotence Verified: Second consecutive run completed with 0 errors
-- Disposition: `PASS`
+- Command Run: `[Record exact reset command actually run]`
+- Scratch Cleanup Observation: `[Record actual .scratch state/result]`
+- Port / Server Teardown Observation: `[Record actual listener/thread result from the activity/test, or NOT RUN if not exercised]`
+- Idempotence Observation: `[Record result of a second reset run, or NOT RUN]`
+- Disposition: `[PASS / FAIL / BLOCKED / NOT RUN]`
+- Inference limit: `[State that reset only owns M22 course scratch/cache; it does not prove unrelated host resources are clean]`
