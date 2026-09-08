@@ -1,0 +1,36 @@
+%% FIG-M23-03 — Decision D-015 12-Dimension Technology Evaluation Framework
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    CAND["Candidate Technology Proposal<br/>(Product, Library, or Architecture Component)"] --> D12
+
+    subgraph D12 ["Decision D-015: The 12 Comprehensive Dimensions"]
+        direction TB
+        subgraph G1 ["Core Fit & Semantics"]
+            D1["1. Problem & Requirement Clarity<br/>What exact failure mode or bottleneck does this solve?"]
+            D2["2. Data Model & Access Pattern Fit<br/>Does data access shape match the engine?"]
+            D3["3. Consistency & Durability Guarantees<br/>ACID, eventual consistency, persistence boundaries"]
+        end
+
+        subgraph G2 ["Operational Realities"]
+            D4["4. Failure Modes & Operational Complexity<br/>Cascades, split-brain, memory leaks, on-call burden"]
+            D5["5. Performance & Scalability Boundaries<br/>Quantified bottlenecks, latency floors, throughput knees"]
+            D6["6. Observability & Debuggability<br/>Tracing, metrics, failure introspection difficulty"]
+        end
+
+        subgraph G3 ["Security & Ecosystem Health"]
+            D7["7. Security, Trust & Isolation<br/>Attack surface, credential scope, network boundary"]
+            D8["8. Ecosystem, Maintenance & Longevity<br/>Community health, release cadence, bus factor"]
+            D9["9. Licensing & Governance<br/>Permissive vs copyleft vs source-available (SSPL/BSL)"]
+        end
+
+        subgraph G4 ["Economics, Exit & Trade-Offs"]
+            D10["10. Cost Model: Infrastructure & Human<br/>Cloud billing, RAM footprint, plus on-call & cognitive overhead"]
+            D11["11. Migration & Reversibility / Exit Strategy<br/>Coupling degree, decoupling cost, lock-in remediation"]
+            D12_DIM["12. Alternatives Considered & Explicit Rejection Rationale<br/>Simpler mechanisms: B-Tree index, SQLite, Outbox table"]
+        end
+    end
+
+    D12 --> DEC{"Architectural Decision<br/>(Objective Trade-Off Evaluation)"}
+    DEC -->|"Justified ROI & Manageable Costs"| ADOPT["ADOPT / TRIAL<br/>Bound to explicit scale threshold"]
+    DEC -->|"Unwarranted Complexity / Better Simpler Alternative"| REJECT["REJECT<br/>Valid decision category when evidence supports it.<br/>Reviewer judges rationale quality; machine checks structure only."]
+    DEC -->|"Insufficient Evidence / Premature"| DEFER["DEFER<br/>Re-evaluate when threshold is crossed"]

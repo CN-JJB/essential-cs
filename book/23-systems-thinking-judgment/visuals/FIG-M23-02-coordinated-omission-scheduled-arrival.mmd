@@ -1,0 +1,29 @@
+%% FIG-M23-02 — Coordinated Omission: Scheduled Arrival vs Completion-Coupled Observation
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    subgraph ASSUMPTIONS ["Explicit Workload & Arrival Assumptions"]
+        A1["Workload Assumption: Open System Model<br/>Requests arrive according to an external schedule (e.g. 100 req/s, delta = 10ms),<br/>independent of whether prior requests have completed."]
+    end
+
+    subgraph SERVER ["System Under Test Event"]
+        STALL["Synthetic Stall Event: Server pauses for 50ms at t=5ms"]
+    end
+
+    subgraph NAIVE ["Naive Synchronous Generator (Completion-Coupled / Closed Loop)"]
+        N1["Req 1 sent at t=0ms<br/>Blocks during stall until t=55ms<br/>Recorded Latency: 55ms"]
+        N2["Req 2 sent ONLY after Req 1 returns (at t=55ms)<br/>Completes at t=57ms<br/>Recorded Latency: 2ms!"]
+        N_FAIL["CRITICAL OMISSION:<br/>Client was blocked from issuing Req 2, 3, 4, 5 at their scheduled arrival times.<br/>Queue wait time is completely omitted from the recorded data!<br/>Reported tail latency is deceptively optimistic."]
+        N1 --> N2 --> N_FAIL
+    end
+
+    subgraph SCHEDULED ["Arrival-Scheduled Generator (Open Workload Accounting)"]
+        S1["Req 1: Scheduled t=0ms, Completed t=55ms<br/>Recorded Latency: 55ms"]
+        S2["Req 2: Scheduled t=10ms, Completed t=57ms<br/>Queue Wait: 45ms, Service: 2ms<br/>Recorded Latency: 47ms"]
+        S3["Req 3: Scheduled t=20ms, Completed t=59ms<br/>Queue Wait: 37ms, Service: 2ms<br/>Recorded Latency: 39ms"]
+        S_WIN["HONEST ACCOUNTING:<br/>Latency = T_complete - T_scheduled.<br/>Captures accumulated queue backlog caused by the stall.<br/>True tail degradation is faithfully exposed."]
+        S1 --> S2 --> S3 --> S_WIN
+    end
+
+    ASSUMPTIONS --> SERVER
+    SERVER --> NAIVE
+    SERVER --> SCHEDULED
