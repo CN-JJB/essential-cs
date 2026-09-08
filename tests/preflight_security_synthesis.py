@@ -39,6 +39,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 M21_DIR = REPO_ROOT / "labs" / "foundations" / "m21"
 M22_DIR = REPO_ROOT / "labs" / "foundations" / "m22"
 M23_DIR = REPO_ROOT / "labs" / "foundations" / "m23"
+M24_DIR = REPO_ROOT / "labs" / "foundations" / "m24"
 
 
 def probe_os() -> Dict[str, Any]:
@@ -426,8 +427,84 @@ def probe_m23_scratch_writability() -> Dict[str, Any]:
         }
 
 
+def probe_stdlib_dataclasses_json() -> Dict[str, Any]:
+    """Probes standard library dataclasses, json, and typing for M24."""
+    try:
+        import dataclasses
+        import json
+
+        @dataclasses.dataclass
+        class _Probe:
+            tag: str
+            val: int
+
+        p = _Probe(tag="m24", val=42)
+        s = json.dumps(dataclasses.asdict(p))
+        d = json.loads(s)
+        if d["tag"] == "m24" and d["val"] == 42:
+            return {
+                "available": True,
+                "disposition": "REQUIRED CAPABILITY PASS",
+                "dataclasses": True,
+                "json": True,
+            }
+        raise RuntimeError("dataclasses/json serialization check failed")
+    except Exception as exc:
+        return {
+            "available": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
+def probe_m24_scratch_writability() -> Dict[str, Any]:
+    """Probes scratch writability for course-owned M24 directory."""
+    scratch = M24_DIR / ".scratch"
+    try:
+        scratch.mkdir(parents=True, exist_ok=True)
+        probe_file = scratch / ".preflight_probe.tmp"
+        probe_file.write_text("preflight-m24-writable-check", encoding="utf-8")
+        content = probe_file.read_text(encoding="utf-8")
+        probe_file.unlink()
+        if content == "preflight-m24-writable-check":
+            return {
+                "writable": True,
+                "disposition": "REQUIRED CAPABILITY PASS",
+                "scratch_dir": str(scratch),
+            }
+        raise RuntimeError("Content mismatch in M24 scratch probe")
+    except Exception as exc:
+        return {
+            "writable": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "scratch_dir": str(scratch),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
 def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
     mod = module.upper()
+    if mod == "M24":
+        return {
+            "stage": "S7",
+            "batch": "S7-B4",
+            "module": "M24",
+            "title": "Final System Defense & Pre-Ship Assessment",
+            "os": probe_os(),
+            "python": probe_python(),
+            "capabilities": {
+                "stdlib_dataclasses_json": probe_stdlib_dataclasses_json(),
+                "sqlite3": probe_sqlite3(),
+                "scratch_writability": probe_m24_scratch_writability(),
+            },
+            "policy_invariants": {
+                "OQ_BP_006": "OPEN / UNRESOLVED",
+                "defense_evaluation": "DECLARED IMPLEMENTATION CONTRACT / REVIEWER-REQUIRED (Machine structural check != learner PASS)",
+                "no_fabricated_mechanisms": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
+                "operational_readiness": "DECLARED IMPLEMENTATION CONTRACT / REVIEWER-REQUIRED",
+            },
+        }
+
     if mod == "M23":
         return {
             "stage": "S7",
@@ -561,14 +638,28 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
             "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
         )
 
+    def test_preflight_m24_capabilities(self) -> None:
+        report = collect_preflight_report("M24")
+        self.assertEqual(report["module"], "M24")
+        self.assertEqual(report["batch"], "S7-B4")
+        self.assertEqual(report["capabilities"]["stdlib_dataclasses_json"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["capabilities"]["sqlite3"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
+        self.assertIn("REVIEWER-REQUIRED", report["policy_invariants"]["defense_evaluation"])
+        self.assertEqual(
+            report["policy_invariants"]["no_fabricated_mechanisms"],
+            "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
+        )
+
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Preflight verification for S7 Security Synthesis & Systems Judgment (M21/M22/M23)")
-    parser.add_argument("--module", choices=["M21", "M22", "M23", "all"], default="M21", help="Module capability probe to run")
+    parser = argparse.ArgumentParser(description="Preflight verification for S7 Security Synthesis & Systems Judgment (M21/M22/M23/M24)")
+    parser.add_argument("--module", choices=["M21", "M22", "M23", "M24", "all"], default="M21", help="Module capability probe to run")
     parser.add_argument("--json", action="store_true", help="Emit raw JSON capability report")
     args = parser.parse_args()
 
-    modules = ["M21", "M22", "M23"] if args.module == "all" else [args.module]
+    modules = ["M21", "M22", "M23", "M24"] if args.module == "all" else [args.module]
     reports = [collect_preflight_report(m) for m in modules]
 
     if args.json:

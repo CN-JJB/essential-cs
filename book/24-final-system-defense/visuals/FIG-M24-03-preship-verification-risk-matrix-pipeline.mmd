@@ -1,0 +1,42 @@
+%% FIG-M24-03 — Pre-Ship Verification & Risk-Prioritized Candidate Release Gate Pipeline
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    subgraph INPUT ["Release Candidate Input"]
+        SRC["Candidate Software Release<br/>(Application code, schema migrations, configs, and telemetry rules)"]
+    end
+
+    subgraph RISK_MATRIX ["Risk-Prioritized Evidence Classification (Severity + Criticality + Evidence Gap + Blast Radius)"]
+        direction TB
+        MM["MUST MEASURE<br/>Project-specific empirical questions where simulation/tests cannot establish the needed claim"]
+        MT["MUST TEST<br/>Project-specific invariants/failure paths that can be exercised deterministically"]
+        MI["MUST INSPECT<br/>Project-specific code/config/schema/dependency facts needing human or static review"]
+        AU["ACCEPTABLE UNKNOWN<br/>Explicit bounded uncertainty with rationale, severity/criticality context, and blast radius"]
+    end
+
+    subgraph CONDITIONAL_PIPELINE ["Candidate Release Verification Pipeline"]
+        G1["Candidate Gate 1: Automated Invariant & Regression Tests<br/>(Unit, integration, and security assertion suites pass)"]
+        G2["Candidate Gate 2: Security, Secret & Dependency Audit<br/>(Static verification of credentials, sanitize output, license check)"]
+        G3["Candidate Gate 3: Workload & Resource Measurement<br/>(Empirical confirmation of capacity bounds where required)"]
+        G4["Candidate Gate 4: Deployment Compatibility & Reversal Evaluation<br/>(Analyze code vs database evolution)"]
+        G5["Candidate Gate 5: Telemetry, Observability & Structured Health Check<br/>(Structured logs, correlation IDs, healthz endpoint verification)"]
+
+        G1 --> G2 --> G3 --> G4 --> G5
+    end
+
+    subgraph RECOVERY_STRATEGY ["Conditional Reversal & Recovery Strategy (Evaluated at Gate 4)"]
+        direction TB
+        C_CODE{"What do actual code + schema/data compatibility evidence show?"}
+        R_ROLLBACK["Code Rollback Candidate:<br/>only after code + schema/data compatibility evidence"]
+        R_ROLLFORWARD["Compatibility Gap Found:<br/>choose a project-specific recovery candidate (rollback / roll-forward / reversal / restore / other)<br/>and verify its data/state consequences"]
+        C_CODE -- Compatible under stated evidence --> R_ROLLBACK
+        C_CODE -- Gap / uncertainty --> R_ROLLFORWARD
+    end
+
+    subgraph RELEASE_DECISION ["Controlled Risk Release Decision"]
+        DECISION["Ship / Do Not Ship Determination<br/>(Reviewer-evaluated judgment; no universal arbitrary numeric score;<br/>100% test coverage != safety proof; test PASS != production proof)"]
+    end
+
+    SRC --> RISK_MATRIX
+    RISK_MATRIX --> CONDITIONAL_PIPELINE
+    G4 -.-> RECOVERY_STRATEGY
+    G5 --> RELEASE_DECISION

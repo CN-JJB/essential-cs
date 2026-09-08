@@ -1,0 +1,63 @@
+{
+  "fixture_class": "COURSE-OWNED SYNTHETIC REFERENCE SCENARIO — NOT LEARNER EVIDENCE",
+  "project_name": "Synthetic M24 Candidate Release",
+  "target_architecture": "Synthetic local stateful service; learner must replace with actual project architecture",
+  "risk_matrix": {
+    "must_measure": [
+      {
+        "id": "MM-01",
+        "target": "Memory-growth behavior under the scenario workload",
+        "methodology": "Define a bounded workload and record actual memory observations on the target system",
+        "success_criterion": "Use the project-specific acceptance criterion recorded by the learner; no course-wide percentage is supplied",
+        "severity": "High in this synthetic scenario",
+        "criticality": "A memory-growth fault could terminate a long-running process",
+        "evidence_gap": "No host-specific memory-growth observation is bundled with this synthetic fixture",
+        "blast_radius_if_omitted": "A release may ship without evidence about sustained-memory behavior"
+      }
+    ],
+    "must_test": [
+      {
+        "id": "MT-01",
+        "target": "One project-specific security or data-integrity invariant",
+        "methodology": "Run the actual course/project test that exercises the invariant and record the exact command/result",
+        "success_criterion": "The chosen invariant-specific test must satisfy its explicit project contract",
+        "severity": "Critical if the selected invariant protects authorization or durable data",
+        "criticality": "Failure can cross a trust boundary or violate persistent-state correctness",
+        "evidence_gap": "The synthetic fixture does not know which invariant or test exists in the learner project",
+        "blast_radius_if_omitted": "A critical invariant could be unverified at release time"
+      }
+    ],
+    "must_inspect": [
+      {
+        "id": "MI-01",
+        "target": "Deployment compatibility across application code and persisted schema/data",
+        "methodology": "Inspect the actual candidate change, previous-version access patterns, and recovery evidence",
+        "success_criterion": "Compatibility and recovery rationale are explicit and supported by project evidence",
+        "severity": "High when a release changes persisted state",
+        "criticality": "An incompatible rollback can make recovery slower or corrupt assumptions",
+        "evidence_gap": "The bundled SQLite examples test only their own synthetic DDL/query pairs",
+        "blast_radius_if_omitted": "Operators may discover code/data incompatibility only after a failed deployment"
+      }
+    ],
+    "acceptable_unknown": [
+      {
+        "id": "AU-01",
+        "description": "A clearly bounded failure mode outside the current synthetic release scenario remains unmeasured",
+        "justification": "Acceptable Unknown is included to demonstrate honest scoping; the learner must replace this with a real project-specific uncertainty and reviewer-approved rationale",
+        "severity": "Scenario-dependent",
+        "criticality": "Must be explicitly judged against the actual project scope",
+        "evidence_gap": "No evidence is collected for this out-of-scope condition",
+        "blast_radius_if_omitted": "The unknown could be forgotten rather than consciously accepted"
+      }
+    ]
+  },
+  "deployment_compatibility": {
+    "app_code_compatibility": "Synthetic example: previous and candidate code compatibility must be established from actual API/data behavior; this fixture makes no project claim",
+    "schema_compatibility_analysis": "Synthetic example: a bundled SQLite DDL/query simulation may inform one compatibility question but does not prove whole-application rollback safety",
+    "chosen_recovery_strategy": "Project-specific recovery strategy to be selected only after compatibility and failure-mode analysis",
+    "recovery_justification": "This synthetic fixture demonstrates that the strategy needs an evidence-backed rationale; it does not prescribe rollback, roll-forward, reversal, snapshot, or canary as a universal answer",
+    "data_loss_applicable": true,
+    "stated_data_loss_bound": "UNVERIFIED in this synthetic reference. The learner must derive any bound from the actual persistence configuration and failure model before reviewer PASS.",
+    "reversal_verification_evidence": "Synthetic reference only: run the bounded SQLite compatibility examples, then replace this with actual recovery evidence for the learner system"
+  }
+}

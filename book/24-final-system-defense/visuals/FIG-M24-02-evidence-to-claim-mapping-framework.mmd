@@ -1,0 +1,36 @@
+%% FIG-M24-02 — The Evidence-to-Claim Mapping Framework
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart LR
+    subgraph CLAIM_CHAIN ["Architectural Defense Chain: Claim → Evidence → Artifact → Inference Limit → Challenge → Adaptation"]
+        direction TB
+
+        subgraph S1 ["Example Trace 1: Crash Resilience"]
+            C1["Architectural Claim:<br/>'Committed records survive sudden process termination without corruption.'"]
+            E1["Evidence Category (E05):<br/>Failure & Recovery Proof"]
+            A1["Artifact Reference:<br/>actual code / config / test / measurement chosen by learner"]
+            L1["Inference Limit:<br/>Claim is valid only for the exact tested crash/persistence configuration; no untested HA/failover inference."]
+            CH1["Reviewer Challenge:<br/>'What happens if host OS crashes during multi-statement transaction write?'"]
+            AD1["Reviewer Follow-up:<br/>check actual recovery state, availability bound, persistence configuration, and remaining unknowns."]
+            C1 --> E1 --> A1 --> L1 --> CH1 --> AD1
+        end
+
+        subgraph S2 ["Example Trace 2: Security Perimeter"]
+            C2["Architectural Claim:<br/>'SQL injection is structurally mitigated on all user queries.'"]
+            E2["Evidence Category (E06):<br/>Transport & Application Security"]
+            A2["Artifact Reference:<br/>actual parameterized-query call sites + course/project tests selected by learner"]
+            L2["Inference Limit:<br/>Proves query-parameter separation; does NOT eliminate application logic flaws or privilege escalation."]
+            CH2["Reviewer Challenge:<br/>'What if dynamic ordering requires column name selection from untrusted input?'"]
+            AD2["Adaptation Candidate:<br/>learner selects an identifier-control approach only if this dynamic-schema case exists"]
+            C2 --> E2 --> A2 --> L2 --> CH2 --> AD2
+        end
+
+        subgraph S3 ["Example Trace 3: Service Capacity"]
+            C3["Architectural Claim:<br/>'Single-instance web tier handles scenario baseline throughput within latency budget.'"]
+            E3["Evidence Category (E07/E08):<br/>Empirical Measurement & Cost Model"]
+            A3["Admissible Artifact:<br/>Arrival-scheduled latency histogram + monotonic timer logs + Fermi compute sizing"]
+            L3["Inference Limit:<br/>Empirical result bounded to single-node test environment; not a universal cloud scale guarantee."]
+            CH3["Reviewer Challenge:<br/>'What if client traffic increases 50x and network RTT jumps by 100ms?'"]
+            AD3["Adaptation Candidate:<br/>learner identifies whether a bottleneck shifts, trade-offs, and new evidence needed"]
+            C3 --> E3 --> A3 --> L3 --> CH3 --> AD3
+        end
+    end
