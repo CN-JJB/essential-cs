@@ -246,11 +246,11 @@ def audit_dependency_against_policy(
             sig_ok, sig_msg = verify_layer5_and_6_teaching_authenticator_and_identity_policy(
                 artifact.sha256, authenticator, key_id, shared_secret_for_test, policy.authorized_signer_keys
             )
-            report["layers"]["layer5_6_signature_and_identity"] = sig_ok
+            report["layers"]["layer5_6_teaching_authenticator_and_identity_policy"] = sig_ok
             if not sig_ok:
                 report["reasons"].append(f"Layer 5/6 FAIL: {sig_msg}")
     else:
-        report["layers"]["layer5_6_signature_and_identity"] = "SKIPPED_BY_POLICY"
+        report["layers"]["layer5_6_teaching_authenticator_and_identity_policy"] = "SKIPPED_BY_POLICY"
 
     # Layer 7 & 8: Provenance & Builder
     if policy.require_provenance:
