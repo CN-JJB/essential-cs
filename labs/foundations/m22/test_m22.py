@@ -23,8 +23,8 @@ Verifies:
    - Layer 1 Version Pinning and Layer 2 Expected Digest Ownership
    - Layer 3 Fetched-Byte Integrity (SHA-256 matching and tamper detection)
    - Layer 4 Build Reproducibility (independent build artifact comparison)
-   - Layer 5 & 6 Signature Verification and Signer Identity Binding
-   - Layer 7 & 8 SLSA v1.2 Provenance and Trusted Builder Platform Verification
+   - Layer 5 & 6 conceptual signature/identity separation; Core uses a labeled HMAC stand-in
+   - Layer 7 & 8 synthetic provenance metadata and builder-policy validation
    - Layer 9 Verifier Policy Enforcement (comprehensive pipeline judgment)
 4. M22 Fail-Closed, Idempotent Reset (reset.py)
 """
@@ -300,7 +300,7 @@ class TestL22_03_SoftwareSupplyChain(unittest.TestCase):
 
     def setUp(self) -> None:
         self.signing_secret = b"test-maintainer-key-32-bytes!!"
-        self.key_id = "maintainer-pubkey-alice-2026"
+        self.key_id = "synthetic-maintainer-shared-key-alice-2026"
         self.policy = activity_l22_03.VerifierPolicy()
 
         self.code = b"def core_func(): return 42\n"
@@ -309,34 +309,37 @@ class TestL22_03_SoftwareSupplyChain(unittest.TestCase):
             "trusted-lib", "2.1.0", self.artifact.sha256, "https://repo.local/trusted-lib-2.1.0.tar.gz"
         )
         import hmac, hashlib
-        self.sig = hmac.new(self.signing_secret, self.artifact.sha256.encode("ascii"), hashlib.sha256).digest()
+        self.authenticator = hmac.new(self.signing_secret, self.artifact.sha256.encode("ascii"), hashlib.sha256).digest()
         self.prov = activity_l22_03.SLSAProvenanceV1_2(
             type="https://in-toto.io/Statement/v1",
             predicate_type="https://slsa.dev/provenance/v1",
             subject_name="trusted-lib",
             subject_sha256=self.artifact.sha256,
-            builder_id="https://github.com/actions/runner-hosted@v1",
-            source_repository="https://github.com/example/trusted-lib",
+            builder_id="https://builder.example/essential-cs@v1",
+            source_repository="https://source.example/trusted-lib",
             source_commit="e0f1d2c3b4a5968778695a4b3c2d1e0f12345678",
-            build_type="https://slsa.dev/build-types/github-actions/v1",
+            build_type="https://build.example/types/essential-cs-python/v1",
         )
 
     def test_supply_chain_legitimate_package_accept(self) -> None:
         report = activity_l22_03.audit_dependency_against_policy(
-            self.entry, self.artifact, self.prov, self.sig, self.key_id, self.signing_secret, self.policy
+            self.entry, self.artifact, self.prov, self.authenticator, self.key_id, self.signing_secret, self.policy,
+            rebuild_bytes=self.artifact.content,
         )
         self.assertEqual(report["verdict"], "ACCEPT")
         self.assertEqual(len(report["reasons"]), 0)
         self.assertTrue(report["layers"]["layer1_version_pinned"])
         self.assertTrue(report["layers"]["layer2_expected_digest_present"])
         self.assertTrue(report["layers"]["layer3_byte_integrity"])
+        self.assertTrue(report["layers"]["layer4_reproducibility"])
         self.assertTrue(report["layers"]["layer5_6_signature_and_identity"])
         self.assertTrue(report["layers"]["layer7_8_provenance_and_builder"])
 
     def test_layer3_tampered_byte_rejection(self) -> None:
         tampered_artifact = activity_l22_03.SyntheticArtifact("trusted-lib", "2.1.0", self.code + b"# corrupted\n")
         report = activity_l22_03.audit_dependency_against_policy(
-            self.entry, tampered_artifact, self.prov, self.sig, self.key_id, self.signing_secret, self.policy
+            self.entry, tampered_artifact, self.prov, self.authenticator, self.key_id, self.signing_secret, self.policy,
+            rebuild_bytes=tampered_artifact.content,
         )
         self.assertEqual(report["verdict"], "REJECT")
         self.assertFalse(report["layers"]["layer3_byte_integrity"])
@@ -353,19 +356,35 @@ class TestL22_03_SoftwareSupplyChain(unittest.TestCase):
         bad_rep, _ = activity_l22_03.verify_layer4_reproducibility(build_1, build_diff)
         self.assertFalse(bad_rep)
 
+    def test_layer4_policy_rejects_mismatched_rebuild(self) -> None:
+        report = activity_l22_03.audit_dependency_against_policy(
+            self.entry,
+            self.artifact,
+            self.prov,
+            self.authenticator,
+            self.key_id,
+            self.signing_secret,
+            self.policy,
+            rebuild_bytes=b"independent-rebuild-does-not-match",
+        )
+        self.assertEqual(report["verdict"], "REJECT")
+        self.assertFalse(report["layers"]["layer4_reproducibility"])
+        self.assertTrue(any("Layer 4 FAIL" in r for r in report["reasons"]))
+
     def test_layer7_8_untrusted_builder_rejection(self) -> None:
         rogue_prov = activity_l22_03.SLSAProvenanceV1_2(
             type="https://in-toto.io/Statement/v1",
             predicate_type="https://slsa.dev/provenance/v1",
             subject_name="trusted-lib",
             subject_sha256=self.artifact.sha256,
-            builder_id="https://untrusted-rogue-builder.invalid@v1",
+            builder_id="https://builder.example/untrusted@v1",
             source_repository="https://github.com/example/trusted-lib",
             source_commit="e0f1d2c3b4a5968778695a4b3c2d1e0f12345678",
-            build_type="https://slsa.dev/build-types/custom/v1",
+            build_type="https://build.example/types/untrusted/v1",
         )
         report = activity_l22_03.audit_dependency_against_policy(
-            self.entry, self.artifact, rogue_prov, self.sig, self.key_id, self.signing_secret, self.policy
+            self.entry, self.artifact, rogue_prov, self.authenticator, self.key_id, self.signing_secret, self.policy,
+            rebuild_bytes=self.artifact.content,
         )
         self.assertEqual(report["verdict"], "REJECT")
         self.assertFalse(report["layers"]["layer7_8_provenance_and_builder"])

@@ -79,12 +79,12 @@ class SLSAProvenanceV1_2:
 @dataclasses.dataclass(frozen=True)
 class VerifierPolicy:
     require_hash_pinning: bool = True
-    require_reproducible: bool = False
+    require_reproducible: bool = True
     require_signature: bool = True
     require_provenance: bool = True
-    trusted_builders: Tuple[str, ...] = ("https://github.com/actions/runner-hosted@v1",)
-    trusted_source_repos: Tuple[str, ...] = ("https://github.com/example/trusted-lib",)
-    authorized_signer_keys: Tuple[str, ...] = ("maintainer-pubkey-alice-2026",)
+    trusted_builders: Tuple[str, ...] = ("https://builder.example/essential-cs@v1",)
+    trusted_source_repos: Tuple[str, ...] = ("https://source.example/trusted-lib",)
+    authorized_signer_keys: Tuple[str, ...] = ("synthetic-maintainer-shared-key-alice-2026",)
 
 
 # -----------------------------------------------------------------------------
@@ -118,29 +118,32 @@ def verify_layer4_reproducibility(build1_bytes: bytes, build2_bytes: bytes) -> T
     return False, f"Build NOT reproducible: build 1 ({hash1[:12]}...) != build 2 ({hash2[:12]}...)"
 
 
-def verify_layer5_and_6_signature_and_identity(
+def verify_layer5_and_6_teaching_authenticator_and_identity_policy(
     artifact_sha256: str,
-    signature_bytes: bytes,
-    signing_key_id: str,
-    signing_secret_for_test: bytes,
-    authorized_keys: Tuple[str, ...],
+    authenticator_bytes: bytes,
+    key_id: str,
+    shared_secret_for_test: bytes,
+    authorized_key_ids: Tuple[str, ...],
 ) -> Tuple[bool, str]:
     """
-    Layer 5 (Signature Verification) & Layer 6 (Signer Identity Binding).
+    Teaching stand-in for Layer 5/6 policy ordering.
 
-    Verifies cryptographic signature using authorized public/shared key.
-    NON-GUARANTEE: Valid signature proves key possession, NOT organizational trustworthiness!
+    IMPORTANT: Required Core uses HMAC because it is available in the Python stdlib.
+    HMAC is NOT a public-key digital signature and cannot uniquely attribute which
+    shared-secret holder created a tag. This function only demonstrates that a
+    cryptographic authenticator and a separate key-identity/adoption policy are
+    distinct gates; it is not machine evidence for real signature verification.
     """
     # Check Layer 6: Signer Identity Binding
-    if signing_key_id not in authorized_keys:
-        return False, f"Signer identity rejected: key '{signing_key_id}' is not in authorized maintainer registry"
+    if key_id not in authorized_key_ids:
+        return False, f"Key identity rejected: key '{key_id}' is not in the synthetic authorized-key policy"
 
-    # Check Layer 5: Cryptographic Signature Verification
-    expected_sig = hmac.new(signing_secret_for_test, artifact_sha256.encode("ascii"), hashlib.sha256).digest()
-    if not hmac.compare_digest(expected_sig, signature_bytes):
-        return False, f"Cryptographic signature verification failed for key '{signing_key_id}'"
+    # Core stand-in: keyed HMAC authentication, not digital-signature verification.
+    expected_tag = hmac.new(shared_secret_for_test, artifact_sha256.encode("ascii"), hashlib.sha256).digest()
+    if not hmac.compare_digest(expected_tag, authenticator_bytes):
+        return False, f"Synthetic HMAC authenticator failed for key id '{key_id}'"
 
-    return True, f"Signature verified and bound to authorized maintainer '{signing_key_id}'"
+    return True, f"Synthetic HMAC authenticator matched and key id '{key_id}' passed local policy"
 
 
 def verify_layer7_and_8_provenance_and_builder(
@@ -152,9 +155,18 @@ def verify_layer7_and_8_provenance_and_builder(
     """
     Layer 7 (Build/Source Provenance) & Layer 8 (Trusted Builder Assumptions).
 
-    Verifies SLSA v1.2 provenance attestation.
-    NON-GUARANTEE: Provenance is meaningless without verifier policy enforcing trusted builders!
+    Validates a course-owned subset of SLSA v1.2-like provenance metadata against policy.
+
+    This does NOT verify an attestation envelope/signature and does NOT certify a real
+    builder at any SLSA level. It checks synthetic subject/type/builder/source fields
+    so learners can separate metadata binding from verifier trust policy.
     """
+    # 0. Basic schema/profile identifiers for the bounded synthetic representation
+    if provenance.type != "https://in-toto.io/Statement/v1":
+        return False, f"Unexpected statement type: '{provenance.type}'"
+    if provenance.predicate_type != "https://slsa.dev/provenance/v1":
+        return False, f"Unexpected provenance predicate type: '{provenance.predicate_type}'"
+
     # 1. Subject digest binding
     if not hmac.compare_digest(provenance.subject_sha256, artifact_sha256):
         return False, f"Provenance subject mismatch: attestation is for '{provenance.subject_sha256[:12]}...', but artifact is '{artifact_sha256[:12]}...'"
@@ -167,17 +179,18 @@ def verify_layer7_and_8_provenance_and_builder(
     if provenance.source_repository not in trusted_source_repos:
         return False, f"Untrusted source repository: '{provenance.source_repository}' does not match official repo"
 
-    return True, f"SLSA v1.2 provenance verified: built on '{provenance.builder_id}' from repo '{provenance.source_repository}' @ commit '{provenance.source_commit[:8]}'"
+    return True, f"Synthetic provenance metadata matched local builder/source policy: builder='{provenance.builder_id}', source='{provenance.source_repository}', commit='{provenance.source_commit[:8]}'"
 
 
 def audit_dependency_against_policy(
     entry: LockfileEntry,
     artifact: SyntheticArtifact,
     provenance: Optional[SLSAProvenanceV1_2],
-    signature: Optional[bytes],
-    signing_key_id: Optional[str],
-    signing_secret_for_test: bytes,
+    authenticator: Optional[bytes],
+    key_id: Optional[str],
+    shared_secret_for_test: bytes,
     policy: VerifierPolicy,
+    rebuild_bytes: Optional[bytes] = None,
 ) -> Dict[str, Any]:
     """
     Layer 9: Verifier Policy Enforcement.
@@ -211,14 +224,27 @@ def audit_dependency_against_policy(
     if not l3_ok:
         report["reasons"].append(f"Layer 3 FAIL: {l3_msg}")
 
+    # Layer 4: Reproducibility is part of the policy path when required.
+    if policy.require_reproducible:
+        if rebuild_bytes is None:
+            report["layers"]["layer4_reproducibility"] = False
+            report["reasons"].append("Layer 4 FAIL: Independent rebuild bytes were not supplied")
+        else:
+            l4_ok, l4_msg = verify_layer4_reproducibility(artifact.content, rebuild_bytes)
+            report["layers"]["layer4_reproducibility"] = l4_ok
+            if not l4_ok:
+                report["reasons"].append(f"Layer 4 FAIL: {l4_msg}")
+    else:
+        report["layers"]["layer4_reproducibility"] = "SKIPPED_BY_POLICY"
+
     # Layer 5 & 6: Signature & Identity Binding
     if policy.require_signature:
-        if not signature or not signing_key_id:
+        if not authenticator or not key_id:
             report["layers"]["layer5_6_signature_and_identity"] = False
-            report["reasons"].append("Layer 5/6 FAIL: Signature or signer identity missing")
+            report["reasons"].append("Layer 5/6 FAIL: Teaching authenticator or key identity missing")
         else:
-            sig_ok, sig_msg = verify_layer5_and_6_signature_and_identity(
-                artifact.sha256, signature, signing_key_id, signing_secret_for_test, policy.authorized_signer_keys
+            sig_ok, sig_msg = verify_layer5_and_6_teaching_authenticator_and_identity_policy(
+                artifact.sha256, authenticator, key_id, shared_secret_for_test, policy.authorized_signer_keys
             )
             report["layers"]["layer5_6_signature_and_identity"] = sig_ok
             if not sig_ok:
@@ -260,7 +286,7 @@ def run_demonstration() -> None:
     print("=" * 78)
 
     signing_secret = b"teaching-package-signing-key-32b"
-    key_id = "maintainer-pubkey-alice-2026"
+    key_id = "synthetic-maintainer-shared-key-alice-2026"
     policy = VerifierPolicy()
 
     # 1. Create legitimate package
@@ -269,7 +295,7 @@ def run_demonstration() -> None:
     lock_entry = LockfileEntry("trusted-auth-lib", "1.4.0", legit_artifact.sha256, "https://pypi.local/packages/1.4.0.tar.gz")
 
     # Sign artifact
-    signature = hmac.new(signing_secret, legit_artifact.sha256.encode("ascii"), hashlib.sha256).digest()
+    authenticator = hmac.new(signing_secret, legit_artifact.sha256.encode("ascii"), hashlib.sha256).digest()
 
     # Provenance attestation
     prov = SLSAProvenanceV1_2(
@@ -277,15 +303,16 @@ def run_demonstration() -> None:
         predicate_type="https://slsa.dev/provenance/v1",
         subject_name="trusted-auth-lib",
         subject_sha256=legit_artifact.sha256,
-        builder_id="https://github.com/actions/runner-hosted@v1",
-        source_repository="https://github.com/example/trusted-lib",
+        builder_id="https://builder.example/essential-cs@v1",
+        source_repository="https://source.example/trusted-lib",
         source_commit="a1b2c3d4e5f678901234567890abcdef12345678",
-        build_type="https://slsa.dev/build-types/github-actions/v1",
+        build_type="https://build.example/types/essential-cs-python/v1",
     )
 
     print("\n[1] Auditing Legitimate Package against 9-Layer Policy:")
     report_legit = audit_dependency_against_policy(
-        lock_entry, legit_artifact, prov, signature, key_id, signing_secret, policy
+        lock_entry, legit_artifact, prov, authenticator, key_id, signing_secret, policy,
+        rebuild_bytes=legit_artifact.content,
     )
     print(f"    Verdict: {report_legit['verdict']}")
     print(f"    Layers:  {json.dumps(report_legit['layers'], indent=2)}")
@@ -297,7 +324,8 @@ def run_demonstration() -> None:
     tampered_artifact = SyntheticArtifact("trusted-auth-lib", "1.4.0", tampered_code)
 
     report_tampered = audit_dependency_against_policy(
-        lock_entry, tampered_artifact, prov, signature, key_id, signing_secret, policy
+        lock_entry, tampered_artifact, prov, authenticator, key_id, signing_secret, policy,
+        rebuild_bytes=tampered_artifact.content,
     )
     print(f"    Verdict: {report_tampered['verdict']}")
     print(f"    Reasons: {report_tampered['reasons']}")
@@ -305,19 +333,20 @@ def run_demonstration() -> None:
     assert any("Layer 3 FAIL" in r for r in report_tampered["reasons"])
 
     # 3. Untrusted builder attack (Compromised CI runner)
-    print("\n[3] Simulating Untrusted Builder Platform:")
+    print("\n[3] Simulating Untrusted Builder Metadata under Local Policy:")
     rogue_prov = SLSAProvenanceV1_2(
         type="https://in-toto.io/Statement/v1",
         predicate_type="https://slsa.dev/provenance/v1",
         subject_name="trusted-auth-lib",
         subject_sha256=legit_artifact.sha256,
-        builder_id="https://compromised-untrusted-builder.xyz@v1",
+        builder_id="https://builder.example/untrusted@v1",
         source_repository="https://github.com/example/trusted-lib",
         source_commit="a1b2c3d4e5f678901234567890abcdef12345678",
-        build_type="https://slsa.dev/build-types/custom/v1",
+        build_type="https://build.example/types/untrusted/v1",
     )
     report_rogue_builder = audit_dependency_against_policy(
-        lock_entry, legit_artifact, rogue_prov, signature, key_id, signing_secret, policy
+        lock_entry, legit_artifact, rogue_prov, authenticator, key_id, signing_secret, policy,
+        rebuild_bytes=legit_artifact.content,
     )
     print(f"    Verdict: {report_rogue_builder['verdict']}")
     print(f"    Reasons: {report_rogue_builder['reasons']}")

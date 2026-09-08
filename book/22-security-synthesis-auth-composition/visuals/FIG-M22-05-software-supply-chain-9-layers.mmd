@@ -5,10 +5,10 @@ flowchart TB
     L2["Layer 2: Expected Digest Ownership<br/>Lockfile records expected cryptographic digests governed by trusted repo<br/><i>Non-guarantee: does not verify whether source code is non-malicious</i>"]
     L3["Layer 3: Fetched-Byte Integrity<br/>SHA-256 hash of downloaded artifact matches recorded expected digest<br/><i>Non-guarantee: digest proves byte immutability, NOT publisher identity</i>"]
     L4["Layer 4: Build Reproducibility<br/>Independent rebuild from source produces bit-for-bit identical binary artifact<br/><i>Non-guarantee: reproducibility does not prove source code is safe or bug-free</i>"]
-    L5["Layer 5: Signature Verification<br/>Cryptographic signature over package archive verified via public key<br/><i>Non-guarantee: valid signature proves key possession, NOT trustworthiness</i>"]
+    L5["Layer 5: Signature Verification (conceptual layer)<br/>Real system: public-key signature verified<br/>Core fixture: labeled HMAC stand-in only<br/><i>Non-guarantee: HMAC is not a digital signature; signature/authenticator != trustworthiness</i>"]
     L6["Layer 6: Signer Identity Binding<br/>Public key linked to authenticated maintainer identity (X.509 / Sigstore)<br/><i>Non-guarantee: identity proves who signed, NOT that build was untampered</i>"]
-    L7["Layer 7: Build/Source Provenance<br/>Verifiable attestation binding artifact SHA-256, source git commit, and builder (SLSA v1.2)<br/><i>Non-guarantee: provenance is merely metadata without a trusted builder</i>"]
-    L8["Layer 8: Trusted Builder Assumptions<br/>Build executes on an isolated, hardened, authenticated build infrastructure<br/><i>Non-guarantee: builder cannot protect against compromised upstream source commits</i>"]
+    L7["Layer 7: Build/Source Provenance<br/>SLSA-style metadata binds subject/source/builder claims; real use also verifies attestation authenticity<br/><i>Non-guarantee: Core metadata allowlist is not real attestation verification</i>"]
+    L8["Layer 8: Trusted Builder Assumptions<br/>Verifier requires builder properties/identity under policy<br/><i>Non-guarantee: a synthetic builder-id allowlist does not prove real isolation or hardening</i>"]
     L9["Layer 9: Verifier Policy Enforcement<br/>Local deployment gate rejects any dependency failing provenance, builder, or integrity criteria<br/><i>Non-guarantee: verifier policy requires human judgment on acceptable risk thresholds</i>"]
 
     L1 --> L2 --> L3 --> L4 --> L5 --> L6 --> L7 --> L8 --> L9
