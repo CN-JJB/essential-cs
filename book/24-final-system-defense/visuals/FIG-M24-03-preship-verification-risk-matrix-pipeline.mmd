@@ -5,12 +5,12 @@ flowchart TB
         SRC["Candidate Software Release<br/>(Application code, schema migrations, configs, and telemetry rules)"]
     end
 
-    subgraph RISK_MATRIX ["Risk-Prioritized Evidence Classification (Tied to Severity & Blast Radius)"]
+    subgraph RISK_MATRIX ["Risk-Prioritized Evidence Classification (Severity + Criticality + Evidence Gap + Blast Radius)"]
         direction TB
-        MM["MUST MEASURE (Empirical Verification)<br/>• Steady-state arrival latency percentiles under modeled load<br/>• Memory RSS growth and leak detection during burn-in<br/>• Resource saturation thresholds (CPU, socket pool, disk I/O)"]
-        MT["MUST TEST (Automated Invariant Gates)<br/>• Safety and correctness invariants under automated regression<br/>• Error handling, retries, and timeout fail-closed behavior<br/>• Token validity, session revocation, and boundary enforcement"]
-        MI["MUST INSPECT (Manual & Static Audits)<br/>• Secret leakage in configs, git history, and runtime logs<br/>• Database migration backward compatibility & lock acquisition<br/>• External dependency integrity and supply chain pin audit"]
-        AU["ACCEPTABLE UNKNOWN (Documented & Bounded Residual Risks)<br/>• Multi-hour upstream cloud provider zone outage (out of current project scope)<br/>• Behavior under extreme physical hardware fault (documented single-node limit)"]
+        MM["MUST MEASURE<br/>Project-specific empirical questions where simulation/tests cannot establish the needed claim"]
+        MT["MUST TEST<br/>Project-specific invariants/failure paths that can be exercised deterministically"]
+        MI["MUST INSPECT<br/>Project-specific code/config/schema/dependency facts needing human or static review"]
+        AU["ACCEPTABLE UNKNOWN<br/>Explicit bounded uncertainty with rationale, severity/criticality context, and blast radius"]
     end
 
     subgraph CONDITIONAL_PIPELINE ["Candidate Release Verification Pipeline"]
@@ -25,11 +25,11 @@ flowchart TB
 
     subgraph RECOVERY_STRATEGY ["Conditional Reversal & Recovery Strategy (Evaluated at Gate 4)"]
         direction TB
-        C_CODE{"Is deployment backward-compatible with database schema?"}
+        C_CODE{"What do actual code + schema/data compatibility evidence show?"}
         R_ROLLBACK["Code Rollback Candidate:<br/>only after code + schema/data compatibility evidence"]
-        R_ROLLFORWARD["Destructive Schema Change Detected:<br/>Code rollback alone causes crash/corruption.<br/>Strategy requires Roll-Forward, Migration Reversal, or Snapshot Recovery.<br/>State explicit, verifiable data-loss bound (e.g., zero loss for committed data, or bounded window)."]
-        C_CODE -- Yes (Expand phase or additive) --> R_ROLLBACK
-        C_CODE -- No (Contract phase or destructive alter) --> R_ROLLFORWARD
+        R_ROLLFORWARD["Compatibility Gap Found:<br/>choose a project-specific recovery candidate (rollback / roll-forward / reversal / restore / other)<br/>and verify its data/state consequences"]
+        C_CODE -- Compatible under stated evidence --> R_ROLLBACK
+        C_CODE -- Gap / uncertainty --> R_ROLLFORWARD
     end
 
     subgraph RELEASE_DECISION ["Controlled Risk Release Decision"]

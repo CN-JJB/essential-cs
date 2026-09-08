@@ -7,7 +7,7 @@ flowchart TB
 
     subgraph FLOW ["I. Flow Traces (Dynamic Path Analysis)"]
         T1["1. Request Trace<br/>Client interaction → transport → OS socket → HTTP parser → handler → storage → response path"]
-        T2["2. Data & State Trace<br/>Lifecycle of mutations from memory buffers to persistent storage (WAL/fsync)"]
+        T2["2. Data & State Trace<br/>Actual volatile/durable/config state transitions; persistence mechanism is project-specific"]
         T3["3. Control & Authority Trace<br/>Call graphs, identity verification, authorization checks, and privilege elevation"]
     end
 
@@ -20,8 +20,8 @@ flowchart TB
 
     subgraph RESILIENCE ["III. Resilience & Empirical Evidence (Failure & Measurement)"]
         T8["8. Failure & Risk Walkthrough<br/>Single points of failure, crash recovery points, and unhandled failure domains"]
-        T9["9. Security & Privacy Decisions<br/>CSPRNG nonces, password hashing (PBKDF2/Argon2), query parameterization"]
-        T10["10. Measurements & Performance Evidence<br/>Question-driven latency distributions under open arrival; coordinated omission defense"]
+        T9["9. Security & Privacy Decisions<br/>Only controls actually implemented/evidenced in the learner system"]
+        T10["10. Measurements & Performance Evidence<br/>Question-driven workload/arrival model, observations, and inference limits"]
         T11["11. Cost & Scale Estimates<br/>Fermi sizing bounds for CPU, RAM, storage growth, and network egress"]
     end
 

@@ -8,19 +8,19 @@ flowchart LR
             C1["Architectural Claim:<br/>'Committed records survive sudden process termination without corruption.'"]
             E1["Evidence Category (E05):<br/>Failure & Recovery Proof"]
             A1["Artifact Reference:<br/>actual code / config / test / measurement chosen by learner"]
-            L1["Inference Limit:<br/>Guarantees single-host crash consistency; provides ZERO multi-region HA or automated failover."]
+            L1["Inference Limit:<br/>Claim is valid only for the exact tested crash/persistence configuration; no untested HA/failover inference."]
             CH1["Reviewer Challenge:<br/>'What happens if host OS crashes during multi-statement transaction write?'"]
-            AD1["Coherent Adaptation:<br/>Recovery verifies WAL header rollback; acknowledges availability is 0 until process restarts."]
+            AD1["Reviewer Follow-up:<br/>check actual recovery state, availability bound, persistence configuration, and remaining unknowns."]
             C1 --> E1 --> A1 --> L1 --> CH1 --> AD1
         end
 
         subgraph S2 ["Example Trace 2: Security Perimeter"]
             C2["Architectural Claim:<br/>'SQL injection is structurally mitigated on all user queries.'"]
             E2["Evidence Category (E06):<br/>Transport & Application Security"]
-            A2["Admissible Artifact:<br/>Parameterized query driver calls + AST/syntax test suite rejecting concatenated SQL"]
+            A2["Artifact Reference:<br/>actual parameterized-query call sites + course/project tests selected by learner"]
             L2["Inference Limit:<br/>Proves query-parameter separation; does NOT eliminate application logic flaws or privilege escalation."]
             CH2["Reviewer Challenge:<br/>'What if dynamic ordering requires column name selection from untrusted input?'"]
-            AD2["Coherent Adaptation:<br/>Introduce strict allowlist validation for schema identifiers; verify rejected inputs fail closed."]
+            AD2["Adaptation Candidate:<br/>learner selects an identifier-control approach only if this dynamic-schema case exists"]
             C2 --> E2 --> A2 --> L2 --> CH2 --> AD2
         end
 
