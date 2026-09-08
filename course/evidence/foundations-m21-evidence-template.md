@@ -78,6 +78,11 @@ Fill in the primitive selection matrix evaluated in `labs/foundations/m21/activi
 | **5. Ephemeral TLS traffic key establishment** | `[Record required property]` | `[Record chosen primitive]` | `[Record incorrect trap]` | `[Explain key agreement != peer authentication; FS mode scope]` |
 | **6. Password-verifier boundary (out of M21 implementation scope)** | `[Record why offline-guess resistance differs from a fast digest]` | `[Record: NOT IMPLEMENTED HERE — belongs to M22/L22-01]` | `[Record why fast unkeyed SHA-256 is a tempting but incorrect verifier choice]` | `[Explain that M21 freezes no password schema, algorithm choice, or work factor]` |
 
+### Required role-boundary notes
+- Nonce uniqueness vs. unpredictability: `[Record the algorithm/profile-specific distinction; do not state a universal nonce rule]`
+- CSPRNG vs. simulation PRNG: `[Explain why security secrets use a CSPRNG such as secrets, while reproducible simulation PRNGs serve a different purpose]`
+- Secret/key lifetime assumptions: `[Record what security claim depends on the key remaining secret/correctly used, and state that M21 freezes no universal rotation interval]`
+
 ---
 
 ## F — Unkeyed Hash vs. Keyed MAC Experimental Evidence

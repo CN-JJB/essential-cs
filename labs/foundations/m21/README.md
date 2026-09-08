@@ -18,6 +18,9 @@ This directory contains executable, course-owned fixtures and worked activities 
 - **Signature != Unconditional Non-Repudiation**: Non-repudiation is a system/legal property, not an intrinsic mathematical guarantee of a primitive.
 - **Encryption != Authenticity**: Confidentiality (encryption) without authenticity is malleable. Network protocols require AEAD (e.g. AES-GCM) or Encrypt-then-MAC.
 - **Key Agreement != Peer Authentication**: Diffie-Hellman establishes shared secret traffic keys but does not authenticate endpoint identity on its own.
+- **Nonce Uniqueness != Unpredictability**: Nonce requirements are algorithm/profile-specific; never universalize uniqueness and unpredictability into one rule.
+- **CSPRNG != Simulation PRNG**: Security-sensitive synthetic secrets use `secrets`; reproducible simulation PRNGs are not interchangeable with a security RNG.
+- **Key Lifetime Is an Assumption**: Secret/key compromise changes what authenticity/confidentiality claims remain valid; M21 freezes no universal rotation interval.
 - **compare_digest API Contract**: `hmac.compare_digest` is used per language documentation to mitigate content-based short-circuiting timing attacks; it does not claim physical constant-time hardware execution.
 - **Zero Real Secrets**: All keys, nonces, and messages are synthetic in-memory byte strings.
 - **Password Hashing Boundary**: Fast hashes (SHA-256) fail as password verifiers. Password verifiers and slow/memory-hard hashing schemas belong to Module M22 (`L22-01`).
