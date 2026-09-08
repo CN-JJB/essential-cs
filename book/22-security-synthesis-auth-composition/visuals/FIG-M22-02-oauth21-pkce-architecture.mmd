@@ -1,0 +1,31 @@
+%% FIG-M22-02 — OAuth 2.1 Authorization Code Flow with PKCE Architecture
+%% Original, course-owned, editable Mermaid source for Essential CS.
+sequenceDiagram
+    autonumber
+    actor User as Resource Owner (User)
+    participant Client as Client Application (SPA / Mobile / Web)
+    participant Browser as User Agent (Browser)
+    participant AS as Authorization Server (IdP / AS)
+    participant RS as Resource Server (API)
+
+    Note over Client: 1. Generate high-entropy code_verifier<br/>Compute code_challenge = BASE64URL(SHA256(code_verifier))<br/>Store code_verifier securely in local session state
+
+    Client->>Browser: 2. Redirect to /authorize with:<br/>client_id, redirect_uri, scope, state,<br/>code_challenge, code_challenge_method=S256
+    Browser->>AS: 3. Forward authorization request
+    AS->>User: 4. Authenticate user & display consent prompt
+    User->>AS: 5. User submits credentials & approves scope
+    AS->>Browser: 6. 302 Redirect to redirect_uri with:<br/>authorization_code, state
+    Browser->>Client: 7. Forward authorization_code & state
+
+    Note over Client: 8. Verify state matches local state<br/>Prepare token exchange request
+
+    Client->>AS: 9. POST /token (backchannel / direct)<br/>grant_type=authorization_code, code,<br/>redirect_uri, client_id, code_verifier
+
+    Note over AS: 10. PKCE Verification:<br/>Compute SHA256(code_verifier)<br/>Assert SHA256(code_verifier) == stored code_challenge<br/>(Binds code exchange to original client)
+
+    AS->>Client: 11. Return JSON response:<br/>access_token, token_type=Bearer, expires_in, (refresh_token)
+
+    Client->>RS: 12. GET /api/resource<br/>Authorization: Bearer <access_token>
+    RS->>Client: 13. Verify token claims & return resource data
+
+    Note over Client,RS: Core Boundary: OAuth is authorization delegation, not authentication by itself!<br/>PKCE prevents authorization code interception on public clients (RFC 9700 / RFC 7636).

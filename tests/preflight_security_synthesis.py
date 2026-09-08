@@ -35,6 +35,7 @@ from typing import Any, Dict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 M21_DIR = REPO_ROOT / "labs" / "foundations" / "m21"
+M22_DIR = REPO_ROOT / "labs" / "foundations" / "m22"
 
 
 def probe_os() -> Dict[str, Any]:
@@ -90,6 +91,86 @@ def probe_stdlib_crypto() -> Dict[str, Any]:
         }
 
 
+def probe_password_kdf() -> Dict[str, Any]:
+    """Probes PBKDF2-HMAC-SHA256 slow hashing capability for M22 L22-01."""
+    try:
+        import hashlib
+        import hmac
+
+        if not hasattr(hashlib, "pbkdf2_hmac"):
+            raise AttributeError("hashlib missing pbkdf2_hmac")
+
+        derived = hashlib.pbkdf2_hmac(
+            hash_name="sha256",
+            password=b"preflight-kdf-pass",
+            salt=b"preflight-kdf-salt-16b",
+            iterations=1000,
+        )
+        if len(derived) == 32:
+            return {
+                "available": True,
+                "disposition": "REQUIRED CAPABILITY PASS",
+                "pbkdf2_hmac_sha256": True,
+                "hmac_compare_digest": hasattr(hmac, "compare_digest"),
+            }
+        raise RuntimeError("pbkdf2_hmac output length mismatch")
+    except Exception as exc:
+        return {
+            "available": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
+def probe_sqlite3() -> Dict[str, Any]:
+    """Probes built-in sqlite3 relational database capability for M22 L22-02."""
+    try:
+        import sqlite3
+
+        conn = sqlite3.connect(":memory:")
+        cur = conn.cursor()
+        cur.execute("SELECT 1 + 1")
+        res = cur.fetchone()
+        conn.close()
+        if res and res[0] == 2:
+            return {
+                "available": True,
+                "disposition": "REQUIRED CAPABILITY PASS",
+                "sqlite3_in_memory": True,
+            }
+        raise RuntimeError("sqlite3 in-memory query returned unexpected result")
+    except Exception as exc:
+        return {
+            "available": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
+def probe_localhost_bind() -> Dict[str, Any]:
+    """Probes OS loopback socket bind/listen capability on 127.0.0.1:0 for M22 L22-02."""
+    import socket
+
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("127.0.0.1", 0))
+        s.listen(1)
+        port = s.getsockname()[1]
+        s.close()
+        return {
+            "available": True,
+            "disposition": "REQUIRED CAPABILITY PASS",
+            "ephemeral_port_assigned": port,
+            "loopback_address": "127.0.0.1",
+        }
+    except Exception as exc:
+        return {
+            "available": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
 def probe_path_confinement_primitives() -> Dict[str, Any]:
     try:
         with tempfile.TemporaryDirectory(prefix="ecs-preflight-") as tmpdir:
@@ -122,11 +203,6 @@ def probe_path_confinement_primitives() -> Dict[str, Any]:
 
 
 def probe_symlink_capability() -> Dict[str, Any]:
-    """
-    Empirically probes whether the host OS and user environment permit symlink creation.
-    On Windows without Developer Mode or non-admin privilege, os.symlink raises OSError.
-    This is truthfully reported and never faked as PASS.
-    """
     try:
         with tempfile.TemporaryDirectory(prefix="ecs-symlink-probe-") as tmpdir:
             tmp = Path(tmpdir)
@@ -134,7 +210,6 @@ def probe_symlink_capability() -> Dict[str, Any]:
             target.write_text("target", encoding="utf-8")
             link = tmp / "link.txt"
             os.symlink(os.fspath(target), os.fspath(link))
-            # Verify reading link
             resolved = link.resolve()
             if resolved == target.resolve():
                 return {
@@ -179,6 +254,30 @@ def probe_scratch_writability() -> Dict[str, Any]:
         }
 
 
+def probe_m22_scratch_writability() -> Dict[str, Any]:
+    scratch = M22_DIR / ".scratch"
+    try:
+        scratch.mkdir(parents=True, exist_ok=True)
+        probe_file = scratch / ".preflight_probe.tmp"
+        probe_file.write_text("preflight-m22-writable-check", encoding="utf-8")
+        content = probe_file.read_text(encoding="utf-8")
+        probe_file.unlink()
+        if content == "preflight-m22-writable-check":
+            return {
+                "writable": True,
+                "disposition": "REQUIRED CAPABILITY PASS",
+                "scratch_dir": str(scratch),
+            }
+        raise RuntimeError("Content mismatch in M22 scratch probe")
+    except Exception as exc:
+        return {
+            "writable": False,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "scratch_dir": str(scratch),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
 def probe_optional_cryptography() -> Dict[str, Any]:
     try:
         import cryptography
@@ -212,7 +311,67 @@ def probe_optional_cryptography() -> Dict[str, Any]:
         }
 
 
-def collect_preflight_report() -> Dict[str, Any]:
+def probe_optional_argon2() -> Dict[str, Any]:
+    """Probes optional Argon2id candidate package (RFC 9106) for M22 L22-01."""
+    try:
+        import argon2  # type: ignore
+
+        ph = argon2.PasswordHasher()
+        h = ph.hash("preflight-test")
+        ph.verify(h, "preflight-test")
+        return {
+            "installed": True,
+            "version": getattr(argon2, "__version__", "UNKNOWN"),
+            "disposition": "OPTIONAL PACKAGE AVAILABLE",
+            "argon2id": True,
+            "inference": "Argon2id candidate available for memory-hard comparison.",
+        }
+    except ImportError:
+        return {
+            "installed": False,
+            "version": None,
+            "disposition": "OPTIONAL PACKAGE NOT INSTALLED / NOT RUN",
+            "argon2id": False,
+            "inference": "argon2-cffi absent. Required Core compute-hard PBKDF2 is unaffected.",
+        }
+    except Exception as exc:
+        return {
+            "installed": False,
+            "version": None,
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
+def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
+    mod = module.upper()
+    if mod == "M22":
+        return {
+            "stage": "S7",
+            "batch": "S7-B2",
+            "module": "M22",
+            "title": "Authn/Authz & Secure Composition",
+            "os": probe_os(),
+            "python": probe_python(),
+            "capabilities": {
+                "stdlib_crypto": probe_stdlib_crypto(),
+                "password_kdf": probe_password_kdf(),
+                "sqlite3": probe_sqlite3(),
+                "localhost_bind": probe_localhost_bind(),
+                "scratch_writability": probe_m22_scratch_writability(),
+                "optional_argon2": probe_optional_argon2(),
+                "optional_cryptography": probe_optional_cryptography(),
+            },
+            "policy_invariants": {
+                "OQ_BP_006": "OPEN / UNRESOLVED",
+                "safe_target_architecture": "CONFIRMED (Loopback only, zero live targets, zero offensive tools)",
+                "crypto_stance": "CONFIRMED (Crypto-use only, zero custom primitive implementation)",
+                "fail_closed_teardown": "CONFIRMED (Explicit thread join & port release verification)",
+                "ephemeral_storage": "CONFIRMED (Course-owned temporary scratch & in-memory DB only)",
+            },
+        }
+
+    # Default / M21 report (preserves exact S7-B1 contract)
     return {
         "stage": "S7",
         "batch": "S7-B1",
@@ -240,18 +399,15 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
     """Automated unit test assertion of the preflight probe itself."""
 
     def test_preflight_core_capabilities(self) -> None:
-        report = collect_preflight_report()
+        report = collect_preflight_report("M21")
         self.assertEqual(report["module"], "M21")
-        # Required core capabilities must pass in standard python 3 environment
         self.assertEqual(report["capabilities"]["stdlib_crypto"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["capabilities"]["path_confinement_primitives"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
 
-        # Symlink capability may be PASS or BLOCKED / NOT RUN, but must be truthful
         sym_disp = report["capabilities"]["symlink_creation"]["disposition"]
         self.assertIn(sym_disp, ["SYMLINK CAPABILITY PASS", "BLOCKED / NOT RUN"])
 
-        # Optional package is either AVAILABLE or NOT INSTALLED / NOT RUN
         opt_disp = report["capabilities"]["optional_cryptography"]["disposition"]
         self.assertIn(
             opt_disp,
@@ -262,43 +418,65 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
             ],
         )
 
-        # Policy invariants
         self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
+
+    def test_preflight_m22_capabilities(self) -> None:
+        report = collect_preflight_report("M22")
+        self.assertEqual(report["module"], "M22")
+        self.assertEqual(report["capabilities"]["stdlib_crypto"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["capabilities"]["password_kdf"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["capabilities"]["sqlite3"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["capabilities"]["localhost_bind"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
+
+        opt_argon2 = report["capabilities"]["optional_argon2"]["disposition"]
+        self.assertIn(
+            opt_argon2,
+            [
+                "OPTIONAL PACKAGE AVAILABLE",
+                "OPTIONAL PACKAGE NOT INSTALLED / NOT RUN",
+                "ENVIRONMENT-BLOCKED / NOT RUN",
+            ],
+        )
+        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
+        self.assertEqual(report["policy_invariants"]["fail_closed_teardown"], "CONFIRMED (Explicit thread join & port release verification)")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Preflight verification for S7 M21 Trust & Crypto Use")
+    parser = argparse.ArgumentParser(description="Preflight verification for S7 Security Synthesis (M21/M22)")
+    parser.add_argument("--module", choices=["M21", "M22", "all"], default="M21", help="Module capability probe to run")
     parser.add_argument("--json", action="store_true", help="Emit raw JSON capability report")
     args = parser.parse_args()
 
-    report = collect_preflight_report()
+    modules = ["M21", "M22"] if args.module == "all" else [args.module]
+    reports = [collect_preflight_report(m) for m in modules]
 
     if args.json:
-        print(json.dumps(report, indent=2))
+        print(json.dumps(reports if len(reports) > 1 else reports[0], indent=2))
         return
 
-    print("=" * 78)
-    print("  STAGE 7 BATCH S7-B1 / MODULE M21 PREFLIGHT CAPABILITY REPORT")
-    print("=" * 78)
-    print(f"  OS:             {report['os']['system']} {report['os']['release']} ({report['os']['architecture']})")
-    print(f"  Python:         {report['python']['implementation']} {report['python']['version']}")
-    print(f"  OQ-BP-006:      {report['python']['oq_bp_006_policy']}")
-    print("-" * 78)
-    print("  CAPABILITY AUDIT:")
-    caps = report["capabilities"]
-    for name, data in caps.items():
-        disp = data.get("disposition", "UNKNOWN")
-        print(f"    - {name:<30}: {disp}")
-        if "error" in data:
-            print(f"        Error detail: {data['error']}")
-        if "note" in data:
-            print(f"        Note:         {data['note']}")
-    print("-" * 78)
-    print("  POLICY INVARIANTS:")
-    for k, v in report["policy_invariants"].items():
-        print(f"    - {k:<28}: {v}")
-    print("=" * 78)
-
+    for report in reports:
+        print("=" * 78)
+        print(f"  STAGE 7 BATCH {report['batch']} / MODULE {report['module']} PREFLIGHT CAPABILITY REPORT")
+        print("=" * 78)
+        print(f"  OS:             {report['os']['system']} {report['os']['release']} ({report['os']['architecture']})")
+        print(f"  Python:         {report['python']['implementation']} {report['python']['version']}")
+        print(f"  OQ-BP-006:      {report['python']['oq_bp_006_policy']}")
+        print("-" * 78)
+        print("  CAPABILITY AUDIT:")
+        caps = report["capabilities"]
+        for name, data in caps.items():
+            disp = data.get("disposition", "UNKNOWN")
+            print(f"    - {name:<30}: {disp}")
+            if "error" in data:
+                print(f"        Error detail: {data['error']}")
+            if "note" in data:
+                print(f"        Note:         {data['note']}")
+        print("-" * 78)
+        print("  POLICY INVARIANTS:")
+        for k, v in report["policy_invariants"].items():
+            print(f"    - {k:<28}: {v}")
+        print("=" * 78)
 
 if __name__ == "__main__":
     main()

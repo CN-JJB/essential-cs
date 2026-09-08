@@ -1,0 +1,18 @@
+%% FIG-M22-01 — Authentication vs. Authorization Request Decision Path
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    R["Incoming HTTP Request<br/>Credentials: Bearer Token / Session ID"] --> V1{"Cryptographic & Format Check<br/>Valid signature / MAC?<br/>Profile claims present?<br/>Reject alg: none"}
+    V1 -->|"Invalid / Tampered / Unknown Alg"| E401["HTTP 401 Unauthorized<br/>Authentication Failure:<br/>Credential cannot be verified"]
+    V1 -->|"Signature / Format Valid"| V2{"Temporal & Revocation Check<br/>exp > now?<br/>Not in revocation list / valid epoch?"}
+    V2 -->|"Expired / Revoked"| E401
+    V2 -->|"Active / Valid"| V3{"Audience & Issuer Check<br/>aud == this_service?<br/>iss == trusted_idp?"}
+    V3 -->|"Audience / Issuer Mismatch"| E401
+    V3 -->|"Audience & Issuer Match"| ID["Authenticated Identity Established<br/>Subject: User #42 / Principal X<br/>(Authentication Complete)"]
+
+    ID --> V4{"Authorization Policy Evaluation<br/>Does Principal X have permission<br/>for Action on Target Resource?<br/>(RBAC / ABAC Policy Engine)"}
+    V4 -->|"Permission Denied"| E403["HTTP 403 Forbidden<br/>Authorization Failure:<br/>Identity known, but lacks authority"]
+    V4 -->|"Permission Granted"| EXEC["Execute Business Logic<br/>HTTP 200 OK<br/>Return Requested Resource"]
+
+    N1["Authentication (Authn):<br/>Proves WHO is calling.<br/>Valid signature != authority!"]
+    N2["Authorization (Authz):<br/>Decides WHAT they can do.<br/>Must check at every resource!"]
+    N1 -. "decoupled stages" .- N2

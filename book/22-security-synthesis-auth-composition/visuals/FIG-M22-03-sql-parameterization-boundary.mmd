@@ -1,0 +1,30 @@
+%% FIG-M22-03 — Code vs. Data: Parameterized API / Driver Boundary in SQL Queries
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    subgraph UNSAFE["UNSAFE: String Concatenation across Boundary"]
+        direction TB
+        U1["User Input Payload:<br/><code>admin' OR '1'='1</code>"]
+        U2["Application String Formatting:<br/><code>'SELECT * FROM users WHERE name = '' + input + '''</code>"]
+        U3["Concatenated SQL String Stream:<br/><code>SELECT * FROM users WHERE name = 'admin' OR '1'='1'</code>"]
+        U4["SQL Parser & Lexer:<br/>Parses entire stream into single AST.<br/>Quotes close early; <code>OR</code> becomes boolean operator node!"]
+        U5["Compiles Execution Plan / Bytecode:<br/>Evaluates <code>'1'='1'</code> as TRUE for every row!"]
+        U6["Result: CATASTROPHIC DATA LEAK<br/>Syntax structure was mutated by payload!"]
+
+        U1 --> U2 --> U3 --> U4 --> U5 --> U6
+    end
+
+    subgraph SAFE["SAFE: Parameterized Driver / API Separation"]
+        direction TB
+        S1["User Input Payload:<br/><code>admin' OR '1'='1</code>"]
+        S2["SQL Statement Template with Parameter Placeholder:<br/><code>SELECT * FROM users WHERE name = ?</code>"]
+        S3["SQL Parser & Lexer:<br/>Parses fixed query structure into AST <i>before</i> value binding.<br/>Predicate node is strictly <code>name == ParameterValue(#1)</code>"]
+        S4["Driver / API Parameter Binding:<br/>Passes raw input bytes directly to query execution engine.<br/>Value bound as literal string data; quotes have no syntactic meaning."]
+        S5["Compiles Execution Plan / Bytecode:<br/>Evaluates literal equality against full string <code>admin' OR '1'='1</code>."]
+        S6["Result: IMMUNE TO INJECTION<br/>Code syntax and user data kept structurally decoupled!"]
+
+        S1 -.->|"data binding"| S4
+        S2 --> S3 --> S4 --> S5 --> S6
+    end
+
+    LIMIT["Inference Limits & Invariants:<br/>1. Parameterization only protects SQL value positions (data literals).<br/>2. Table names, column names, and SQL keywords CANNOT be parameterized.<br/>3. Exact compilation mechanics are engine-specific (SQLite bytecode vs PostgreSQL prepared statements)."]
+    UNSAFE -. "architectural fix" .-> SAFE
