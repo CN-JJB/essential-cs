@@ -115,6 +115,16 @@ def _trace_section(content: str, number: int, next_number: int | None) -> str:
     return tail[: end.start()] if end else tail
 
 
+def _claim_register_section(content: str) -> str:
+    """Return only the `## Architectural Claim Register` section (up to the next peer `##` heading)."""
+    start = re.search(r"(?im)^##\s+Architectural Claim Register\s*$", content)
+    if not start:
+        return ""
+    tail = content[start.end():]
+    end = re.search(r"(?m)^##\s+", tail)
+    return tail[: end.start()] if end else tail
+
+
 def validate_defense_dossier(
     dossier_content: str,
     dossier_path: str = "<memory>",
@@ -133,7 +143,8 @@ def validate_defense_dossier(
         report.errors.append("Missing required trace headings: " + ", ".join(report.traces_missing))
 
     claim_rows: Dict[str, List[str]] = {}
-    for line in dossier_content.splitlines():
+    register_section = _claim_register_section(dossier_content)
+    for line in register_section.splitlines():
         if not line.lstrip().startswith("|"):
             continue
         match = re.search(r"\bCLM-\d+\b", line, re.IGNORECASE)

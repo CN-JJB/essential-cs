@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import unittest
 
 from labs.foundations.m24.defense_validator import validate_defense_dossier
@@ -28,7 +29,7 @@ class TestDefenseValidator(unittest.TestCase):
         self.assertEqual(report.status, "STRUCTURAL_CHECK_PASS")
         self.assertEqual(len(report.traces_found), 16)
         self.assertEqual(report.evidence_rows_valid, 12)
-        self.assertGreaterEqual(report.claims_count, 5)
+        self.assertEqual(report.claims_count, 5)
         self.assertEqual(report.explicit_unknown_ids, report.learning_plan_linked_ids)
         self.assertIn("REVIEWER-REQUIRED", report.disclaimer)
 
@@ -51,11 +52,33 @@ class TestDefenseValidator(unittest.TestCase):
         report = validate_defense_dossier(corrupted, "<test>")
         self.assertFalse(report.is_valid)
         self.assertIn("CLM-99", report.dangling_claim_refs)
+        self.assertEqual(report.claims_count, 5, "an Evidence Matrix CLM reference must not be re-parsed as a claim row")
+
+    def test_evidence_matrix_clm_refs_are_not_claim_rows(self) -> None:
+        """Issue #127: E01-E12 rows referencing CLM-01 must never count as Claim Register rows."""
+        corrupted = re.sub(
+            r"(?im)^##\s+Architectural Claim Register\s*$.*?(?=^##\s+)",
+            "",
+            self.sample,
+            flags=re.S,
+        )
+        report = validate_defense_dossier(corrupted, "<test>")
+        self.assertFalse(report.is_valid)
+        self.assertEqual(report.claims_count, 0, "E-matrix CLM references must not be parsed as Claim Register rows")
+        self.assertTrue(any("at least 5" in err for err in report.errors))
+        self.assertIn("CLM-01", report.dangling_claim_refs)
+
+    def test_claim_register_row_missing_field_fails(self) -> None:
+        """Issue #127: a malformed Claim Register row inside the register section must still FAIL."""
+        corrupted = self.sample.replace("UNVERIFIED_MEASUREMENT_REQUIRED", "-")
+        report = validate_defense_dossier(corrupted, "<test>")
+        self.assertFalse(report.is_valid)
+        self.assertTrue(any("CLM-03" in err and "status" in err.lower() for err in report.errors))
 
     def test_reject_missing_evidence_inference_limit(self) -> None:
         corrupted = self.sample.replace(
-            "| E02 | State & Data Lifecycle | CLM-01 | Trace 2 | Course reference maps volatile/durable/config state | Synthetic fixture only; learner must replace with actual state evidence |",
-            "| E02 | State & Data Lifecycle | CLM-01 | Trace 2 | Course reference maps volatile/durable/config state | - |",
+            "| E02 | State & Data Lifecycle | CLM-01 | Trace 2 | Course reference maps volatile, durable, and configuration state | Synthetic fixture only; learner must replace with actual state evidence |",
+            "| E02 | State & Data Lifecycle | CLM-01 | Trace 2 | Course reference maps volatile, durable, and configuration state | - |",
         )
         report = validate_defense_dossier(corrupted, "<test>")
         self.assertFalse(report.is_valid)
