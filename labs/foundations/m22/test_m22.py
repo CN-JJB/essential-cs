@@ -94,7 +94,7 @@ class TestL22_01_AuthnAndTokens(unittest.TestCase):
         self.assertIsNotNone(result.claims)
         self.assertEqual(result.claims["aud"], "api.local")
 
-    def test_token_authority_tampered_signature_rejection(self) -> None:
+    def test_token_authority_tampered_hmac_tag_rejection(self) -> None:
         secret = secrets.token_bytes(32)
         authority = activity_l22_01.TeachingTokenAuthority(secret, expected_audience="api.local")
         token = authority.issue_token(subject="alice", lifetime_seconds=120)
@@ -211,6 +211,7 @@ class TestL22_02_WebSecurity(unittest.TestCase):
         # Multicast
         disallowed, _ = activity_l22_02.is_ip_disallowed("224.0.0.1")
         self.assertTrue(disallowed, "Multicast IP must be disallowed")
+
     def test_safe_fetch_contract_rejects_https_and_loopback_by_default(self) -> None:
         ok_https, status_https, _ = activity_l22_02.safe_http_fetch_over_socket(
             "https://127.0.0.1:443/synthetic"
@@ -332,7 +333,7 @@ class TestL22_03_SoftwareSupplyChain(unittest.TestCase):
         self.assertTrue(report["layers"]["layer2_expected_digest_present"])
         self.assertTrue(report["layers"]["layer3_byte_integrity"])
         self.assertTrue(report["layers"]["layer4_reproducibility"])
-        self.assertTrue(report["layers"]["layer5_6_signature_and_identity"])
+        self.assertTrue(report["layers"]["layer5_6_teaching_authenticator_and_identity_policy"])
         self.assertTrue(report["layers"]["layer7_8_provenance_and_builder"])
 
     def test_layer3_tampered_byte_rejection(self) -> None:
@@ -378,7 +379,7 @@ class TestL22_03_SoftwareSupplyChain(unittest.TestCase):
             subject_name="trusted-lib",
             subject_sha256=self.artifact.sha256,
             builder_id="https://builder.example/untrusted@v1",
-            source_repository="https://github.com/example/trusted-lib",
+            source_repository="https://source.example/trusted-lib",
             source_commit="e0f1d2c3b4a5968778695a4b3c2d1e0f12345678",
             build_type="https://build.example/types/untrusted/v1",
         )

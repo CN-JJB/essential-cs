@@ -63,15 +63,15 @@ class LockfileEntry:
 @dataclasses.dataclass(frozen=True)
 class SLSAProvenanceV1_2:
     """
-    Synthetic representation of OpenSSF SLSA v1.2 Provenance Attestation.
+    Course-owned synthetic subset of SLSA v1.2-style provenance metadata.
     Reference: https://slsa.dev/spec/v1.2/provenance
     """
     type: str  # "https://in-toto.io/Statement/v1"
     predicate_type: str  # "https://slsa.dev/provenance/v1"
     subject_name: str
     subject_sha256: str
-    builder_id: str  # e.g., "https://github.com/actions/runner-hosted@v1"
-    source_repository: str  # e.g., "https://github.com/example/trusted-lib"
+    builder_id: str  # e.g., "https://builder.example/essential-cs@v1"
+    source_repository: str  # e.g., "https://source.example/trusted-lib"
     source_commit: str  # e.g., git commit hash
     build_type: str
 
@@ -96,7 +96,7 @@ def verify_layer3_byte_integrity(artifact: SyntheticArtifact, expected_sha256: s
     Layer 3: Fetched-Byte Integrity.
 
     Checks if computed SHA-256 matches expected digest.
-    NON-GUARANTEE: A valid digest proves byte immutability, NOT publisher identity!
+    NON-GUARANTEE: A digest match only compares candidate bytes with the trusted expected digest under hash assumptions; it does NOT prove publisher identity.
     """
     computed = artifact.sha256
     if hmac.compare_digest(computed, expected_sha256):
@@ -173,7 +173,7 @@ def verify_layer7_and_8_provenance_and_builder(
 
     # 2. Trusted Builder evaluation (Layer 8)
     if provenance.builder_id not in trusted_builders:
-        return False, f"Untrusted builder platform: '{provenance.builder_id}' is not an approved isolated builder"
+        return False, f"Builder id '{provenance.builder_id}' is not in the local synthetic builder allowlist"
 
     # 3. Source repository evaluation (Layer 7)
     if provenance.source_repository not in trusted_source_repos:
@@ -237,10 +237,10 @@ def audit_dependency_against_policy(
     else:
         report["layers"]["layer4_reproducibility"] = "SKIPPED_BY_POLICY"
 
-    # Layer 5 & 6: Signature & Identity Binding
+    # Layer 5 & 6 teaching analogue: HMAC authenticator + synthetic key-id policy
     if policy.require_signature:
         if not authenticator or not key_id:
-            report["layers"]["layer5_6_signature_and_identity"] = False
+            report["layers"]["layer5_6_teaching_authenticator_and_identity_policy"] = False
             report["reasons"].append("Layer 5/6 FAIL: Teaching authenticator or key identity missing")
         else:
             sig_ok, sig_msg = verify_layer5_and_6_teaching_authenticator_and_identity_policy(
@@ -256,7 +256,7 @@ def audit_dependency_against_policy(
     if policy.require_provenance:
         if not provenance:
             report["layers"]["layer7_8_provenance_and_builder"] = False
-            report["reasons"].append("Layer 7/8 FAIL: SLSA provenance attestation missing")
+            report["reasons"].append("Layer 7/8 FAIL: Required synthetic provenance metadata missing")
         else:
             prov_ok, prov_msg = verify_layer7_and_8_provenance_and_builder(
                 provenance, artifact.sha256, policy.trusted_builders, policy.trusted_source_repos
@@ -294,10 +294,10 @@ def run_demonstration() -> None:
     legit_artifact = SyntheticArtifact("trusted-auth-lib", "1.4.0", legit_code)
     lock_entry = LockfileEntry("trusted-auth-lib", "1.4.0", legit_artifact.sha256, "https://pypi.local/packages/1.4.0.tar.gz")
 
-    # Sign artifact
+    # Create the Core HMAC authenticator stand-in (not a digital signature)
     authenticator = hmac.new(signing_secret, legit_artifact.sha256.encode("ascii"), hashlib.sha256).digest()
 
-    # Provenance attestation
+    # Course-owned synthetic provenance metadata
     prov = SLSAProvenanceV1_2(
         type="https://in-toto.io/Statement/v1",
         predicate_type="https://slsa.dev/provenance/v1",
@@ -340,7 +340,7 @@ def run_demonstration() -> None:
         subject_name="trusted-auth-lib",
         subject_sha256=legit_artifact.sha256,
         builder_id="https://builder.example/untrusted@v1",
-        source_repository="https://github.com/example/trusted-lib",
+        source_repository="https://source.example/trusted-lib",
         source_commit="a1b2c3d4e5f678901234567890abcdef12345678",
         build_type="https://build.example/types/untrusted/v1",
     )

@@ -37,9 +37,9 @@ This directory contains executable, course-owned fixtures and worked activities 
 
 1. **`activity_l22_01.py`**
    - Implements authentication, password verifiers, and bearer token handling for L22-01:
-     - `generate_password_verifier`: PBKDF2-HMAC-SHA256 with unique salt (>= 32 bits per NIST SP 800-63B-4).
-     - `verify_password`: Format parsing and constant-time comparison via `hmac.compare_digest`.
-     - `TeachingTokenAuthority`: Educational token profile validator enforcing algorithm whitelisting, signature verification, `exp`, `aud`, and rejecting `alg: "none"`.
+     - `generate_password_verifier`: PBKDF2-HMAC-SHA256 with independently generated salt (>= 32 bits; selected to minimize collisions, not guaranteed unique).
+     - `verify_password`: Format parsing and sensitive-value comparison via `hmac.compare_digest` timing-analysis mitigation; no physical constant-time proof.
+     - `TeachingTokenAuthority`: Educational HS256 token-profile validator enforcing HMAC-tag verification, header/profile, `iss`, `sub`, `exp`, `aud`, and profile-level rejection of `alg: "none"`.
      - `evaluate_resource_authorization`: Demonstrates that token validity is separate from resource authorization (Authn != Authz).
 
 2. **`activity_l22_02.py`**

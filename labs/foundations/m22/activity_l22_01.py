@@ -11,11 +11,11 @@ Demonstrates:
    - Salts generated via secrets.token_bytes (>= 32 bits per NIST SP 800-63B-4; default 128 bits);
    - Slow compute-hard KDF (PBKDF2-HMAC-SHA256 per SP 800-132 / RFC 8018);
    - Formatted verifier string (algo$params$salt$hash);
-   - Constant-time equality comparison via hmac.compare_digest.
+   - Sensitive-value comparison via hmac.compare_digest's documented timing-analysis mitigation; no physical constant-time proof.
 2. TeachingProfile-BearerV1 Token Validation:
    - Educational bearer token profile modeled on standard claims (RFC 7519 / RFC 8725 BCP);
    - Strict rejection of alg: "none" and unapproved algorithms;
-   - Cryptographic signature check under configured verifier policy;
+   - HS256 HMAC authentication-tag check under the configured TeachingProfile policy;
    - Required claims: alg, sub, aud, exp, iat;
    - Audience restriction (aud) to prevent token substitution;
    - Temporal expiration (exp) verification.
@@ -26,7 +26,7 @@ Demonstrates:
 Safety & Invariants:
 - Zero real user credentials or live networks;
 - Pure standard library, zero external dependencies;
-- Educational profile: valid signature != issuer trust != authorization.
+- Educational profile: valid HMAC tag != issuer trust != authorization; HMAC != digital signature.
 """
 
 from __future__ import annotations
@@ -155,7 +155,7 @@ class TeachingTokenAuthority:
     - Fixed approved algorithm list (default ['HS256']);
     - Strictly rejects alg: 'none';
     - Verifies the HS256 HMAC authentication tag using hmac.compare_digest;
-    - Enforces mandatory claims: alg, sub, aud, exp, iat;
+    - Enforces header/profile binding plus mandatory payload claims: sub, aud, iss, exp, iat;
     - Enforces audience matching to prevent token substitution across services.
     """
 
@@ -164,7 +164,7 @@ class TeachingTokenAuthority:
 
     def __init__(self, signing_secret: bytes, expected_audience: str, issuer_id: str = "teaching-idp.local"):
         if len(signing_secret) < 16:
-            raise ValueError("Signing secret must be at least 16 bytes")
+            raise ValueError("HS256 shared secret must be at least 16 bytes")
         self._secret = signing_secret
         self.expected_audience = expected_audience
         self.issuer_id = issuer_id
@@ -201,14 +201,14 @@ class TeachingTokenAuthority:
 
         if alg == "none":
             # For testing controlled failure: unsigned token
-            sig_b64 = ""
+            tag_b64 = ""
         elif alg == "HS256":
-            sig = hmac.new(self._secret, signing_input, hashlib.sha256).digest()
-            sig_b64 = _b64url_encode(sig)
+            tag = hmac.new(self._secret, signing_input, hashlib.sha256).digest()
+            tag_b64 = _b64url_encode(tag)
         else:
             raise ValueError(f"Unsupported signing algorithm: {alg}")
 
-        return f"{header_b64}.{payload_b64}.{sig_b64}"
+        return f"{header_b64}.{payload_b64}.{tag_b64}"
 
     def validate_token(
         self,
@@ -222,7 +222,7 @@ class TeachingTokenAuthority:
         if len(parts) != 3:
             return TokenValidationResult(valid=False, error="Malformed token: must contain exactly 3 dot-separated segments")
 
-        header_b64, payload_b64, sig_b64 = parts
+        header_b64, payload_b64, tag_b64 = parts
 
         # 1. Parse header
         try:
@@ -242,11 +242,11 @@ class TeachingTokenAuthority:
         signing_input = f"{header_b64}.{payload_b64}".encode("ascii")
         expected_sig = hmac.new(self._secret, signing_input, hashlib.sha256).digest()
         try:
-            actual_sig = _b64url_decode(sig_b64)
+            actual_tag = _b64url_decode(tag_b64)
         except Exception:
             return TokenValidationResult(valid=False, error="Malformed HMAC authentication-tag base64url")
 
-        if not hmac.compare_digest(expected_sig, actual_sig):
+        if not hmac.compare_digest(expected_sig, actual_tag):
             return TokenValidationResult(valid=False, error="HMAC authentication-tag verification failed (tampered token)")
 
         # 4. Parse payload claims
@@ -370,7 +370,7 @@ def run_demonstration() -> None:
     parts = valid_token.split(".")
     tampered_token = f"{parts[0]}.{parts[1]}.{_b64url_encode(b'bad_signature_bytes_1234')}"
     res_tampered = authority.validate_token(tampered_token)
-    print(f"    Tampered signature check: valid={res_tampered.valid}, error={res_tampered.error}")
+    print(f"    Tampered HMAC-tag check: valid={res_tampered.valid}, error={res_tampered.error}")
     assert res_tampered.valid is False
 
     # 4. alg: none rejection

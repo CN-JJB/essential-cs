@@ -29,7 +29,7 @@ Record the decision path analysis across the authentication and authorization li
 
 | Decision Step | Inspected Element | Verification Rule / Check | Outcome if Invalid | Non-Guarantee / What This Step Does NOT Prove |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Credential Check** | `[Record incoming token / session]` | `[Record signature / MAC check]` | `[Record HTTP 401 response]` | `[Explain why signature != issuer trust or authorization]` |
+| **1. Credential Check** | `[Record incoming token / session]` | `[Record the actual credential authenticator check; for TeachingProfile-BearerV1 this is an HS256 HMAC tag]` | `[Record HTTP 401 response]` | `[Explain why authenticator success != issuer trust != authorization; distinguish HMAC from digital signature]` |
 | **2. Temporal Validity** | `[Record exp claim / session expiry]` | `[Record exp > now validation]` | `[Record HTTP 401 response]` | `[Explain stateless token revocation latency]` |
 | **3. Audience Restriction** | `[Record aud claim]` | `[Record aud == this_service]` | `[Record HTTP 401 response]` | `[Explain why aud check is required to prevent token substitution]` |
 | **4. Authenticated Identity** | `[Record sub claim / principal]` | `[Record identity establishment]` | `[Record rejection]` | `[Explain why Identity != Authority]` |
