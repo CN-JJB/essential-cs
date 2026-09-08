@@ -5,18 +5,18 @@ test_m22.py — Standard Library Unit Test Suite for Foundations Module M22
 
 Verifies:
 1. L22-01 Authentication, Password Verifiers & Token Validation (activity_l22_01.py)
-   - Password verifier generation with unique salt (salt >= 32 bits per NIST SP 800-63B-4)
-   - PBKDF2-HMAC-SHA256 verifier formatting and constant-time verification
+   - Password verifier generation with independently generated salt (>= 32 bits; chosen to minimize collisions)
+   - PBKDF2-HMAC-SHA256 verifier formatting and compare_digest timing-analysis mitigation
    - Rejection of incorrect passwords without data leakage
    - TeachingProfile-BearerV1 token validation (alg whitelist, reject alg: none)
-   - Tampered signature detection
+   - Tampered HS256 HMAC authentication-tag detection
    - Temporal expiration (exp) and audience restriction (aud) enforcement
    - Decoupled authentication from resource authorization (Authn != Authz)
 2. L22-02 Web Security, SQL Parameterization & SSRF Egress (activity_l22_02.py)
    - SQL string concatenation vulnerability (data syntax mutation)
-   - Structural parameterized query immunity (? placeholder / literal value binding)
+   - Structural parameterized value binding (? placeholder; bounded to value positions)
    - SSRF destination policy (rejection of RFC 1918, link-local metadata 169.254.x.x, loopback)
-   - DNS rebinding mitigation via post-resolution direct socket binding
+   - Bounded direct-socket path avoids a second hostname lookup after address validation
    - CSRF defenses: SameSite cookies, Origin validation, anti-CSRF synchronizer tokens
    - Managed server lifecycle and fail-closed teardown
 3. L22-03 Software Supply Chain 9-Layer Model (activity_l22_03.py)
@@ -73,11 +73,11 @@ class TestL22_01_AuthnAndTokens(unittest.TestCase):
         # Corrupted verifier record fails
         self.assertFalse(activity_l22_01.verify_password(password, "corrupted_record"))
 
-    def test_password_verifier_salt_uniqueness(self) -> None:
+    def test_password_verifier_independent_salts_in_fixture(self) -> None:
         password = "IdenticalPasswordUsedTwice"
         v1 = activity_l22_01.generate_password_verifier(password, iterations=1000)
         v2 = activity_l22_01.generate_password_verifier(password, iterations=1000)
-        # Salt must be unique per credential
+        # Two independent fixture draws should differ; this is not a mathematical uniqueness proof.
         self.assertNotEqual(v1.split("$")[2], v2.split("$")[2])
         # Derived hash must be different due to distinct salts
         self.assertNotEqual(v1.split("$")[3], v2.split("$")[3])
@@ -211,6 +211,18 @@ class TestL22_02_WebSecurity(unittest.TestCase):
         # Multicast
         disallowed, _ = activity_l22_02.is_ip_disallowed("224.0.0.1")
         self.assertTrue(disallowed, "Multicast IP must be disallowed")
+    def test_safe_fetch_contract_rejects_https_and_loopback_by_default(self) -> None:
+        ok_https, status_https, _ = activity_l22_02.safe_http_fetch_over_socket(
+            "https://127.0.0.1:443/synthetic"
+        )
+        self.assertFalse(ok_https)
+        self.assertEqual(status_https, 403)
+
+        ok_loop, status_loop, _ = activity_l22_02.safe_http_fetch_over_socket(
+            "http://127.0.0.1:9/synthetic"
+        )
+        self.assertFalse(ok_loop)
+        self.assertEqual(status_loop, 403)
 
     def test_server_lifecycle_and_csrf_defenses(self) -> None:
         server = activity_l22_02.SafeLocalhostServer()
@@ -248,7 +260,22 @@ class TestL22_02_WebSecurity(unittest.TestCase):
                 urllib.request.urlopen(bad_req)
             self.assertEqual(ctx.exception.code, 403)
 
-            # 3. Legitimate request with matching Origin and CSRF token -> Accepted 200
+            # 3. Prefix-shaped Origin must NOT pass an exact-origin policy.
+            prefix_origin_req = urllib.request.Request(
+                f"{server.origin}/update_email",
+                data=json.dumps({"email": "prefix_attack@example.local", "csrf_token": csrf_token}).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "Cookie": cookie,
+                    "Origin": server.origin + ".evil.example",
+                    "X-CSRF-Token": csrf_token,
+                },
+            )
+            with self.assertRaises(urllib.error.HTTPError) as prefix_ctx:
+                urllib.request.urlopen(prefix_origin_req)
+            self.assertEqual(prefix_ctx.exception.code, 403)
+
+            # 4. Legitimate request with matching Origin and CSRF token -> Accepted 200
             good_req = urllib.request.Request(
                 f"{server.origin}/update_email",
                 data=json.dumps({"email": "alice_updated@example.local", "csrf_token": csrf_token}).encode("utf-8"),

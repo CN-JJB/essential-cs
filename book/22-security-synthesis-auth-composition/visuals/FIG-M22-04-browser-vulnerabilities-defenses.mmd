@@ -28,9 +28,9 @@ flowchart TB
         S1["Attack Vector: Attacker provides URL/host coerced into outbound fetch"]
         S2["Execution Boundary: Server Outbound Network Egress"]
         S3["Flaw: Server fetches internal/metadata endpoints using its own network authority"]
-        S4["Primary Defense: Parse URL + Resolve DNS + Validate IP against blocklist (RFC 1918/3927)"]
-        S5["Defense-in-Depth: Bind socket directly to validated IP to eliminate DNS Rebinding (TOCTOU)"]
-        S6["Non-Guarantee: URL regex string filtering alone fails against DNS rebinding, redirects, or userinfo tricks"]
+        S4["Bounded Defense: Parse URL + Resolve DNS + Validate candidate IPs against egress policy"]
+        S5["Direct HTTP fixture: connect to validated IP so this path does not re-resolve hostname"]
+        S6["Non-Guarantee: direct binding here does not cover redirects, proxies, HTTPS/TLS identity, or other request paths"]
         S1 --> S2 --> S3 --> S4 --> S5 --> S6
     end
 

@@ -92,7 +92,7 @@ def query_user_safe(conn: sqlite3.Connection, username_input: str) -> List[Tuple
     Guarantees:
     Query structure is fixed with '?' placeholder. The SQL compiler
     evaluates '?' strictly as a parameter value position. The driver
-    passes username_input as literal string data, immune to SQL syntax injection.
+    passes username_input as a bound value parameter; in this SQLite value-position fixture the input is not concatenated into SQL syntax.
     """
     cur = conn.cursor()
     query = "SELECT id, username, role, email, account_balance FROM users WHERE username = ?"
@@ -178,7 +178,10 @@ def validate_and_resolve_destination(
     if not hostname:
         return False, "Missing hostname in URL", None, None, None
 
-    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    try:
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    except ValueError as exc:
+        return False, f"Invalid URL port: {exc}", None, None, None
 
     # Resolve hostname to IP addresses
     try:
@@ -205,20 +208,29 @@ def validate_and_resolve_destination(
 
 def safe_http_fetch_over_socket(
     target_url: str,
-    allow_loopback_for_testing: bool = True,
+    allow_loopback_for_testing: bool = False,
     timeout: float = 2.0,
 ) -> Tuple[bool, int, str]:
     """
-    Executes a safe outbound HTTP fetch addressing DNS Rebinding.
+    Executes the bounded HTTP-only direct-socket teaching path.
 
-    Mitigation:
-    1. Resolve DNS and validate IP address;
-    2. Open socket connection DIRECTLY to the validated IP;
-    3. Send HTTP request specifying the original hostname in the 'Host' header;
-    4. Do not allow subsequent DNS resolution to alter the connection target.
+    Scope:
+    1. Only plaintext http:// is supported by this local fixture.
+       https:// is rejected because correct HTTPS requires a TLS stack plus
+       certificate/service-identity verification; raw TCP + plaintext HTTP is not HTTPS.
+    2. Resolve DNS once and validate every returned address.
+    3. Open the teaching connection directly to one validated address.
+    4. Use the original hostname only in the HTTP Host field, avoiding a second
+       hostname lookup in this direct path.
+
+    This does not prove safety for redirects, proxies, connection pools, TLS, or
+    any caller that performs another outbound request outside this path.
+    Loopback is denied by default; tests must opt in explicitly.
     """
     is_valid, msg, validated_ip, port, hostname = validate_and_resolve_destination(
-        target_url, allow_loopback_for_testing=allow_loopback_for_testing
+        target_url,
+        allowed_schemes=("http",),
+        allow_loopback_for_testing=allow_loopback_for_testing,
     )
     if not is_valid or not validated_ip or not port or not hostname:
         return False, 403, f"SSRF Check Blocked: {msg}"
@@ -228,7 +240,7 @@ def safe_http_fetch_over_socket(
     if parsed.query:
         path = f"{path}?{parsed.query}"
 
-    # Connect socket directly to validated IP (mitigating DNS rebinding TOCTOU)
+    # Connect directly to the validated IP, avoiding a second hostname lookup in this bounded path.
     try:
         with socket.create_connection((validated_ip, port), timeout=timeout) as sock:
             http_request = (
@@ -267,6 +279,17 @@ def safe_http_fetch_over_socket(
 # -----------------------------------------------------------------------------
 # Part 3: Localhost HTTP Server with CSRF & SameSite Defenses
 # -----------------------------------------------------------------------------
+
+def _normalized_request_origin(value: str) -> Optional[str]:
+    """Return scheme://authority for an Origin/Referer value, or None if malformed."""
+    try:
+        parsed = urllib.parse.urlsplit(value)
+    except ValueError:
+        return None
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return None
+    return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"
+
 
 class WebSecurityHarnessHandler(http.server.BaseHTTPRequestHandler):
     """
@@ -324,7 +347,9 @@ class WebSecurityHarnessHandler(http.server.BaseHTTPRequestHandler):
             self.active_sessions[session_id] = username
             self.session_csrf_tokens[session_id] = csrf_token
 
-            # Set-Cookie with SameSite=Lax; HttpOnly
+            # Localhost HTTP teaching fixture: HttpOnly + SameSite=Lax.
+            # Secure is intentionally omitted because this fixture is plaintext loopback HTTP;
+            # production HTTPS session cookies normally include Secure under their cookie policy.
             cookie_hdr = f"session_id={session_id}; Path=/; HttpOnly; SameSite=Lax"
             self._send_json(
                 200,
@@ -344,13 +369,21 @@ class WebSecurityHarnessHandler(http.server.BaseHTTPRequestHandler):
             username = self.active_sessions[session_id]
             expected_csrf = self.session_csrf_tokens.get(session_id)
 
-            # Defensive Check 1: Origin / Referer validation
-            origin_header = self.headers.get("Origin") or self.headers.get("Referer", "")
-            if origin_header and self.server_origin:
-                if not origin_header.startswith(self.server_origin):
+            # Defensive Check 1: Origin / Referer validation.
+            # Never use startswith() for origin equality: a prefix-shaped hostile origin
+            # must not be accepted as the exact course-owned server origin.
+            origin_header = self.headers.get("Origin")
+            referer_header = self.headers.get("Referer")
+            source_header = origin_header or referer_header
+            if source_header and self.server_origin:
+                request_origin = _normalized_request_origin(source_header)
+                if request_origin is None or request_origin != self.server_origin:
                     self._send_json(
                         403,
-                        {"error": "CSRF Blocked: Cross-Origin request rejected by Origin policy", "origin": origin_header},
+                        {
+                            "error": "CSRF Blocked: Cross-Origin request rejected by exact Origin policy",
+                            "origin": source_header,
+                        },
                     )
                     return
 
@@ -407,6 +440,14 @@ class SafeLocalhostServer:
         self.origin: str = ""
 
     def start(self) -> None:
+        # Reset course-owned class state so one fixture run cannot inherit another.
+        WebSecurityHarnessHandler.active_sessions.clear()
+        WebSecurityHarnessHandler.session_csrf_tokens.clear()
+        WebSecurityHarnessHandler.user_emails = {
+            "alice": "alice@example.local",
+            "bob": "bob@example.local",
+        }
+
         # Bind exclusively to 127.0.0.1 on ephemeral port 0
         self.server = http.server.HTTPServer(("127.0.0.1", 0), WebSecurityHarnessHandler)
         self.port = self.server.server_port
@@ -455,6 +496,9 @@ class SafeLocalhostServer:
         finally:
             test_sock.close()
 
+        WebSecurityHarnessHandler.active_sessions.clear()
+        WebSecurityHarnessHandler.session_csrf_tokens.clear()
+
 
 # -----------------------------------------------------------------------------
 # Self-Test / CLI Demonstration
@@ -479,7 +523,7 @@ def run_demonstration() -> None:
 
     # Safe parameterized query returns 0 records
     safe_records = query_user_safe(db, payload)
-    print(f"    Safe Query Result:   Returned {len(safe_records)} records (IMMUNE TO INJECTION)")
+    print(f"    Parameterized value result: Returned {len(safe_records)} records (payload treated as data in this fixture)")
     assert len(safe_records) == 0
 
     # Normal user query works correctly
