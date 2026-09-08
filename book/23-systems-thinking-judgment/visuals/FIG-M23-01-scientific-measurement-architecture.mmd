@@ -1,0 +1,10 @@
+%% FIG-M23-01 — Scientific Systems Measurement Architecture
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    Q["1. Engineering Question & Falsifiable Hypothesis<br/>(Define independent & dependent variables)"] --> W{"2. Workload Model Selection<br/>Open Model: Independent arrival schedule<br/>Closed Model: Bounded concurrent clients"}
+    W --> SUT["3. System Under Test & Controlled Harness<br/>(Measure duration via Monotonic Clock)<br/>(Note: Integer nanosecond units != hardware timer resolution)"]
+    SUT --> WARM{"4. Warm-Up Criteria Evaluation<br/>Evaluate mechanism transients: cache, JIT, pool?<br/>Steady-state: discard warm-up<br/>Cold-start: measure transients"}
+    WARM --> RAW["5. Empirical Sample Collection<br/>(Arrival timestamp vs dispatch vs completion)"]
+    RAW --> DIST["6. Latency Distribution & Histogram<br/>(Observe multimodal shapes, knees, tail spread)"]
+    DIST --> STATS["7. Question-Driven Metric Selection<br/>Percentiles (p50, p90, p99): User tail SLOs<br/>Mean & Moments: Total work, throughput, billing/energy<br/>(No universal p99 or mean dogmatism)"]
+    STATS --> LIMIT["8. Explicit Inference Limits<br/>(State hardware, OS, concurrency, and environment boundaries)"]
