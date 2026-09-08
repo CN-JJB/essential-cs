@@ -98,9 +98,9 @@ def convert_storage(value: float, from_unit: str, to_unit: str) -> float:
 def estimate_storage_capacity(
     items_per_day: float,
     avg_item_bytes: float,
-    replication_factor: float = 1.0,
-    indexing_overhead_ratio: float = 0.0,
-    retention_days: Optional[float] = None,
+    replication_factor: float,
+    indexing_overhead_ratio: float,
+    retention_days: Optional[float],
 ) -> Dict[str, float]:
     """
     Calculates storage capacity requirements.
@@ -156,7 +156,7 @@ def estimate_storage_capacity(
 def estimate_network_egress(
     requests_per_day: float,
     avg_payload_bytes: float,
-    peak_to_avg_ratio: float = 1.0,
+    peak_to_avg_ratio: float,
 ) -> Dict[str, float]:
     """
     Estimates daily egress data volume and bandwidth requirements.
@@ -379,6 +379,7 @@ def main() -> None:
         items_per_day=uploads_day,
         avg_item_bytes=photo_size_bytes,
         replication_factor=3.0,
+        indexing_overhead_ratio=0.0,
         retention_days=90,
     )
     print(f"  Daily Logical Ingestion:  {storage['daily_logical_gb']:.1f} GB/day ({storage['daily_logical_bytes']/1e12:.2f} TB/day)")

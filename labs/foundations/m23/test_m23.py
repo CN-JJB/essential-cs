@@ -31,6 +31,7 @@ from activity_l23_01 import (
     calculate_percentile,
     calculate_summary_statistics,
     get_clock_characteristics,
+    run_live_synthetic_benchmark,
     simulate_measurement_deterministic,
 )
 from activity_l23_02 import (
@@ -164,6 +165,16 @@ class TestActivityL23_01(unittest.TestCase):
         with self.assertRaises(ValueError):
             simulate_measurement_deterministic(10.0, 2.0, 1, -1.0, 5)
 
+    def test_live_synthetic_budget_is_safety_capped(self) -> None:
+        with self.assertRaises(ValueError):
+            run_live_synthetic_benchmark(
+                request_count=200,
+                target_rate_req_per_sec=100.0,
+                base_service_time_ms=10.0,
+                synthetic_stall_index=10,
+                synthetic_stall_ms=100.0,
+            )
+
 
 class TestActivityL23_02(unittest.TestCase):
     """Tests for Decision D-015 Technology Evaluation Framework."""
@@ -277,10 +288,10 @@ class TestFermiCost(unittest.TestCase):
             convert_storage(1.0, "mb", "bytes")
 
     def test_storage_capacity_estimation(self) -> None:
-        # 100,000 items/day, 10,000 bytes each, 3x replication, 90 day retention
+        # Synthetic assumptions: 100,000 items/day, 10,000 B each, 3x replication, 90-day retention
         res = estimate_storage_capacity(
             items_per_day=100_000,
-            avg_item_bytes=10_000,  # 10 KB
+            avg_item_bytes=10_000,  # 10 kB
             replication_factor=3.0,
             indexing_overhead_ratio=0.10,  # 10% indexing
             retention_days=90,
@@ -310,7 +321,7 @@ class TestFermiCost(unittest.TestCase):
 
     def test_memory_cache_fit(self) -> None:
         # 10,000,000 rows * 200 bytes = 2,000,000,000 bytes (~2 GB)
-        # Server has 16 GB RAM. Usable fraction 0.75 -> 12 GB.
+        # Synthetic assumption: server has 16 GiB RAM; learner-selected usable fraction 0.75 -> 12 GiB.
         res = estimate_memory_cache_fit(
             active_items=10_000_000,
             avg_item_bytes=200,
@@ -323,7 +334,7 @@ class TestFermiCost(unittest.TestCase):
         # Massive dataset does NOT fit
         res_overflow = estimate_memory_cache_fit(
             active_items=100_000_000,
-            avg_item_bytes=2000,  # 200 GB
+            avg_item_bytes=2000,  # synthetic row-size assumption
             installed_ram_bytes=16 * 1024**3,
             max_cache_fraction=0.75,
         )

@@ -114,7 +114,7 @@ def simulate_measurement_deterministic(
        - Under a stall, subsequent requests are delayed at the client; the client
          records only the service time, omitting the queuing delay incurred by
          the target schedule.
-    2. Arrival-scheduled generator (open arrival model):
+    2. Arrival-scheduled accounting model (open-arrival assumption):
        - Requests are scheduled to arrive at T_sched[i] = i * arrival_interval_ms.
        - A single-server queue processes requests sequentially.
        - Total latency recorded = T_complete[i] - T_sched[i].
@@ -151,7 +151,7 @@ def simulate_measurement_deterministic(
         # Naive generator measures only completion - dispatch
         naive_latencies.append(actual_service)
 
-    # 2. Arrival-scheduled generator (Open arrival queue model):
+    # 2. Arrival-scheduled accounting model (open-arrival single-server queue):
     scheduled_latencies: List[float] = []
     server_free_time: float = 0.0
 

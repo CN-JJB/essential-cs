@@ -505,6 +505,7 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertEqual(report["module"], "M21")
         self.assertEqual(report["capabilities"]["stdlib_crypto"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["capabilities"]["path_confinement_primitives"]["disposition"], "REQUIRED CAPABILITY PASS")
+        self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
 
         sym_disp = report["capabilities"]["symlink_creation"]["disposition"]
         self.assertIn(sym_disp, ["SYMLINK CAPABILITY PASS", "BLOCKED / NOT RUN"])
@@ -550,7 +551,6 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertEqual(report["module"], "M23")
         self.assertEqual(report["batch"], "S7-B3")
         self.assertEqual(report["capabilities"]["monotonic_clock"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
         self.assertEqual(
             report["policy_invariants"]["OQ_BP_001"],
