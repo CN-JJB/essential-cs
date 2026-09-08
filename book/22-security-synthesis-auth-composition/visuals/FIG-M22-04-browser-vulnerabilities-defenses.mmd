@@ -1,0 +1,37 @@
+%% FIG-M22-04 — Browser Vulnerabilities & Defensive Boundaries (XSS, CSRF, SSRF)
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    subgraph XSS["XSS: Cross-Site Scripting Boundary"]
+        direction TB
+        X1["Attack Vector: Untrusted string reflected/stored into HTML stream"]
+        X2["Execution Boundary: Browser HTML Parser & DOM"]
+        X3["Flaw: Browser parser executes injected text as executable JavaScript"]
+        X4["Primary Defense: Context-aware output encoding (HTML body, attribute, JS context)"]
+        X5["Defense-in-Depth: W3C CSP Level 3 strict nonces ('nonce-...' / 'strict-dynamic')"]
+        X6["Non-Guarantee: CSP does not eliminate DOM clobbering or server-side template injection"]
+        X1 --> X2 --> X3 --> X4 --> X5 --> X6
+    end
+
+    subgraph CSRF["CSRF: Cross-Site Request Forgery Boundary"]
+        direction TB
+        C1["Attack Vector: Malicious third-party origin triggers request to target server"]
+        C2["Execution Boundary: Browser Cross-Origin HTTP Request Dispatch"]
+        C3["Flaw: Ambient authority: browser automatically attaches session cookies"]
+        C4["Primary Defense: SameSite cookie attributes (SameSite=Lax / Strict)"]
+        C5["Defense-in-Depth: Origin / Referer header validation + Anti-CSRF Synchronizer Tokens"]
+        C6["Non-Guarantee: SameSite=Lax allows top-level GET navigations; state mutation on GET is vulnerable!"]
+        C1 --> C2 --> C3 --> C4 --> C5 --> C6
+    end
+
+    subgraph SSRF["SSRF: Server-Side Request Forgery Boundary"]
+        direction TB
+        S1["Attack Vector: Attacker provides URL/host coerced into outbound fetch"]
+        S2["Execution Boundary: Server Outbound Network Egress"]
+        S3["Flaw: Server fetches internal/metadata endpoints using its own network authority"]
+        S4["Bounded Defense: Parse URL + Resolve DNS + Validate candidate IPs against egress policy"]
+        S5["Direct HTTP fixture: connect to validated IP so this path does not re-resolve hostname"]
+        S6["Non-Guarantee: direct binding here does not cover redirects, proxies, HTTPS/TLS identity, or other request paths"]
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    end
+
+    N["Core Web Security Axiom:<br/>Defend at the exact architectural interpretation boundary, not through fragile ad-hoc blacklists."]
