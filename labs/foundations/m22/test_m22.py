@@ -422,7 +422,24 @@ class TestL22_03_SoftwareSupplyChain(unittest.TestCase):
         )
         self.assertEqual(report["verdict"], "REJECT")
         self.assertFalse(report["layers"]["layer7_8_provenance_and_builder"])
-        self.assertTrue(any("Untrusted builder" in r for r in report["reasons"]))
+        layer78_reasons = [r for r in report["reasons"] if "Layer 7/8" in r]
+        self.assertTrue(layer78_reasons, "rejection must be attributed to Layer 7/8")
+        self.assertTrue(
+            any("builder" in r.lower() for r in layer78_reasons),
+            "Layer 7/8 rejection must identify the builder check",
+        )
+        self.assertTrue(
+            any("allowlist" in r for r in layer78_reasons),
+            "Layer 7/8 rejection must reference the local synthetic builder allowlist",
+        )
+        self.assertTrue(
+            any(rogue_prov.builder_id in r for r in layer78_reasons),
+            "Layer 7/8 rejection must name the rejected builder id",
+        )
+        self.assertFalse(
+            any("digital signature" in r.lower() or "attestation verification" in r.lower() for r in layer78_reasons),
+            "Layer 7/8 rejection must not claim real signature or attestation verification",
+        )
 
 
 class TestM22_ResetAndCleanup(unittest.TestCase):
