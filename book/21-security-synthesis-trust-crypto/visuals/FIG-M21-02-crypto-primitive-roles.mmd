@@ -1,0 +1,11 @@
+%% FIG-M21-02 — Crypto Primitive Roles
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart LR
+    H["HASH<br/>Key: none<br/>Core: digest / integrity detection vs trusted expected digest<br/>Non-guarantee: no sender authenticity against active replacement"]
+    M["MAC<br/>Key: shared secret<br/>Core: integrity + shared-secret authenticity<br/>Non-guarantee: no public verification; secret holders are not distinguishable"]
+    S["SIGNATURE<br/>Keys: private/public keypair<br/>Core: verification under a public key<br/>Non-guarantee: key verification alone != human identity, trustworthiness,<br/>or unconditional non-repudiation"]
+    A["AEAD<br/>Key: symmetric secret (+ nonce requirements by algorithm/profile)<br/>Core: confidentiality + authenticity<br/>Non-guarantee: does not decide authorization or peer identity"]
+
+    H -->|"need active-channel authenticity?"| M
+    M -->|"need public verification without giving verifiers signing authority?"| S
+    M -->|"also need confidentiality?"| A

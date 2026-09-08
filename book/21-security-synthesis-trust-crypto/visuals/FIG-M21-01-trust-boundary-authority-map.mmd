@@ -1,0 +1,23 @@
+%% FIG-M21-01 — Trust Boundary & Authority Map
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    U["Untrusted input<br/>filename / request data"]
+    V{"Verification point<br/>parse + validate intended authority"}
+    A["Application worker<br/>least-privilege authority"]
+    P{"Resolved path<br/>inside authorized root?"}
+    K["OS / filesystem API<br/>higher enforcement authority"]
+    S["Authorized course-owned storage"]
+    D["Denied / handled violation"]
+
+    U -->|"crosses application trust boundary"| V
+    V -->|"accepted structure"| A
+    V -->|"invalid structure"| D
+    A -->|"path request crosses storage boundary"| P
+    P -->|"resolved descendant"| K
+    P -->|"escape / absolute / NUL"| D
+    K -->|"bounded operation"| S
+
+    I1["Isolation: separates execution / resources"]
+    I2["Trust boundary: change in trust, authority,<br/>or verification obligation"]
+    I1 -. "related but not identical" .- I2
+    A -. "authority is deliberately narrowed" .-> I1
