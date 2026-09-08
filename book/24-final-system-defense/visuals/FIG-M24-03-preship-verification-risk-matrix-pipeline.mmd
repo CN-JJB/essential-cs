@@ -1,0 +1,42 @@
+%% FIG-M24-03 — Pre-Ship Verification & Risk-Prioritized Candidate Release Gate Pipeline
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    subgraph INPUT ["Release Candidate Input"]
+        SRC["Candidate Software Release<br/>(Application code, schema migrations, configs, and telemetry rules)"]
+    end
+
+    subgraph RISK_MATRIX ["Risk-Prioritized Evidence Classification (Tied to Severity & Blast Radius)"]
+        direction TB
+        MM["MUST MEASURE (Empirical Verification)<br/>• Steady-state arrival latency percentiles under modeled load<br/>• Memory RSS growth and leak detection during burn-in<br/>• Resource saturation thresholds (CPU, socket pool, disk I/O)"]
+        MT["MUST TEST (Automated Invariant Gates)<br/>• Safety and correctness invariants under automated regression<br/>• Error handling, retries, and timeout fail-closed behavior<br/>• Token validity, session revocation, and boundary enforcement"]
+        MI["MUST INSPECT (Manual & Static Audits)<br/>• Secret leakage in configs, git history, and runtime logs<br/>• Database migration backward compatibility & lock acquisition<br/>• External dependency integrity and supply chain pin audit"]
+        AU["ACCEPTABLE UNKNOWN (Documented & Bounded Residual Risks)<br/>• Multi-hour upstream cloud provider zone outage (out of current project scope)<br/>• Behavior under extreme physical hardware fault (documented single-node limit)"]
+    end
+
+    subgraph CONDITIONAL_PIPELINE ["Candidate Release Verification Pipeline"]
+        G1["Candidate Gate 1: Automated Invariant & Regression Tests<br/>(Unit, integration, and security assertion suites pass)"]
+        G2["Candidate Gate 2: Security, Secret & Dependency Audit<br/>(Static verification of credentials, sanitize output, license check)"]
+        G3["Candidate Gate 3: Workload & Resource Measurement<br/>(Empirical confirmation of capacity bounds where required)"]
+        G4["Candidate Gate 4: Deployment Compatibility & Reversal Evaluation<br/>(Analyze code vs database evolution)"]
+        G5["Candidate Gate 5: Telemetry, Observability & Structured Health Check<br/>(Structured logs, correlation IDs, healthz endpoint verification)"]
+
+        G1 --> G2 --> G3 --> G4 --> G5
+    end
+
+    subgraph RECOVERY_STRATEGY ["Conditional Reversal & Recovery Strategy (Evaluated at Gate 4)"]
+        direction TB
+        C_CODE{"Is deployment backward-compatible with database schema?"}
+        R_ROLLBACK["Code Rollback Safe:<br/>Redeploy prior commit; database schema remains intact."]
+        R_ROLLFORWARD["Destructive Schema Change Detected:<br/>Code rollback alone causes crash/corruption.<br/>Strategy requires Roll-Forward, Migration Reversal, or Snapshot Recovery.<br/>State explicit, verifiable data-loss bound (e.g., zero loss for committed data, or bounded window)."]
+        C_CODE -- Yes (Expand phase or additive) --> R_ROLLBACK
+        C_CODE -- No (Contract phase or destructive alter) --> R_ROLLFORWARD
+    end
+
+    subgraph RELEASE_DECISION ["Controlled Risk Release Decision"]
+        DECISION["Ship / Do Not Ship Determination<br/>(Reviewer-evaluated judgment; no universal arbitrary numeric score;<br/>100% test coverage != safety proof; test PASS != production proof)"]
+    end
+
+    SRC --> RISK_MATRIX
+    RISK_MATRIX --> CONDITIONAL_PIPELINE
+    G4 -.-> RECOVERY_STRATEGY
+    G5 --> RELEASE_DECISION

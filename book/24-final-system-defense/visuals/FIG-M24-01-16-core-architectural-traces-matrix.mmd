@@ -1,0 +1,39 @@
+%% FIG-M24-01 — The 16 Core Architectural Traces Matrix
+%% Original, course-owned, editable Mermaid source for Essential CS.
+flowchart TB
+    subgraph OVERVIEW ["Capstone Architecture Defense: 16 Core Architectural Traces"]
+        DIRECTION["Core Rule: All 16 traces must be grounded on the actual learner system.<br/>Zero fabricated Raft consensus, fake replicas, or cloud platforms.<br/>Evidence sufficiency is reviewer-evaluated, not point-scored."]
+    end
+
+    subgraph FLOW ["I. Flow Traces (Dynamic Path Analysis)"]
+        T1["1. Request Trace<br/>Client interaction → transport → OS socket → HTTP parser → handler → storage → response path"]
+        T2["2. Data & State Trace<br/>Lifecycle of mutations from memory buffers to persistent storage (WAL/fsync)"]
+        T3["3. Control & Authority Trace<br/>Call graphs, identity verification, authorization checks, and privilege elevation"]
+    end
+
+    subgraph STRUCTURE ["II. Structural Inventories (State & Invariant Boundaries)"]
+        T4["4. State Inventory<br/>Classification into volatile memory, durable disk, and shared state"]
+        T5["5. Invariants & Specifications<br/>Explicit correctness guarantees (e.g., atomic commit, token expiration)"]
+        T6["6. Trust Boundaries<br/>Perimeters where data crosses between untrusted clients, network, and host processes"]
+        T7["7. Isolation Boundaries<br/>Process memory spaces, database transactions, and tenant isolation"]
+    end
+
+    subgraph RESILIENCE ["III. Resilience & Empirical Evidence (Failure & Measurement)"]
+        T8["8. Failure & Risk Walkthrough<br/>Single points of failure, crash recovery points, and unhandled failure domains"]
+        T9["9. Security & Privacy Decisions<br/>CSPRNG nonces, password hashing (PBKDF2/Argon2), query parameterization"]
+        T10["10. Measurements & Performance Evidence<br/>Question-driven latency distributions under open arrival; coordinated omission defense"]
+        T11["11. Cost & Scale Estimates<br/>Fermi sizing bounds for CPU, RAM, storage growth, and network egress"]
+    end
+
+    subgraph DECISIONS ["IV. Decision Rationale & Adaptation (Judgment & Evolution)"]
+        T12["12. Alternatives Considered<br/>Structured D-015 comparison of evaluated frameworks and architectures"]
+        T13["13. When-Not-To-Use & Rejected Choices<br/>Explicit justification for rejecting complex solutions (e.g., rejecting microservices)"]
+        T14["14. Explicit Unknowns<br/>First-class documented technical blind spots and unverified edge cases"]
+        T15["15. Learning Plan<br/>Actionable engineering roadmap to investigate and resolve explicit unknowns"]
+        T16["16. Changed-Constraint Adaptation<br/>Reasoned architectural redesign under perturbed constraints (e.g., 100x data, 200ms latency)"]
+    end
+
+    DIRECTION --> FLOW
+    FLOW --> STRUCTURE
+    STRUCTURE --> RESILIENCE
+    RESILIENCE --> DECISIONS

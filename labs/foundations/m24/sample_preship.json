@@ -1,0 +1,76 @@
+{
+  "project_name": "Mini Cloud App Candidate Release v1.2",
+  "target_architecture": "Single-Node SQLite WAL service",
+  "risk_matrix": {
+    "must_measure": [
+      {
+        "id": "MM-01",
+        "target": "Process memory RSS leak during continuous operation",
+        "methodology": "30-minute steady-state burn-in under 200 req/s open arrival",
+        "threshold": "RSS growth <= 5% across 20,000 requests after initial warm-up",
+        "blast_radius_if_omitted": "Host OOM killer terminates application worker after days of production uptime"
+      },
+      {
+        "id": "MM-02",
+        "target": "Latency distribution under open arrival schedule",
+        "methodology": "labs/foundations/m23/activity_l23_01.py scheduled arrival benchmark",
+        "threshold": "p95 latency <= 50ms, p99 latency <= 100ms at target 200 req/s load",
+        "blast_radius_if_omitted": "Queue backlog cascade during minor service pause causing client timeouts"
+      }
+    ],
+    "must_test": [
+      {
+        "id": "MT-01",
+        "target": "Token expiration and signature verification fail-closed invariant",
+        "methodology": "Automated security test suite injecting expired and corrupted HMAC tokens",
+        "threshold": "100% of expired or invalid tokens receive HTTP 401 Unauthorized",
+        "blast_radius_if_omitted": "Security boundary breach permitting unauthorized session reuse"
+      },
+      {
+        "id": "MT-02",
+        "target": "Atomic transaction rollback on multi-table document creation",
+        "methodology": "Simulated disk error injected during secondary table insert",
+        "threshold": "SQLite recovery leaves database in consistent pre-transaction state without orphan records",
+        "blast_radius_if_omitted": "Relational data corruption requiring manual database repair"
+      }
+    ],
+    "must_inspect": [
+      {
+        "id": "MI-01",
+        "target": "Repository git tree and configuration secret leakage",
+        "methodology": "Static scan of commit history and environment config files",
+        "threshold": "Zero private keys, session tokens, or DB passwords found in repository code",
+        "blast_radius_if_omitted": "Credential compromise via accidental source exposure"
+      },
+      {
+        "id": "MI-02",
+        "target": "Database migration DDL backward compatibility",
+        "methodology": "Manual and simulated schema inspection via preship_validator.py",
+        "threshold": "All newly added columns are NULLABLE or have defined DEFAULT values",
+        "blast_radius_if_omitted": "Emergency rollback crashes previous application version with column missing errors"
+      }
+    ],
+    "acceptable_unknown": [
+      {
+        "id": "AU-01",
+        "description": "System availability during an unexpected multi-hour regional power loss on the host hardware",
+        "justification": "This project is explicitly bounded to a single-node architecture with localized storage; multi-region active-active failover is out of scope for current budget and design constraints.",
+        "blast_radius_if_omitted": "Total downtime for the duration of the physical power outage (acknowledged and accepted)"
+      },
+      {
+        "id": "AU-02",
+        "description": "B-Tree indexing overhead when document table exceeds 10,000,000 rows on low RAM hosts",
+        "justification": "Target scale for current candidate release is bounded to 100,000 documents; 10M row scaling is cataloged in the M25 learning plan.",
+        "blast_radius_if_omitted": "Increased query latency if database unexpectedly exceeds 100x target scale"
+      }
+    ]
+  },
+  "deployment_compatibility": {
+    "app_code_compatibility": "Backward-compatible with existing client mobile and web apps (no breaking REST schema changes)",
+    "schema_compatibility_type": "Additive",
+    "chosen_recovery_strategy": "Code Rollback",
+    "recovery_justification": "Candidate migration adds a nullable 'summary' column to the documents table. The previous application version ignores this column and continues reading and writing baseline fields without error. Code rollback is safe.",
+    "stated_data_loss_bound": "Committed transactions: Zero loss. In-flight HTTP requests during restart window (< 3.0 seconds): Bounded to socket timeout; clients receive clean connection reset and may retry.",
+    "reversal_verification_evidence": "Validated via labs/foundations/m24/preship_validator.py --simulate-migration Scenario 1."
+  }
+}
