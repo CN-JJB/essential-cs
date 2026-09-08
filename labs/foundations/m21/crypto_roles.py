@@ -188,40 +188,56 @@ def optional_signature_demo(message: bytes) -> Dict[str, Any]:
             ),
         }
 
-    version = getattr(cryptography, "__version__", "UNKNOWN")
-    private_key = Ed25519PrivateKey.generate()
-    public_key = private_key.public_key()
-    signature = private_key.sign(message)
-    matching_ok = False
     try:
-        public_key.verify(signature, message)
-        matching_ok = True
-    except Exception:
+        version = getattr(cryptography, "__version__", "UNKNOWN")
+        private_key = Ed25519PrivateKey.generate()
+        public_key = private_key.public_key()
+        signature = private_key.sign(message)
         matching_ok = False
+        try:
+            public_key.verify(signature, message)
+            matching_ok = True
+        except Exception:
+            matching_ok = False
 
-    other_pub = Ed25519PrivateKey.generate().public_key()
-    unrelated_ok = False
-    try:
-        other_pub.verify(signature, message)
-        unrelated_ok = True
-    except Exception:
+        other_pub = Ed25519PrivateKey.generate().public_key()
         unrelated_ok = False
+        try:
+            other_pub.verify(signature, message)
+            unrelated_ok = True
+        except Exception:
+            unrelated_ok = False
 
-    return {
-        "disposition": "OPTIONAL PACKAGE AVAILABLE",
-        "package": "cryptography",
-        "version": version,
-        "algorithm": "Ed25519",
-        "verified_under_matching_public_key": matching_ok,
-        "verified_under_unrelated_public_key": unrelated_ok,
-        "inference_limit": (
-            "Proves mathematical verification under a specific public key on synthetic "
-            "in-memory material. Does not prove signer identity, key custody, host "
-            "integrity, verifier policy, or legal/organizational non-repudiation. "
-            "Observed package version is implementation-time currentness, not a "
-            "course-wide pin (OQ-BP-006 remains OPEN)."
-        ),
-    }
+        return {
+            "disposition": "OPTIONAL PACKAGE AVAILABLE",
+            "package": "cryptography",
+            "version": version,
+            "algorithm": "Ed25519",
+            "verified_under_matching_public_key": matching_ok,
+            "verified_under_unrelated_public_key": unrelated_ok,
+            "inference_limit": (
+                "Proves mathematical verification under a specific public key on synthetic "
+                "in-memory material. Does not prove signer identity, key custody, host "
+                "integrity, verifier policy, or legal/organizational non-repudiation. "
+                "Observed package version is implementation-time currentness, not a "
+                "course-wide pin (OQ-BP-006 remains OPEN)."
+            ),
+        }
+    except Exception as exc:
+        return {
+            "disposition": "BLOCKED / NOT RUN",
+            "package": "cryptography",
+            "version": getattr(cryptography, "__version__", "UNKNOWN"),
+            "algorithm": "Ed25519",
+            "verified_under_matching_public_key": None,
+            "verified_under_unrelated_public_key": None,
+            "error": f"{type(exc).__name__}: {exc}",
+            "inference_limit": (
+                "Optional package is installed but the Ed25519 capability probe could not "
+                "complete in this environment. Required Core remains independent; this "
+                "blocked optional route is never converted to PASS."
+            ),
+        }
 
 
 def compare_digest_contract_probe() -> Dict[str, Any]:

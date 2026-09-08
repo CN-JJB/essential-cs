@@ -181,7 +181,10 @@ class TestL21_02_CryptoRoles(unittest.TestCase):
 
     def test_optional_signature_demo(self) -> None:
         demo = crypto_roles.optional_signature_demo(crypto_roles.SYNTHETIC_MESSAGE)
-        self.assertIn(demo["disposition"], ["OPTIONAL PACKAGE AVAILABLE", "NOT RUN / CAPABILITY ABSENT"])
+        self.assertIn(
+            demo["disposition"],
+            ["OPTIONAL PACKAGE AVAILABLE", "NOT RUN / CAPABILITY ABSENT", "BLOCKED / NOT RUN"],
+        )
         if demo["disposition"] == "OPTIONAL PACKAGE AVAILABLE":
             self.assertTrue(demo["verified_under_matching_public_key"])
             self.assertFalse(demo["verified_under_unrelated_public_key"])

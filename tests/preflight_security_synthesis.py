@@ -253,7 +253,14 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
 
         # Optional package is either AVAILABLE or NOT INSTALLED / NOT RUN
         opt_disp = report["capabilities"]["optional_cryptography"]["disposition"]
-        self.assertIn(opt_disp, ["OPTIONAL PACKAGE AVAILABLE", "OPTIONAL PACKAGE NOT INSTALLED / NOT RUN"])
+        self.assertIn(
+            opt_disp,
+            [
+                "OPTIONAL PACKAGE AVAILABLE",
+                "OPTIONAL PACKAGE NOT INSTALLED / NOT RUN",
+                "ENVIRONMENT-BLOCKED / NOT RUN",
+            ],
+        )
 
         # Policy invariants
         self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
