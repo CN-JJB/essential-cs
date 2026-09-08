@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 """
-activity_l24_02.py — Hands-on Activity for Lesson L24-02 (Pre-Ship Verification)
-================================================================================
+activity_l24_02.py — M24 Pre-Ship Structural Activity
+=====================================================
 
-Provides the runnable harness for evaluating candidate software releases before shipping:
-1. Validates risk-prioritized pre-ship evidence matrices (Must Measure, Must Test,
-   Must Inspect, Acceptable Unknown).
-2. Simulates SQLite database schema migrations to verify backward compatibility and
-   test rollback safety vs roll-forward necessity.
-3. Audits stated data-loss bounds and ensures zero naive overclaims.
-
-Standard Library Only (PEP 557 dataclasses, json, sqlite3, argparse, pathlib).
+Validates a risk-prioritized evidence matrix and runs bounded SQLite DDL/query
+compatibility examples. The SQLite examples do not prove whole-application rollback
+safety and do not prescribe a universal recovery strategy.
 """
 
 from __future__ import annotations
@@ -20,12 +15,8 @@ import json
 import sys
 from pathlib import Path
 
-# Import sibling preship validator
 try:
-    from preship_validator import (
-        simulate_sqlite_schema_evolution,
-        validate_risk_matrix_data,
-    )
+    from preship_validator import simulate_sqlite_schema_evolution, validate_risk_matrix_data
 except ImportError:
     from labs.foundations.m24.preship_validator import (
         simulate_sqlite_schema_evolution,
@@ -34,57 +25,53 @@ except ImportError:
 
 
 def run_migration_simulations() -> None:
+    scenarios = [
+        (
+            "Add nullable column",
+            "CREATE TABLE documents (id INTEGER PRIMARY KEY, title TEXT, content TEXT);",
+            "INSERT INTO documents (title, content) VALUES ('Doc 1', 'Content 1');",
+            "ALTER TABLE documents ADD COLUMN summary TEXT;",
+            "SELECT id, title, content FROM documents WHERE id = 1;",
+        ),
+        (
+            "Rename a column referenced by the old query",
+            "CREATE TABLE documents (id INTEGER PRIMARY KEY, title TEXT, content TEXT);",
+            "INSERT INTO documents (title, content) VALUES ('Doc 1', 'Content 1');",
+            "ALTER TABLE documents RENAME COLUMN content TO body_text;",
+            "SELECT id, title, content FROM documents WHERE id = 1;",
+        ),
+        (
+            "Add NOT NULL column without default to populated table",
+            "CREATE TABLE documents (id INTEGER PRIMARY KEY, title TEXT, content TEXT);",
+            "INSERT INTO documents (title, content) VALUES ('Doc 1', 'Content 1');",
+            "ALTER TABLE documents ADD COLUMN priority INTEGER NOT NULL;",
+            "SELECT id, title, content FROM documents WHERE id = 1;",
+        ),
+    ]
+
     print("=" * 78)
-    print("  M24 L24-02 DATABASE SCHEMA MIGRATION & REVERSAL SIMULATIONS")
+    print("  M24 SQLITE DDL / OLD-QUERY COMPATIBILITY EXAMPLES")
     print("=" * 78)
-
-    # Simulation 1: Expand phase (Additive column)
-    print("\n[SIMULATION 1] Additive Column Migration (Expand Phase)")
-    print("  Scenario: Candidate release adds nullable 'summary' column to 'documents' table.")
-    ok1, msg1 = simulate_sqlite_schema_evolution(
-        initial_ddl="CREATE TABLE documents (id INTEGER PRIMARY KEY, title TEXT, content TEXT);",
-        initial_insert="INSERT INTO documents (title, content) VALUES ('Doc 1', 'Content 1');",
-        migration_ddl="ALTER TABLE documents ADD COLUMN summary TEXT;",
-        old_code_query="SELECT id, title, content FROM documents WHERE id = 1;",
-    )
-    print(f"  Execution Status: {'PASS' if ok1 else 'FAIL'}")
-    print(f"  Old Code Query:   {msg1}")
-    print("  Architecture Insight: Old application code ignores new nullable column. Safe to roll back code!")
-
-    # Simulation 2: Destructive rename
-    print("\n[SIMULATION 2] Destructive Column Rename Migration")
-    print("  Scenario: Candidate release renames 'content' to 'body_text'.")
-    ok2, msg2 = simulate_sqlite_schema_evolution(
-        initial_ddl="CREATE TABLE documents (id INTEGER PRIMARY KEY, title TEXT, content TEXT);",
-        initial_insert="INSERT INTO documents (title, content) VALUES ('Doc 1', 'Content 1');",
-        migration_ddl="ALTER TABLE documents RENAME COLUMN content TO body_text;",
-        old_code_query="SELECT id, title, content FROM documents WHERE id = 1;",
-    )
-    print(f"  Execution Status: {'BLOCKED (Expected Incompatibility)' if not ok2 else 'UNEXPECTED'}")
-    print(f"  Old Code Query:   {msg2}")
-    print("  Architecture Insight: Old application code crashes immediately. Code rollback alone is FORBIDDEN!")
-    print("                        Must execute roll-forward fix or explicit migration reversal.")
-
-    # Simulation 3: Destructive NOT NULL without default
-    print("\n[SIMULATION 3] Destructive NOT NULL Column without Default")
-    print("  Scenario: Candidate release adds 'priority INTEGER NOT NULL' without default value to populated table.")
-    ok3, msg3 = simulate_sqlite_schema_evolution(
-        initial_ddl="CREATE TABLE documents (id INTEGER PRIMARY KEY, title TEXT, content TEXT);",
-        initial_insert="INSERT INTO documents (title, content) VALUES ('Doc 1', 'Content 1');",
-        migration_ddl="ALTER TABLE documents ADD COLUMN priority INTEGER NOT NULL;",
-        old_code_query="SELECT id, title, content FROM documents WHERE id = 1;",
-    )
-    print(f"  Execution Status: {'FAIL-CLOSED (Expected DDL Failure)' if not ok3 else 'UNEXPECTED'}")
-    print(f"  Migration Output: {msg3}")
-    print("  Architecture Insight: SQLite refuses to add non-null columns without defaults to existing rows.")
-    print("                        Protects relational integrity at deployment time.")
+    for title, initial_ddl, initial_insert, migration_ddl, old_query in scenarios:
+        ok, message = simulate_sqlite_schema_evolution(
+            initial_ddl=initial_ddl,
+            initial_insert=initial_insert,
+            migration_ddl=migration_ddl,
+            old_code_query=old_query,
+        )
+        label = "QUERY_COMPATIBLE" if ok else "QUERY_INCOMPATIBLE_OR_DDL_BLOCKED"
+        print(f"  - {title}: {label}")
+        print(f"      {message}")
+    print("-" * 78)
+    print("  NOTE: Results apply only to the exact SQLite DDL/query pairs above.")
+    print("  Whole-application recovery strategy remains project- and reviewer-dependent.")
     print("=" * 78)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="L24-02 Pre-Ship Verification & Migration Activity Harness")
-    parser.add_argument("--matrix", help="Path to pre-ship risk matrix JSON file to audit")
-    parser.add_argument("--simulate-migration", action="store_true", help="Execute schema migration compatibility simulations")
+    parser = argparse.ArgumentParser(description="L24-02 pre-ship structural activity")
+    parser.add_argument("--matrix", help="Path to pre-ship risk matrix JSON")
+    parser.add_argument("--simulate-migration", action="store_true")
     args = parser.parse_args()
 
     if args.simulate_migration:
@@ -95,39 +82,27 @@ def main() -> None:
     if not matrix_path.exists():
         print(f"ERROR: Matrix file not found: {matrix_path}", file=sys.stderr)
         sys.exit(1)
-
     try:
         data = json.loads(matrix_path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (OSError, json.JSONDecodeError) as exc:
         print(f"ERROR: Failed to parse matrix JSON: {exc}", file=sys.stderr)
         sys.exit(1)
 
     report = validate_risk_matrix_data(data, str(matrix_path))
-
     print("=" * 78)
-    print(f"  M24 L24-02 PRE-SHIP RISK MATRIX AUDIT: {matrix_path.name}")
+    print(f"  M24 PRE-SHIP STRUCTURAL AUDIT: {matrix_path.name}")
     print("=" * 78)
-    print(f"  Status:               {report.status}")
-    print(f"  Risk Classes Found:   {len(report.classes_found)} / 4")
-    for cls_name, count in report.item_counts.items():
-        print(f"    - {cls_name:<20}: {count} items")
-    print(f"  Chosen Strategy:      {report.reversal_strategy}")
-    print(f"  Stated Data-Loss:     {report.stated_data_loss_bound}")
-    print("-" * 78)
-
-    if report.is_valid:
-        print("  [SUCCESS] All 4 risk classes are present and populated.")
-        print("  [SUCCESS] Reversal strategy is aligned with schema compatibility.")
-        print("  [SUCCESS] Stated data-loss bound is explicitly declared.")
-    else:
-        print("  [FAILED] Pre-ship matrix validation failed:")
-        for err in report.errors:
-            print(f"    - {err}")
-
+    print(f"  Status:             {report.status}")
+    print(f"  Risk Classes:       {len(report.classes_found)} / 4")
+    print(f"  Recovery Strategy:  {report.recovery_strategy}")
+    print(f"  Data-Loss Bound:    {report.stated_data_loss_bound or 'NOT APPLICABLE / SEE RATIONALE'}")
+    if report.errors:
+        print("-" * 78)
+        for error in report.errors:
+            print(f"    [FAIL] {error}")
     print("-" * 78)
     print(f"  NOTE: {report.disclaimer}")
     print("=" * 78)
-
     sys.exit(0 if report.is_valid else 1)
 
 
