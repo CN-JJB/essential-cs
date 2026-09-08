@@ -500,7 +500,7 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
             "policy_invariants": {
                 "OQ_BP_006": "OPEN / UNRESOLVED",
                 "defense_evaluation": "DECLARED IMPLEMENTATION CONTRACT / REVIEWER-REQUIRED (Machine structural check != learner PASS)",
-                "no_fabricated_mechanisms": "CONFIRMED (Zero fake Raft/replicas/cloud infrastructure)",
+                "no_fabricated_mechanisms": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
                 "operational_readiness": "DECLARED IMPLEMENTATION CONTRACT / REVIEWER-REQUIRED",
             },
         }
@@ -649,7 +649,7 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertIn("REVIEWER-REQUIRED", report["policy_invariants"]["defense_evaluation"])
         self.assertEqual(
             report["policy_invariants"]["no_fabricated_mechanisms"],
-            "CONFIRMED (Zero fake Raft/replicas/cloud infrastructure)",
+            "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
         )
 
 
