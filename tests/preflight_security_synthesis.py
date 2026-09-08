@@ -438,15 +438,13 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
             "python": probe_python(),
             "capabilities": {
                 "monotonic_clock": probe_monotonic_clock(),
-                "perf_counter": probe_perf_counter(),
-                "scratch_writability": probe_m23_scratch_writability(),
             },
             "policy_invariants": {
                 "OQ_BP_006": "OPEN / UNRESOLVED",
                 "OQ_BP_001": "OPEN / RFC-GATED (AI outputs treated as unverified candidate hypotheses)",
-                "measurement_stance": "CONFIRMED (Question-driven, no universal constants, arrival-scheduled accounting)",
-                "technology_evaluation": "CONFIRMED (Decision D-015 12 dimensions, REJECT is valid passing outcome)",
-                "cost_modeling": "CONFIRMED (Assumption-first arithmetic, explicit unit tracking, no universal pricing)",
+                "measurement_stance": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
+                "technology_evaluation": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
+                "cost_modeling": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
             },
         }
 
@@ -507,7 +505,6 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertEqual(report["module"], "M21")
         self.assertEqual(report["capabilities"]["stdlib_crypto"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["capabilities"]["path_confinement_primitives"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
 
         sym_disp = report["capabilities"]["symlink_creation"]["disposition"]
         self.assertIn(sym_disp, ["SYMLINK CAPABILITY PASS", "BLOCKED / NOT RUN"])
@@ -553,12 +550,15 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertEqual(report["module"], "M23")
         self.assertEqual(report["batch"], "S7-B3")
         self.assertEqual(report["capabilities"]["monotonic_clock"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["capabilities"]["perf_counter"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
         self.assertEqual(
             report["policy_invariants"]["OQ_BP_001"],
             "OPEN / RFC-GATED (AI outputs treated as unverified candidate hypotheses)",
+        )
+        self.assertEqual(
+            report["policy_invariants"]["measurement_stance"],
+            "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
         )
 
 

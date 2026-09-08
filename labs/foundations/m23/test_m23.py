@@ -58,7 +58,6 @@ class TestActivityL23_01(unittest.TestCase):
     def test_clock_characteristics_structure(self) -> None:
         info = get_clock_characteristics()
         self.assertIn("monotonic", info)
-        self.assertIn("perf_counter", info)
         mono = info["monotonic"]
         self.assertTrue(mono["monotonic"], "Monotonic clock must report monotonic=True")
         self.assertFalse(mono["adjustable"], "Monotonic clock must not be adjustable by NTP/time-of-day")
@@ -158,6 +157,12 @@ class TestActivityL23_01(unittest.TestCase):
             simulate_measurement_deterministic(10.0, -1.0, 1, 10.0, 5)
         with self.assertRaises(ValueError):
             simulate_measurement_deterministic(10.0, 2.0, 1, 10.0, 0)
+        with self.assertRaises(ValueError):
+            simulate_measurement_deterministic(10.0, 2.0, -1, 10.0, 5)
+        with self.assertRaises(ValueError):
+            simulate_measurement_deterministic(10.0, 2.0, 5, 10.0, 5)
+        with self.assertRaises(ValueError):
+            simulate_measurement_deterministic(10.0, 2.0, 1, -1.0, 5)
 
 
 class TestActivityL23_02(unittest.TestCase):
@@ -245,26 +250,31 @@ class TestFermiCost(unittest.TestCase):
         # Bit vs Byte
         self.assertEqual(convert_storage(8.0, "b", "bytes"), 1.0)
         self.assertEqual(convert_storage(1.0, "bytes", "b"), 8.0)
+        self.assertEqual(convert_storage(1.0, "Mb", "kB"), 125.0)
 
         # Decimal (SI, 1000)
-        self.assertEqual(convert_storage(1.0, "kb", "bytes"), 1000.0)
-        self.assertEqual(convert_storage(1.0, "mb", "kb"), 1000.0)
-        self.assertEqual(convert_storage(1.0, "tb", "bytes"), 1e12)
+        self.assertEqual(convert_storage(1.0, "kB", "bytes"), 1000.0)
+        self.assertEqual(convert_storage(1.0, "MB", "kB"), 1000.0)
+        self.assertEqual(convert_storage(1.0, "TB", "bytes"), 1e12)
 
         # Binary (IEC, 1024)
-        self.assertEqual(convert_storage(1.0, "kib", "bytes"), 1024.0)
-        self.assertEqual(convert_storage(1.0, "mib", "kib"), 1024.0)
-        self.assertEqual(convert_storage(1.0, "gib", "bytes"), 1073741824.0)
+        self.assertEqual(convert_storage(1.0, "KiB", "bytes"), 1024.0)
+        self.assertEqual(convert_storage(1.0, "MiB", "KiB"), 1024.0)
+        self.assertEqual(convert_storage(1.0, "GiB", "bytes"), 1073741824.0)
 
         # Cross decimal/binary
-        one_gib_in_gb = convert_storage(1.0, "gib", "gb")
+        one_gib_in_gb = convert_storage(1.0, "GiB", "GB")
         self.assertAlmostEqual(one_gib_in_gb, 1.073741824)
 
     def test_storage_conversions_invalid_inputs(self) -> None:
         with self.assertRaises(ValueError):
             convert_storage(-5.0, "mb", "gb")
         with self.assertRaises(ValueError):
-            convert_storage(10.0, "invalid_unit", "gb")
+            convert_storage(10.0, "invalid_unit", "GB")
+        with self.assertRaises(ValueError):
+            convert_storage(1.0, "KB", "bytes")
+        with self.assertRaises(ValueError):
+            convert_storage(1.0, "mb", "bytes")
 
     def test_storage_capacity_estimation(self) -> None:
         # 100,000 items/day, 10,000 bytes each, 3x replication, 90 day retention
@@ -337,8 +347,11 @@ class TestFermiCost(unittest.TestCase):
         baseline = {
             "items_per_day": 10_000,
             "avg_item_bytes": 1000,
+            "replication_factor": 1.0,
+            "indexing_overhead_ratio": 0.0,
             "requests_per_day": 100_000,
             "avg_egress_bytes": 2000,
+            "peak_to_avg_ratio": 1.0,
             "retention_days": 30,
         }
         variations = {
@@ -358,6 +371,21 @@ class TestFermiCost(unittest.TestCase):
             365.0 / 30.0,
             places=3,
         )
+
+        zero_baseline = dict(baseline)
+        zero_baseline["requests_per_day"] = 0
+        zero_variation = run_sensitivity_analysis(
+            zero_baseline,
+            {"traffic_starts": {"requests_per_day": 1000}},
+        )
+        zero_delta = zero_variation["variations"]["traffic_starts"]["deltas_from_baseline"]["daily_egress_gb"]
+        self.assertIsNone(zero_delta["multiplier"])
+        self.assertEqual(zero_delta["multiplier_status"], "UNDEFINED_FROM_ZERO_BASELINE")
+
+        missing_assumption = dict(baseline)
+        del missing_assumption["peak_to_avg_ratio"]
+        with self.assertRaises(ValueError):
+            run_sensitivity_analysis(missing_assumption, {})
 
 
 class TestResetM23(unittest.TestCase):

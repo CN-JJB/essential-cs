@@ -13,7 +13,7 @@ Provides deterministic, assumption-first arithmetic for systems capacity plannin
 4. In-memory working set cache-fit calculations under explicit memory safety margins.
 5. Multi-dimensional Total Cost of Ownership (TCO) separating hardware/cloud infrastructure
    from human operational maintenance (without asserting that one is universally 'highest').
-6. Sensitivity analysis modeling how a 10x traffic surge or changed retention alters bottleneck resources.
+6. Sensitivity analysis comparing explicitly supplied baseline assumptions with explicitly supplied variations.
 
 Zero external dependencies (Python standard library only).
 Fails closed on negative values, zero durations, and invalid unit strings.
@@ -25,56 +25,59 @@ import math
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 def get_storage_factor_to_bytes(unit_str: str) -> float:
-    """Returns the multiplier to convert 1 unit of `unit_str` to Bytes."""
+    """Return the multiplier converting one explicit unit to Bytes.
+
+    Symbol case is meaningful:
+    - bit symbols: b, kb, Mb, Gb, Tb, Pb
+    - byte symbols: B, kB, MB, GB, TB, PB
+    - IEC byte symbols: KiB, MiB, GiB, TiB, PiB
+    - IEC bit symbols: Kibit, Mibit, Gibit, Tibit, Pibit
+
+    Ambiguous/non-standard case variants such as ``KB`` or ``mb`` are rejected rather
+    than silently guessed. Word aliases ``bit(s)`` and ``byte(s)`` are also accepted.
+    """
     raw = unit_str.strip()
     if not raw:
         raise ValueError("Unit string cannot be empty")
 
-    # Strict bit vs Byte distinction
-    if raw == "b" or raw.lower() in ("bit", "bits"):
+    word = raw.lower()
+    if word in ("bit", "bits"):
         return 1.0 / 8.0
-    if raw == "B" or raw.lower() in ("byte", "bytes"):
+    if word in ("byte", "bytes"):
         return 1.0
 
-    lower = raw.lower()
-    # Explicit bit names
-    bit_units = {
-        "kbit": 1_000.0 / 8.0,
-        "mbit": 1_000_000.0 / 8.0,
-        "gbit": 1_000_000_000.0 / 8.0,
-        "tbit": 1_000_000_000_000.0 / 8.0,
-        "pbit": 1_000_000_000_000_000.0 / 8.0,
-        "kibit": 1_024.0 / 8.0,
-        "mibit": 1_048_576.0 / 8.0,
-        "gibit": 1_073_741_824.0 / 8.0,
+    exact_units = {
+        "b": 1.0 / 8.0,
+        "B": 1.0,
+        "kb": 1_000.0 / 8.0,
+        "Mb": 1_000_000.0 / 8.0,
+        "Gb": 1_000_000_000.0 / 8.0,
+        "Tb": 1_000_000_000_000.0 / 8.0,
+        "Pb": 1_000_000_000_000_000.0 / 8.0,
+        "kB": 1_000.0,
+        "MB": 1_000_000.0,
+        "GB": 1_000_000_000.0,
+        "TB": 1_000_000_000_000.0,
+        "PB": 1_000_000_000_000_000.0,
+        "Kibit": 1_024.0 / 8.0,
+        "Mibit": 1_048_576.0 / 8.0,
+        "Gibit": 1_073_741_824.0 / 8.0,
+        "Tibit": 1_099_511_627_776.0 / 8.0,
+        "Pibit": 1_125_899_906_842_624.0 / 8.0,
+        "KiB": 1_024.0,
+        "MiB": 1_048_576.0,
+        "GiB": 1_073_741_824.0,
+        "TiB": 1_099_511_627_776.0,
+        "PiB": 1_125_899_906_842_624.0,
     }
-    if lower in bit_units:
-        return bit_units[lower]
+    if raw in exact_units:
+        return exact_units[raw]
 
-    # Byte units (Decimal SI, base 1000)
-    decimal_units = {
-        "kb": 1_000.0,
-        "mb": 1_000_000.0,
-        "gb": 1_000_000_000.0,
-        "tb": 1_000_000_000_000.0,
-        "pb": 1_000_000_000_000_000.0,
-    }
-    if lower in decimal_units:
-        return decimal_units[lower]
-
-    # Byte units (Binary IEC, base 1024)
-    binary_units = {
-        "kib": 1_024.0,
-        "mib": 1_048_576.0,
-        "gib": 1_073_741_824.0,
-        "tib": 1_099_511_627_776.0,
-        "pib": 1_125_899_906_842_624.0,
-    }
-    if lower in binary_units:
-        return binary_units[lower]
-
-    raise ValueError(f"Unrecognized storage unit: '{unit_str}'. Supported: b, B, KB, KiB, MB, MiB, GB, GiB, TB, TiB, PB, PiB, kbit, mbit, gbit")
-
+    raise ValueError(
+        f"Unrecognized or ambiguous storage unit: '{unit_str}'. "
+        "Use case-exact symbols such as kb/Mb/Gb for bits, kB/MB/GB for Bytes, "
+        "or KiB/MiB/GiB for IEC Bytes."
+    )
 
 def convert_storage(value: float, from_unit: str, to_unit: str) -> float:
     """
@@ -202,7 +205,7 @@ def estimate_memory_cache_fit(
     active_items: float,
     avg_item_bytes: float,
     installed_ram_bytes: float,
-    max_cache_fraction: float = 0.75,
+    max_cache_fraction: float,
 ) -> Dict[str, Any]:
     """
     Evaluates whether an active dataset fits in single-node RAM without paging.
@@ -282,20 +285,38 @@ def run_sensitivity_analysis(
     """
     results: Dict[str, Any] = {}
 
+    required_fields = (
+        "items_per_day",
+        "avg_item_bytes",
+        "replication_factor",
+        "indexing_overhead_ratio",
+        "retention_days",
+        "requests_per_day",
+        "avg_egress_bytes",
+        "peak_to_avg_ratio",
+    )
+    missing = [name for name in required_fields if name not in baseline_params]
+    if missing:
+        raise ValueError(
+            "Sensitivity baseline must state every modeling assumption explicitly; missing: "
+            + ", ".join(missing)
+        )
+
     def compute_model(p: Dict[str, Any]) -> Dict[str, float]:
         st = estimate_storage_capacity(
-            items_per_day=p.get("items_per_day", 100_000),
-            avg_item_bytes=p.get("avg_item_bytes", 2048),
-            replication_factor=p.get("replication_factor", 3.0),
-            retention_days=p.get("retention_days", 90),
+            items_per_day=p["items_per_day"],
+            avg_item_bytes=p["avg_item_bytes"],
+            replication_factor=p["replication_factor"],
+            indexing_overhead_ratio=p["indexing_overhead_ratio"],
+            retention_days=p["retention_days"],
         )
         eg = estimate_network_egress(
-            requests_per_day=p.get("requests_per_day", 1_000_000),
-            avg_payload_bytes=p.get("avg_egress_bytes", 4096),
-            peak_to_avg_ratio=p.get("peak_to_avg_ratio", 2.5),
+            requests_per_day=p["requests_per_day"],
+            avg_payload_bytes=p["avg_egress_bytes"],
+            peak_to_avg_ratio=p["peak_to_avg_ratio"],
         )
         return {
-            "retained_tb": st.get("total_retained_tb", 0.0),
+            "retained_tb": st["total_retained_tb"],
             "daily_egress_gb": eg["daily_egress_gb"],
             "peak_mbps": eg["peak_mbps"],
         }
@@ -315,10 +336,12 @@ def run_sensitivity_analysis(
         deltas = {}
         for k, v in var_metrics.items():
             b_val = baseline_metrics[k]
-            ratio = (v / b_val) if b_val > 0 else 1.0
+            ratio = (v / b_val) if b_val != 0 else None
             deltas[k] = {
                 "val": v,
+                "absolute_delta": v - b_val,
                 "multiplier": ratio,
+                "multiplier_status": "DEFINED" if ratio is not None else "UNDEFINED_FROM_ZERO_BASELINE",
             }
 
         variations_res[var_name] = {
@@ -373,9 +396,9 @@ def main() -> None:
 
     print("-" * 80)
     print("[BOTTLENECK CONCLUSION]")
-    print("  This system is overwhelmingly NETWORK EGRESS and STORAGE bound.")
-    print("  Peak egress is ~13.9 Gbps. Direct server serving would saturate network interfaces.")
-    print("  Caching at CDN edge and image optimization (WebP/AVIF compression) are mandatory.")
+    print("  Under these declared scenario inputs, network egress and retained storage are large modeled demands.")
+    print("  Peak egress is ~13.9 Gbps only because this scenario explicitly assumes a 3.0x peak-to-average ratio.")
+    print("  Whether an origin link saturates depends on actual NIC/topology capacity. CDN/image optimization are candidate mitigations to evaluate, not mandatory conclusions.")
     print("=" * 80)
 
 

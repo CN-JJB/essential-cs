@@ -9,7 +9,7 @@ Canonical Lesson: L23-01 — How do I measure honestly?
 Demonstrates the scientific, question-driven measurement methodology:
 1. Formulates a clear measurement question and falsifiable hypothesis.
 2. Compares uncoordinated synchronous loops (completion-coupled) against
-   arrival-scheduled generators under an open arrival workload model.
+   an arrival-scheduled single-server accounting model under an open-arrival assumption.
 3. Injects explicitly labeled *synthetic* pauses to illustrate coordinated omission
    (without claiming uninstrumented garbage collection observation).
 4. Employs monotonic performance timers (time.monotonic_ns()) while explicitly
@@ -31,19 +31,12 @@ from typing import Any, Dict, List, Optional, Tuple
 def get_clock_characteristics() -> Dict[str, Any]:
     """Inspects the system monotonic timer characteristics via Python stdlib."""
     info = time.get_clock_info("monotonic")
-    perf_info = time.get_clock_info("perf_counter")
     return {
         "monotonic": {
             "implementation": info.implementation,
             "monotonic": info.monotonic,
             "adjustable": info.adjustable,
             "resolution_seconds": info.resolution,
-        },
-        "perf_counter": {
-            "implementation": perf_info.implementation,
-            "monotonic": perf_info.monotonic,
-            "adjustable": perf_info.adjustable,
-            "resolution_seconds": perf_info.resolution,
         },
         "inference_boundary": (
             "Integer nanosecond return values from time.monotonic_ns() reflect API units, "
@@ -131,12 +124,23 @@ def simulate_measurement_deterministic(
     Returns:
         (naive_latencies_ms, arrival_scheduled_latencies_ms)
     """
+    numeric_values = {
+        "arrival_interval_ms": arrival_interval_ms,
+        "service_time_ms": service_time_ms,
+        "stall_duration_ms": stall_duration_ms,
+    }
+    if not all(math.isfinite(v) for v in numeric_values.values()):
+        raise ValueError("Measurement inputs must be finite numbers")
     if arrival_interval_ms <= 0:
         raise ValueError("Arrival interval must be positive")
     if service_time_ms < 0:
         raise ValueError("Service time cannot be negative")
+    if stall_duration_ms < 0:
+        raise ValueError("Synthetic stall duration cannot be negative")
     if request_count <= 0:
         raise ValueError("Request count must be positive")
+    if stall_index < 0 or stall_index >= request_count:
+        raise ValueError("stall_index must identify a request within the modeled request_count")
 
     # 1. Naive synchronous loop:
     # Client sends request, awaits completion, sleeps until next tick.
@@ -175,19 +179,36 @@ def run_live_synthetic_benchmark(
     synthetic_stall_ms: float = 60.0,
 ) -> Dict[str, Any]:
     """
-    Runs a bounded, course-owned, live synthetic benchmark on localhost memory.
+    Runs a bounded, course-owned synthetic service-time observation plus arrival-scheduled accounting reconstruction.
 
     Notice:
     - Synthetic stall is explicitly labeled as synthetic pause injection.
     - Zero external network calls.
-    - Execution time bounded to < 1.5 seconds.
+    - Nominal requested sleep budget is safety-capped at 1.5 seconds; host scheduling can extend wall-clock runtime.
     """
+    numeric_values = {
+        "target_rate_req_per_sec": target_rate_req_per_sec,
+        "base_service_time_ms": base_service_time_ms,
+        "synthetic_stall_ms": synthetic_stall_ms,
+    }
+    if not all(math.isfinite(v) for v in numeric_values.values()):
+        raise ValueError("Live synthetic benchmark inputs must be finite numbers")
     if target_rate_req_per_sec <= 0:
         raise ValueError("Target request rate must be positive")
     if request_count <= 0 or request_count > 200:
         raise ValueError("Request count must be between 1 and 200 for bounded execution")
+    if base_service_time_ms < 0 or synthetic_stall_ms < 0:
+        raise ValueError("Synthetic service/stall durations cannot be negative")
+    if synthetic_stall_index < 0 or synthetic_stall_index >= request_count:
+        raise ValueError("synthetic_stall_index must identify a request within request_count")
 
-    interval_ns = int((1.0 / target_rate_req_per_sec) * 1_000_000_000)
+    nominal_sleep_budget_ms = request_count * base_service_time_ms + synthetic_stall_ms
+    if nominal_sleep_budget_ms > 1500.0:
+        raise ValueError(
+            "Nominal synthetic sleep budget exceeds the course safety cap of 1500 ms; "
+            "reduce request_count/service/stall parameters."
+        )
+
     base_service_ns = int(base_service_time_ms * 1_000_000)
     stall_ns = int(synthetic_stall_ms * 1_000_000)
 
@@ -209,9 +230,8 @@ def run_live_synthetic_benchmark(
         t_req_end = time.monotonic_ns()
         naive_samples_ms.append((t_req_end - t_req_start) / 1_000_000.0)
 
-    # Run Arrival-Scheduled Simulation
-    # To prevent runaway clock drift in testing, we use the deterministic arrival schedule model
-    # mapped to the actual recorded service times:
+    # Reconstruct an arrival-scheduled single-server queue from the observed service samples.
+    # This is a model/accounting reconstruction, not a concurrently issuing live open-load generator.
     scheduled_samples_ms: List[float] = []
     simulated_server_free_ms: float = 0.0
     interval_ms = 1000.0 / target_rate_req_per_sec
@@ -240,13 +260,14 @@ def run_live_synthetic_benchmark(
         "scheduled_summary": calculate_summary_statistics(scheduled_samples_ms),
         "naive_samples": naive_samples_ms,
         "scheduled_samples": scheduled_samples_ms,
+        "model_boundary": "scheduled samples are reconstructed from observed service times; no live concurrent open-load generator is claimed",
     }
 
 
 def format_summary_table(naive: Dict[str, float], scheduled: Dict[str, float]) -> str:
     """Formats a comparative markdown table between naive and scheduled measurement."""
     lines = [
-        "| Metric | Naive Synchronous Loop (Service Time Only) | Arrival-Scheduled Generator (Queue + Service) | Omission Ratio (Sched / Naive) |",
+        "| Metric | Naive Synchronous Loop (Service Time Only) | Arrival-Scheduled Accounting Model (Queue + Service) | Omission Ratio (Sched / Naive) |",
         "| :--- | :--- | :--- | :--- |",
     ]
     metrics = ["min", "p50", "p90", "p95", "p99", "max", "mean", "stddev"]
@@ -275,10 +296,10 @@ def main() -> None:
     print("[MEASUREMENT QUESTION]")
     print("  'When a server experiences a 60ms synthetic pause under a 100 req/s arrival schedule,")
     print("   how does completion-coupled sampling distort perceived tail latency compared to")
-    print("   arrival-scheduled latency accounting?'")
+    print("   arrival-scheduled queue accounting?'")
     print("-" * 80)
 
-    print("[RUNNING BOUNDED SYNTHETIC BENCHMARK] (25 requests, synthetic stall at req #8)...")
+    print("[RUNNING BOUNDED SYNTHETIC SERVICE OBSERVATION + QUEUE MODEL] (25 requests, synthetic stall at req #8)...")
     res = run_live_synthetic_benchmark(
         request_count=25,
         target_rate_req_per_sec=100.0,
@@ -292,7 +313,7 @@ def main() -> None:
     print("[EMPIRICAL OBSERVATION]")
     print("  1. In the naive synchronous loop, the client stopped generating requests during the stall.")
     print("     Requests arriving right after the stall experienced no measured queue wait in the naive run.")
-    print("  2. In the arrival-scheduled accounting, requests scheduled to arrive during the 50ms stall")
+    print("  2. In the arrival-scheduled accounting model, requests scheduled to arrive during the 50ms stall")
     print("     accumulated queue delay, dramatically revealing elevated p90 and p99 tail latencies.")
     print("  3. Coordinated omission is not a universal truth of all benchmarks; it is specifically")
     print("     a property of workloads where requests arrive independently of service completion.")
