@@ -336,6 +336,39 @@ class TestL22_03_SoftwareSupplyChain(unittest.TestCase):
         self.assertTrue(report["layers"]["layer5_6_teaching_authenticator_and_identity_policy"])
         self.assertTrue(report["layers"]["layer7_8_provenance_and_builder"])
 
+    def test_layer5_6_report_key_consistency_across_paths(self) -> None:
+        """Issue #125: verify layer 5/6 canonical key across success, missing, and skipped paths."""
+        canonical_key = "layer5_6_teaching_authenticator_and_identity_policy"
+        stale_key = "layer5_6_signature_and_identity"
+
+        # 1. Success path
+        rep_success = activity_l22_03.audit_dependency_against_policy(
+            self.entry, self.artifact, self.prov, self.authenticator, self.key_id, self.signing_secret, self.policy,
+            rebuild_bytes=self.artifact.content,
+        )
+        self.assertIn(canonical_key, rep_success["layers"])
+        self.assertNotIn(stale_key, rep_success["layers"])
+        self.assertIs(rep_success["layers"][canonical_key], True)
+
+        # 2. Missing authenticator path
+        rep_missing = activity_l22_03.audit_dependency_against_policy(
+            self.entry, self.artifact, self.prov, None, self.key_id, self.signing_secret, self.policy,
+            rebuild_bytes=self.artifact.content,
+        )
+        self.assertIn(canonical_key, rep_missing["layers"])
+        self.assertNotIn(stale_key, rep_missing["layers"])
+        self.assertIs(rep_missing["layers"][canonical_key], False)
+
+        # 3. Policy skipped path
+        policy_skip = activity_l22_03.VerifierPolicy(require_signature=False)
+        rep_skipped = activity_l22_03.audit_dependency_against_policy(
+            self.entry, self.artifact, self.prov, None, self.key_id, self.signing_secret, policy_skip,
+            rebuild_bytes=self.artifact.content,
+        )
+        self.assertIn(canonical_key, rep_skipped["layers"])
+        self.assertNotIn(stale_key, rep_skipped["layers"])
+        self.assertEqual(rep_skipped["layers"][canonical_key], "SKIPPED_BY_POLICY")
+
     def test_layer3_tampered_byte_rejection(self) -> None:
         tampered_artifact = activity_l22_03.SyntheticArtifact("trusted-lib", "2.1.0", self.code + b"# corrupted\n")
         report = activity_l22_03.audit_dependency_against_policy(
