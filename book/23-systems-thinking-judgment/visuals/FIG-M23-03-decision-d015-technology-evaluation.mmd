@@ -32,5 +32,5 @@ flowchart TB
 
     D12 --> DEC{"Architectural Decision<br/>(Objective Trade-Off Evaluation)"}
     DEC -->|"Justified ROI & Manageable Costs"| ADOPT["ADOPT / TRIAL<br/>Bound to explicit scale threshold"]
-    DEC -->|"Unwarranted Complexity / Better Simpler Alternative"| REJECT["REJECT<br/>High-scoring, mature engineering outcome:<br/>Keep architecture simpler!"]
+    DEC -->|"Unwarranted Complexity / Better Simpler Alternative"| REJECT["REJECT<br/>Valid decision category when evidence supports it.<br/>Reviewer judges rationale quality; machine checks structure only."]
     DEC -->|"Insufficient Evidence / Premature"| DEFER["DEFER<br/>Re-evaluate when threshold is crossed"]

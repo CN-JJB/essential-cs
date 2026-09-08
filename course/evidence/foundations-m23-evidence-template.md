@@ -87,7 +87,7 @@ Record the evaluation audited by `labs/foundations/m23/activity_l23_02.py`:
 
 - Candidate Technology Name: `[Record technology name, e.g. Redis / Apache Kafka / Proposed Service]`
 - Evaluated Scenario Context: `[Record architectural context and target SLOs]`
-- Final Engineering Decision: `[Record ADOPT / REJECT / DEFER / TRIAL; confirm REJECT is an explicitly valid passing outcome]`
+- Final Engineering Decision: `[Record ADOPT / REJECT / DEFER / TRIAL; REJECT is a valid decision category, but machine structural PASS is not decision-quality PASS]`
 - Overall Decision Justification: `[Summarize trade-off rationale]`
 
 ### 12-Dimension Evaluation Audit:

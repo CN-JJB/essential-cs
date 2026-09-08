@@ -187,7 +187,7 @@ class TestActivityL23_02(unittest.TestCase):
         res = validate_technology_evaluation_card(card)
         self.assertTrue(res.is_valid, f"Scenario A should be valid, errors: {res.errors}")
         self.assertEqual(res.decision, "REJECT")
-        self.assertEqual(res.score, 100.0)
+        self.assertEqual(res.coverage_percent, 100.0)
         self.assertEqual(len(res.missing_dimensions), 0)
         self.assertEqual(len(res.placeholder_dimensions), 0)
 
@@ -196,14 +196,14 @@ class TestActivityL23_02(unittest.TestCase):
         res = validate_technology_evaluation_card(card)
         self.assertTrue(res.is_valid, f"Scenario B should be valid, errors: {res.errors}")
         self.assertEqual(res.decision, "REJECT")
-        self.assertEqual(res.score, 100.0)
+        self.assertEqual(res.coverage_percent, 100.0)
 
     def test_scenario_c_ai_hypothesis_rejection_passes_validation(self) -> None:
         card = build_scenario_c_ai_hypothesis()
         res = validate_technology_evaluation_card(card)
         self.assertTrue(res.is_valid, f"Scenario C should be valid, errors: {res.errors}")
         self.assertEqual(res.decision, "REJECT")
-        self.assertEqual(res.score, 100.0)
+        self.assertEqual(res.coverage_percent, 100.0)
 
     def test_missing_dimension_fails_validation(self) -> None:
         card = build_scenario_a_redis_rejection()
@@ -211,7 +211,7 @@ class TestActivityL23_02(unittest.TestCase):
         res = validate_technology_evaluation_card(card)
         self.assertFalse(res.is_valid)
         self.assertIn("10. Cost Model — Infrastructure & Human", res.missing_dimensions)
-        self.assertLess(res.score, 100.0)
+        self.assertLess(res.coverage_percent, 100.0)
 
     def test_placeholder_text_fails_validation(self) -> None:
         card = build_scenario_a_redis_rejection()
@@ -227,12 +227,15 @@ class TestActivityL23_02(unittest.TestCase):
         self.assertFalse(res.is_valid)
         self.assertTrue(any("Invalid decision" in err for err in res.errors))
 
-    def test_adopt_decision_is_valid_when_justified(self) -> None:
+    def test_machine_schema_accepts_adopt_category_without_grading_semantics(self) -> None:
         card = build_scenario_a_redis_rejection()
         card["decision"] = "ADOPT"
         res = validate_technology_evaluation_card(card)
+        # Structural lint intentionally does not decide semantic judgment quality.
+        # A reviewer must reject contradictory ADOPT/REJECT rationale if a learner submits it.
         self.assertTrue(res.is_valid)
         self.assertEqual(res.decision, "ADOPT")
+        self.assertEqual(res.coverage_percent, 100.0)
 
 
 class TestFermiCost(unittest.TestCase):
