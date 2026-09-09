@@ -3,7 +3,7 @@
 Status: **INDEPENDENT RE-VERIFICATION REPORT — Issue #133 (not a repair, not VERIFIED/RELEASED)**
 Verification base: `main @ e6b8a2f357efe4ed8a02306dede1c556b8da628b`
 Date: 2026-09-09
-Final recommendation: **`READY FOR WEB LEAD v0.9 RC REVIEW`**
+Final recommendation: **`NOT READY — BLOCKERS REQUIRE REPAIR`**
 
 This report re-verifies the two Issue #131 / PR #132 repairs of the accepted Issue #129 Full-Core verification. It is not a rerun of the 25-Module / 70-Lesson / 5-Required-Lab matrix.
 
@@ -66,7 +66,7 @@ Exact verification SHA: `e6b8a2f357efe4ed8a02306dede1c556b8da628b`.
 
 Independent LAB-REQ-02 runtime was executed on a `git archive` LF tree at that SHA extracted to WSL ext4 `/tmp/issue-133/tree`. This avoids Windows `core.autocrlf` working-tree conversion and drvfs build artifacts. Learner `user/sleep.c` and `$U/_sleep` existed only in the gitignored xv6 worktree copy under that tree.
 
-Committed lab scripts are stored as git mode `100644` (Windows git filemode). On the Linux ephemeral tree, `chmod +x` was applied as environment preparation so the contract's `./preflight.sh` / `./setup.sh` / `./smoke.sh` / `./reset.sh` invocations could run. That chmod was not committed and is not a repair of verified material. Classification: `NOT A BLOCKER / BOUNDED LIMIT` (environment/filemode), not a smoke semantic defect.
+Committed LAB-REQ-02 entrypoint scripts are stored in the Git tree as mode `100644`: `preflight.sh`, `setup.sh`, `smoke.sh`, and `reset.sh`. The learner README requires direct `./preflight.sh` / `./setup.sh` / `./smoke.sh` / `./reset.sh` invocation. On a fresh Linux checkout, those commands therefore fail with `Permission denied` until a user performs an undocumented `chmod +x`. The verifier applied ephemeral `chmod +x` only to obtain the independent runtime evidence; that proves the script logic but does not prove the committed learner workflow is directly runnable as documented. **Classification: `SIMPLE FIX` / BLOCKING v0.9 readiness (V-133-01).** This is repository metadata, not a Windows/WSL-only environment artifact.
 
 ---
 
@@ -304,7 +304,26 @@ No historical classification was changed without new evidence.
 
 ---
 
-## 14. BLOCKED / NOT RUN items
+## 14. New blocker found by re-verification
+
+### V-133-01 — LAB-REQ-02 shell entrypoints are non-executable in the Git tree (BLOCKING — SIMPLE FIX)
+
+- **Location:** Git tree modes for:
+  - `labs/lab-req-02-xv6-syscall/preflight.sh`
+  - `labs/lab-req-02-xv6-syscall/setup.sh`
+  - `labs/lab-req-02-xv6-syscall/smoke.sh`
+  - `labs/lab-req-02-xv6-syscall/reset.sh`
+- **Observed committed mode:** `100644` for all four scripts.
+- **Learner contract:** the LAB-REQ-02 README instructs direct `./preflight.sh`, `./setup.sh`, `./smoke.sh`, and `./reset.sh` invocation.
+- **Independent reproduction:** the verifier's first Linux direct invocation returned rc=126 / `Permission denied`; verification could continue only after an ephemeral `chmod +x` in the temporary Linux tree.
+- **Why this is not environment-only:** Git executable mode is part of the repository tree object. A fresh Linux checkout that honors Git file modes receives these scripts as non-executable regardless of WSL timing behavior.
+- **Expected:** Required Lab entrypoints are directly runnable using the commands published in the README.
+- **Actual:** the published commands fail until an undocumented permission mutation is performed.
+- **Classification:** `SIMPLE FIX`.
+- **Severity / readiness effect:** **BLOCKING v0.9 readiness** because a Required Lab is not directly runnable from a clean canonical Linux checkout according to its own documented workflow.
+- **Recommended routing:** separate narrow repair setting the executable bit (`100755`) on the four LAB-REQ-02 shell entrypoints, followed by targeted independent re-verification. Do not repair inside this verification PR.
+
+## 15. BLOCKED / NOT RUN items
 
 | Item | Status | Reason |
 |---|---|---|
@@ -320,7 +339,7 @@ Nothing in this table is treated as a substitute for the independent QEMU eviden
 
 ---
 
-## 15. Repository hygiene
+## 16. Repository hygiene
 
 At verification start and before the report commit:
 
@@ -348,7 +367,7 @@ Not committed:
 
 ---
 
-## 16. Explicit non-claims
+## 17. Explicit non-claims
 
 This report does **not** establish:
 
@@ -361,12 +380,12 @@ This report does **not** establish:
 - a Mini Cloud deployable tree
 - that Issue #129's full-Core matrix was rerun at this SHA
 
-`READY FOR WEB LEAD v0.9 RC REVIEW` means only: after the Issue #131 repairs, the technical LAB-REQ-02 smoke gate and the public-license-text gate passed independent re-verification and may be handed to Web Lead for v0.9 RC governance review.
+The Issue #131 smoke semantics and public-license-text gates passed independent re-verification, but V-133-01 prevents a READY recommendation until the committed LAB-REQ-02 shell entrypoints are directly executable in a clean Linux checkout.
 
 ---
 
-## 17. Final recommendation
+## 18. Final recommendation
 
-**`READY FOR WEB LEAD v0.9 RC REVIEW`**
+**`NOT READY — BLOCKERS REQUIRE REPAIR`**
 
-Rationale: the locked base contains the merged five-path Issue #131 repair and no later unexpected repair of that material. Independent source audit of `smoke.sh` shows prompt-paced interaction, usage-output observation, `sleep 10` return, execution-only marker, echo-only rejection, owned process-group reap, and truthful PID cleanup. Three consecutive independent QEMU runs at this SHA produced the Required guest evidence, including a standalone `LAB_REQ_02_OK` line distinct from `$ echo LAB_REQ_02_OK`. Committed Apache-2.0 and CC BY-SA 4.0 blobs are byte-identical to the official ASF and Creative Commons plaintext sources. Targeted regressions passed. V-129-02 through V-129-05 are unchanged bounded/environment items and are not reclassified into v0.9 blockers.
+Rationale: the Issue #131 semantic smoke repair is independently validated by source audit, three consecutive real QEMU runs, echo-only rejection, cleanup/reap evidence, and targeted regressions. The Apache-2.0 and CC BY-SA 4.0 committed blobs are byte-identical to the official sources, so V-129-01 and V-129-06 are closed. However, this re-verification also independently confirmed V-133-01: all four documented LAB-REQ-02 shell entrypoints are committed as Git mode `100644`, while the learner README requires direct `./...` execution. A clean Linux checkout therefore fails the Required Lab workflow with `Permission denied` until an undocumented `chmod +x`. Because the Required Lab is not directly runnable as documented from the repository state, v0.9 readiness remains blocked pending a narrow executable-bit repair and targeted independent re-verification.
