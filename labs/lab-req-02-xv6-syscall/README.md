@@ -60,8 +60,10 @@ PASS requires:
 - xv6 build success;
 - disassembly relation `main -> pause -> ecall`;
 - QEMU reaches the xv6 shell;
-- missing-argument usage output is observed;
-- `sleep 10` returns and `LAB_REQ_02_OK` is observed within the bounded window.
+- missing-argument usage output (`Usage: sleep ticks`) is observed as command output;
+- `sleep 10` returns to a subsequent shell prompt;
+- `echo LAB_REQ_02_OK` produces an execution-only output line exactly `LAB_REQ_02_OK`, not merely the echoed command text, followed by the next prompt;
+- the owned QEMU process group is terminated/reaped and the PID marker is removed.
 
 The pinned base repo does not contain MIT's course-fork `grade-lab-util`, so that grader is **NOT RUN** unless a separately provenance-verified grader source is intentionally introduced later.
 
