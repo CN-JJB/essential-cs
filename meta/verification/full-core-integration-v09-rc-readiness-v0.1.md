@@ -251,8 +251,10 @@ At the verification base / report head: `git status --short` shows only the untr
 ### V-129-05 — sqlite3 CLI not preinstalled (NOT A BLOCKER / BOUNDED LIMIT)
 - LAB-REQ-04's mandatory CLI gate requires the `sqlite3` binary; it was absent in both runtimes and provisioned (3.45.1) for this verification. Documented as environment provisioning; relates to OQ-BP-006 (no canonical pin). Routing: Web Lead to consider a documented provisioning step in the canonical environment image.
 
-### V-129-06 — Attribution ledger / license texts not yet populated (NOT A BLOCKER / BOUNDED LIMIT)
-- `ATTRIBUTION.md` has no entries; `LICENSES/` lacks full license texts. Accurate today because **no third-party material is incorporated**; LICENSES/README explicitly schedules full texts before first public release. Routing: Web Lead pre-release checklist.
+### V-129-06 — Canonical license texts not yet populated (NON-BLOCKING FOR TECHNICAL INTEGRATION; BLOCKS PUBLIC v0.9 TAG/RELEASE UNTIL CLOSED)
+- `ATTRIBUTION.md` has no entries; this is accurate today because **no third-party material is incorporated**.
+- `LICENSES/` lacks the canonical full CC BY-SA 4.0 and Apache-2.0 license texts. `LICENSES/README.md` explicitly requires those texts **before the first public content/code release**.
+- **Classification:** not a blocker to the technical integration findings in this report, but a release-hygiene gate that must be closed before Web Lead creates any public `v0.9` tag/release. Routing: bounded release-prep fix; do not repair inside this verification PR.
 
 ## 21. What this verification does NOT establish
 
@@ -271,4 +273,4 @@ The verification PR diff contains only this report (`meta/verification/full-core
 
 **`NOT READY — BLOCKERS REQUIRE REPAIR`**
 
-Rationale: 295/296 Python tests PASS, all preflights PASS, M03/M04 flows PASS, and four of five Required Labs are fully PASS with real canonical mechanisms. LAB-REQ-02's Required mechanism is fully verified PASS, but its committed machine-checkable `smoke.sh` fails deterministically at the locked base (V-129-01) and contains an environment-independent marker-vacuity defect. Under Issue #129's rules a failing committed Required surface is a v0.9 blocker unless purely environmental; V-129-01 is not purely environmental. The repair is small and well-scoped (`SIMPLE FIX` routing above). Everything else is PASS or truthfully classified (ENVIRONMENT / NOT A BLOCKER). After Web Lead disposition of V-129-01 (and optionally the bounded items V-129-04/05/06), the readiness re-review can proceed.
+Rationale: 295/296 Python tests PASS, all preflights PASS, M03/M04 flows PASS, and four of five Required Labs are fully PASS with real canonical mechanisms. LAB-REQ-02's Required mechanism is fully verified PASS, but its committed machine-checkable `smoke.sh` fails deterministically at the locked base (V-129-01) and contains an environment-independent marker-vacuity defect. Under Issue #129's rules a failing committed Required surface is a v0.9 blocker unless purely environmental; V-129-01 is not purely environmental. The repair is small and well-scoped (`SIMPLE FIX` routing above). Everything else is PASS or truthfully classified. After Web Lead disposition of V-129-01, the technical readiness re-review can proceed; before any public `v0.9` tag/release, V-129-06 must also be closed because the repository licensing policy requires canonical full license texts before the first public content/code release. V-129-04/05 remain bounded governance/environment items.
