@@ -381,8 +381,8 @@ gate; parallelizable work is identified; true v1.0 dependencies are identified; 
   versions, provisioning steps (sqlite3 CLI, strace scope, GDB floor), preflight recording rules, refresh cadence.
 - Stand up the executable matrix: CI (or documented scheduled) runs of the full Python suite, shell/C flows,
   all four preflights, and the five Required Lab smokes on the pinned image; record versions per run.
-- Owner: human/Lead Decision for the pin; AI Executor for image/docs/CI implementation; independent verifier.
-- AI-executable after the Decision; the Decision itself is human governance.
+- Owner: Web Lead governance for the pin; AI Executor for image/docs/CI implementation; independent verifier. Escalate to the human owner only if an existing policy/Decision boundary requires it.
+- Implementation is AI-executable after the Decision; choosing the pin is Lead governance, not an Executor self-selection. This plan does not create a new human-only gate.
 - **Blocks:** stable lab acceptance (Gate 3), stable re-verification (Gate 5), Mini Cloud acceptance (Gate 2),
   maintenance operation (Gate 8).
 
@@ -403,7 +403,7 @@ gate; parallelizable work is identified; true v1.0 dependencies are identified; 
   with exact-base discipline; close or reclassify the bounded environment debts (GDB, grader, relay,
   provisioning) as stable-scope decisions with evidence.
 - Formal multi-role VERIFIED audit (technical + pedagogy + lab quality + integration) over the stable content.
-- Owner: independent verifier(s) + Web Lead; AI-executable verification, human-owned acceptance.
+- Owner: independent verifier(s) + Web Lead; verification is AI-executable where the environment permits, and acceptance remains Web Lead authority. No new human-only acceptance gate is created.
 - **Blocked by:** Phases 1–2. **Blocks:** release decision.
 
 ### Phase 4 — External final curriculum/coverage audit (after stable content)
@@ -411,14 +411,15 @@ gate; parallelizable work is identified; true v1.0 dependencies are identified; 
 - Commission an independent external audit of the stable M00–M24 spine + labs + Mini Cloud state against
   authoritative references (CS2023 as reference model, classic texts/courses as mechanism evidence —
   same method family as the v0.1 audit, new snapshot, `RECHECK-AFTER-ISSUE-1` items closed with evidence).
-- Owner: external independent auditor (human/external); repository supplies frozen stable snapshot + evidence packets.
+- Owner: independent external curriculum/coverage auditor; the auditor may be human or AI so long as role independence and evidence discipline are preserved. Repository supplies the frozen stable snapshot + evidence packets.
 - **Blocked by:** Phases 1–3 (auditing a moving target wastes the audit). Parallel preparation allowed.
 
 ### Phase 5 — Real learner validation (start early, finish before v1.0)
 
 - Run Issue #34 (M00–M01 first pilot, ≥1 real target-learner session with the observation template,
-  anonymized) and extend bounded pilots to the remaining key Core paths the Lead designates as
-  release-gating (at minimum one path per stage-cluster touching Required Labs and the Mini Cloud baseline).
+  anonymized) and extend bounded pilots only to additional key Core paths the Web Lead designates from existing
+  policy and observed risk evidence. This plan sets no fixed per-stage, per-cluster, or Mini-Cloud learner-count/path
+  minimum beyond the repository's existing requirement to validate key Core paths.
 - Non-blocking for Phases 1–4 per D-027 (start immediately — lead time dominates); **blocking for the v1.0
   decision** per D-024. AI may organize/analyze real observations only; sessions, friction, misconception,
   timing, and transfer evidence must be human.
@@ -439,7 +440,7 @@ gate; parallelizable work is identified; true v1.0 dependencies are identified; 
   admit as bounded Core (then implement + verify before Phase 3/4 close) or reject for v1.0 scope
   (then declare the interim states — AI-output verification practice; P2/P9 evidence hooks — normative
   for stable and move full admission to post-v1.0 roadmap).
-- Owner: Web Lead governance with human judgment; AI supports research/drafting only.
+- Owner: Web Lead governance; AI may perform bounded research/drafting and, when acting as the claimed Web Lead within repository authority, may make the governance disposition. Escalate to the human owner only where an existing policy/Decision requires it; this plan creates no new human-only gate.
 - Parallel with Phases 1–6, but the decision must precede the Phase 3/4 closures if it admits new Core scope.
 
 ### Phase 8 — VERIFIED → RELEASED / v1.0 decision (Lead governance only)
