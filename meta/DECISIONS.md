@@ -94,3 +94,14 @@ Every formal Local Agent delivery must make its execution history reviewable fro
 
 ## D-031 — Mandatory role-specific agent guides
 All repository AI work enters through the root `AGENTS.md`, then must identify the active role before material work. Web Lead / Reviewer sessions must read `meta/agents/WEB_LEAD.md`; Local Executor sessions must read `meta/agents/EXECUTOR.md`. The roles are intentionally separated: the Web Lead owns task contracts, architecture stewardship, review routing, Direct Fixes, acceptance, and merge; the Local Executor owns bounded execution of its assigned Issue, branch/worktree changes, verification, and PR delivery with an auditable Completion Report / Execution Trace, and never self-merges or silently assumes Lead authority. Shared policies still apply to both roles.
+
+## D-032 — First stable environment implementation strategy
+The first stable canonical environment will use a **digest-addressed Ubuntu 24.04 LTS (Noble)-based learner/test environment artifact**. Standard GitHub-hosted `ubuntu-24.04` runners may execute that environment, but their moving runner images are infrastructure substrate, not the canonical immutable pin.
+
+Compatibility policy for the first stable environment uses bounded floors rather than universal patch-level locks where exactness is not pedagogically or operationally justified: Python >= 3.12, SQLite engine + `sqlite3` CLI >= 3.45, GCC >= 13 with the required C11 surface, curl >= 8.5, and GDB >= 15.0. **GDB is required** for canonical M03 evidence; a convenience host without GDB may be PARTIAL/BLOCKED but cannot stand in for the stable canonical environment. strace, browser/Chromium, live observability backends, PostgreSQL/psql, Docker/Podman, and arm64 remain capability-gated or optional where the accepted curriculum already treats them that way.
+
+LAB-REQ-02 keeps stricter lane-scoped identity: the xv6 source pin remains exact, and the canonical environment must record the full resolved QEMU/RISC-V distro package identities represented by the validated QEMU 8.2.2 / riscv64-unknown-elf-gcc 13.2.0 candidate. Bare upstream version strings are not sufficient apt locks; refresh requires a real QEMU smoke on the replacement environment.
+
+This Decision selects the **implementation strategy**, not the final realized pin. OQ-BP-006 remains OPEN until the implementation task commits the canonical environment definition, immutable digest, resolved package identities, CI execution matrix, and exact-head runtime evidence sufficient for Web Lead acceptance. No v1.0 / VERIFIED / RELEASED claim follows from this Decision.
+
+**Provenance:** Issue #143 / PR #144; Lead-reviewed final research head `35175095c1a62cb6968221d54d2d3564f4d6f259`; PR #144 merge `07d5550bc7bed1ac9126351688bab7ce70d1357b`.
