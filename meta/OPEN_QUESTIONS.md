@@ -24,9 +24,15 @@ The goal is not a full HCI course. Evidence hooks (denial/error/privacy interact
 
 **Escalation:** Core-scope change requires RFC/Decision. RFC candidate: `meta/rfcs/RFC-CAND-002-human-facing-boundary.md` (candidate only — does not decide the question).
 
-### OQ-BP-006 — What versions define the first stable environment? (OPEN — implementation-time pin)
+### OQ-BP-006 — What versions define the first stable environment? (OPEN — implementation realization after D-032)
 
-Exact Python, SQLite/PostgreSQL case version, Linux/dev-container base, compiler/toolchain (incl. QEMU/RISC-V cross-toolchain for LAB-REQ-02), browser, and optional container/observability versions remain to be pinned when the first module dossier and lab implementation require them. Closely related but separately tracked: the canonical latency-constant list (R11) and its refresh cadence (CURRENT per Living Curriculum Policy).
+**Strategy decided in D-032:** use a digest-addressed Ubuntu 24.04 LTS (Noble)-based canonical learner/test environment; standard GitHub-hosted `ubuntu-24.04` is only a moving execution substrate, not the immutable pin. Compatibility floors are Python >= 3.12, SQLite engine + `sqlite3` CLI >= 3.45, GCC >= 13/C11, curl >= 8.5, and GDB >= 15.0, with GDB required for canonical M03 evidence. LAB-REQ-02 retains exact xv6 source identity and lane-scoped full QEMU/RISC-V package/image identity. strace, browser/Chromium, PostgreSQL/psql, live observability backends, Docker/Podman, and arm64 remain capability-gated or optional according to the accepted curriculum boundary.
+
+**Still OPEN:** the final canonical environment artifact has not yet been implemented or accepted. The implementation task must produce the committed environment definition, immutable digest, resolved package identities, CI execution matrix, and exact-head runtime evidence (including canonical M10, m20 triage/resolution, GDB, and real LAB-REQ-02 QEMU smoke). Only after Web Lead acceptance of that realized pin may this Open Question close.
+
+**Provenance:** Issue #143 / PR #144; D-032.
+
+Closely related but separately tracked: the canonical latency-constant list (R11) and its refresh cadence (CURRENT per Living Curriculum Policy).
 
 ## Resolved after Blueprint closure
 
