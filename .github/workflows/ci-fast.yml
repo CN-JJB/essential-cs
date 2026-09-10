@@ -5,8 +5,10 @@
 # - Every release-relevant command below runs INSIDE the digest-addressed canonical
 #   environment built from .devcontainer/Dockerfile. Reproducibility claims come from
 #   that definition/artifact, never from hosted-runner contents.
+# - On pull_request events we explicitly checkout the PR HEAD SHA, not GitHub's synthetic
+#   refs/pull/<n>/merge commit, and assert the revision before any evidence is produced.
 # - Course execution happens in a fresh LF archive copy (/tmp/ci-tree), never in the
-#   checkout working tree, so `git diff --check` on the checkout stays meaningful.
+#   checkout working tree, so source/runtime evidence is tied to the asserted revision.
 # - No test is quarantined here: M10 runs normally; the m20 timing trio runs normally.
 #   A separately-reported diagnostic triage for m20 lives in ci-qemu-lane.yml and is
 #   explicitly non-blocking — it can never count as stable-green evidence.
@@ -28,8 +30,20 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - name: Checkout
+      - name: Checkout exact event revision
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Assert exact checked-out revision
+        shell: bash
+        run: |
+          expected='${{ github.event.pull_request.head.sha || github.sha }}'
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_REVISION=${expected}"
+          echo "ACTUAL_REVISION=${actual}"
+          test "${actual}" = "${expected}"
 
       - name: Record hosted substrate identity (informational only, not the pin)
         run: |
@@ -119,10 +133,15 @@ jobs:
             python3 labs/lab_req_05/reset.py
             echo LAB_HARNESSES_DONE'
 
-      - name: Hygiene (diff-check, no stray QEMU, no PID markers)
+      - name: Hygiene (PR diff-check, no stray QEMU, no PID markers)
+        shell: bash
         run: |
-          git diff --check
-          test -z "$(pgrep -f qemu-system-riscv64 || true)"
+          if [ '${{ github.event_name }}' = 'pull_request' ]; then
+            git diff --check '${{ github.event.pull_request.base.sha }}...HEAD'
+          else
+            git diff --check HEAD^...HEAD
+          fi
+          test -z "$(pgrep -f '[q]emu-system-riscv64' || true)"
           test ! -e labs/lab-req-02-xv6-syscall/.qemu_smoke.pid
           echo HYGIENE_DONE
 
@@ -132,3 +151,4 @@ jobs:
         with:
           name: canonical-fast-evidence
           path: /tmp/ci-tree/.ci-logs/
+          include-hidden-files: true
