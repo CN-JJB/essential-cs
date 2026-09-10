@@ -91,11 +91,7 @@ Two deviations, both recorded as environment/timing findings for CI design — n
 2. **m20 `TestThreeServicePipelineIntegration` — 2–3 FAILs, run-varying membership.**
    First run: 3 failures; re-run: 2 failures (`test_fault_injection_delay_and_relative_localization`: 502 != 200;
    `test_safe_mitigation_recovers_latency`: 504 != 200; `test_normal_end_to_end_request` failed in one run,
-   passed in the next). 502/504 under injected delay/latency-budget paths on a shared virtualized host with
-   relay networking is the classic timing/load-flake signature; membership changing between identical runs on
-   the same tree rules out a deterministic content defect. Routed outcome: the stable CI design (§7) must give
-   this trio a quarantine-with-triage rule and the post-implementation phase must run a dedicated triage
-   (thresholds vs runner sizing vs test isolation). No threshold was changed here.
+   passed in the next). The changing membership demonstrates **nondeterministic behavior in this WSL/shared-host run**, but it does not by itself distinguish runner load/threshold sensitivity from isolation problems or a real race/defect in the repository. Routed outcome: CI implementation must reproduce and triage this trio on the canonical environment before stable Gate 3/5 evidence is claimed. A temporary separately reported rollout lane is acceptable for diagnosis; silent waiver as stable-green evidence is not. No threshold or course code was changed here.
 
 ### 3.3 Representative C/shell flows — ACTUAL RUN
 
@@ -127,14 +123,14 @@ Contract vocabulary (exactly one per row): `EXACT PIN` / `VERSION FLOOR` / `CAPA
 
 | Component | Recommended contract | Evidence and rationale |
 |---|---|---|
-| Canonical Linux base + image/digest strategy | `EXACT PIN` | Ubuntu 24.04 LTS (Noble): all ACTUAL RUN evidence above; GH `ubuntu-24.04` runner image is likewise 24.04.4 (image 20260831); standard security to May 2029 + ESM to 2034; 22.04 runner deprecation underway. Pin the **image digest** (runner image version or learner-container digest), refresh on cadence (§4.1), never float on `ubuntu-latest` (it migrates 22→24→26 and would silently move the canonical floor). |
+| Canonical Linux base + image/digest strategy | `EXACT PIN` | Ubuntu 24.04 LTS (Noble) remains the recommended base family, but the **standard GitHub-hosted `ubuntu-24.04` runner is not the immutable pin**: GitHub updates hosted images regularly and `runs-on: ubuntu-24.04` selects the moving OS label, not a selectable runner-image digest/version. Lead freshness review on 2026-09-10 found hosted image `20260907.300.1` on Ubuntu 24.04.5, already newer than this research runtime's 24.04.4 / image-20260831 comparison. The canonical release environment should therefore be a digest-addressed Ubuntu-24.04-based learner/test image (or equivalently reproducible image artifact) whose build inputs are committed; a standard hosted runner may execute that image but is only the substrate. Never use `ubuntu-latest` as the canonical contract. |
 | Python interpreter | `VERSION FLOOR` | Floor **3.12.x** (stdlib-only course; full surface green on 3.12.3 here and historically on 3.13.x, so no 3.13-only syntax is load-bearing). CI reference: system 3.12.3; record exact per run; allow patch updates freely. Rationale against EXACT PIN: patch churn buys nothing; against floating: learner 3.11-vs-3.12 `sqlite3`/error-text drift is real (this host's 3.11 embeds sqlite 3.45.1 vs 3.13's 3.45.3 — same engine line, but pin the floor, record the rest). |
 | SQLite embedded engine | `VERSION FLOOR` | Floor **≥ 3.45**, record exact. Taught features (transactions, locking, EQP shapes, rollback journal) are stable across this line; EQP/timing assertions are already observation-gated, not version-literal. |
 | `sqlite3` CLI | `VERSION FLOOR` | Floor **≥ 3.45**, REQUIRED learner gate per LAB-REQ-04 README (no Python-module substitution allowed). Provision via apt on Noble and runners (both ship 3.45.1); document the provisioning step because bare/Windows hosts lack it. |
 | C compiler / toolchain | `VERSION FLOOR` | Floor **gcc ≥ 13 with `-std=c11`**; CI reference 13.3.0. M03 canonical flags build identically on 13.3 (Linux) and 14.2 (Windows) historically; disassembly text is observation evidence, never asserted literal across compilers. binutils/gdb versions recorded per run, not pinned. |
-| GDB | `CAPABILITY-GATED` | Present 15.1 on Noble with preflight PASS; historical three-point/debugger-failure runtime debt (GDB absent in author/Lead envs) converts to evidence once CI carries GDB — preflight stays fail-closed, CI must include the GDB lane rather than weakening M03. |
+| GDB | `VERSION FLOOR` | **Required in the canonical stable environment**, not optional: M03 `preflight.sh` marks missing GDB BLOCKED, the learner README says canonical activity requires it, and `smoke-test.sh` is only PASS when both GDB and preflight PASS. Use a conservative Noble-compatible floor of **GDB >= 15.0** (this ACTUAL RUN used 15.1), record the exact package/version per run, and keep the three-point trace + debugger-failure evidence release-relevant. Convenience hosts without GDB may remain PARTIAL/BLOCKED, but the canonical v1.0 environment may not waive it. |
 | strace | `CAPABILITY-GATED` | MISSING on Noble default and on historical runners; installable via apt; preflight already reports MISSING/RESTRICTED truthfully and M06/M08 degrade to observation fallbacks by design. CI installs it but keeps capability-gated verdicts (seccomp on hosted runners may restrict live tracing — verify in implementation). |
-| QEMU + RISC-V cross-toolchain (LAB-REQ-02 lane) | `EXACT PIN` | Lane-scoped exact pin: **QEMU 8.2.2 + riscv64-unknown-elf-gcc 13.2.0** (apt version lock) with the xv6 pin `35b0884` and accepted smoke blob `40d8156…`. Reason: the smoke's prompt-paced console interaction is timing-sensitive; it was validated against exactly these builds (5× QEMU PASS). Refresh only with a re-run of the lane. Neither QEMU nor the toolchain is preinstalled on hosted runners — apt provisioning is mandatory for this lane. |
+| QEMU + RISC-V cross-toolchain (LAB-REQ-02 lane) | `EXACT PIN` | Lane-scoped exactness is justified, with the current validated candidate **QEMU 8.2.2 + riscv64-unknown-elf-gcc 13.2.0** plus xv6 pin `35b0884` and accepted smoke blob `40d8156…`. Pin the **actual distro package identities / image digest**, not only the upstream binary-version strings: Ubuntu package revisions can change while `qemu-system-riscv64 --version` still reports 8.2.2. The implementation task must record the full package versions resolved into the canonical image and re-run the real QEMU smoke before accepting any refresh. Do not assume `apt install package=8.2.2` is a valid immutable lock. |
 | Browser / web runtime | `OPTIONAL / NOT RELEASE-GATING` | No live browser needed: M12/CORS/DevTools evidence is truthfully capability-gated; EXP-03 Chromium recheck is opt-in. Never gate releases on a browser version. |
 | Shell / core utilities (bash, coreutils, git, make, perl, bc, curl, openssl CLI, iproute2, procps, procfs) | `VERSION FLOOR` | Noble + runners converge (bash 5.2.21, git 2.43.0-class, make 4.3, perl 5.38.2, bc 1.07.1, curl 8.5.0, OpenSSL 3.0.13). curl is REQUIRED for LAB-REQ-01 (real-curl trace; note Schannel-vs-OpenSSL backend differences — canonical evidence is the Linux build). Floors, not pins: these move with the image digest. |
 | PostgreSQL (server + psql CLI) | `OPTIONAL / NOT RELEASE-GATING` | LAB-OPT-03 strictly Optional; EXP-02 is a reachability/revision check (course ref `7344937cbe64`, 2026-09-04), not a live-server dependency. Runners ship MySQL/postgres-adjacent bits but the course must not depend on them. psql CLI: OPTIONAL / NOT RELEASE-GATING; server: NOT REQUIRED. |
@@ -143,7 +139,7 @@ Contract vocabulary (exactly one per row): `EXACT PIN` / `VERSION FLOOR` / `CAPA
 | Architecture | `EXACT PIN` (x86-64 canonical) + arm64 `OPTIONAL / NOT RELEASE-GATING` | All ISA/ABI/disassembly evidence is x86-64; runners and WSL here are x86_64. arm64 (ubuntu-24.04-arm) as forward-test only for the Python suite — never release-gating, since x86-specific observations cannot transfer. |
 | Package provisioning | `VERSION FLOOR` (policy) | Noble archive via apt; version locks only inside the QEMU lane; **no pip** (stdlib-only course — PEP 668 externally-managed restrictions are therefore irrelevant); per-run `apt list --installed` snapshot recorded as provenance. |
 | Refresh cadence + forward-test | policy (§4.1) | Digest re-pin quarterly or on security need; Python minor floor revisited as 3.12 approaches EOL (Oct 2028); `main` forward-tests newer toolchains without moving the pin; R11 latency constants stay CURRENT (6–12 mo per Living Curriculum Policy). |
-| CI runner feasibility | feasible on hosted `ubuntu-24.04` (see §7) | Runner ships the full non-QEMU surface (Python 3.12.3, gcc 13-class, sqlite3 3.45.1, curl, make, perl, Docker); apt adds QEMU/RISC-V/strace in minutes; no browser/GPU/self-hosted needed. |
+| CI runner feasibility | feasible on standard hosted `ubuntu-24.04` **as execution substrate** (see §7) | Standard hosted runners are convenient and currently supply most non-QEMU prerequisites, but their image contents move over time and are not the canonical pin. Release-relevant commands should execute inside the canonical digest-addressed environment; every run should also capture the hosted runner image version. QEMU/RISC-V/strace may be baked into that canonical image rather than re-resolved from floating apt metadata on every job. No browser/GPU/self-hosted requirement is established by this packet. |
 | Cache / artifact / network assumptions | fetch-pinned, cache-rest | xv6 fetched by exact SHA (shallow fetch of the pin suffices — full clone is waste); apt packages cached via `actions/cache`; no build artifacts committed (worktree is gitignored); tests must pass offline after fetch (no test may require live network except the explicitly-marked reachability probes, which SKIP offline). |
 | License / provenance of image/toolchain choice | no new obligations | Noble archive packages are toolchain *use*, not vendoring — no ATTRIBUTION rows. xv6 stays runtime-fetched MIT with the existing LICENSE check. The runner/container image is infrastructure, not distributed content; record its digest as provenance, not as a license event. |
 
@@ -179,14 +175,12 @@ binutils, curl). CI runs one immutable stack.
 
 ### Option B — Pinned OS/Python floor with capability gates, exactness only where timing-sensitive (recommended)
 
-Pin **Ubuntu 24.04 image digest**; set **floors** (Python ≥ 3.12, sqlite ≥ 3.45, gcc ≥ 13, curl ≥ 8.5);
-keep **capability gates** (GDB/strace/browser/OTel/psql) via the existing preflights;
-**exact-pin only the LAB-REQ-02 lane** (QEMU 8.2.2 + riscv64-unknown-elf-gcc 13.2.0 + xv6 `35b0884`).
+Pin a **digest-addressed Ubuntu 24.04-based canonical learner/test environment**; use standard GitHub-hosted `ubuntu-24.04` only as the moving execution substrate. Set compatibility **floors** (Python ≥ 3.12, sqlite ≥ 3.45, gcc ≥ 13, curl ≥ 8.5, GDB ≥ 15.0); keep only genuinely optional/degradable surfaces capability-gated (for example strace/browser/OTel/psql); preserve **lane-scoped exactness for LAB-REQ-02** (validated QEMU 8.2.2 + riscv64-unknown-elf-gcc 13.2.0 + xv6 `35b0884`, represented by full package/image identities in implementation).
 
 - Reproducibility benefit: high where it matters (OS baseline identical; timing-sensitive lane exact; everything else floor-bounded with per-run version capture).
 - Maintenance cost: lowest compatible with stability — security patches flow inside floors; only digest + lane need scheduled attention.
 - Learner friction: low — any Noble-class host with floors met works; preflights tell the truth otherwise.
-- CI feasibility: fully hosted-runner compatible today (§7 evidence: runner ships the whole non-QEMU surface).
+- CI feasibility: compatible with standard hosted runners as the host substrate; reproducibility comes from the canonical digest-addressed environment, not from freezing the hosted runner image.
 - Stale/brittle-pin risk: low — floors age gracefully toward the 2029/2028 horizons with a defined revisit.
 - Effect on current labs: zero redesign — the packet's ACTUAL RUN is literally this option instantiated (24/26 + 2 known-flaky dispositions).
 - Migration/refresh burden: digest re-pin quarterly + lane re-validation; floors rise only with evidence.
@@ -207,9 +201,7 @@ fighting it. **This recommendation is input, not a Decision — the pin is the W
 
 ## 7. Required CI execution-matrix proposal (design input — no workflows created here)
 
-All jobs run on `ubuntu-24.04` (digest-pinned at implementation), checkout with `core.autocrlf=false`,
-and capture an environment/version snapshot (`os/python/sqlite/cli/gcc/binutils/gdb/git/apt-list`) per job.
-Every job ends with its owned reset + a no-stray-process/artifact check.
+Jobs may use standard GitHub-hosted `ubuntu-24.04` as the host substrate, but **that runner label is not digest-pinnable**. Release-relevant commands execute in the canonical digest-addressed Ubuntu-24.04-based environment selected by the Web Lead. Capture both the hosted runner image version and the canonical environment digest, plus (`os/python/sqlite/cli/gcc/binutils/gdb/git/apt-list`) inside the canonical environment. Every job ends with its owned reset + a no-stray-process/artifact check.
 
 | Job | Contents | Trigger | Gate rule |
 |---|---|---|---|
@@ -217,37 +209,24 @@ Every job ends with its owned reset + a no-stray-process/artifact check.
 | `preflights` | 4 Python preflights + `scripts/preflight-m05-m09.sh` | per-PR | All REQUIRED PASS; optionals informational |
 | `shell-c` | `bash -n` over entrypoints; M03 preflight/build/inspect/reset; M04 run; `git diff --check` | per-PR | Green required |
 | `lab-smokes` | REQ-01/03/04/05 harnesses + resets | per-PR (or nightly if slow) | Green required; CLI-provisioning step explicit |
-| `qemu-lane` | apt provision (QEMU 8.2.2 + riscv64-unknown-elf-gcc 13.2.0, version-locked) → REQ-02 preflight/setup/source-route/smoke/reset, longer timeout | nightly + manual + pre-release (per-PR optional) | Green required on its schedule; network-fetch failures are infra-flakes (retry once), smoke-semantic failures are course findings |
+| `qemu-lane` | run from the canonical image carrying the recorded full QEMU/RISC-V package identities → REQ-02 preflight/setup/source-route/smoke/reset, longer timeout; if packages are provisioned outside that image, lock their **full distro package versions/snapshot**, not bare upstream version strings | nightly + manual + pre-release (per-PR optional) | Green required on its schedule; network-fetch failures may be retried once as infrastructure failures, while smoke-semantic failures remain course findings |
 | `version-capture` | folded into every job (snapshot artifact) | always | Informational, retained per run |
 | capability-gated | browser/OTel/psql/argon2 probes | always | SKIP allowed, never FAIL; must not gate |
 
-Quarantine-with-triage rule (exact scope): `m10::test_dynamic_port_and_loopback_exchange` (V-129-02 relay
-signature) and the m20 `TestThreeServicePipelineIntegration` delay/latency trio run in a separately-reported
-step whose non-green outcome opens a triage item (thresholds vs runner sizing vs isolation) instead of
-red-blocking unrelated PRs — and instead of being deleted or weakened without a Lead disposition.
-GDB debt closes when the GDB lane runs green in CI; strace disposition is verified (not assumed) on hosted
-runners during implementation.
+Temporary rollout-triage rule: do **not** pre-quarantine the M10 relay probe on the canonical Linux CI merely because it failed under WSL2; V-129-02 is a WSL relay signature and the canonical non-WSL runner should be expected to pass it. The m20 `TestThreeServicePipelineIntegration` timing trio may initially run in a separately reported triage step while the implementation task determines whether the nondeterminism comes from thresholds, runner load, isolation, or a real test/product race. Changing failure membership between identical runs demonstrates nondeterminism; it does **not** rule out a repository defect. Any temporary non-blocking treatment is implementation-stage only and cannot count as stable green evidence for Gate 3/5 or v1.0 until the failures are resolved or explicitly environment-classified with evidence. GDB is release-relevant in the canonical environment and its historical debt closes only when the canonical CI trace is green; strace remains capability-gated and must be verified, not assumed.
 
 ## 8. Completion criteria — direct answers
 
-1. **What exactly should be pinned:** Ubuntu 24.04 image digest + the LAB-REQ-02 lane (QEMU 8.2.2,
-   riscv64-unknown-elf-gcc 13.2.0, xv6 `35b088427ef37611c38afdeed5a52a278cae38f9`, smoke blob expectations)
-   + x86-64 as canonical arch. Everything else by floor/gate.
+1. **What exactly should be pinned:** a digest-addressed Ubuntu-24.04-based canonical learner/test environment (distinct from the moving standard GitHub-hosted runner image) + the LAB-REQ-02 lane's resolved full QEMU/RISC-V package identities, xv6 `35b088427ef37611c38afdeed5a52a278cae38f9`, smoke blob expectations, and x86-64 as canonical arch. Everything else is governed by a floor or a genuine capability/optional classification.
 2. **What should only have a floor:** Python 3.12.x, SQLite engine + CLI ≥ 3.45, gcc ≥ 13 (`-std=c11`),
    shell/core toolchain (curl ≥ 8.5 et al.).
-3. **What should remain capability-gated/optional:** GDB, strace, browser/Chromium, OTel live route,
-   psql/PostgreSQL, Docker/Podman, EXP source reachability, arm64 forward-test.
-4. **Which candidate best fits:** Option B on Noble — proven by this packet's ACTUAL RUNs and convergent
-   with hosted-runner contents (runner ships the same 24.04.4/Python-3.12.3/sqlite-3.45.1 baseline).
-5. **What the next Executor must create:** pinned base definition (image digest doc + provisioning list with
-   the QEMU-lane apt locks), the §7 workflow files, a version-capture step, the quarantine-with-triage rule
-   as code, and a refresh-cadence note — acceptance: §9 evidence on the new stack.
+3. **What should remain capability-gated/optional:** strace, browser/Chromium, OTel live route, psql/PostgreSQL, Docker/Podman, EXP source reachability, arm64 forward-test. **GDB is excluded from this list because it is required for canonical M03 evidence.**
+4. **Which candidate best fits:** revised Option B on Noble — supported by this packet's ACTUAL RUNs. Hosted-runner contents are only a compatibility/substrate observation, not pin evidence; Lead freshness review already observed the hosted Ubuntu-24.04 image moving from the report's 20260831/24.04.4 snapshot to 20260907.300.1/24.04.5.
+5. **What the next Executor must create:** the canonical digest-addressed environment definition/build inputs, provisioning manifest with full resolved package identities for the QEMU lane, the §7 workflow files, hosted-runner + canonical-environment version capture, temporary m20 triage routing, and a refresh-cadence note — acceptance: §9 evidence on the new stack.
 6. **What independent runtime evidence is required after implementation:** full 26-suite matrix + preflights +
    shell/C gates + 5 lab smokes incl. real QEMU on the pinned stack, version snapshots, idempotent-cleanup
    proof, and exact-head Lead review — with the two quarantined dispositions triaged, not hidden.
-7. **Residual uncertainty:** m20 trio root cause (thresholds vs runner load — needs the triage, §3.2);
-   strace live-tracing under hosted-runner seccomp (verify, don't assume); arm64 scope confirmation;
-   apt-version longevity for the lane locks; Docker-daemon reliance (none required — M19 stays optional).
+7. **Residual uncertainty:** m20 trio root cause (runner load/thresholds vs isolation vs repository race/defect — needs triage, §3.2); strace live-tracing under hosted-runner/container restrictions (verify, don't assume); arm64 scope confirmation; full-package/image pin refresh mechanics for the QEMU lane; Docker-daemon reliance (none required — M19 stays optional).
 
 ## 9. Final recommendation
 
