@@ -213,7 +213,7 @@ Recorded **before** any lab command was invoked, in both fresh trees:
 
 Ownership: `root:root` (`uid=0:gid=0`); type `regular file` for all four.
 
-The archive materialization renders `0775` rather than `0755` because `git archive` masks the tree mode with an archive-derived umask (`0777 & ~002`, applied to `100755`). This is a tar-rendering artifact, not a repository property:
+The archive materialization renders `0775` rather than `0755` because Git's tar backend applies `tar.umask`; its documented default is `0002`, so an executable regular-file archive entry is restricted to `0775`. This is an archive-format rendering detail, not a repository tree-mode defect:
 
 - Git tree authority remains `100755` (section 5).
 - The real Linux checkout — the learner-facing path — yields exactly `0755`.
@@ -331,7 +331,7 @@ Usage: sleep ticks
 $ sleep 10
 $ echo LAB_REQ_02_OK
 LAB_REQ_02_OK
-$ 
+$
 ```
 
 Script-reported verdicts, both runs:
@@ -494,7 +494,7 @@ No defect was found in the verified material. Consequently no classification (`S
 
 One **informational, non-blocking** observation is recorded for completeness:
 
-- **`git archive` mode rendering.** `git archive` emitted the four entrypoints as `-rwxrwxr-x` (`0775`) rather than `0755`, because it masks the tree mode with an archive-derived umask. Execute bits are present either way, and a genuine Linux checkout yields exactly `0755`. **Classification: `NOT A BLOCKER / BOUNDED LIMIT`** — a property of tar rendering, not of the repository. Anyone verifying executable bits should prefer a real clone/checkout, or compare against `git ls-tree`.
+- **`git archive` mode rendering.** Git's tar backend applies `tar.umask` (documented default `0002`), so the executable entries are rendered as `-rwxrwxr-x` (`0775`) while the authoritative repository tree mode remains `100755`. A genuine Linux checkout yields `0755`. **Classification: `NOT A BLOCKER / BOUNDED LIMIT`** — an archive-format rendering detail, not a repository defect. Anyone verifying repository executable bits should prefer a real clone/checkout or compare against `git ls-tree`.
 
 One **verifier-side method correction** (not a defect in verified material) is recorded in section 15: `pgrep -a qemu-system-riscv64` cannot match because of the 15-character `comm` limit; the host-level process check was re-run correctly.
 
