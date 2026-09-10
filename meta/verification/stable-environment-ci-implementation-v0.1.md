@@ -1,9 +1,9 @@
 # Stable Environment + CI Matrix Implementation Evidence v0.1
 
-**Task:** Issue #145 — `[Implementation] Canonical stable environment + CI matrix v0.1`  
-**Role:** Stable Environment / CI Executor; Web Lead bounded configuration/report corrections recorded below  
-**Canonical base:** `main @ e53580fcce2c32d0785cf43f0d42e98ca8a78ea5`  
-**Implementation branch:** `implementation/issue-145-stable-environment-ci-v0.1`  
+**Task:** Issue #145 — `[Implementation] Canonical stable environment + CI matrix v0.1`
+**Role:** Stable Environment / CI Executor; Web Lead bounded configuration/report corrections recorded below
+**Canonical base:** `main @ e53580fcce2c32d0785cf43f0d42e98ca8a78ea5`
+**Implementation branch:** `implementation/issue-145-stable-environment-ci-v0.1`
 **Governance:** D-032. **OQ-BP-006 remains OPEN.** No v1.0 / VERIFIED / stable RELEASED claim is made.
 
 ---
