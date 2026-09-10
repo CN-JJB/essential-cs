@@ -4,6 +4,12 @@
 # commands run inside the candidate canonical image built from .devcontainer/Dockerfile.
 # The built image is not yet a durable published canonical pin; OQ-BP-006 stays OPEN.
 #
+# V-147-01 repair (Issue #149): qemu-smoke is fail-closed. A green job must prove the real
+# learner-owned ./smoke.sh executed and produced the required retained evidence
+# (req02-smoke.log + PASS markers). The fixture uses printf/Python file-write (no indented
+# nested heredoc); an in-step postcondition and a separate evidence-completeness gate make a
+# green job impossible if the smoke never ran or the bundle is incomplete.
+#
 # - qemu-smoke is release-relevant and REQUIRED on its schedule (nightly + manual +
 #   pre-release). Network-fetch flakes may be retried once as infra; smoke-semantic
 #   failures are course findings and must be routed, never edited away here.
@@ -64,10 +70,16 @@ jobs:
           docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" \
             bash /work/scripts/canonical-env-capture.sh | tee "${CI_TREE}/.ci-logs/qemu-env-snapshot.txt"
 
-      - name: LAB-REQ-02 real QEMU lane (preflight/setup/source-route/smoke/reset)
+      - name: LAB-REQ-02 real QEMU lane (setup/source-route/fixture/smoke/fail-closed)
         # The smoke needs the documented learner change surface (worktree/user/sleep.c +
         # $U/_sleep registration). CI writes the minimal README-guided fixture itself so the
-        # lane is fully automated; the fixture is ephemeral scaffolding, never committed.
+        # lane stays fully automated; the fixture is ephemeral scaffolding, never committed.
+        # V-147-01: the fixture is written with printf + a short Python file-write instead of
+        # an indented nested heredoc. YAML block-scalar stripping leaves the inner bash -c
+        # script 2-space-indented, so a "<<EOF" terminator can never sit at column 0 and the
+        # un-terminated heredoc silently swallows ./smoke.sh (false-green). The postcondition
+        # after ./smoke.sh is fail-closed: the job fails unless the retained log proves the
+        # real smoke executed (status, banner, standalone guest marker, reap/PID-marker clean).
         run: |
           docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
             set -ueo pipefail
@@ -75,31 +87,39 @@ jobs:
             ./preflight.sh | tee /work/.ci-logs/req02-preflight.log
             ./setup.sh | tee /work/.ci-logs/req02-setup.log
             python3 verify_source_route.py worktree | tee /work/.ci-logs/req02-source-route.log
-            cat > worktree/user/sleep.c << "SLEEPEOF"
-            #include "kernel/types.h"
-            #include "user/user.h"
-            int
-            main(int argc, char *argv[])
-            {
-              if(argc != 2){
-                fprintf(2, "Usage: sleep ticks\n");
-                exit(1);
-              }
-              pause(atoi(argv[1]));
-              exit(0);
-            }
-            SLEEPEOF
-            grep -q "U/_sleep" worktree/Makefile || python3 - worktree/Makefile << "PYEOF"
-            import sys
-            p = sys.argv[1]
-            s = open(p).read()
-            anchor = "\t$U/_zombie\\"
-            assert anchor in s, "UPROGS anchor not found"
-            s = s.replace(anchor, anchor + "\n\t$U/_sleep\\", 1)
-            open(p, "w").write(s)
-            PYEOF
+            printf "%s\n" \
+              "#include \"kernel/types.h\"" \
+              "#include \"user/user.h\"" \
+              "int" \
+              "main(int argc, char *argv[])" \
+              "{" \
+              "  if(argc != 2){" \
+              "    fprintf(2, \"Usage: sleep ticks\\n\");" \
+              "    exit(1);" \
+              "  }" \
+              "  pause(atoi(argv[1]));" \
+              "  exit(0);" \
+              "}" > worktree/user/sleep.c
+            printf "%s\n" \
+              "import sys" \
+              "p = sys.argv[1]" \
+              "s = open(p).read()" \
+              "T = chr(9); N = chr(10); B = chr(92)" \
+              "anchor = T + \"\$U/_zombie\" + B" \
+              "add = N + T + \"\$U/_sleep\" + B" \
+              "assert anchor in s, \"UPROGS anchor not found\"" \
+              "open(p, \"w\").write(s.replace(anchor, anchor + add, 1))" > /tmp/patch_uprogs.py
+            python3 /tmp/patch_uprogs.py worktree/Makefile
             grep -q "U/_sleep" worktree/Makefile
-            ./smoke.sh | tee /work/.ci-logs/req02-smoke.log' 2>&1 | tee "${CI_TREE}/.ci-logs/qemu-lane-outer.log"
+            ./smoke.sh | tee /work/.ci-logs/req02-smoke.log
+            SMOKE_LOG=/work/.ci-logs/req02-smoke.log
+            test -s "${SMOKE_LOG}" || { echo "FAIL-CLOSED: req02-smoke.log missing or empty"; exit 1; }
+            grep -q "QEMU_SMOKE_STATUS: PASS" "${SMOKE_LOG}" || { echo "FAIL-CLOSED: QEMU_SMOKE_STATUS: PASS marker absent"; exit 1; }
+            grep -q "=== LAB-REQ-02 Smoke Test PASS ===" "${SMOKE_LOG}" || { echo "FAIL-CLOSED: final smoke PASS banner absent"; exit 1; }
+            grep -qE "^[[:space:]]*LAB_REQ_02_OK[[:space:]]*\$" "${SMOKE_LOG}" || { echo "FAIL-CLOSED: standalone LAB_REQ_02_OK execution marker absent"; exit 1; }
+            grep -q "QEMU_REAPED: TRUE" "${SMOKE_LOG}" || { echo "FAIL-CLOSED: QEMU_REAPED: TRUE absent"; exit 1; }
+            grep -q "PID_MARKER_CLEAN: YES" "${SMOKE_LOG}" || { echo "FAIL-CLOSED: PID_MARKER_CLEAN: YES absent"; exit 1; }
+            echo "REQ02_SMOKE_EVIDENCE: FAIL-CLOSED POSTCONDITION PASS"' 2>&1 | tee "${CI_TREE}/.ci-logs/qemu-lane-outer.log"
           test "${PIPESTATUS[0]}" -eq 0
         timeout-minutes: 40
 
@@ -114,6 +134,20 @@ jobs:
             test ! -e .qemu_smoke.pid
             test -z "$(pgrep -f "[q]emu-system-riscv64" || true)"
             echo REQ02_CLEANUP_TRUTH_DONE'
+
+      - name: QEMU evidence completeness gate (fail-closed)
+        run: |
+          set -ueo pipefail
+          EVIDENCE_DIR="${CI_TREE}/.ci-logs"
+          REQUIRED="qemu-env-snapshot.txt req02-preflight.log req02-setup.log req02-source-route.log req02-smoke.log qemu-lane-outer.log"
+          for f in ${REQUIRED}; do
+            if [ ! -s "${EVIDENCE_DIR}/${f}" ]; then
+              echo "FAIL-CLOSED: required evidence file missing or empty: ${f}"
+              exit 1
+            fi
+            echo "EVIDENCE_OK: ${f} ($(wc -c < "${EVIDENCE_DIR}/${f}") bytes)"
+          done
+          echo "QEMU_EVIDENCE_COMPLETE: FAIL-CLOSED GATE PASS"
 
       - name: Upload QEMU lane evidence bundle
         if: always()
