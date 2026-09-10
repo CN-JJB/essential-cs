@@ -1,0 +1,154 @@
+# Essential CS canonical stable CI — fast matrix (Issue #145, D-032).
+#
+# Execution model (read this before "optimizing"):
+# - runs-on ubuntu-24.04 is the MOVING execution substrate, not the canonical pin.
+# - Every release-relevant command below runs INSIDE the digest-addressed canonical
+#   environment built from .devcontainer/Dockerfile. Reproducibility claims come from
+#   that definition/artifact, never from hosted-runner contents.
+# - On pull_request events we explicitly checkout the PR HEAD SHA, not GitHub's synthetic
+#   refs/pull/<n>/merge commit, and assert the revision before any evidence is produced.
+# - Course execution happens in a fresh LF archive copy (/tmp/ci-tree), never in the
+#   checkout working tree, so source/runtime evidence is tied to the asserted revision.
+# - No test is quarantined here: M10 runs normally; the m20 timing trio runs normally.
+#   A separately-reported diagnostic triage for m20 lives in ci-qemu-lane.yml and is
+#   explicitly non-blocking — it can never count as stable-green evidence.
+
+name: canonical-fast
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CANONICAL_IMAGE: essential-cs-canonical:ci
+  CI_TREE: /tmp/ci-tree
+
+jobs:
+  canonical-matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact event revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Assert exact checked-out revision
+        shell: bash
+        run: |
+          expected='${{ github.event.pull_request.head.sha || github.sha }}'
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_REVISION=${expected}"
+          echo "ACTUAL_REVISION=${actual}"
+          test "${actual}" = "${expected}"
+
+      - name: Record hosted substrate identity (informational only, not the pin)
+        run: |
+          cat /etc/os-release | head -n 3
+          echo "runner_image_version=${ImageVersion}"
+          echo "runner_arch=$(uname -m)"
+
+      - name: Build canonical image from committed definition
+        run: |
+          docker build -f .devcontainer/Dockerfile -t "${CANONICAL_IMAGE}" .
+          docker inspect "${CANONICAL_IMAGE}" --format 'CANONICAL_IMAGE_SHA={{.Id}} ARCH={{.Architecture}} OS={{.Os}}'
+
+      - name: Materialize LF tree for course execution
+        run: |
+          rm -rf "${CI_TREE}"
+          mkdir -p "${CI_TREE}/.ci-logs"
+          git -c core.autocrlf=false archive --format=tar HEAD | tar -x -C "${CI_TREE}"
+
+      - name: Canonical floor gate + version snapshot
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" \
+            bash /work/scripts/canonical-env-capture.sh | tee "${CI_TREE}/.ci-logs/canonical-env-snapshot.txt"
+
+      - name: Shared preflights (all REQUIRED must PASS)
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            python3 tests/preflight_network_web.py
+            python3 tests/preflight_data_concurrency.py
+            python3 tests/preflight_distributed_infra.py
+            python3 tests/preflight_security_synthesis.py --module M21
+            python3 tests/preflight_security_synthesis.py --module M22
+            bash scripts/preflight-m05-m09.sh' 2>&1 | tee "${CI_TREE}/.ci-logs/preflights.log"
+
+      - name: Shell syntax gates
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            for f in labs/lab-req-02-xv6-syscall/preflight.sh labs/lab-req-02-xv6-syscall/setup.sh labs/lab-req-02-xv6-syscall/smoke.sh labs/lab-req-02-xv6-syscall/reset.sh scripts/preflight-m05-m09.sh labs/foundations/m03/preflight.sh labs/foundations/m03/build.sh labs/foundations/m03/capture-gdb.sh labs/foundations/m03/smoke-test.sh; do
+              bash -n "$f" || { echo "SYNTAX_FAIL $f"; exit 1; }
+            done
+            echo SYNTAX_ALL_OK'
+
+      - name: Full Python test surface (26 suites, no quarantine)
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            fail=0
+            for d in labs/foundations/m00-m01 labs/foundations/m02 labs/foundations/m05 labs/foundations/m06 labs/foundations/m07 labs/foundations/m08 labs/foundations/m09 labs/foundations/m10 labs/foundations/m11 labs/foundations/m12 labs/foundations/m13 labs/foundations/m14 labs/foundations/m15 labs/foundations/m16 labs/foundations/m17 labs/foundations/m18 labs/foundations/m19 labs/foundations/m20 labs/foundations/m21 labs/foundations/m22 labs/foundations/m23 labs/foundations/m24 labs/lab_req_01 labs/lab_req_03 labs/lab_req_04 labs/lab_req_05; do
+              if python3 -m unittest discover -s "$d" -p "test_*.py"; then
+                echo "SUITE_PASS $d"
+              else
+                echo "SUITE_FAIL $d"
+                fail=1
+              fi
+            done
+            python3 -m unittest discover -s tests -p "preflight*.py" || { echo "SUITE_FAIL tests/preflight"; fail=1; }
+            exit "$fail"' 2>&1 | tee "${CI_TREE}/.ci-logs/python-matrix.log"
+          test "${PIPESTATUS[0]}" -eq 0
+
+      - name: M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            cd labs/foundations/m03
+            ./preflight.sh
+            ./smoke-test.sh | tee /work/.ci-logs/m03-smoke.log
+            grep -q "SMOKE result=PASS" /work/.ci-logs/m03-smoke.log
+            grep -Fq "TRACE point=before-call" gdb-trace.txt
+            grep -Fq "TRACE point=callee" gdb-trace.txt
+            grep -Fq "TRACE point=after-return" gdb-trace.txt
+            grep -Fq "TRACE local=30" gdb-trace.txt
+            ./reset.sh
+            echo M03_CANONICAL_EVIDENCE_DONE'
+
+      - name: Required Lab harnesses 01/03/04/05 + resets
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            python3 labs/lab_req_01/harness.py | tee /work/.ci-logs/harness-req01.log
+            python3 labs/lab_req_01/reset.py
+            python3 labs/lab_req_03/runner.py | tee /work/.ci-logs/harness-req03.log
+            python3 labs/lab_req_03/reset.py
+            python3 labs/lab_req_04/harness.py | tee /work/.ci-logs/harness-req04.log
+            python3 labs/lab_req_04/reset.py
+            python3 labs/lab_req_05/runner.py | tee /work/.ci-logs/harness-req05.log
+            python3 labs/lab_req_05/reset.py
+            echo LAB_HARNESSES_DONE'
+
+      - name: Hygiene (PR diff-check, no stray QEMU, no PID markers)
+        shell: bash
+        run: |
+          if [ '${{ github.event_name }}' = 'pull_request' ]; then
+            git diff --check '${{ github.event.pull_request.base.sha }}...HEAD'
+          else
+            git diff --check HEAD^...HEAD
+          fi
+          test -z "$(pgrep -f '[q]emu-system-riscv64' || true)"
+          test ! -e labs/lab-req-02-xv6-syscall/.qemu_smoke.pid
+          echo HYGIENE_DONE
+
+      - name: Upload canonical evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-fast-evidence
+          path: /tmp/ci-tree/.ci-logs/
+          include-hidden-files: true

@@ -1,0 +1,9 @@
+{
+  "name": "Essential CS canonical stable environment (candidate v0.1)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/work",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/work,type=bind",
+  "remoteUser": "root"
+}
