@@ -156,7 +156,7 @@ Contract vocabulary (exactly one per row): `EXACT PIN` / `VERSION FLOOR` / `CAPA
   version coincides with a verifier env — e.g. QEMU 8.2.2 — the reason is timing-sensitivity + validation
   history, stated explicitly).
 - Does not close OQ-BP-006, does not write a Decision, does not mark anything VERIFIED/RELEASED/v1.0.
-- Does not fix the m10 relay probe or the m20 timing trio (recorded + routed to CI quarantine-with-triage, §7).
+- Does not fix the m10 relay probe or the m20 timing trio. M10 remains an environment-classified WSL finding that should run normally on canonical non-WSL CI; m20 is routed to temporary implementation-stage triage until its nondeterminism is explained (§7).
 
 ## 6. Required decision options
 
@@ -182,7 +182,7 @@ Pin a **digest-addressed Ubuntu 24.04-based canonical learner/test environment**
 - Learner friction: low — any Noble-class host with floors met works; preflights tell the truth otherwise.
 - CI feasibility: compatible with standard hosted runners as the host substrate; reproducibility comes from the canonical digest-addressed environment, not from freezing the hosted runner image.
 - Stale/brittle-pin risk: low — floors age gracefully toward the 2029/2028 horizons with a defined revisit.
-- Effect on current labs: zero redesign — the packet's ACTUAL RUN is literally this option instantiated (24/26 + 2 known-flaky dispositions).
+- Effect on current labs: no redesign is indicated by the compatibility evidence. The ACTUAL RUN supports the proposed Noble/tool-floor choices, but it did **not** execute inside the not-yet-built digest-addressed canonical image, so it is evidence for the option rather than proof of the final artifact.
 - Migration/refresh burden: digest re-pin quarterly + lane re-validation; floors rise only with evidence.
 
 A considered-and-rejected third sketch, `ubuntu-latest` floating plus a `setup-python` version matrix, is
@@ -192,12 +192,7 @@ and converts every upstream runner-image refresh into an unplanned curriculum ev
 
 ### Recommendation
 
-**Recommend Option B.** Reasons: (1) it is the only option already proven by this packet's ACTUAL RUNs on the
-exact candidate stack; (2) it matches the repository's existing architecture — the preflights were built
-precisely to be gates rather than pins, and Option B lets them do that job; (3) it concentrates exactness
-where timing demands it (QEMU lane) instead of taxing the whole stack; (4) it runs on free hosted runners
-with only apt provisioning; (5) its maintenance curve fits a living curriculum (floors + cadence) instead of
-fighting it. **This recommendation is input, not a Decision — the pin is the Web Lead's to choose.**
+**Recommend Option B.** Reasons: (1) this packet's ACTUAL RUNs support the underlying Noble + tool-floor compatibility, while the digest-addressed canonical artifact still requires implementation and independent runtime proof; (2) it matches the repository's existing architecture — preflights are gates rather than universal patch pins; (3) it concentrates explicit component-level exactness where timing/history justify it while the canonical environment digest records the resolved stack; (4) it is compatible with standard hosted runners as substrate without pretending their image is frozen; (5) its maintenance curve fits a living curriculum (floors + cadence). **This recommendation is input, not a Decision — the pin is the Web Lead's to choose.**
 
 ## 7. Required CI execution-matrix proposal (design input — no workflows created here)
 
@@ -205,7 +200,7 @@ Jobs may use standard GitHub-hosted `ubuntu-24.04` as the host substrate, but **
 
 | Job | Contents | Trigger | Gate rule |
 |---|---|---|---|
-| `python-matrix` | all 26 unittest suites + `tests/preflight*.py` discover | per-PR + nightly | Green required except the two quarantined dispositions below, which must be triaged, never silently waived |
+| `python-matrix` | all 26 unittest suites + `tests/preflight*.py` discover | per-PR + nightly | Green required on canonical CI. M10 is not pre-quarantined; m20 may be temporarily separated only during rollout triage and cannot count as stable green until resolved or evidence-classified. |
 | `preflights` | 4 Python preflights + `scripts/preflight-m05-m09.sh` | per-PR | All REQUIRED PASS; optionals informational |
 | `shell-c` | `bash -n` over entrypoints; M03 preflight/build/inspect/reset; M04 run; `git diff --check` | per-PR | Green required |
 | `lab-smokes` | REQ-01/03/04/05 harnesses + resets | per-PR (or nightly if slow) | Green required; CLI-provisioning step explicit |
@@ -223,21 +218,14 @@ Temporary rollout-triage rule: do **not** pre-quarantine the M10 relay probe on 
 3. **What should remain capability-gated/optional:** strace, browser/Chromium, OTel live route, psql/PostgreSQL, Docker/Podman, EXP source reachability, arm64 forward-test. **GDB is excluded from this list because it is required for canonical M03 evidence.**
 4. **Which candidate best fits:** revised Option B on Noble — supported by this packet's ACTUAL RUNs. Hosted-runner contents are only a compatibility/substrate observation, not pin evidence; Lead freshness review already observed the hosted Ubuntu-24.04 image moving from the report's 20260831/24.04.4 snapshot to 20260907.300.1/24.04.5.
 5. **What the next Executor must create:** the canonical digest-addressed environment definition/build inputs, provisioning manifest with full resolved package identities for the QEMU lane, the §7 workflow files, hosted-runner + canonical-environment version capture, temporary m20 triage routing, and a refresh-cadence note — acceptance: §9 evidence on the new stack.
-6. **What independent runtime evidence is required after implementation:** full 26-suite matrix + preflights +
-   shell/C gates + 5 lab smokes incl. real QEMU on the pinned stack, version snapshots, idempotent-cleanup
-   proof, and exact-head Lead review — with the two quarantined dispositions triaged, not hidden.
+6. **What independent runtime evidence is required after implementation:** full 26-suite matrix + preflights + shell/C gates + 5 lab smokes incl. real QEMU on the pinned stack, version snapshots, idempotent-cleanup proof, and exact-head Lead review. M10 must be green on canonical non-WSL CI; the m20 nondeterminism must be resolved or explicitly environment-classified with evidence before it can contribute stable-green proof.
 7. **Residual uncertainty:** m20 trio root cause (runner load/thresholds vs isolation vs repository race/defect — needs triage, §3.2); strace live-tracing under hosted-runner/container restrictions (verify, don't assume); arm64 scope confirmation; full-package/image pin refresh mechanics for the QEMU lane; Docker-daemon reliance (none required — M19 stays optional).
 
 ## 9. Final recommendation
 
 **`ENVIRONMENT PIN DECISION PACKET READY FOR WEB LEAD REVIEW`**
 
-Rationale: the packet answers all seven completion questions from evidence — ACTUAL RUNs on a fresh
-materialization of the exact canonical base (preflights green, 24/26 suites green with two honestly-routed
-deviations, M03 flow green, REQ-02 fetch/pin/route green with smoke honestly NOT RUN and historically
-provenanced), convergent hosted-runner research, a classified per-component contract, two full options plus a
-rejected sketch with a reasoned recommendation, and a minimal CI matrix that turns static policy into future
-operating evidence. No pin was made, OQ-BP-006 stays open, and no lifecycle state is claimed.
+Rationale: the packet answers all seven completion questions from evidence — ACTUAL RUNs on a fresh materialization of the exact canonical base (preflights green, 24/26 suites green with two honestly-routed deviations, M03 flow green, REQ-02 fetch/pin/route green with smoke honestly NOT RUN and historically provenanced), hosted-runner feasibility research corrected by Lead freshness review, a classified per-component contract, two full options plus a rejected sketch with a reasoned recommendation, and a minimal CI matrix that can turn static policy into future operating evidence after the canonical artifact exists. No pin was made by the researcher, OQ-BP-006 stays open until Lead disposition is persisted, and no lifecycle state is claimed.
 
 ---
 
