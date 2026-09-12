@@ -105,3 +105,17 @@ LAB-REQ-02 keeps stricter lane-scoped identity: the xv6 source pin remains exact
 This Decision selects the **implementation strategy**, not the final realized pin. OQ-BP-006 remains OPEN until the implementation task commits the canonical environment definition, immutable digest, resolved package identities, CI execution matrix, and exact-head runtime evidence sufficient for Web Lead acceptance. No v1.0 / VERIFIED / RELEASED claim follows from this Decision.
 
 **Provenance:** Issue #143 / PR #144; Lead-reviewed final research head `35175095c1a62cb6968221d54d2d3564f4d6f259`; PR #144 merge `07d5550bc7bed1ac9126351688bab7ce70d1357b`.
+
+## D-033 — v1.0 bounded AI-literacy scope
+For the first stable v1.0 curriculum, Essential CS will **not** expand the accepted M00–M24 Core spine with an AI/ML/LLM module or new canonical Core thread. The already accepted bounded practice remains: AI-generated code, documentation, configuration, and claims are treated as untrusted hypotheses that require source, test, measurement, and security verification. This is a CURRENT CASE / technical-literacy practice, not a new Core theory obligation.
+
+This decision resolves OQ-BP-001 for v1.0. It does not claim AI literacy is unimportant, and it does not prevent a future post-v1.0 RFC from reopening the question if learner evidence, external audit evidence, or durable systems-practice evidence justifies expansion.
+
+**Provenance:** `meta/rfcs/RFC-CAND-001-bounded-ai-literacy.md`; Issue #155.
+
+## D-034 — v1.0 human-facing-system-boundary scope
+For the first stable v1.0 curriculum, Essential CS will **not** add a new canonical HCI/accessibility Core first home or module. The accepted boundary remains the existing system-facing evidence hooks: user-observable denial/error/recovery behavior, privacy/consent interaction, affected-user reasoning, and accessibility consideration where relevant in Mini Cloud P2/P9 and existing browser/security contexts.
+
+This decision resolves OQ-BP-003 for v1.0 while preserving the project's systems focus and avoiding a late new Core concept family and assessment surface. A future post-v1.0 RFC may reopen the question if real learner or external-audit evidence shows the bounded hooks are insufficient.
+
+**Provenance:** `meta/rfcs/RFC-CAND-002-human-facing-boundary.md`; Issue #155.
