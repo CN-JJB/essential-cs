@@ -67,6 +67,17 @@ class TestOriginServer(unittest.TestCase):
         self.assertEqual(len(body_304), 0, "RFC 9111 304 response must not carry body bytes")
         conn.close()
 
+        # 3. Conditional GET with non-matching ETag -> 200 OK + full body bytes (cache validator break)
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3.0)
+        conn.request("GET", "/resource", headers={"If-None-Match": '"non-matching-etag"'})
+        resp = conn.getresponse()
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.getheader("ETag"), ETAG_RESOURCE)
+        body_200 = resp.read()
+        self.assertGreater(len(body_200), 0)
+        self.assertIn(b"Hello from origin server", body_200)
+        conn.close()
+
     def test_origin_health(self) -> None:
         conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3.0)
         conn.request("GET", "/health")
@@ -91,6 +102,26 @@ class TestIntermediaryAdapter(unittest.TestCase):
         self.assertTrue(_remove_for_forwarding("Trailer", trailer_tokens))
         self.assertTrue(_remove_for_forwarding("Proxy-Connection", tokens))
         self.assertFalse(_remove_for_forwarding("If-None-Match", tokens))
+
+    def test_unsupported_method_yields_405(self) -> None:
+        handler_class = make_proxy_handler("127.0.0.1", 8080)
+        proxy = ThreadingHTTPServer(("127.0.0.1", 0), handler_class)
+        proxy_port = proxy.server_port
+        thread = threading.Thread(target=proxy.serve_forever, daemon=False)
+        thread.start()
+        try:
+            conn = http.client.HTTPConnection("127.0.0.1", proxy_port, timeout=3.0)
+            conn.request("POST", "/resource", body=b'{"not":"allowed"}')
+            resp = conn.getresponse()
+            self.assertEqual(resp.status, 405)
+            self.assertIn("GET", resp.getheader("Allow", ""))
+            self.assertIn("HEAD", resp.getheader("Allow", ""))
+            conn.close()
+        finally:
+            proxy.shutdown()
+            proxy.server_close()
+            thread.join(timeout=2.0)
+            self.assertFalse(thread.is_alive())
 
     def test_proxy_upstream_down_yields_502(self) -> None:
         # Pick an unbound loopback port for upstream

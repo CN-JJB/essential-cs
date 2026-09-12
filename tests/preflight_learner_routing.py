@@ -1,0 +1,361 @@
+#!/usr/bin/env python3
+"""
+preflight_learner_routing.py — Static regression gate for Issue #166 repair.
+
+Verifies that learner-facing routing and governance truth cannot silently drift
+again ("files exist but learners cannot reach them"):
+
+A. Required Lab routes — book/ must visibly route to all five Required Labs.
+B. Mini Cloud route — staged P0-P9 project connections exist and M24 defends
+   the real Mini Cloud (synthetic sample explicitly non-final).
+C. Governance truth — OQ-BP-001/OQ-BP-003/OQ-BP-006 lifecycle labels match the
+   accepted Decisions (#155/D-033/D-034, #167/OQ-BP-006 CLOSED), while the
+   #158 independent re-check requirement is preserved.
+D. Hygiene — root .gitignore blocks local-agent state dirs and none are tracked.
+
+Static only: reads committed text, runs nothing. Usable as a preflight script
+(exit 0 on PASS) and as a unittest suite (CI: discover -s tests -p "preflight*.py").
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _read(rel: str) -> str:
+    return (REPO_ROOT / rel).read_text(encoding="utf-8")
+
+
+def _contains(rel: str, *needles: str) -> tuple[bool, str]:
+    try:
+        text = _read(rel)
+    except FileNotFoundError:
+        return False, f"missing file {rel}"
+    for needle in needles:
+        if needle not in text:
+            return False, f"{rel} lacks {needle!r}"
+    return True, "ok"
+
+
+# ---------------------------------------------------------------------------
+# A. Required Lab routes: (home lesson, canonical ID, lab path, required mark)
+# ---------------------------------------------------------------------------
+REQUIRED_LAB_ROUTES = [
+    ("book/11-networking-tls-http-cdn-proxies/L11-03.md", "LAB-REQ-01", "labs/lab_req_01", "Required"),
+    ("book/06-processes-syscalls-execution-context/L06-01.md", "LAB-REQ-02", "labs/lab-req-02-xv6-syscall", "Required"),
+    ("book/15-concurrency-threads-races-synchronization/L15-01.md", "LAB-REQ-03", "labs/lab_req_03", "Required"),
+    ("book/13-databases-storage-indexing/L13-01.md", "LAB-REQ-04", "labs/lab_req_04", "Required"),
+    ("book/14-databases-transactions-recovery-isolation/L14-01.md", "LAB-REQ-05", "labs/lab_req_05", "Required"),
+]
+
+# ---------------------------------------------------------------------------
+# B. Mini Cloud staged route: (lesson, milestone marker, project path)
+# ---------------------------------------------------------------------------
+MINICLOUD_ROUTES = [
+    ("book/00-the-map/L00-02.md", "P0", "project/README.md"),
+    ("book/06-processes-syscalls-execution-context/L06-03.md", "P1", "project/minicloud"),
+    ("book/10-networking-ip-dns-transport/L10-03.md", "P3", "project/minicloud"),
+    ("book/13-databases-storage-indexing/L13-03.md", "P4", "project/minicloud/bench.py"),
+    ("book/14-databases-transactions-recovery-isolation/L14-03.md", "P5", "project/minicloud"),
+    ("book/19-modern-infrastructure-delivery/L19-03.md", "P7", "project/minicloud"),
+    ("book/20-observability-reliability-engineering/L20-02.md", "P8", "project/minicloud"),
+    ("book/22-security-synthesis-auth-composition/L22-03.md", "P2", "project/minicloud"),
+    ("book/23-systems-thinking-judgment/L23-03.md", "P9", "project/minicloud/walkthrough.py"),
+    ("book/24-final-system-defense/L24-01.md", "Mini Cloud", "project/minicloud"),
+    ("book/24-final-system-defense/L24-02.md", "Mini Cloud", "project/minicloud"),
+]
+
+
+def check_required_lab_routes() -> list[str]:
+    failures = []
+    for lesson, lab_id, lab_path, _required_mark in REQUIRED_LAB_ROUTES:
+        ok, why = _contains(lesson, lab_id, lab_path)
+        if not ok:
+            failures.append(why)
+            continue
+        text = _read(lesson)
+        if "Required" not in text and "必修" not in text:
+            failures.append(f"{lesson} routes {lab_id} but never marks it Required/必修 vs foundation")
+    return failures
+
+
+def _has_concrete_project_ref(text: str) -> bool:
+    """Concrete project reference, not just the words 'Mini Cloud'."""
+    if "project/minicloud" in text:
+        return True
+    has_minicloud_path = ("minicloud/" in text) or ("minicloud." in text)
+    return has_minicloud_path and ("project/" in text)
+
+
+def check_minicloud_routes() -> list[str]:
+    failures = []
+    for lesson, marker, project_path in MINICLOUD_ROUTES:
+        try:
+            text = _read(lesson)
+        except FileNotFoundError:
+            failures.append(f"missing file {lesson}")
+            continue
+        if marker not in text:
+            failures.append(f"{lesson} lacks {marker!r}")
+        elif project_path == "project/minicloud":
+            if not _has_concrete_project_ref(text):
+                failures.append(f"{lesson} lacks a concrete Mini Cloud project reference")
+        elif project_path not in text:
+            failures.append(f"{lesson} lacks {project_path!r}")
+    # M24 must defend the REAL Mini Cloud, with the synthetic sample fenced off.
+    for rel in (
+        "book/24-final-system-defense/L24-01.md",
+        "book/24-final-system-defense/L24-02.md",
+        "labs/foundations/m24/README.md",
+    ):
+        try:
+            text = _read(rel)
+        except FileNotFoundError:
+            failures.append(f"missing file {rel}")
+            continue
+        if not _has_concrete_project_ref(text):
+            failures.append(f"{rel} does not route final defense to the real Mini Cloud")
+    ok, why = _contains("book/24-final-system-defense/L24-01.md", "synthetic")
+    if not ok:
+        failures.append(why)
+    # LAB-REQ-03 accepted predicate-break surface must exist and be wired.
+    for rel, needle in (
+        ("labs/lab_req_03/cond_predicate_break.c", "predicate"),
+        ("labs/lab_req_03/harness.py", "cond_predicate_break"),
+        ("labs/lab_req_03/test_lab.py", "predicate"),
+        ("labs/lab_req_03/README.md", "cond_predicate_break"),
+    ):
+        ok, why = _contains(rel, needle)
+        if not ok:
+            failures.append(why)
+    # LAB-REQ-04 two-size learner evidence surface must exist and be documented.
+    for rel, needle in (
+        ("labs/lab_req_04/harness.py", "run_lab_req_04_compare"),
+        ("labs/lab_req_04/harness.py", "--compare-sizes"),
+        ("labs/lab_req_04/README.md", "--compare-sizes"),
+        ("course/evidence/lab-req-04-evidence-template.md", "--compare-sizes"),
+    ):
+        ok, why = _contains(rel, needle)
+        if not ok:
+            failures.append(why)
+    return failures
+
+
+def check_governance_truth() -> list[str]:
+    failures = []
+    expected = [
+        ("tests/preflight_security_synthesis.py", "RESOLVED FOR v1.0 BY D-033"),
+        ("meta/CURRICULUM_MAP.md", "D-033"),
+        ("meta/CONCEPT_REGISTRY.md", "D-033"),
+        ("book/00-the-map/L00-02.md", "D-033"),
+        ("book/23-systems-thinking-judgment/L23-02.md", "D-033"),
+        ("meta/CONCEPT_REGISTRY.md", "D-034"),
+        ("meta/CURRICULUM_MAP.md", "D-034"),
+        # OQ-BP-006 CLOSED as technical question; #153 same-lineage; #158 pending.
+        ("tests/preflight_security_synthesis.py", "CLOSED (technical environment-definition/realization per #167"),
+        ("tests/preflight_security_synthesis.py", "#158 re-check still required"),
+        ("tests/preflight_distributed_infra.py", "CLOSED — TECHNICAL ENVIRONMENT ACCEPTED; #158 INDEPENDENT RE-CHECK REQUIRED"),
+        ("tests/preflight_distributed_infra.py", "#158 must still independently re-check before v1.0"),
+        ("tests/preflight_data_concurrency.py", "OQ-BP-006 CLOSED — canonical environment definition/realization accepted"),
+        ("tests/preflight_data_concurrency.py", "#158 independent re-check required"),
+        ("course/evidence/foundations-m23-evidence-template.md", "RESOLVED FOR v1.0 BY D-033"),
+        (".devcontainer/CANONICAL_ENVIRONMENT.md", "OQ-BP-006 CLOSED as the technical environment-definition/realization question"),
+        (".github/workflows/ci-qemu-lane.yml", "#158 must still independently re-check"),
+        ("meta/OPEN_QUESTIONS.md", "CLOSED — realized pin technically re-verified"),
+        ("meta/OPEN_QUESTIONS.md", "#158 must independently re-check"),
+    ]
+    for rel, needle in expected:
+        ok, why = _contains(rel, needle)
+        if not ok:
+            failures.append(why)
+    # Every active foundations evidence template must carry the accepted label.
+    for module in ("11", "12", "16", "17", "18", "19", "20", "21", "22", "23", "24"):
+        rel = f"course/evidence/foundations-m{module}-evidence-template.md"
+        ok, why = _contains(rel, "CLOSED (technical environment-definition/realization per #167")
+        if not ok:
+            failures.append(why)
+    # Active runtime/learner surfaces outside the preflights must match too.
+    for rel, needle in (
+        ("labs/foundations/m21/crypto_roles.py", "OQ-BP-006 is CLOSED as the technical"),
+        ("labs/foundations/m03/README.md", "OQ-BP-006 已按 #167 关闭"),
+        ("labs/foundations/m11/README.md", "OQ-BP-006 is CLOSED as the technical"),
+        ("project/README.md", "CLOSED as the"),
+    ):
+        ok, why = _contains(rel, needle)
+        if not ok:
+            failures.append(why)
+    # No active preflight or learner/test surface may still assert the
+    # pre-decision lifecycle states (blocks regression to OPEN / UNRESOLVED).
+    stale = [
+        ("tests/preflight_security_synthesis.py", '"OQ_BP_006": "OPEN / UNRESOLVED"'),
+        ("tests/preflight_security_synthesis.py", '"OQ_BP_001": "OPEN / RFC-GATED'),
+        ("tests/preflight_security_synthesis.py", "OQ_BP_001 == \"OPEN / RFC-GATED"),
+        ("tests/preflight_distributed_infra.py", '"oq_bp_006_status": "OPEN / UNRESOLVED"'),
+        ("tests/preflight_distributed_infra.py", "OQ-BP-006 remains OPEN"),
+        ("tests/preflight_distributed_infra.py", "OQ-BP-006 remains open"),
+        ("tests/preflight_data_concurrency.py", "OQ-BP-006 remains OPEN"),
+        ("tests/preflight_data_concurrency.py", '"oq_bp_006_host_baseline": "OPEN'),
+        ("book/00-the-map/L00-02.md", "does not close that Open Question"),
+        ("book/23-systems-thinking-judgment/L23-02.md", "RFC-GATED"),
+        ("course/evidence/foundations-m24-evidence-template.md", "OPEN / UNRESOLVED"),
+        # Other active learner/runtime surfaces, not just the CI-executed preflights.
+        ("labs/foundations/m21/crypto_roles.py", "OQ-BP-006 remains OPEN"),
+        ("labs/foundations/m03/README.md", "OQ-BP-006 仍然 OPEN"),
+        ("labs/foundations/m11/README.md", "OQ-BP-006 remains OPEN"),
+        ("project/README.md", "`OQ-BP-006` is untouched"),
+        ("course/evidence/foundations-m11-evidence-template.md", "OQ-BP-006: **OPEN**"),
+        ("course/evidence/foundations-m12-evidence-template.md", "OQ-BP-006 status: **OPEN**"),
+        ("course/evidence/foundations-m16-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m17-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m18-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m19-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m20-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m21-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m22-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m23-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m23-evidence-template.md", "OPEN / RFC-GATED"),
+        ("course/evidence/foundations-m23-evidence-template.md", "safe interim state"),
+        (".devcontainer/CANONICAL_ENVIRONMENT.md", "OQ-BP-006 remains OPEN"),
+        (".github/workflows/ci-qemu-lane.yml", "OQ-BP-006 stays OPEN"),
+    ]
+    for rel, needle in stale:
+        try:
+            text = _read(rel)
+        except FileNotFoundError:
+            failures.append(f"missing file {rel}")
+            continue
+        if needle in text:
+            failures.append(f"{rel} still asserts stale lifecycle {needle!r}")
+    return failures
+
+
+LESSON_ID_RE = re.compile(r"^L\d{2}-\d{2}\.md$")
+
+# Every learner Lesson must expose a prerequisite declaration. Two accepted
+# conventions exist in the repository (canonical header block field, or a
+# `前置知识` / Prerequisites section); either satisfies the DoD requirement.
+_PREREQ_PATTERNS = (
+    re.compile(r"^>\s*\*\*Canonical (Lesson )?Predecessors?\*\*", re.M),
+    re.compile(r"^>\s*\*\*Canonical Lesson Predecessor Refinement\*\*", re.M),
+    re.compile(r"^#{2,3}[^\n]*?(前置知识|Prerequisites)", re.M),
+)
+
+_DOD_PATTERNS = (
+    ("Exit Criteria", re.compile(r"Exit Criteria|达标退出标准|达标通关标准|退出标准")),
+    ("Competency Mapping", re.compile(r"Competency Mapping|能力映射|能力等级对齐", re.I)),
+    ("Provenance", re.compile(r"Provenance|出处|源流|时效")),
+    ("Common Misconceptions", re.compile(r"Common Misconceptions|认知谬误|认知误区|常见误解")),
+    (
+        "What You Can Ignore - for Now",
+        re.compile(r"^#{2,4}[^\n]*?(Ignore\s*[—\-–]\s*for\s*Now|暂缓深入|暂时可以忽略)", re.M | re.I),
+    ),
+)
+
+
+def _lesson_files() -> list:
+    book = REPO_ROOT / "book"
+    return sorted(
+        p for p in book.rglob("L*.md") if LESSON_ID_RE.match(p.name)
+    )
+
+
+def check_lesson_contracts() -> list[str]:
+    """Every learner Lesson keeps numbering, prerequisites, and DoD blocks."""
+    failures = []
+    lessons = _lesson_files()
+    if len(lessons) != 70:
+        failures.append(f"expected 70 learner Lessons, found {len(lessons)}")
+
+    per_module: dict[str, list[int]] = {}
+    for path in lessons:
+        stem = path.stem
+        per_module.setdefault(stem[1:3], []).append(int(stem[4:6]))
+    for module in sorted(per_module):
+        numbers = sorted(per_module[module])
+        if numbers != list(range(1, len(numbers) + 1)):
+            failures.append(f"M{module} Lesson numbering not contiguous: {numbers}")
+
+    for path in lessons:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if not any(pattern.search(text) for pattern in _PREREQ_PATTERNS):
+            failures.append(f"{rel} declares no prerequisites")
+        for label, pattern in _DOD_PATTERNS:
+            if not pattern.search(text):
+                failures.append(f"{rel} lacks the DoD block {label!r}")
+    return failures
+
+
+def check_hygiene() -> list[str]:
+    failures = []
+    ok, why = _contains(".gitignore", "/.commandcode", "/.workbuddy-ai")
+    if not ok:
+        failures.append(why)
+        return failures
+    try:
+        proc = subprocess.run(
+            ["git", "ls-files", ".commandcode/**", ".workbuddy-ai/**"],
+            cwd=str(REPO_ROOT),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        failures.append(f"git ls-files unavailable: {exc}")
+        return failures
+    tracked = [line for line in proc.stdout.splitlines() if line.strip()]
+    if tracked:
+        failures.append(f"tracked local-agent state must be empty, found: {tracked[:5]}")
+    return failures
+
+
+def collect_report() -> dict:
+    return {
+        "required_lab_routes": check_required_lab_routes(),
+        "minicloud_routes": check_minicloud_routes(),
+        "lesson_contracts": check_lesson_contracts(),
+        "governance_truth": check_governance_truth(),
+        "hygiene": check_hygiene(),
+    }
+
+
+class TestLearnerRoutingRegressions(unittest.TestCase):
+    def test_required_lab_routes(self):
+        self.assertEqual(check_required_lab_routes(), [])
+
+    def test_minicloud_routes(self):
+        self.assertEqual(check_minicloud_routes(), [])
+
+    def test_lesson_contracts(self):
+        self.assertEqual(check_lesson_contracts(), [])
+
+    def test_governance_truth(self):
+        self.assertEqual(check_governance_truth(), [])
+
+    def test_hygiene(self):
+        self.assertEqual(check_hygiene(), [])
+
+
+def main() -> int:
+    report = collect_report()
+    failed = False
+    for section, problems in report.items():
+        if problems:
+            failed = True
+            print(f"FAIL {section}:")
+            for problem in problems:
+                print(f"  - {problem}")
+        else:
+            print(f"PASS {section}")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

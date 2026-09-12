@@ -30,7 +30,7 @@ class TestLabReq03(unittest.TestCase):
     def test_compilation(self):
         res = self.harness.compile_all()
         self.assertTrue(res["passed"])
-        self.assertEqual(len(res["build_log"]), 4)
+        self.assertEqual(len(res["build_log"]), 5)
 
     def test_checkpoint_1_deterministic_lost_update(self):
         res = self.harness.run_checkpoint_1_deterministic_lost_update()
@@ -63,6 +63,14 @@ class TestLabReq03(unittest.TestCase):
         self.assertEqual(res["final_data"], 42)
         self.assertTrue(res["predicate_recheck_verified"])
         self.assertGreaterEqual(res["predicate_eval_count"], 2)
+
+    def test_controlled_break_predicate_if(self):
+        res = self.harness.run_controlled_break_predicate_if()
+        self.assertTrue(res["passed"])
+        self.assertTrue(res["break_manifested"])
+        self.assertEqual(res["predicate_eval_count"], 1)
+        self.assertIn("PREDICATE_BREAK_DETECTED", res["events"])
+        self.assertIn("inference_limit", res)
 
     def test_checkpoint_5_deadlock_preconditions(self):
         res = self.harness.run_checkpoint_5_deadlock_preconditions(timeout_sec=1.5)

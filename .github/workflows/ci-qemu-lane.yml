@@ -4,7 +4,9 @@
 # commands run inside the canonical environment materialized by pulling the SAME immutable
 # registry digest committed in .devcontainer/canonical-image.env. This lane does not build
 # an environment, and it consumes exactly the digest canonical-fast consumes.
-# OQ-BP-006 stays OPEN until Web Lead acceptance after independent verification.
+# OQ-BP-006 is CLOSED as the technical environment-definition/realization question
+# (Web Lead disposition #167); #153 remains same-lineage technical re-verification and
+# #158 must still independently re-check the canonical environment before v1.0.
 #
 # V-147-01 repair (Issue #149): qemu-smoke is fail-closed. A green job must prove the real
 # learner-owned ./smoke.sh executed and produced the required retained evidence

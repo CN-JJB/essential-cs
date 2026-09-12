@@ -11,7 +11,7 @@ cd labs/foundations/m03
 
 canonical activity 要求 `uname -m` 为 `x86_64`，并且 `cc`、`objdump`、`nm`、`gdb`、`git` 可用。脚本会记录实际版本。若不是 x86-64，或 GDB 被 hosted policy/环境阻止，请记录 `BLOCKED / NON-CANONICAL ENVIRONMENT` 或具体缺失项；不要照抄课程里的示例地址。
 
-OQ-BP-006 仍然 OPEN：这里记录“你实际用了什么”，不宣布最终 canonical pin。
+OQ-BP-006 已按 #167 关闭（技术环境定义/实现问题；#153 是**同系技术复核**、不是独立证据；#158 仍需在 v1.0 前独立复核 canonical environment）：这里只记录“你实际用了什么”，不宣布新的 canonical pin。
 
 ## 1. Reset → build → baseline
 

@@ -18,7 +18,13 @@ from eqp_parser import (
     summarize_eqp_paths,
 )
 from generator import generate_lab_dataset
-from harness import check_sqlite_cli, run_lab_req_04
+from harness import (
+    COMPARE_ROW_COUNTS,
+    MAX_COMPARE_ROWS,
+    check_sqlite_cli,
+    run_lab_req_04,
+    run_lab_req_04_compare,
+)
 from reset import reset_lab_req_04
 
 
@@ -139,6 +145,42 @@ class TestLabReq04(unittest.TestCase):
             report = run_lab_req_04()
             self.assertEqual(report["disposition"], "ENVIRONMENT-BLOCKED / NOT RUN")
             self.assertIn("not found", report["reason"].lower())
+
+    def test_compare_mode_rejects_unbounded_sizes(self):
+        # Size validation is CLI-independent: unbounded input fails closed.
+        for bad in ([5000], [1000, 1000], [1000, MAX_COMPARE_ROWS + 1], [0, 5000]):
+            report = run_lab_req_04_compare(row_counts=bad)
+            self.assertEqual(report["disposition"], "FAIL", bad)
+            self.assertEqual(report["per_size"], {})
+
+    def test_compare_mode_executes_both_bounded_sizes(self):
+        # Accepted F-05-03 evidence: both sizes actually execute through the
+        # real sqlite3 CLI with per-size equivalence and truthful planner
+        # records; no fixed timing ratio or plan category is asserted.
+        cli_available, _ = check_sqlite_cli()
+        report = run_lab_req_04_compare(
+            row_counts=list(COMPARE_ROW_COUNTS),
+            trials=2,
+            workdir=self.tmp_dir.name,
+        )
+        if not cli_available:
+            self.assertEqual(report["disposition"], "ENVIRONMENT-BLOCKED / NOT RUN")
+            return
+        self.assertEqual(report["disposition"], "PASS", report)
+        self.assertEqual(report["row_counts"], list(COMPARE_ROW_COUNTS))
+        self.assertTrue(report["both_bounded"])
+        self.assertTrue(report["both_cli"])
+        self.assertTrue(report["both_equivalent"])
+        self.assertEqual(set(report["per_size"]), {str(n) for n in COMPARE_ROW_COUNTS})
+        for n in COMPARE_ROW_COUNTS:
+            info = report["per_size"][str(n)]
+            self.assertEqual(info["disposition"], "PASS")
+            self.assertTrue(info["bounded"])
+            self.assertTrue(info["result_equivalence"]["matched"])
+            self.assertGreater(info["result_equivalence"]["indexed_rows"], 0)
+            # Planner outcome is recorded truthfully, never hardcoded.
+            self.assertTrue(info["unindexed_plan_categories"])
+            self.assertTrue(info["indexed_plan_categories"])
 
     def test_reset_idempotence(self):
         base_dir = os.path.dirname(os.path.abspath(__file__))

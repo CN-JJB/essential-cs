@@ -19,7 +19,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Loopback Networking Capability (`127.0.0.1:0` bind/listen): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
 - Course-Owned Scratch Writability (`labs/foundations/m22/.scratch`): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
 - Optional `argon2-cffi` Disposition: `[Record OPTIONAL PACKAGE AVAILABLE (with version) or OPTIONAL PACKAGE NOT INSTALLED / NOT RUN]`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED (Capability-based evaluation; no course-wide CPython pin frozen in learner truth)`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`; evaluation here stays capability-based — no course-wide CPython pin is frozen in learner truth
 
 ---
 
@@ -195,7 +195,7 @@ Record the implementation-time authority audit for all standards cited:
 | **Content Security Policy** | W3C CSP Level 3 | Working Draft, 29 Jul 2026 | 2026-09-07 | Nonce-based script policy as defense in depth | CSP is not a substitute for context-correct output handling | W3C document license; linked/paraphrased |
 | **Cookies** | draft-ietf-httpbis-layered-cookies-02 | Active Internet-Draft, 21 May 2026 | 2026-09-07 | SameSite semantics used as current draft context | Draft may change; SameSite is not universal CSRF immunity | IETF Trust Legal Provisions |
 | **Supply Chain Levels** | OpenSSF SLSA v1.2 | Approved, 24 Nov 2025 | 2026-09-07 | Provenance v1 / Build Track concepts; Core only validates synthetic metadata/policy | Core does not verify a real attestation signature or certify a builder/SLSA level | Community Specification License 1.0; linked/paraphrased |
-| **Python stdlib** | Python `hashlib`, `hmac`, `sqlite3`, `socket` docs/APIs | Current API family; OQ-BP-006 remains OPEN | 2026-09-07 | Required Core mechanisms/capabilities only | Behavior and availability remain host/runtime dependent; no course-wide CPython pin | PSF License v2 for docs; examples additionally Zero-Clause BSD where applicable |
+| **Python stdlib** | Python `hashlib`, `hmac`, `sqlite3`, `socket` docs/APIs | Current API family; OQ-BP-006 CLOSED (technical environment-definition/realization per #167; #158 re-check still required) | 2026-09-07 | Required Core mechanisms/capabilities only | Behavior and availability remain host/runtime dependent; no course-wide CPython pin | PSF License v2 for docs; examples additionally Zero-Clause BSD where applicable |
 
 ### Deterministic Reset Verification
 - Command Run: `[Record exact reset command actually run]`

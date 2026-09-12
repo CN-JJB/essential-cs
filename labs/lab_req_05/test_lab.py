@@ -81,6 +81,21 @@ class TestLabReq05(unittest.TestCase):
         self.assertEqual(res["invariant_total"], 1000)
         self.assertGreater(res["backup_file_size_bytes"], 0)
 
+    def test_controlled_break_transactionless_update(self):
+        res = self.harness.run_controlled_break_transactionless_update()
+        self.assertTrue(res["passed"])
+        self.assertTrue(res["invariant_broken"])
+        self.assertEqual(res["broken_balances"]["A"], 400)
+        self.assertEqual(res["total_balance"], 800)
+        self.assertIn("inference_limit", res)
+
+    def test_controlled_break_missing_backup_restore(self):
+        res = self.harness.run_controlled_break_missing_backup_restore()
+        self.assertTrue(res["passed"])
+        self.assertTrue(res["fail_closed"])
+        self.assertTrue(res["active_db_intact"])
+        self.assertIn("inference_limit", res)
+
     def test_full_run_all(self):
         full_report = self.harness.run_all(verbose=False)
         self.assertTrue(full_report["overall_passed"])

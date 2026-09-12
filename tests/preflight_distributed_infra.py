@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Preflight verification script for Stage 6 Distributed Systems & Modern Infrastructure (M16-M20).
-Evaluates and records host capabilities empirically without permanently pinning OQ-BP-006.
+Evaluates and records host capabilities empirically. Capability evaluation here
+does not replace the canonical environment pin
+(OQ-BP-006 CLOSED per #167; #158 re-check still required).
 
 Probes the required Stage 6 dimensions:
 1. OS / kernel / architecture
@@ -13,7 +15,9 @@ Probes the required Stage 6 dimensions:
 7. Subprocess watchdog / termination / reaping capability
 8. Optional external source reachability (Stanford CS144 LAB-OPT-02)
 
-OQ-BP-006 remains OPEN.
+OQ-BP-006 is CLOSED as a technical environment-definition/realization question
+(#167/#168; #153 is same-lineage technical re-verification, NOT final
+role-independent evidence; #158 must still independently re-check before v1.0).
 Readiness is not lesson/lab PASS.
 """
 
@@ -673,7 +677,7 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
 
     return {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "oq_bp_006_status": "OPEN / UNRESOLVED",
+        "oq_bp_006_status": "CLOSED — TECHNICAL ENVIRONMENT ACCEPTED; #158 INDEPENDENT RE-CHECK REQUIRED",
         "m16_core_status": "READY" if m16_core_ready else "BLOCKED",
         "m17_core_status": "READY" if m17_core_ready else "BLOCKED",
         "m18_core_status": "READY" if m18_core_ready else "BLOCKED",
@@ -699,7 +703,8 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
             "Readiness is not lesson/lab PASS. "
             "M16, M17, M18, and M20 use standard Python stdlib capabilities which are cross-platform. "
             "M19 requires canonical Linux read-only observation (/proc/self/ns and /proc/self/cgroup). "
-            "OQ-BP-006 remains open for the wider course curriculum."
+            "OQ-BP-006 is CLOSED as the technical canonical-environment definition/realization question (#167); "
+            "capability evaluation here does not replace the canonical pin, and #158 must still independently re-check before v1.0."
         ),
     }
 
@@ -707,7 +712,7 @@ def run_preflight(check_cs144: bool = False, check_mit: bool = False) -> Dict[st
 class TestPreflightDistributedInfra(unittest.TestCase):
     def test_m16_core_capabilities_report_truthfully(self):
         report = run_preflight(check_cs144=False)
-        self.assertEqual(report["oq_bp_006_status"], "OPEN / UNRESOLVED")
+        self.assertEqual(report["oq_bp_006_status"], "CLOSED — TECHNICAL ENVIRONMENT ACCEPTED; #158 INDEPENDENT RE-CHECK REQUIRED")
 
         dims = report["dimensions"]
         required_facts = [

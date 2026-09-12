@@ -4,8 +4,9 @@ preflight_security_synthesis.py â€” Preflight Verification Script for S7 / M21â€
 =============================================================================
 
 Evaluates and records host capabilities empirically for Stage 7 (Security Synthesis
-& Systems Judgment), specifically M21 (Trust Boundaries & Crypto Use) and M22 (Authn/Authz & Secure Composition),
-without permanently pinning OQ-BP-006.
+& Systems Judgment), specifically M21 (Trust Boundaries & Crypto Use) and M22 (Authn/Authz & Secure Composition).
+Capability evaluation here does not replace the canonical environment pin
+(OQ-BP-006 CLOSED per #167; #158 re-check still required).
 
 Probes the required capabilities actually used:
 1. OS / platform / architecture
@@ -17,7 +18,9 @@ Probes the required capabilities actually used:
 7. M22-only password-KDF, sqlite3, localhost-bind, M22 scratch and optional Argon2 capabilities when --module M22 is selected
 8. M21-only optional PyCA cryptography capability when M21 is selected
 
-OQ-BP-006 remains OPEN.
+OQ-BP-006 is CLOSED as a technical environment-definition/realization question
+(#167/#168; #153 is same-lineage technical re-verification, NOT final
+role-independent evidence; #158 must still independently re-check before v1.0).
 Readiness is not lesson/lab PASS.
 Zero offensive tools, zero live/public targets, zero real secrets.
 """
@@ -56,7 +59,7 @@ def probe_python() -> Dict[str, Any]:
         "implementation": platform.python_implementation(),
         "version": platform.python_version(),
         "sys_version": sys.version,
-        "oq_bp_006_policy": "OPEN / UNRESOLVED (capability-based evaluation; no course-wide pin)",
+        "oq_bp_006_policy": "CLOSED (technical environment-definition/realization per #167; capability-based evaluation here; #158 re-check still required)",
     }
 
 
@@ -498,7 +501,7 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
                 "scratch_writability": probe_m24_scratch_writability(),
             },
             "policy_invariants": {
-                "OQ_BP_006": "OPEN / UNRESOLVED",
+                "OQ_BP_006": "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)",
                 "defense_evaluation": "DECLARED IMPLEMENTATION CONTRACT / REVIEWER-REQUIRED (Machine structural check != learner PASS)",
                 "no_fabricated_mechanisms": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
                 "operational_readiness": "DECLARED IMPLEMENTATION CONTRACT / REVIEWER-REQUIRED",
@@ -517,8 +520,8 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
                 "monotonic_clock": probe_monotonic_clock(),
             },
             "policy_invariants": {
-                "OQ_BP_006": "OPEN / UNRESOLVED",
-                "OQ_BP_001": "OPEN / RFC-GATED (AI outputs treated as unverified candidate hypotheses)",
+                "OQ_BP_006": "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)",
+                "OQ_BP_001": "RESOLVED FOR v1.0 BY D-033 (AI outputs treated as unverified candidate hypotheses)",
                 "measurement_stance": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
                 "technology_evaluation": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
                 "cost_modeling": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
@@ -542,7 +545,7 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
                 "optional_argon2": probe_optional_argon2(),
             },
             "policy_invariants": {
-                "OQ_BP_006": "OPEN / UNRESOLVED",
+                "OQ_BP_006": "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)",
                 "safe_target_architecture": "CONFIRMED (Loopback only, zero live targets, zero offensive tools)",
                 "crypto_stance": "CONFIRMED (Crypto-use only, zero custom primitive implementation)",
                 "fail_closed_teardown": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT (runtime verification belongs to activity/test)",
@@ -566,7 +569,7 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
             "optional_cryptography": probe_optional_cryptography(),
         },
         "policy_invariants": {
-            "OQ_BP_006": "OPEN / UNRESOLVED",
+            "OQ_BP_006": "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)",
             "safe_target_architecture": "CONFIRMED (Zero live targets, zero offensive tools)",
             "crypto_stance": "CONFIRMED (Crypto-use only, zero custom primitive implementation)",
             "ephemeral_storage": "CONFIRMED (Course-owned temporary scratch only)",
@@ -597,7 +600,7 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
+        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)")
 
     def test_preflight_m22_capabilities(self) -> None:
         report = collect_preflight_report("M22")
@@ -617,7 +620,7 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
                 "ENVIRONMENT-BLOCKED / NOT RUN",
             ],
         )
-        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
+        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)")
         self.assertEqual(
             report["policy_invariants"]["fail_closed_teardown"],
             "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT (runtime verification belongs to activity/test)",
@@ -628,10 +631,10 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertEqual(report["module"], "M23")
         self.assertEqual(report["batch"], "S7-B3")
         self.assertEqual(report["capabilities"]["monotonic_clock"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
+        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)")
         self.assertEqual(
             report["policy_invariants"]["OQ_BP_001"],
-            "OPEN / RFC-GATED (AI outputs treated as unverified candidate hypotheses)",
+            "RESOLVED FOR v1.0 BY D-033 (AI outputs treated as unverified candidate hypotheses)",
         )
         self.assertEqual(
             report["policy_invariants"]["measurement_stance"],
@@ -645,7 +648,7 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertEqual(report["capabilities"]["stdlib_dataclasses_json"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["capabilities"]["sqlite3"]["disposition"], "REQUIRED CAPABILITY PASS")
         self.assertEqual(report["capabilities"]["scratch_writability"]["disposition"], "REQUIRED CAPABILITY PASS")
-        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
+        self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "CLOSED (technical environment-definition/realization per #167; #153 same-lineage, NOT independent; #158 re-check still required)")
         self.assertIn("REVIEWER-REQUIRED", report["policy_invariants"]["defense_evaluation"])
         self.assertEqual(
             report["policy_invariants"]["no_fabricated_mechanisms"],

@@ -8,9 +8,10 @@ import threading
 import unittest
 from unittest import mock
 
-from _support import RunningStack, temp_dir
+from _support import RunningStack, make_service, temp_dir
 
 from minicloud.client import MiniCloudClient
+from minicloud.errors import UnauthenticatedError, ValidationError
 from minicloud.observability import REDACTED, sanitize_fields
 
 
@@ -195,6 +196,87 @@ class TestLeadRedactionRegressions(unittest.TestCase):
         self.assertEqual(sanitized["context"]["child"]["session_token"], REDACTED)
         self.assertEqual(sanitized["context"]["items"][0]["password"], REDACTED)
         self.assertEqual(sanitized["context"]["child"]["title"], "ok")
+
+
+class TestLeadUsernamePrivacyRegressions(unittest.TestCase):
+    """P2 privacy (#157 F-06-06): telemetry must not expose raw usernames.
+
+    Contract: ``user.created`` / ``user.login_failed`` carry the stable
+    pseudonymous ``user_id`` only; unknown-account login attempts log nothing
+    (so log presence cannot enumerate accounts); share/revoke against a
+    missing grantee fail with a generic message that names no account.
+    Debugging usefulness is retained through ``user_id`` correlation.
+    """
+
+    def setUp(self):
+        self.tmp = temp_dir()
+        self.addCleanup(lambda: shutil.rmtree(self.tmp, ignore_errors=True))
+        self.service, self.config, self.obs = make_service(self.tmp)
+        self.records = []
+        real_log = self.obs.log
+
+        def _capture(event, *, request_id=None, level="info", **fields):
+            record = real_log(event, request_id=request_id, level=level, **fields)
+            self.records.append(record)
+            return record
+
+        self.obs.log = _capture
+
+    def _records_text(self) -> str:
+        import json
+
+        return json.dumps(self.records, sort_keys=True, ensure_ascii=False)
+
+    def test_user_created_log_has_no_raw_username(self):
+        user = self.service.create_user("privacy-alice", "privacy-password-1")
+        created = [r for r in self.records if r["event"] == "user.created"]
+        self.assertEqual(len(created), 1)
+        self.assertEqual(created[0]["user_id"], user["user_id"])
+        self.assertNotIn("username", created[0])
+        self.assertNotIn("privacy-alice", self._records_text())
+
+    def test_failed_login_log_has_no_raw_username(self):
+        user = self.service.create_user("privacy-bob", "privacy-password-1")
+        with self.assertRaises(UnauthenticatedError) as ctx:
+            self.service.login("privacy-bob", "wrong-password-1")
+        self.assertEqual(str(ctx.exception), "invalid credentials")
+        failed = [r for r in self.records if r["event"] == "user.login_failed"]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(failed[0]["user_id"], user["user_id"])
+        self.assertNotIn("username", failed[0])
+        self.assertNotIn("privacy-bob", self._records_text())
+
+    def test_unknown_account_login_logs_nothing_and_stays_generic(self):
+        before = len(self.records)
+        with self.assertRaises(UnauthenticatedError) as ctx:
+            self.service.login("ghost-account-zzz", "some-password-1")
+        self.assertEqual(str(ctx.exception), "invalid credentials")
+        self.assertEqual(len(self.records), before)
+        self.assertNotIn("ghost-account-zzz", self._records_text())
+
+    def test_share_revoke_missing_grantee_do_not_enumerate(self):
+        owner = self.service.create_user("privacy-owner", "privacy-password-1")
+        self.records.clear()
+        identity = self.service.authenticate(
+            self.service.login("privacy-owner", "privacy-password-1")["token"]
+        )
+        item_id = self.service.create_item(identity, kind="note", title="t")["item_id"]
+        self.records.clear()
+        with self.assertRaises(ValidationError) as share_ctx:
+            self.service.share_item(identity, item_id, "ghost-grantee-zzz")
+        self.assertEqual(str(share_ctx.exception), "invalid grantee user")
+        with self.assertRaises(ValidationError) as revoke_ctx:
+            self.service.revoke_share(identity, item_id, "ghost-grantee-zzz")
+        self.assertEqual(str(revoke_ctx.exception), "invalid grantee user")
+        self.assertNotIn("ghost-grantee-zzz", self._records_text())
+        self.assertEqual(owner["user_id"], identity["user_id"])
+
+    def test_telemetry_records_contain_no_password_or_token(self):
+        self.service.create_user("privacy-carol", "privacy-password-1")
+        login = self.service.login("privacy-carol", "privacy-password-1")
+        blob = self._records_text()
+        self.assertNotIn("privacy-password-1", blob)
+        self.assertNotIn(login["token"], blob)
 
 
 if __name__ == "__main__":

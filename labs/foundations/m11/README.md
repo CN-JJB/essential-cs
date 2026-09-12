@@ -6,7 +6,7 @@ These course-owned activities support M11 on localhost only.
 
 - listeners bind `127.0.0.1` and request port `0`;
 - no public endpoint, proxy, cloud account, root/sudo, raw packet, or system trust-store modification;
-- exact Python/TLS/curl versions are recorded at runtime; OQ-BP-006 remains OPEN;
+- exact Python/TLS/curl versions are recorded at runtime; OQ-BP-006 is CLOSED as the technical environment-definition/realization question (#167; #158 must still independently re-check the canonical environment before v1.0), so this activity records what you actually used rather than declaring a new pin;
 - the external `openssl` CLI is optional;
 - the `cryptography` package is used only by the optional certificate **regeneration** utility, not learner Core execution.
 

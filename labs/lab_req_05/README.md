@@ -41,18 +41,60 @@ This Required Lab investigates database transaction boundaries, committed-only v
    - Reopens the backup database and verifies the invariant holds.
    - Cleans up all backup and database artifacts.
 
+## Prerequisites
+
+- Hard prerequisites: M08 (Files, filesystems & I/O), M09 (Disks, Flash & WAL), M13 (Indexing), M14 (`L14-01` transaction boundaries, `L14-02` rollback journal & crash recovery, `L14-03` concurrency conflicts & retry discipline).
+- Preflight Gate: `python tests/preflight_data_concurrency.py` (evaluates Python embedded SQLite capabilities).
+- Tooling boundary (F-05-08): the required path is Python stdlib `sqlite3` with two real connections in one owned temp dir; the `sqlite3` CLI binary is NOT required for LAB-REQ-05.
+
+## Prediction-Before-Observation
+
+1. If Connection 1 mutates Account A inside `BEGIN IMMEDIATE;` without committing, predict whether Connection 2 can read that uncommitted value.
+2. If Connection 2 attempts `BEGIN IMMEDIATE;` while Connection 1 holds write intent, predict the exact structural conflict class returned.
+3. If an owned child process is terminated abruptly (`kill()`) while holding uncommitted writes, predict what state a fresh database connection observes after rollback journal recovery.
+
+## Controlled Breaks & Failure Modes
+
+- **Transactionless Multi-Step Update**: Executing multi-step mutations outside a transaction (`BEGIN`/`COMMIT`) permanently commits partial state upon mid-flight interruption, violating the balance conservation invariant ($\sum \ne 1000$).
+- **Restore from Missing/Invalid Backup**: Attempting to restore from a non-existent or corrupted backup source fails closed without corrupting or wiping the active database.
+
+## Exit Criteria
+
+- Execute all 5 checkpoints via `python labs/lab_req_05/runner.py`.
+- Confirm committed-only visibility ($0$ dirty reads).
+- Structurally classify `SQLITE_BUSY` conflict without hardcoded error strings.
+- Verify child interruption recovery under parent watchdog.
+- Confirm online backup API creates consistent, recoverable replica.
+- Record evidence in `course/evidence/lab-req-05-evidence-template.md`.
+
+## Provenance & Standards
+
+- SQLite Documentation: *Atomic Commit in SQLite* (https://www.sqlite.org/atomiccommit.html).
+- SQLite Documentation: *Isolation In SQLite* (https://www.sqlite.org/isolation.html).
+
 ## Running the Lab
 
+### Preflight Gate
 ```bash
-# Run interactive harness
+python tests/preflight_data_concurrency.py
+```
+
+### Run Interactive Harness
+```bash
 python labs/lab_req_05/runner.py
+```
 
-# Run with machine-readable JSON output
+### Run with Machine-Readable JSON Output
+```bash
 python labs/lab_req_05/runner.py --json
+```
 
-# Run unit tests
+### Run Unit Tests
+```bash
 python -m unittest discover -s labs/lab_req_05 -p "test_*.py"
+```
 
-# Clean up all generated artifacts
+### Clean Up All Generated Artifacts
+```bash
 python labs/lab_req_05/reset.py
 ```

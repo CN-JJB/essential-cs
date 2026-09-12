@@ -21,7 +21,9 @@ implementation milestone, not a curriculum verdict:
 
 - no learner-validation evidence is claimed (Issue #34 remains a human gate);
 - no `VERIFIED` / `RELEASED` / v1.0 claim follows from this document;
-- `OQ-BP-006` is untouched.
+- `OQ-BP-006` is not closed or modified by this project: it is CLOSED as the
+  technical environment-definition/realization question (#167), and `#158` must
+  still independently re-check the canonical environment before v1.0.
 
 ## 0.1 Milestone numbering — read this first
 
@@ -193,6 +195,11 @@ service core has no HTTP knowledge; the adapter translates.
 - Untrusted input is validated at the boundary and never concatenated into SQL.
 - Logs redact secrets and never contain note bodies; the smoke asserts that the
   fixture password never reaches the log.
+- **Telemetry never carries raw usernames.** `user.created` / `user.login_failed`
+  log the stable pseudonymous `user_id` only; unknown-account login attempts log
+  nothing (so log presence cannot enumerate accounts); share/revoke against a
+  missing grantee fail with the generic `invalid grantee user` message. Account
+  correlation for debugging uses `user_id`, never the username.
 - Config comes from the environment; no secret is committed. The service binds
   `127.0.0.1` by default and must never be exposed publicly as-is.
 - Transport is plain HTTP on loopback **by design** — this is a local teaching

@@ -12,7 +12,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - M17 Trace Fixture Version / File: `labs/foundations/m17/trace_harness.py`
 - Local Writable Scratch Capability: `<PASS / FAIL / BLOCKED>`
 - Preflight Distributed Infra M17 Status: `<READY / BLOCKED>`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`
 
 ---
 

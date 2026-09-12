@@ -1,0 +1,3 @@
+# Local AI agent / harness state — never commit (see Issue #166 takeover review).
+/.commandcode
+/.workbuddy-ai

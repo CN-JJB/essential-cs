@@ -16,7 +16,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Filesystem Symlink Creation Capability: `[Record SYMLINK CAPABILITY PASS or BLOCKED / NOT RUN]`
 - Course-Owned Scratch Writability (`labs/foundations/m21/.scratch`): `[Record REQUIRED CAPABILITY PASS or BLOCKED]`
 - Optional PyCA `cryptography` Disposition: `[Record OPTIONAL PACKAGE AVAILABLE (with version) or OPTIONAL PACKAGE NOT INSTALLED / NOT RUN]`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED (Capability-based evaluation; no course-wide CPython pin frozen in learner truth)`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`; evaluation here stays capability-based — no course-wide CPython pin is frozen in learner truth
 
 ---
 
