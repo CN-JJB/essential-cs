@@ -1,0 +1,295 @@
+# Essential CS canonical environment publication (Issue #150, V-147-02).
+#
+# Publishes the canonical x86-64 environment as a repository-owned GHCR OCI
+# artifact and records its immutable registry manifest digest. It does NOT write
+# the committed pin (.devcontainer/canonical-image.env); moving the accepted pin
+# requires a reviewed PR (see .devcontainer/CANONICAL_ENVIRONMENT.md section 7).
+#
+# Identity discipline this workflow keeps honest:
+#   registry digest (recorded here)  = the pin
+#   Docker local image ID            = daemon-local, ephemeral; NOT the pin
+#   mutable tags (:candidate/:sha-*) = convenience labels; NOT the pin
+#   git commit / workflow SHA        = source revision; NOT the pin
+#   GitHub-hosted ubuntu-24.04       = moving execution substrate; NOT the pin
+#
+# --- Why a push trigger exists at all (read before removing) ---
+# GitHub will not `workflow_dispatch` a workflow that does not yet exist on the
+# default branch. The push trigger is therefore the only way this brand-new
+# workflow can execute during its own bootstrap.
+#
+# It is *guarded*, not a publication-on-push switch:
+#   * push + committed pin is still the all-zero sentinel -> publish a candidate
+#     (bootstrap: exactly once, before the pin PR commits a real digest);
+#   * push + committed pin is a real digest                -> VERIFY ONLY.
+#
+# Once the sentinel is replaced by a real digest, no push can ever publish or
+# move the accepted pin again. Deliberate future candidate publication requires
+# an explicit `workflow_dispatch` with mode=publish-candidate, which still cannot
+# write the pin.
+#
+# The clean-retrieval job runs on a *separate, fresh* runner so the pull-by-digest
+# proof cannot be satisfied by the builder's local daemon cache.
+
+name: publish-canonical-environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: verify-pin (default) or publish-candidate (never moves the committed pin)
+        required: true
+        default: verify-pin
+        type: choice
+        options:
+          - verify-pin
+          - publish-candidate
+      reason:
+        description: Why this run is happening (recorded in evidence)
+        required: false
+        default: manual
+        type: string
+  push:
+    branches:
+      - implementation/durable-canonical-environment-pin-v0.1
+    paths:
+      - .devcontainer/**
+      - scripts/canonical-image-*.sh
+      - .github/workflows/publish-canonical-environment.yml
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+  PLATFORM: linux/amd64
+  EVIDENCE_DIR: /tmp/canonical-publish
+
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    outputs:
+      mode: ${{ steps.classify.outputs.mode }}
+    steps:
+      - name: Checkout exact event revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Classify run — push may publish only while the committed pin is the sentinel
+        id: classify
+        run: |
+          set -ueo pipefail
+          if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then
+            mode='${{ inputs.mode }}'
+          else
+            digest="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+            if printf '%s' "${digest}" | grep -q '^sha256:0\{64\}$'; then
+              mode=publish-bootstrap
+              echo "Push observed an unpublished sentinel pin: this is the one-shot bootstrap publication."
+            else
+              mode=verify-pin
+              echo "Push observed a committed digest pin (${digest}): verify only. A push can never publish or move the pin."
+            fi
+          fi
+          case "${mode}" in
+            publish-bootstrap|publish-candidate|verify-pin) ;;
+            *) echo "FAIL: unknown mode '${mode}'"; exit 1 ;;
+          esac
+          echo "mode=${mode}" >> "${GITHUB_OUTPUT}"
+          echo "CLASSIFIED_MODE=${mode}"
+
+  publish-candidate:
+    needs: classify
+    if: needs.classify.outputs.mode == 'publish-bootstrap' || needs.classify.outputs.mode == 'publish-candidate'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      registry_digest: ${{ steps.publish.outputs.registry_digest }}
+      reference: ${{ steps.publish.outputs.reference }}
+    steps:
+      - name: Checkout exact event revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Assert exact checked-out revision
+        run: |
+          set -ueo pipefail
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_REVISION=${GITHUB_SHA}"
+          echo "ACTUAL_REVISION=${actual}"
+          test "${actual}" = "${GITHUB_SHA}"
+
+      - name: Login to repository-owned GHCR (least privilege)
+        run: |
+          set -ueo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Publish candidate and capture registry digest
+        id: publish
+        run: |
+          set -ueo pipefail
+          bash scripts/canonical-image-publish.sh
+          digest="$(tr -d '[:space:]' < "${EVIDENCE_DIR}/registry-digest.txt")"
+          echo "registry_digest=${digest}" >> "${GITHUB_OUTPUT}"
+          echo "reference=${CANONICAL_IMAGE_REF}@${digest}" >> "${GITHUB_OUTPUT}"
+
+      - name: Best-effort public visibility (not a merge blocker; auth path is documented)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -ueo pipefail
+          {
+            echo "Attempting GHCR visibility=public for the repository-linked package."
+            echo "If this fails, CI consumption uses the repository-owned GITHUB_TOKEN"
+            echo "with packages:read, which is the minimum documented mechanism."
+            gh api --method PUT -H "Accept: application/vnd.github+json" \
+              "/user/packages/container/essential-cs%2Fcanonical/visibility" \
+              -f visibility=public && echo "VISIBILITY_USER_API=public-ok" \
+              || echo "VISIBILITY_USER_API=failed-or-unsupported"
+            gh api --method PUT -H "Accept: application/vnd.github+json" \
+              "/users/${GITHUB_REPOSITORY_OWNER}/packages/container/essential-cs%2Fcanonical/visibility" \
+              -f visibility=public && echo "VISIBILITY_USERS_API=public-ok" \
+              || echo "VISIBILITY_USERS_API=failed-or-unsupported"
+          } | tee "${EVIDENCE_DIR}/visibility.txt"
+
+      - name: Upload publication evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-publish-evidence
+          path: /tmp/canonical-publish/
+          include-hidden-files: true
+
+  retrieve-by-digest:
+    needs: [classify, publish-candidate]
+    if: needs.classify.outputs.mode == 'publish-bootstrap' || needs.classify.outputs.mode == 'publish-candidate'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      # Fresh runner, empty Docker cache: this is a genuinely clean context and
+      # cannot be satisfied by the builder's local daemon.
+      - name: Checkout exact event revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Record clean-context substrate identity (informational only, not the pin)
+        run: |
+          set -ueo pipefail
+          mkdir -p "${EVIDENCE_DIR}"
+          {
+            echo "retrieval_context=CLEAN (separate fresh runner, no prior local images)"
+            echo "runner_image_version=${ImageVersion}"
+            echo "runner_arch=$(uname -m)"
+            echo "git_sha=${GITHUB_SHA}"
+            echo "workflow_run_id=${GITHUB_RUN_ID}"
+          } | tee "${EVIDENCE_DIR}/retrieval-context.txt"
+          docker image ls --format '{{.Repository}}:{{.Tag}} {{.ID}}' | tee "${EVIDENCE_DIR}/pre-pull-image-list.txt"
+          echo "PRE_PULL_CANONICAL_PRESENT=$(docker image ls --format '{{.Repository}}' | grep -c 'essential-cs/canonical' || true)"
+
+      - name: Login to repository-owned GHCR
+        run: |
+          set -ueo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Pull the published digest by digest only (no tag resolution)
+        run: |
+          set -ueo pipefail
+          DIGEST='${{ needs.publish-candidate.outputs.registry_digest }}'
+          PIN="${CANONICAL_IMAGE_REF}@${DIGEST}"
+          printf '%s' "${DIGEST}" | grep -Eq '^sha256:[0-9a-f]{64}$'
+          echo "PULL_BY_DIGEST_REFERENCE=${PIN}"
+          docker buildx imagetools inspect "${PIN}" | tee "${EVIDENCE_DIR}/retrieval-imagetools-inspect.txt"
+          docker pull --platform "${PLATFORM}" "${PIN}"
+          docker image inspect "${PIN}" --format '{{.Id}}' | tee "${EVIDENCE_DIR}/retrieval-local-image-id.txt"
+          REPO_DIGESTS="$(docker image inspect "${PIN}" --format '{{range .RepoDigests}}{{.}} {{end}}')"
+          printf '%s\n' "${REPO_DIGESTS}" | tee "${EVIDENCE_DIR}/retrieval-repodigests.txt"
+          printf '%s\n' "${REPO_DIGESTS}" | grep -Fq "${PIN}" || {
+            echo "FAIL: RepoDigests do not contain the published digest ${PIN}"
+            exit 1
+          }
+          echo "CLEAN_PULL_BY_DIGEST=PASS"
+
+      - name: Canonical environment capture from the pulled digest
+        run: |
+          set -ueo pipefail
+          DIGEST='${{ needs.publish-candidate.outputs.registry_digest }}'
+          PIN="${CANONICAL_IMAGE_REF}@${DIGEST}"
+          docker run --rm -v "${GITHUB_WORKSPACE}:/work" -w /work "${PIN}" \
+            bash /work/scripts/canonical-env-capture.sh | tee "${EVIDENCE_DIR}/canonical-env-snapshot.txt"
+
+      - name: Upload clean retrieval evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-retrieval-evidence
+          path: /tmp/canonical-publish/
+          include-hidden-files: true
+
+  verify-pin:
+    needs: classify
+    if: needs.classify.outputs.mode == 'verify-pin'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact event revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Assert exact checked-out revision
+        run: |
+          set -ueo pipefail
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_REVISION=${GITHUB_SHA}"
+          echo "ACTUAL_REVISION=${actual}"
+          test "${actual}" = "${GITHUB_SHA}"
+
+      - name: Login to repository-owned GHCR
+        run: |
+          set -ueo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Materialize committed pin by immutable digest (fail-closed)
+        run: |
+          set -ueo pipefail
+          mkdir -p "${EVIDENCE_DIR}"
+          bash scripts/canonical-image-pull.sh 2>&1 | tee "${EVIDENCE_DIR}/pin-materialization.log"
+
+      - name: Assert registry content still equals the committed digest
+        run: |
+          set -ueo pipefail
+          DIGEST="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+          PIN="${CANONICAL_IMAGE_REF}@${DIGEST}"
+          docker buildx imagetools inspect "${PIN}" | tee "${EVIDENCE_DIR}/pin-imagetools-inspect.txt"
+          docker pull --platform "${PLATFORM}" "${PIN}"
+          REPO_DIGESTS="$(docker image inspect "${PIN}" --format '{{range .RepoDigests}}{{.}} {{end}}')"
+          printf '%s\n' "${REPO_DIGESTS}" | grep -Fq "${PIN}" || {
+            echo "FAIL: registry no longer serves the committed canonical digest ${PIN}"
+            exit 1
+          }
+          echo "COMMITTED_PIN_RETRIEVABLE=PASS"
+          echo "COMMITTED_PIN_DIGEST=${DIGEST}"
+
+      - name: Canonical environment capture from the pinned digest
+        run: |
+          set -ueo pipefail
+          DIGEST="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+          PIN="${CANONICAL_IMAGE_REF}@${DIGEST}"
+          docker run --rm -v "${GITHUB_WORKSPACE}:/work" -w /work "${PIN}" \
+            bash /work/scripts/canonical-env-capture.sh | tee "${EVIDENCE_DIR}/canonical-env-snapshot.txt"
+
+      - name: Upload pin verification evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-pin-verification-evidence
+          path: /tmp/canonical-publish/
+          include-hidden-files: true

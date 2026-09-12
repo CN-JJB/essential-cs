@@ -1,8 +1,10 @@
-# Essential CS canonical stable CI — QEMU lane + m20 timing triage (Issue #145, D-032).
+# Essential CS canonical stable CI — QEMU lane + m20 timing triage (Issue #145/#150, D-032).
 #
 # Same execution model as ci-fast.yml: hosted ubuntu-24.04 is substrate; release-relevant
-# commands run inside the candidate canonical image built from .devcontainer/Dockerfile.
-# The built image is not yet a durable published canonical pin; OQ-BP-006 stays OPEN.
+# commands run inside the canonical environment materialized by pulling the SAME immutable
+# registry digest committed in .devcontainer/canonical-image.env. This lane does not build
+# an environment, and it consumes exactly the digest canonical-fast consumes.
+# OQ-BP-006 stays OPEN until Web Lead acceptance after independent verification.
 #
 # V-147-01 repair (Issue #149): qemu-smoke is fail-closed. A green job must prove the real
 # learner-owned ./smoke.sh executed and produced the required retained evidence
@@ -26,8 +28,11 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+
 env:
-  CANONICAL_IMAGE: essential-cs-canonical:ci
   CI_TREE: /tmp/ci-tree
 
 jobs:
@@ -54,16 +59,45 @@ jobs:
           echo "runner_image_version=${ImageVersion}"
           echo "runner_arch=$(uname -m)"
 
-      - name: Build candidate canonical image from committed definition
+      - name: Materialize canonical environment by immutable registry digest
+        # Same committed digest as canonical-fast. No build. The pull's local image
+        # ID is recorded for audit and is explicitly not the pin.
         run: |
-          docker build -f .devcontainer/Dockerfile -t "${CANONICAL_IMAGE}" .
-          docker inspect "${CANONICAL_IMAGE}" --format 'CANONICAL_IMAGE_SHA={{.Id}} ARCH={{.Architecture}} OS={{.Os}}'
+          set -ueo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          bash scripts/canonical-image-pull.sh
+
+      - name: Assert this lane consumes the committed digest
+        run: |
+          set -ueo pipefail
+          digest="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+          echo "COMMITTED_CANONICAL_DIGEST=${digest}"
+          echo "CONSUMED_CANONICAL_IMAGE=${CANONICAL_IMAGE}"
+          case "${CANONICAL_IMAGE}" in
+            *"@${digest}") echo "DIGEST_CONSUMPTION_ASSERT=PASS" ;;
+            *) echo "FAIL: canonical image reference does not carry the committed digest"; exit 1 ;;
+          esac
+          docker image inspect "${CANONICAL_IMAGE}" --format 'CONSUMED_LOCAL_IMAGE_ID={{.Id}} ARCH={{.Architecture}} OS={{.Os}}'
 
       - name: Materialize LF tree for course execution
         run: |
           rm -rf "${CI_TREE}"
           mkdir -p "${CI_TREE}/.ci-logs"
           git -c core.autocrlf=false archive --format=tar HEAD | tar -x -C "${CI_TREE}"
+
+      - name: Record canonical digest consumption in the retained evidence bundle
+        run: |
+          set -ueo pipefail
+          {
+            echo "lane=canonical-qemu-lane"
+            echo "canonical_image=${CANONICAL_IMAGE}"
+            echo "canonical_image_digest=${CANONICAL_IMAGE_DIGEST}"
+            echo "committed_pin_digest=$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+            echo "local_image_id=$(docker image inspect "${CANONICAL_IMAGE}" --format '{{.Id}}')"
+            echo "local_image_id_role=NOT-PIN (daemon-local)"
+            echo "runner_image_version=${ImageVersion}"
+            echo "git_sha=$(git rev-parse HEAD)"
+          } | tee "${CI_TREE}/.ci-logs/canonical-digest-consumption.txt"
 
       - name: Canonical floor gate + version snapshot
         run: |
@@ -175,10 +209,11 @@ jobs:
           echo "ACTUAL_REVISION=${actual}"
           test "${actual}" = "${GITHUB_SHA}"
 
-      - name: Build candidate canonical image from committed definition
+      - name: Materialize canonical environment by the same immutable registry digest
         run: |
-          docker build -f .devcontainer/Dockerfile -t "${CANONICAL_IMAGE}" .
-          docker inspect "${CANONICAL_IMAGE}" --format 'CANONICAL_IMAGE_SHA={{.Id}}'
+          set -ueo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          bash scripts/canonical-image-pull.sh
 
       - name: Materialize LF tree for course execution
         run: |

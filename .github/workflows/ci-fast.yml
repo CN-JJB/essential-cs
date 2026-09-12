@@ -1,10 +1,14 @@
-# Essential CS canonical stable CI — fast matrix (Issue #145, D-032).
+# Essential CS canonical stable CI — fast matrix (Issue #145/#150, D-032).
 #
 # Execution model (read this before "optimizing"):
 # - runs-on ubuntu-24.04 is the MOVING execution substrate, not the canonical pin.
-# - Every release-relevant command below runs INSIDE the digest-addressed canonical
-#   environment built from .devcontainer/Dockerfile. Reproducibility claims come from
-#   that definition/artifact, never from hosted-runner contents.
+# - Every release-relevant command below runs INSIDE the canonical environment
+#   materialized by pulling the immutable registry digest committed in
+#   .devcontainer/canonical-image.env. This lane does NOT build an environment.
+#   The durable identity is the published OCI digest, not a rebuild recipe.
+# - V-147-02: the earlier "build from .devcontainer/Dockerfile every run" model was
+#   replaced because floating Noble apt resolution produced a different local image
+#   ID per run. Those IDs were ephemeral evidence, never a canonical identity.
 # - On pull_request events we explicitly checkout the PR HEAD SHA, not GitHub's synthetic
 #   refs/pull/<n>/merge commit, and assert the revision before any evidence is produced.
 # - Course execution happens in a fresh LF archive copy (/tmp/ci-tree), never in the
@@ -21,8 +25,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+
 env:
-  CANONICAL_IMAGE: essential-cs-canonical:ci
   CI_TREE: /tmp/ci-tree
 
 jobs:
@@ -51,16 +58,46 @@ jobs:
           echo "runner_image_version=${ImageVersion}"
           echo "runner_arch=$(uname -m)"
 
-      - name: Build canonical image from committed definition
+      - name: Materialize canonical environment by immutable registry digest
+        # The ONLY canonical identity is the registry digest committed in
+        # .devcontainer/canonical-image.env. No build happens here. A local image ID
+        # produced by this pull is recorded for audit and is explicitly not the pin.
         run: |
-          docker build -f .devcontainer/Dockerfile -t "${CANONICAL_IMAGE}" .
-          docker inspect "${CANONICAL_IMAGE}" --format 'CANONICAL_IMAGE_SHA={{.Id}} ARCH={{.Architecture}} OS={{.Os}}'
+          set -ueo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          bash scripts/canonical-image-pull.sh
+
+      - name: Assert this lane consumes the committed digest
+        run: |
+          set -ueo pipefail
+          digest="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+          echo "COMMITTED_CANONICAL_DIGEST=${digest}"
+          echo "CONSUMED_CANONICAL_IMAGE=${CANONICAL_IMAGE}"
+          case "${CANONICAL_IMAGE}" in
+            *"@${digest}") echo "DIGEST_CONSUMPTION_ASSERT=PASS" ;;
+            *) echo "FAIL: canonical image reference does not carry the committed digest"; exit 1 ;;
+          esac
+          docker image inspect "${CANONICAL_IMAGE}" --format 'CONSUMED_LOCAL_IMAGE_ID={{.Id}} ARCH={{.Architecture}} OS={{.Os}}'
 
       - name: Materialize LF tree for course execution
         run: |
           rm -rf "${CI_TREE}"
           mkdir -p "${CI_TREE}/.ci-logs"
           git -c core.autocrlf=false archive --format=tar HEAD | tar -x -C "${CI_TREE}"
+
+      - name: Record canonical digest consumption in the retained evidence bundle
+        run: |
+          set -ueo pipefail
+          {
+            echo "lane=canonical-fast"
+            echo "canonical_image=${CANONICAL_IMAGE}"
+            echo "canonical_image_digest=${CANONICAL_IMAGE_DIGEST}"
+            echo "committed_pin_digest=$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+            echo "local_image_id=$(docker image inspect "${CANONICAL_IMAGE}" --format '{{.Id}}')"
+            echo "local_image_id_role=NOT-PIN (daemon-local)"
+            echo "runner_image_version=${ImageVersion}"
+            echo "git_sha=$(git rev-parse HEAD)"
+          } | tee "${CI_TREE}/.ci-logs/canonical-digest-consumption.txt"
 
       - name: Canonical floor gate + version snapshot
         run: |
