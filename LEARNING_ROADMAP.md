@@ -2,331 +2,562 @@
 
 Checked: **2026-09-12**
 
-This is the learner-facing default route for Essential CS v1.0.
+这是 Essential CS v1.0 的默认学习入口。目标不是把下面列出的整门大学课程、整本书或所有仓库实验全部做完，而是按 **知识点 → 精确资源片段 → checkpoint → 下一模块** 前进。
 
-The repository is a map and guide. You do **not** need to complete every repo-owned lab or the Mini Cloud project to benefit from the curriculum. Prefer the strongest available external resource for a mechanism, use the repo Lessons for orientation and synthesis, and use repo Labs/Mini Cloud only when you want an extra guided exercise.
+> **学生使用规则：** 每次只做当前模块列出的 `Core` 片段。看到一个大课程/大书时，只读这里点名的 lecture/chapter/section；没有点名的部分默认先跳过。仓库 Lessons 用于中文导览和跨主题连接，Labs/Mini Cloud 是可选实践。
 
-## How to use this roadmap
+## 0. 一眼看懂怎么走
 
-For each module:
+`README → 本页索引 → 当前模块 → 知识点/精确资源 → checkpoint → Next`
 
-1. Read the **Goal** first so you know what you are trying to understand.
-2. Use the **Primary** resource as the main learning source.
-3. Use **Reference / Deep Dive** only when the primary source leaves a gap or you want more depth.
-4. Answer the **Checkpoint** in your own words or with a small observation. Do not optimize for finishing every exercise.
-5. Stop when you can explain the mechanism and make one correct prediction. Move on; revisit depth later.
+### M00–M24 一键索引
 
-Resource labels:
+| Stage | 模块 |
+|---|---|
+| S1 计算的底座 | [M00 地图/工具](#m00) · [M01 信息与表示](#m01) · [M02 算法与数据结构](#m02) |
+| S2 机器 | [M03 ISA/执行](#m03) · [M04 内存层次/测量](#m04) · [M05 语言/运行时/编译](#m05) |
+| S3 OS 与持久化 | [M06 进程/系统调用](#m06) · [M07 虚拟内存](#m07) · [M08 文件/文件系统/I/O](#m08) · [M09 存储/耐久性](#m09) |
+| S4 网络与浏览器 | [M10 IP/DNS/传输](#m10) · [M11 TLS/HTTP/缓存](#m11) · [M12 浏览器](#m12) |
+| S5 数据与并发 | [M13 DB 存储/索引/查询](#m13) · [M14 事务/恢复/隔离](#m14) · [M15 并发](#m15) |
+| S6 分布式与现代基础设施 | [M16 部分失败/RPC](#m16) · [M17 复制/一致性/共识](#m17) · [M18 分布式状态/协调](#m18) · [M19 交付/容器/供应链](#m19) · [M20 可观测性/SRE](#m20) |
+| S7 安全与判断 | [M21 信任/密码学](#m21) · [M22 认证/授权/安全组合](#m22) · [M23 系统判断](#m23) · [M24 最终系统答辩](#m24) |
 
-- **PRIMARY** — recommended first route.
-- **REFERENCE** — authoritative specification/docs; use to verify details.
-- **DEEP DIVE** — valuable but not required for the first traversal.
-- **CURRENT PRACTICE** — time-sensitive; periodically re-check.
+### 资源标签
 
----
-
-## Stage 0 — Tooling bridge (optional)
-
-Before M00, if shell/Git/editor/debugging friction is high:
-
-- **PRIMARY:** [MIT — The Missing Semester of Your CS Education](https://missing.csail.mit.edu/) — command line, version control, debugging/tool fluency. The site has a current 2026 edition.
-
-**Checkpoint:** clone a repository, inspect a diff, run a small program, redirect output, search files, and explain what Git is tracking.
+- **Core**：现在就学；这是继续下一模块所需的最小集合。
+- **Reference**：遇到疑问时查；不用顺序读完。
+- **Optional deep dive**：想深入再做；不阻塞 Core。
+- **Repo companion**：仓库自己的中文 Lesson / Lab / Mini Cloud；用于导览、连接和练习，不是强制。
 
 ---
 
-## S1 — Foundations of Computation
+<a id="m00"></a>
+## M00 — The Map：工具、证据与“计算机里到底发生了什么”
 
-### M00 — The Map
+**Repo companion:** [`book/00-the-map/`](book/00-the-map/)
 
-**Goal:** build a whole-system mental model: source code → runtime → OS → network/storage → service → database → response; distinguish abstraction, interface, state, indirection, and evidence.
+| 知识点 | 精确资源 | 你要带走什么 |
+|---|---|---|
+| shell、路径、管道、重定向、进程入口 | **Core:** MIT Missing Semester 2026 — **Lecture 1 “Course Overview + Introduction to the Shell”** 与 **Lecture 2 “Command-line Environment”**：<https://missing.csail.mit.edu/2026/> | 能解释 cwd/path/stdin/stdout/stderr，能组合一个小 pipeline |
+| debugger / profiler 是“观察工具”而不是魔法 | **Core:** Missing Semester 2026 — **Lecture 4 “Debugging and Profiling”**：<https://missing.csail.mit.edu/2026/> | 先预测，再观察，再解释；区分 observation 与 explanation |
+| Git 的 commit / branch / diff | **Core:** Missing Semester 2026 — **Lecture 5 “Version Control and Git”**：<https://missing.csail.mit.edu/2026/> | 能用 diff/commit 作为证据，不需要精通复杂 Git workflow |
+| 本课程的问题框架 | **Core:** [`L00-01.md`](book/00-the-map/L00-01.md) + [`L00-02.md`](book/00-the-map/L00-02.md) | 建立 State / Abstraction / Interface / Indirection 四个观察镜头 |
 
-- **PRIMARY:** this repository: `book/00-the-map/` and `meta/CURRICULUM_MAP.md`.
-- **REFERENCE:** [The Missing Semester](https://missing.csail.mit.edu/) for practical tooling.
+**先跳过：** shell scripting 花活、复杂 Git history surgery、完整 dotfiles 配置。
 
-**Checkpoint:** take one everyday action such as loading a web page and draw the major layers involved. For each boundary ask: *what crosses this interface, who owns the state, and what evidence could prove my story?*
+**Checkpoint:** 给一个你熟悉的程序，写出“输入 → 状态变化 → 输出”，再指出你会用哪个工具验证其中一个判断。
 
-### M01 — Information & Representation
-
-**Goal:** understand bits/bytes, integers, finite width, text/Unicode/UTF-8, endianness, serialization, and size reasoning.
-
-- **PRIMARY:** [Nand2Tetris](https://www.nand2tetris.org/) — use the early Boolean/arithmetic/memory material for concrete representation intuition.
-- **REFERENCE:** [The Unicode Standard](https://www.unicode.org/standard/standard.html) for text semantics and encoding references.
-
-**Checkpoint:** predict byte length before measuring: encode several Unicode strings as UTF-8, serialize one small record, and explain the difference between character, code point, encoded bytes, and field boundaries.
-
-### M02 — Computation, Algorithms & Data Structures
-
-**Goal:** asymptotic reasoning, searching/sorting, hashing, trees, graphs, dynamic programming, and choosing a data structure based on operations rather than fashion.
-
-- **PRIMARY:** [MIT 6.006 — Introduction to Algorithms](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/).
-- **DEEP DIVE:** MIT 6.006 problem sets / lecture notes from the same course.
-
-**Checkpoint:** for a small program, state the dominant operation, derive its time/space growth, then change the data structure and predict how the cost changes before benchmarking.
+**Next → [M01 信息与表示](#m01)**
 
 ---
 
-## S2 — The Machine
+<a id="m01"></a>
+## M01 — Information & Representation：bit、整数、文本、字节与序列化
 
-### M03 — ISA, Execution & Machine State
+**Repo companion:** [`book/01-information-representation/`](book/01-information-representation/)
 
-**Goal:** understand instructions, registers, stack frames, calls, branches, memory operands, compilation to machine code, and what a debugger/disassembler reveals.
+| 知识点 | 精确资源 | 你要带走什么 |
+|---|---|---|
+| 固定位宽、二进制加法、溢出、ALU 直觉 | **Core:** Nand2Tetris **Project 2: Boolean Arithmetic**：<https://www.nand2tetris.org/project02> | 位模式不是“数字本身”；位宽决定可表示范围 |
+| character / code point / code unit / UTF-8 bytes | **Core:** Unicode Core Spec **Chapter 2 §2.4 Code Points and Characters、§2.5 Encoding Forms、§2.5.3 UTF-8、§2.6 Encoding Schemes**：<https://www.unicode.org/versions/latest/core-spec/chapter-2/> | “字符数、code point 数、UTF-8 byte 数”可能不同 |
+| UTF-8 的正式字节编码边界 | **Reference:** RFC 3629：<https://www.rfc-editor.org/rfc/rfc3629.html> | 知道何时需要标准而不是凭经验猜 |
+| endian、字段宽度、padding、序列化 | **Core:** Python `struct` — **Byte Order, Size, and Alignment**：<https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment> | 序列化协议必须显式定义 byte order/size/alignment |
 
-- **PRIMARY:** [Nand2Tetris](https://www.nand2tetris.org/) — machine language / computer architecture sequence.
-- **DEEP DIVE:** CMU 15-213 / CS:APP materials when available through the official course site.
+**先跳过：** Unicode 全部规范、复杂 normalization/collation、自己做完整 CPU。
 
-**Checkpoint:** compile a tiny function, disassemble it, identify arguments/return value, single-step it in a debugger, and explain one source-level operation in terms of machine state.
+**Checkpoint:** 任选一个字符串，预测 `len(text)` 与 UTF-8 byte 长度；再用 `encode()` 验证。用 `struct.pack('<I', x)` / `'>I'` 展示同一整数的不同 byte order。
 
-### M04 — Memory Hierarchy, Locality & Measurement
-
-**Goal:** caches, locality, latency hierarchy, benchmarking discipline, distributions/variation, and limits of performance inference.
-
-- **PRIMARY:** CMU 15-213 / CS:APP memory-hierarchy and performance material.
-- **REFERENCE:** current hardware/vendor documentation only when exact cache sizes or latency figures matter; treat those as **CURRENT**, not universal constants.
-
-**Checkpoint:** write or reuse two equivalent traversals with different locality, predict which is faster and why, run repeated measurements, and report a bounded conclusion rather than a single timing number.
-
-### M05 — Languages, Runtime & Compiler
-
-**Goal:** connect source syntax, parsing/AST, bytecode or machine code, runtime representation, allocation, dispatch, exceptions, and garbage collection without trying to build an industrial compiler.
-
-- **PRIMARY:** [Crafting Interpreters](https://craftinginterpreters.com/) — free online book; use selected chapters rather than treating the whole interpreter build as mandatory.
-- **REFERENCE:** the official documentation for the language/runtime you actually use (for example Python's language/reference docs).
-
-**Checkpoint:** trace one tiny expression from source text to parsed representation to runtime values; explain what the runtime, not the source language, must actually do.
+**Next → [M02 算法与数据结构](#m02)**
 
 ---
 
-## S3 — Operating Systems & Persistence
+<a id="m02"></a>
+## M02 — Computation, Complexity & Data Structures
 
-### M06 — Processes, Syscalls & Execution Context
+**Repo companion:** [`book/02-computation-complexity/`](book/02-computation-complexity/)
 
-**Goal:** process creation, execution, file descriptors, syscalls, privilege boundary, signals, exit/reaping, and the user/kernel transition.
+只取 MIT 6.006 的以下片段，不要求完成整门课：<https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/pages/lecture-notes/>
 
-- **PRIMARY:** [Operating Systems: Three Easy Pieces (OSTEP)](https://pages.cs.wisc.edu/~remzi/OSTEP/) — virtualization/process sections.
-- **REFERENCE:** [Linux man-pages](https://man7.org/linux/man-pages/) for `fork`, `execve`, `wait`, `open`, `read`, `write`, signals, and `/proc` behavior.
-- **OPTIONAL COMPANION:** repo LAB-REQ-02 / xv6 route when you want to see a syscall path in a teaching kernel.
+| 知识点 | 精确资源 | Core 深度 |
+|---|---|---|
+| 算法模型、渐近复杂度 | **Lecture 1: Introduction** | 会给简单 loop/递归做数量级判断 |
+| sequence / dynamic array 与接口成本 | **Lecture 2: Data Structures** | 理解操作集合与代价，不背 API |
+| hash table | **Lecture 4: Hashing** | average-case lookup 与 collision 的来源 |
+| binary tree / balanced tree / heap | **Lectures 6–8** | 知道 tree/heap 为什么提供不同操作成本 |
+| graph traversal | **Lectures 9–10: BFS / DFS** | 能说清 frontier / visited 与 O(V+E) |
+| dynamic programming | **Lectures 15–17**，只学“状态 + 子问题 + 转移” | 能识别重复子问题即可，不追求竞赛技巧 |
 
-**Checkpoint:** run a small program under `strace` (or equivalent), identify process/file syscalls, and explain what changed in user state versus kernel-managed state.
+**Optional deep dive:** Lectures 11–14 shortest paths、18–19 pseudopolynomial/complexity。
 
-### M07 — Virtual Memory & Isolation
+**Checkpoint:** 对“查找、插入、取最小值、遍历连接关系”四类任务各选一种结构并解释为什么；给一段代码估算时间与空间数量级。
 
-**Goal:** address spaces, pages, page tables, translation, faults, mapping, copy-on-write, protection, and why isolation is a mechanism rather than a guarantee of total security.
-
-- **PRIMARY:** [OSTEP](https://pages.cs.wisc.edu/~remzi/OSTEP/) — virtual-memory chapters.
-- **REFERENCE:** Linux `mmap(2)`, `proc(5)`, and related man-pages.
-
-**Checkpoint:** inspect a process memory map, identify code/heap/stack/shared-library regions, and explain what a page fault means without equating it with a program bug.
-
-### M08 — Files, Filesystems & I/O
-
-**Goal:** file descriptors, directories, inode-like metadata, buffering/page cache, filesystem namespace, crash boundaries, and deletion/retention semantics.
-
-- **PRIMARY:** [OSTEP](https://pages.cs.wisc.edu/~remzi/OSTEP/) — persistence/filesystem chapters.
-- **REFERENCE:** Linux man-pages for `open`, `fsync`, `rename`, `unlink`, and filesystem interfaces.
-
-**Checkpoint:** trace a read/write with OS tools and explain at which point data is in user memory, kernel cache, filesystem state, and durable media.
-
-### M09 — Storage & Durability
-
-**Goal:** block devices, SSD/HDD differences, caching, ordering, writeback, fsync, journaling/logging ideas, backup versus durability, and failure assumptions.
-
-- **PRIMARY:** OSTEP persistence chapters plus the relevant filesystem documentation for your platform.
-- **REFERENCE:** SQLite's durability/atomic-commit documentation is a useful concrete case: <https://www.sqlite.org/atomiccommit.html>.
-
-**Checkpoint:** state what your program can and cannot claim after `write()`, after close, after `fsync`, and after a backup copy. Include the failure model in every durability claim.
+**Next → [M03 ISA / 执行](#m03)**
 
 ---
 
-## S4 — Networking, Web & Browser
+<a id="m03"></a>
+## M03 — Machine：ISA、汇编、CPU 执行与调试
 
-### M10 — IP, DNS & Transport
+**Repo companion:** [`book/03-machine-isa-execution/`](book/03-machine-isa-execution/)
 
-**Goal:** addressing/routing, DNS, ports/sockets, UDP/TCP, reliability/order, congestion at a conceptual level, QUIC as modern transport, and end-to-end latency reasoning.
+| 知识点 | 精确资源 | 你要带走什么 |
+|---|---|---|
+| machine language / assembly / instruction | **Core:** Nand2Tetris **Project 4: Machine Language**：<https://www.nand2tetris.org/project04> | 指令就是编码后的状态转换，不是“CPU 理解源码” |
+| CPU、register、memory、fetch/execute | **Core:** Nand2Tetris **Project 5: Computer Architecture**：<https://www.nand2tetris.org/project05> | 能画出 instruction→register/memory 的最小数据流 |
+| 真实 machine-level program / stack / control flow | **Reference:** CMU 15-213 schedule 中 **Machine-Level Programming: Basics / Control / Procedures / Data**：<https://www.cs.cmu.edu/~213/schedule.html> | 把教学 ISA 映射到真实 compiled code |
+| 用 debugger 验证 | **Repo Core:** M03 Lessons 中的 GDB 路线 | 至少看一次 register/stack/instruction 的真实状态 |
 
-- **PRIMARY:** [Stanford CS144](https://cs144.github.io/) — use lectures/notes for networking mechanisms; projects are optional.
-- **PRACTICAL REFERENCE:** [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/).
-- **REFERENCE:** IETF RFCs for protocol truth when details matter.
+**先跳过：** 自己设计完整 ISA、微架构优化、流水线 hazard 细节。
 
-**Checkpoint:** trace one connection from DNS lookup to socket endpoints; identify which guarantees come from IP, transport, application protocol, or your own code.
+**Checkpoint:** 找一个小函数的反汇编，指出参数、返回值、一次 load/store、一次 branch，并用 debugger 验证其中一个预测。
 
-### M11 — TLS, HTTP, Caching & Intermediaries
-
-**Goal:** TLS security properties, HTTP semantics, methods/status, representations, caching/validators, proxies, and the difference between application semantics and transport.
-
-- **PRIMARY / REFERENCE:** [RFC 9110 — HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html).
-- **CURRENT REFERENCE:** [RFC 9846 — TLS 1.3](https://www.rfc-editor.org/rfc/rfc9846.html) (2026; obsoletes RFC 8446).
-- **PRACTICAL:** [MDN Web Security / TLS guidance](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/TLS).
-
-**Checkpoint:** inspect one real HTTPS request and explain what TLS protects, what HTTP defines, what a cache validator means, and which metadata may still be observable.
-
-### M12 — Browser as an Integrated System
-
-**Goal:** URL/origin/site, navigation, parsing/rendering, event loop, storage, process model, sandbox/site isolation, and performance/security interactions.
-
-- **PRIMARY:** MDN Web platform guides: <https://developer.mozilla.org/>.
-- **REFERENCE / CURRENT PRACTICE:** [Chromium Site Isolation](https://www.chromium.org/Home/chromium-security/site-isolation/) and Chromium design documentation.
-- **DEEP DIVE:** web.dev browser-rendering material, with process-model claims cross-checked against current Chromium docs.
-
-**Checkpoint:** use browser DevTools to explain one page load across network, parser, DOM/layout/paint, script scheduling, storage, and process/security boundaries.
+**Next → [M04 内存层次与测量](#m04)**
 
 ---
 
-## S5 — Data & Concurrency
+<a id="m04"></a>
+## M04 — Memory Hierarchy, Locality & Measurement
 
-### M13 — Database Storage, Indexing & Query Execution
+**Repo companion:** [`book/04-memory-locality-measurement/`](book/04-memory-locality-measurement/)
 
-**Goal:** relational model, pages/records, indexes, query plans, declarative query versus physical execution, measurement, and space/write/read trade-offs.
+| 知识点 | 精确资源 | 你要带走什么 |
+|---|---|---|
+| cache hierarchy、block、locality、miss | **Core:** CMU 15-213 schedule — **The Memory Hierarchy (6.1–6.3)** + **Cache Memories (6.4–6.7)**：<https://www.cs.cmu.edu/~213/schedule.html> | cache 是利用 locality 的近似，不是“更快的 RAM” |
+| 如何做可信性能实验 | **Core:** [`L04-02.md`](book/04-memory-locality-measurement/L04-02.md) | baseline、controlled change、重复测量、分布/噪声、推断边界 |
+| profiling 选择工具 | **Reference:** Missing Semester 2026 — **Debugging and Profiling**：<https://missing.csail.mit.edu/2026/> | 先问问题，再选计时/profiler，而不是先跑工具 |
 
-- **PRIMARY:** [CMU 15-445/645 — Intro to Database Systems](https://15445.courses.cs.cmu.edu/) (use the current semester or archive appropriate to you).
-- **REFERENCE:** [SQLite Query Planner](https://www.sqlite.org/queryplanner.html) and `EXPLAIN QUERY PLAN` docs.
+**Checkpoint:** 对两种访问模式先预测谁快、为什么；至少重复测量多次，并说明“观察到更快”不等于你已证明唯一原因。
 
-**Checkpoint:** run the same query before/after an index on bounded data, verify result equivalence, inspect the actual plan, and explain why the planner is allowed to choose differently from your expectation.
-
-### M14 — Transactions, Isolation, Recovery
-
-**Goal:** transaction boundaries, atomicity, isolation/visibility, conflicts, rollback, logging/recovery, backup versus transaction semantics, and explicit failure models.
-
-- **PRIMARY:** CMU 15-445 transaction/concurrency/recovery lectures.
-- **REFERENCE:** [SQLite Transactions](https://www.sqlite.org/lang_transaction.html) and SQLite locking/journaling docs.
-
-**Checkpoint:** use two database connections to produce a visibility/conflict scenario, predict the result, observe it, then explain which guarantee came from the DB and which came from your application protocol.
-
-### M15 — Concurrency
-
-**Goal:** interleavings, data races, atomicity, locks, condition variables, deadlock, threads/tasks, ownership, and invariants.
-
-- **PRIMARY:** [OSTEP](https://pages.cs.wisc.edu/~remzi/OSTEP/) — concurrency chapters.
-- **REFERENCE:** POSIX/Linux pthread documentation or your language runtime's official concurrency docs.
-
-**Checkpoint:** construct a small lost-update or ordering failure, write the invariant that failed, repair it, and explain why the repair works for all relevant interleavings rather than only the observed run.
+**Next → [M05 语言/运行时/编译](#m05)**
 
 ---
 
-## S6 — Distributed Systems & Modern Infrastructure
+<a id="m05"></a>
+## M05 — Languages, Runtime & Compiler：源码如何变成执行
 
-### M16 — Distributed Communication & Partial Failure
+**Repo companion:** [`book/05-languages-runtime-compiler/`](book/05-languages-runtime-compiler/)
 
-**Goal:** RPC/message boundaries, serialization, deadlines/timeouts, retry ambiguity, idempotency, backoff, partial failure, and why remote calls are not local calls.
+Crafting Interpreters 不用整本做完，只读对应机制：
 
-- **PRIMARY:** [MIT 6.5840 / 6.824 Distributed Systems](https://pdos.csail.mit.edu/6.824/) — lectures/notes/readings; labs are optional.
-- **DEEP DIVE:** *Designing Data-Intensive Applications* (Martin Kleppmann) for a durable conceptual synthesis.
+| 知识点 | 精确资源 |
+|---|---|
+| token / scanner | **Core:** Ch.4 [Scanning](https://craftinginterpreters.com/scanning.html) |
+| AST / representation | **Core:** Ch.5 [Representing Code](https://craftinginterpreters.com/representing-code.html) |
+| parser 与语法结构 | **Core:** Ch.6 [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html) |
+| interpreter / evaluation | **Core:** Ch.7 [Evaluating Expressions](https://craftinginterpreters.com/evaluating-expressions.html) |
+| bytecode / VM 的另一种执行模型 | **Core skim:** Ch.14 [Chunks of Bytecode](https://craftinginterpreters.com/chunks-of-bytecode.html) + Ch.15 [A Virtual Machine](https://craftinginterpreters.com/a-virtual-machine.html) |
+| GC | **Optional:** Ch.26 [Garbage Collection](https://craftinginterpreters.com/garbage-collection.html) |
 
-**Checkpoint:** for one remote mutation, enumerate failures before send, after send/before response, duplicate delivery, and delayed response. Decide what the client can know in each case.
+**Checkpoint:** 用一段 `a + b * c` 解释 source → tokens → AST → evaluator/bytecode → machine/runtime，指出每层丢掉和新增了什么信息。
 
-### M17 — Replication, Consistency & Consensus
-
-**Goal:** replication, quorum reasoning, ordering/visibility models, linearizability, leader/term/log ideas, consensus purpose and limitations.
-
-- **PRIMARY:** MIT 6.5840 replication/Raft/consistency material.
-- **DEEP DIVE:** DDIA replication/consistency chapters.
-
-**Checkpoint:** describe one read/write history and state exactly what guarantee you need. Do not use "consistent" without naming the ordering/visibility property.
-
-### M18 — Coordination, Delivery & Distributed Transactions
-
-**Goal:** duplicate delivery, queues, at-least-once implications, idempotency keys, leases/coordination, distributed transaction boundaries, 2PC trade-offs, and application-level invariants.
-
-- **PRIMARY:** MIT 6.5840 transaction/sharding/coordination readings.
-- **DEEP DIVE:** DDIA transactions and distributed-systems chapters.
-
-**Checkpoint:** design one operation that remains correct under duplicate delivery and crash/retry. Identify the durable idempotency boundary and the business invariant it protects.
-
-### M19 — Modern Infrastructure & Isolation
-
-**Goal:** process/container boundary, namespaces, cgroups/resource control, deployment artifacts, reproducibility, supply-chain boundary, and when *not* to add orchestration.
-
-- **PRIMARY / REFERENCE:** [Linux namespaces(7)](https://man7.org/linux/man-pages/man7/namespaces.7.html).
-- **REFERENCE:** [Linux kernel cgroup v2 documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html).
-- **OPTIONAL CURRENT PRACTICE:** Docker/OCI/Kubernetes docs only after you understand the underlying process/namespace/resource mechanisms.
-
-**Checkpoint:** inspect namespaces/cgroups for a process or container and explain which isolation/resource properties come from the kernel versus the container tool.
-
-### M20 — Observability & Reliability Engineering
-
-**Goal:** logs/metrics/traces, latency/error/saturation, instrumentation boundaries, correlation, SLI/SLO reasoning, incidents, and evidence without high-cardinality or sensitive-data mistakes.
-
-- **PRIMARY:** [Google SRE Books](https://sre.google/books/) — Site Reliability Engineering and the SRE Workbook are readable online.
-- **CURRENT REFERENCE:** [OpenTelemetry Documentation](https://opentelemetry.io/docs/) and [Signals](https://opentelemetry.io/docs/concepts/signals/).
-
-**Checkpoint:** for one request, decide what belongs in a log, metric, and trace; then state one SLI and one failure that your chosen telemetry would miss.
+**Next → [M06 进程与系统调用](#m06)**
 
 ---
 
-## S7 — Security, Systems Judgment & Synthesis
+<a id="m06"></a>
+## M06 — Processes, Syscalls & Execution Context
 
-### M21 — Trust, Cryptography & Secure Channels
+**Repo companion:** [`book/06-processes-syscalls-execution-context/`](book/06-processes-syscalls-execution-context/)
 
-**Goal:** threat model, trust boundary, hashing/MAC/signature/encryption distinctions, key material, randomness, certificates, secure channels, and "do not design your own crypto" judgment.
+OSTEP 只读：**Ch.4 Processes、Ch.5 Process API、Ch.6 Limited Direct Execution**：<https://pages.cs.wisc.edu/~remzi/OSTEP/>
 
-- **PRIMARY:** [Cryptopals](https://cryptopals.com/) as an optional experiential route for understanding why crypto misuse fails; do not treat implementing primitives as production guidance.
-- **REFERENCE:** [RFC 9846 — TLS 1.3](https://www.rfc-editor.org/rfc/rfc9846.html) and current NIST/IETF guidance for production claims.
-- **SECURITY REFERENCE:** [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/).
+然后查三个真实接口：
 
-**Checkpoint:** given a system claim such as "TLS makes this secure," name the protected property, trust anchor, key/identity assumption, and at least one property TLS does not provide.
+- **Core:** [`fork(2)`](https://man7.org/linux/man-pages/man2/fork.2.html) — 进程复制语义。
+- **Core:** [`execve(2)`](https://man7.org/linux/man-pages/man2/execve.2.html) — 替换当前 process image。
+- **Core:** [`waitpid(2)`](https://man7.org/linux/man-pages/man2/waitpid.2.html) — parent 如何等待/reap child。
 
-### M22 — Authentication, Authorization & Secure Composition
+**Optional repo practice:** LAB-REQ-02/xv6 syscall，用来把 user→syscall→kernel route 具体化；不做也不阻塞后续阅读。
 
-**Goal:** AuthN versus AuthZ, session/token lifecycle, least privilege, deny-by-default, per-request authorization, enumeration, input/trust boundaries, and composition failures.
+**Checkpoint:** 准确解释 shell 启动一个命令时 `fork/exec/wait` 分别做什么，以及 system call 为什么需要 privilege transition。
 
-- **PRIMARY / CURRENT PRACTICE:** [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html) and [Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html).
-- **CURRENT REFERENCE:** [RFC 9700 — OAuth 2.0 Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700.html); for browser-based OAuth, also check the current IETF browser-app BCP.
-
-**Checkpoint:** draw an authorization matrix for a small app. For every request ask: who is authenticated, what resource is addressed, what action is requested, and where the server enforces authorization.
-
-### M23 — Systems Thinking & Technical Judgment
-
-**Goal:** evaluate technologies using evidence, constraints, failure modes, cost, operational complexity, reversibility, and uncertainty rather than popularity.
-
-- **PRIMARY:** [Google SRE Books](https://sre.google/books/) for reliability/operations trade-off reasoning.
-- **DEEP DIVE:** DDIA for data-system trade-offs and failure-driven architecture reasoning.
-
-**Checkpoint:** write a one-page Technology Card for a proposed component: problem, constraints, mechanism, failure modes, operational cost, measurement plan, alternatives, and a clear "when not to use it" section.
-
-### M24 — Final System Synthesis / Defense
-
-**Goal:** connect the entire stack and defend an architecture with evidence and bounded claims. A custom project is optional; you may analyze an existing system, external course project, work project (with confidential details removed), or the repo Mini Cloud.
-
-- **PRIMARY:** revisit the strongest sources above for the actual system you choose.
-- **SYNTHESIS REFERENCE:** Google SRE + OWASP + protocol/database/OS primary references relevant to your design.
-- **OPTIONAL COMPANION:** repo Mini Cloud P0–P9 and M24 evidence templates.
-
-**Checkpoint:** produce a system map that identifies state, interfaces, trust boundaries, failure boundaries, consistency/durability assumptions, observability, performance/cost risks, and one deliberate component you chose **not** to add. Every major claim should have evidence or an explicit uncertainty label.
+**Next → [M07 虚拟内存](#m07)**
 
 ---
 
-# Recommended pacing
+<a id="m07"></a>
+## M07 — Virtual Memory & Isolation
 
-Do not optimize for finishing 25 modules quickly.
+**Repo companion:** [`book/07-virtual-memory-isolation/`](book/07-virtual-memory-isolation/)
 
-A good first traversal is:
+OSTEP 只读：**Ch.13 Address Spaces、Ch.15 Address Translation、Ch.18 Introduction to Paging、Ch.19 TLB、Ch.21 Beyond Physical Memory: Mechanisms**：<https://pages.cs.wisc.edu/~remzi/OSTEP/>
 
-- **S1:** learn enough representation/algorithms to reason precisely;
-- **S2–S3:** spend extra time here if systems are new to you;
-- **S4 and S5:** either order after S3 is acceptable;
-- **S6:** only after networking + transaction/concurrency foundations feel concrete;
-- **S7:** synthesis, not a bag of security buzzwords.
+真实接口只查：
 
-For each module, aim for roughly:
+- **Core:** [`mmap(2)`](https://man7.org/linux/man-pages/man2/mmap.2.html) — mapping 是什么。
+- **Reference:** [`proc_pid_maps(5)`](https://man7.org/linux/man-pages/man5/proc_pid_maps.5.html) — 进程地址空间的可观察表面。
 
-1. **Orientation** — 30–60 min: read the repo Lesson/module overview.
-2. **Primary source** — several focused sessions; skip irrelevant assignments.
-3. **One observation** — run or inspect something real.
-4. **One explanation** — write the mechanism in your own words.
-5. **One transfer question** — predict a related case you have not seen.
+**Checkpoint:** 解释 virtual address → page table → physical frame；说明 page fault 可能意味着“合法但尚未映射/载入”，不等于 segfault。
 
-If you can explain the mechanism, make a useful prediction, and know where to look up exact details, move on.
+**Next → [M08 文件/文件系统/I/O](#m08)**
 
-# What not to do
+---
 
-- Do not finish an entire external university course just because it is linked.
-- Do not implement a kernel, compiler, database, TCP stack, consensus system, or cloud platform unless that is your chosen deep dive.
-- Do not memorize exact latency/version numbers as timeless facts.
-- Do not treat AI output as authority; use it to generate hypotheses, comparisons, explanations, and search plans, then verify against primary sources.
-- Do not confuse a green demo with understanding. Prefer a small experiment whose outcome you predicted.
+<a id="m08"></a>
+## M08 — Files, Filesystems & I/O
 
-# Existing repository exercises
+**Repo companion:** [`book/08-files-filesystems-io/`](book/08-files-filesystems-io/)
 
-The existing `labs/**`, `project/**`, and evidence templates remain valuable **optional companions**. They are especially useful when you want a ready-made bounded experiment instead of designing one yourself.
+| 知识点 | 精确资源 |
+|---|---|
+| fd、目录、inode-like namespace、read/write | **Core:** OSTEP **Ch.39 Files and Directories**：<https://pages.cs.wisc.edu/~remzi/OSTEP/> |
+| 文件系统内部 layout / allocation | **Core:** OSTEP **Ch.40 File System Implementation**：<https://pages.cs.wisc.edu/~remzi/OSTEP/> |
+| `open/read/write` 的真实契约 | **Reference:** [`open(2)`](https://man7.org/linux/man-pages/man2/open.2.html)、[`read(2)`](https://man7.org/linux/man-pages/man2/read.2.html)、[`write(2)`](https://man7.org/linux/man-pages/man2/write.2.html) |
+| rename/unlink 与“名字≠数据” | **Reference:** [`rename(2)`](https://man7.org/linux/man-pages/man2/rename.2.html)、[`unlink(2)`](https://man7.org/linux/man-pages/man2/unlink.2.html) |
 
-They are no longer a universal requirement for completing the resource-first roadmap.
+**Checkpoint:** 解释一个 pathname 如何最终指向可读 bytes；解释“删除文件名”为什么不等于物理介质上的 bytes 立即消失。
+
+**Next → [M09 存储与耐久性](#m09)**
+
+---
+
+<a id="m09"></a>
+## M09 — Storage Engines & Durable Storage
+
+**Repo companion:** [`book/09-storage-engine-durable-storage/`](book/09-storage-engine-durable-storage/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| device latency / HDD 与 block I/O | **Core:** OSTEP **Ch.36 I/O Devices + Ch.37 Hard Disk Drives**：<https://pages.cs.wisc.edu/~remzi/OSTEP/> |
+| crash consistency / journaling | **Core:** OSTEP **Ch.42 FSCK and Journaling**：<https://pages.cs.wisc.edu/~remzi/OSTEP/> |
+| SSD 基本差异 | **Core skim:** OSTEP **Ch.44 Flash-based SSDs**：<https://pages.cs.wisc.edu/~remzi/OSTEP/> |
+| `fsync` 到底承诺什么 | **Reference:** [`fsync(2)`](https://man7.org/linux/man-pages/man2/fsync.2.html) |
+| “数据库原子提交”如何建立在存储机制上 | **Reference:** SQLite [Atomic Commit §1–3](https://www.sqlite.org/atomiccommit.html)；WAL 只读 [§1 Overview、§2 How WAL Works](https://www.sqlite.org/wal.html) |
+
+**Checkpoint:** 分别解释 “write() 返回”“fsync() 返回”“transaction COMMIT 返回”在不同层的含义，不把它们混成同一个 durability 承诺。
+
+**Next → [M10 IP/DNS/传输](#m10)**
+
+---
+
+<a id="m10"></a>
+## M10 — Networking：IP、DNS、socket、TCP/UDP
+
+**Repo companion:** [`book/10-networking-ip-dns-transport/`](book/10-networking-ip-dns-transport/)
+
+Beej 不要全读，只读以下段落：<https://beej.us/guide/bgnet/html/index-wide.html>
+
+| 知识点 | 精确资源 |
+|---|---|
+| name → address | **Core:** Beej **§5.1 `getaddrinfo()`** |
+| socket endpoint 与 client/server lifecycle | **Core:** **§5.2–5.7** `socket/bind/connect/listen/accept/send/recv` |
+| stream vs datagram | **Core:** **§5.7–5.8 + §6.1–6.3** |
+| blocking / multiplexing / partial send | **Reference:** **§7.1–7.5** |
+| TCP 内部的 seq/ack/flow-control | **Optional deep dive:** Stanford CS144 **Checkpoint 2 TCP Receiver** 与 **Checkpoint 3 TCP Sender** handouts；课程当前定义见 Stanford CS144 catalog。无需实现完整 TCP stack。 |
+
+**Checkpoint:** 从域名开始，画出 DNS → IP → socket → TCP byte stream → application bytes；说出 packet/datagram 与 TCP stream 为什么不是一回事。
+
+**Next → [M11 TLS/HTTP/缓存](#m11)**
+
+---
+
+<a id="m11"></a>
+## M11 — TLS, HTTP, Caches, Proxies & CDNs
+
+**Repo companion:** [`book/11-networking-tls-http-cdn-proxies/`](book/11-networking-tls-http-cdn-proxies/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| HTTP request routing / target / intermediaries | **Core:** RFC 9110 **§7 Routing HTTP Messages**：<https://www.rfc-editor.org/rfc/rfc9110.html#section-7> |
+| method semantics | **Core:** RFC 9110 **§9 Methods**：<https://www.rfc-editor.org/rfc/rfc9110.html#section-9> |
+| conditional requests | **Core:** RFC 9110 **§13 Conditional Requests**：<https://www.rfc-editor.org/rfc/rfc9110.html#section-13> |
+| status codes | **Reference:** RFC 9110 **§15 Status Codes**：<https://www.rfc-editor.org/rfc/rfc9110.html#section-15> |
+| cache freshness / validation | **Core:** RFC 9111 **§4.2 Freshness + §4.3 Validation**：<https://www.rfc-editor.org/rfc/rfc9111.html#section-4.2> |
+| TLS 1.3 handshake / authentication | **Core:** RFC 9846 **§2 Protocol Overview + §4 Handshake Protocol**；证书只查 **§4.5.1 Certificate**：<https://www.rfc-editor.org/rfc/rfc9846.html> |
+
+**先跳过：** RFC 中密码套件编码细节、完整 HTTP extension registry。
+
+**Checkpoint:** 解释一次 HTTPS GET 中 TCP/TLS/HTTP 各自解决什么；给出一个 fresh cache hit 和一个 stale→conditional validation 的流程。
+
+**Next → [M12 浏览器](#m12)**
+
+---
+
+<a id="m12"></a>
+## M12 — Browser as an Integrated System
+
+**Repo companion:** [`book/12-web-browser-integrated-case/`](book/12-web-browser-integrated-case/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| event loop / task queue 的执行模型 | **Core:** MDN [JavaScript event loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop) |
+| parse → DOM/CSSOM → layout → paint | **Core:** MDN [Critical rendering path](https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Critical_rendering_path) |
+| origin 与跨源边界 | **Core:** MDN [Same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy) |
+| browser-side state | **Reference:** MDN [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API) |
+| 多进程架构 / Site Isolation | **Core:** Chromium [Process Model and Site Isolation](https://chromium.googlesource.com/chromium/src/+/main/docs/process_model_and_site_isolation.md) — 只读 **Goals、Site Isolation、Modes and Availability** |
+
+**Checkpoint:** 任选一个网页，从 URL 到 network response、parse/render、JS event loop、storage、process isolation 画出一条主链，并标出一个性能边界和一个安全边界。
+
+**Next → [M13 DB 存储/索引/查询](#m13)**
+
+---
+
+<a id="m13"></a>
+## M13 — Databases：Storage, Indexing & Query Processing
+
+**Repo companion:** [`book/13-databases-storage-indexing/`](book/13-databases-storage-indexing/)
+
+CMU 15-445 **只看 Fall 2026 schedule 中这些 lecture**：<https://15445.courses.cs.cmu.edu/fall2026/schedule.html>
+
+| 知识点 | 精确资源 |
+|---|---|
+| relational model / declarative query | **Core:** **#01 Relational Model & Algebra** |
+| page/storage layout | **Core:** **#03 Database Storage I、#05 Database Storage II**；#04 Memory Management 只 skim |
+| hash/index/B+tree | **Core:** **#07 Hash Tables、#08–09 Indexes & Filters I/II** |
+| query operators | **Core:** **#11 Sorting & Aggregations、#13 Join Algorithms、#14–15 Query Execution I/II** |
+| planner/optimizer | **Core:** **#16–17 Query Planning & Optimization I/II** |
+| SQLite 中索引如何实际改变访问路径 | **Core practice/reference:** SQLite Query Planner **§1.1–1.7**（scan→rowid→index→multi-column→covering index）：<https://www.sqlite.org/queryplanner.html> |
+
+**先跳过：** CMU 课程 projects、vector indexes、复杂 DBMS implementation。
+
+**Checkpoint:** 对一个 `WHERE` query 先预测 scan/index 可能性，再看 `EXPLAIN QUERY PLAN`；说明“加 index”为什么既有读收益也有写/空间成本。
+
+**Next → [M14 事务/恢复/隔离](#m14)**
+
+---
+
+<a id="m14"></a>
+## M14 — Transactions, Recovery & Isolation
+
+**Repo companion:** [`book/14-databases-transactions-recovery-isolation/`](book/14-databases-transactions-recovery-isolation/)
+
+CMU 15-445 Fall 2026 精确片段：<https://15445.courses.cs.cmu.edu/fall2026/schedule.html>
+
+- **Core:** **#18 Concurrency Control Theory**。
+- **Core:** **#19 Two-Phase Locking、#20 Timestamp Ordering、#21 MVCC** — 目标是比较，不要求实现。
+- **Core:** **#22 Database Logging、#23 Database Recovery**。
+
+SQLite 用来把抽象机制落到真实单机 DB：
+
+- **Core:** [Transaction](https://www.sqlite.org/lang_transaction.html) — `DEFERRED/IMMEDIATE/EXCLUSIVE`、COMMIT/ROLLBACK、error response。
+- **Core:** [File Locking and Concurrency](https://www.sqlite.org/lockingv3.html) — 只读 **§1 Locking、§4 Rollback Journal、§5 Writing、§7 SQL-level transaction control**。
+- **Core:** [Atomic Commit](https://www.sqlite.org/atomiccommit.html) — **§1–3** 建立“原子是幻觉如何实现”的直觉。
+- **Reference:** [WAL §1–2](https://www.sqlite.org/wal.html) — 与 rollback journal 比较。
+
+**Checkpoint:** 用两个 DB connection 解释 committed visibility / writer conflict；解释 rollback journal 或 WAL 如何帮助 crash recovery，但不要把 process-crash 与 power-loss guarantee 混为一谈。
+
+**Next → [M15 并发](#m15)**
+
+---
+
+<a id="m15"></a>
+## M15 — Concurrency：Threads, Races & Synchronization
+
+**Repo companion:** [`book/15-concurrency-threads-races-synchronization/`](book/15-concurrency-threads-races-synchronization/)
+
+OSTEP 只读这些章：<https://pages.cs.wisc.edu/~remzi/OSTEP/>
+
+- **Core:** **Ch.26 Concurrency and Threads**。
+- **Core:** **Ch.27 Thread API**，只理解 create/join 基本契约。
+- **Core:** **Ch.28 Locks**。
+- **Core:** **Ch.30 Condition Variables**，重点是 predicate + `while`。
+- **Core:** **Ch.32 Common Concurrency Problems**。
+- **Reference:** Ch.31 Semaphores；需要时再读。
+
+**Optional repo practice:** LAB-REQ-03 用真实 C/pthreads 展示 lost update、mutex、condition-variable predicate break。
+
+**Checkpoint:** 写出一个 race 的两个合法 interleaving；说明 mutex 保护的 invariant 是什么；解释为什么 condition variable 通常需要 `while(predicate)` 而不是 `if`。
+
+**Next → [M16 部分失败/RPC](#m16)**
+
+---
+
+<a id="m16"></a>
+## M16 — Distributed Systems I：Partial Failure, RPC, Timeouts & Retries
+
+**Repo companion:** [`book/16-distributed-systems-partial-failure-rpc/`](book/16-distributed-systems-partial-failure-rpc/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| 为什么分布式系统的失败与本地调用不同 | **Core:** MIT 6.5840 Spring 2026 **Lecture 1: Introduction**：<https://pdos.csail.mit.edu/6.824/schedule.html> |
+| RPC + concurrency 基本模型 | **Core:** MIT 6.5840 **Lecture 2: RPC and Threads** |
+| timeout / retry / exponential backoff / jitter | **Core practitioner:** AWS Builders' Library **“Timeouts, retries, and backoff with jitter”**：<https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/> |
+| retry 与副作用 | **Core:** AWS Builders' Library **“Making retries safe with idempotent APIs”**：<https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/> |
+
+**Checkpoint:** 对“客户端 timeout 但服务端可能已经成功”列出至少三种真实状态；说明为什么 retry 必须结合 idempotency/operation identity 才能推理。
+
+**Next → [M17 复制/一致性/共识](#m17)**
+
+---
+
+<a id="m17"></a>
+## M17 — Distributed Systems II：Replication, Consistency & Consensus
+
+**Repo companion:** [`book/17-distributed-systems-replication-consistency-consensus/`](book/17-distributed-systems-replication-consistency-consensus/)
+
+MIT 6.5840 Spring 2026 schedule：<https://pdos.csail.mit.edu/6.824/schedule.html>
+
+| 知识点 | 精确资源 |
+|---|---|
+| replication 为什么既提高可用性又制造一致性问题 | **Core:** **Lecture 3: GFS** + GFS paper preparation |
+| consensus 的问题定义与多数派直觉 | **Core:** **Lecture 4: Paxos pseudo-code**；后续 Raft lab/lecture只理解 leader/term/log/majority，不要求完成 lab |
+| coordination service / linearizable metadata | **Core:** **Lecture 9: ZooKeeper** + ZooKeeper paper preparation |
+| consistency 不是 ACID “C” | **Core:** [`L17-03.md`](book/17-distributed-systems-replication-consistency-consensus/L17-03.md) |
+
+**先跳过：** 自己实现 production consensus、完整 formal proof。
+
+**Checkpoint:** 给三副本系统画出一次 leader/network failure；说明哪些 observation 可能旧、哪些承诺需要 quorum/ordering guarantee，并明确你采用的 consistency guarantee 名称。
+
+**Next → [M18 分布式状态/协调](#m18)**
+
+---
+
+<a id="m18"></a>
+## M18 — Distributed State：Transactions, Sharding, Coordination & Delivery Semantics
+
+**Repo companion:** [`book/18-distributed-state-coordination/`](book/18-distributed-state-coordination/)
+
+MIT 6.5840 Spring 2026：<https://pdos.csail.mit.edu/6.824/schedule.html>
+
+- **Core:** **Lecture 11: Distributed Transactions**；指定 preparation 只读 6.033 Ch.9 的课程点名小节。
+- **Core:** **Lecture 12: Spanner** — 看 transaction + time/replication 如何组合，不需要掌握整篇所有工程细节。
+- **Core:** **Lecture 13: Chain Replication** — 比较另一种 replication/ordering design。
+- **Reference:** 后续 sharding/kv-service material，只理解 shard movement/ownership/change 带来的 state coordination 问题。
+- **Core judgement:** AWS [Making retries safe with idempotent APIs](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/) 的 **Retries and side effects / Semantic equivalence** 两节。
+
+**Checkpoint:** 解释 “exactly once” 为什么通常不是简单网络属性；对一个 payment/order-like operation 设计 operation ID + retry contract，并说明它没解决哪些跨资源 atomicity 问题。
+
+**Next → [M19 交付/容器/供应链](#m19)**
+
+---
+
+<a id="m19"></a>
+## M19 — Modern Infrastructure：Isolation, Delivery & Supply Chain
+
+**Repo companion:** [`book/19-modern-infrastructure-delivery/`](book/19-modern-infrastructure-delivery/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| Linux namespace 到底隔离什么 | **Core:** [`namespaces(7)`](https://man7.org/linux/man-pages/man7/namespaces.7.html) — 先读 overview + namespace type list |
+| resource control 与 cgroup v2 | **Core:** [`cgroups(7)`](https://man7.org/linux/man-pages/man7/cgroups.7.html) 的 **CGROUPS VERSION 2**；需要接口细节再查 kernel [Control Group v2](https://docs.kernel.org/admin-guide/cgroup-v2.html) **Introduction / Terminology** |
+| container image 是内容/metadata，不等于 VM | **Reference:** OCI Image Spec `spec.md`：<https://github.com/opencontainers/image-spec/blob/main/spec.md>，只看 image manifest/config/layers 的模型 |
+| build provenance / supply-chain trust | **Core:** SLSA v1.2 **Build Track Basics**：<https://slsa.dev/spec/v1.2/build-track-basics>；重点 L1/L2/L3 分别增加什么保证 |
+
+**先跳过：** Kubernetes API 大全、多云产品目录、自己写 container runtime。
+
+**Checkpoint:** 用“namespace + cgroup + filesystem/image + process”解释 container 与 VM 的不同；对一个二进制说明“来自哪个 source/build”为什么需要 provenance。
+
+**Next → [M20 可观测性/SRE](#m20)**
+
+---
+
+<a id="m20"></a>
+## M20 — Observability & Reliability Engineering
+
+**Repo companion:** [`book/20-observability-reliability-engineering/`](book/20-observability-reliability-engineering/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| SLI/SLO 与风险预算 | **Core:** Google SRE **Ch.4 Service Level Objectives**：<https://sre.google/sre-book/service-level-objectives/> |
+| white-box/black-box、四个黄金信号 | **Core:** Google SRE **Ch.6 Monitoring Distributed Systems**：<https://sre.google/sre-book/monitoring-distributed-systems/> |
+| troubleshooting = hypothesis→test | **Core:** Google SRE **Ch.12 Effective Troubleshooting**：<https://sre.google/sre-book/effective-troubleshooting/> |
+| traces / metrics / logs | **Core:** OpenTelemetry [Signals](https://opentelemetry.io/docs/concepts/signals/) — 只读 Traces/Metrics/Logs 的角色与差异 |
+| context propagation 的价值与隐私风险 | **Reference:** OpenTelemetry [Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/) — 特别读 **security considerations** |
+
+**Checkpoint:** 给一个“请求变慢”故障先写 2–3 个 hypothesis，再为每个 hypothesis 指定 metric/log/trace 中哪一种证据能区分它们；避免“先收集所有数据”。
+
+**Next → [M21 信任/密码学](#m21)**
+
+---
+
+<a id="m21"></a>
+## M21 — Security I：Trust Boundaries & Cryptographic Mechanisms
+
+**Repo companion:** [`book/21-security-synthesis-trust-crypto/`](book/21-security-synthesis-trust-crypto/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| threat model / data-at-rest crypto 的边界 | **Core:** OWASP [Cryptographic Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html) — **Architectural Design、Key Storage** |
+| password hashing 与 encryption 不同 | **Core:** OWASP [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) — **Introduction、Background: Hashing vs Encryption** |
+| TLS 1.3 提供什么 | **Core:** RFC 9846 **§2 Protocol Overview、§4 Handshake Protocol、§4.5.1 Certificate**：<https://www.rfc-editor.org/rfc/rfc9846.html> |
+| 不要自己发明 crypto | **Reference:** repo `L21-*` 的 primitive→property→threat mapping；需要练手时 Cryptopals 只做选题，不作为安全实现指南 |
+
+**Checkpoint:** 对“数据库里的 password、API traffic、disk backup、signing key”分别选择 hash/encryption/TLS/signature/key-management 中的机制，并说出每个机制**不**解决什么。
+
+**Next → [M22 认证/授权/安全组合](#m22)**
+
+---
+
+<a id="m22"></a>
+## M22 — Security II：Authentication, Authorization, Sessions & Composition
+
+**Repo companion:** [`book/22-security-synthesis-auth-composition/`](book/22-security-synthesis-auth-composition/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| authentication lifecycle | **Core:** OWASP [Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html) — 重点 re-authentication / transport / generic errors |
+| authorization / least privilege / deny by default | **Core:** OWASP [Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html) |
+| session ID/cookie 安全 | **Core:** OWASP [Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) — session ID、cookie attributes、TLS |
+| OAuth 的现代安全边界 | **Core:** RFC 9700 **§2 Best Practices**；遇到具体 attack 再查 **§4 Attacks and Mitigations**：<https://www.rfc-editor.org/rfc/rfc9700.html> |
+
+**先跳过：** 自己实现 OAuth server、背诵所有 attack 名称。
+
+**Checkpoint:** 画出 user → browser/client → auth service → resource 的 trust map；分别标出 identity proof、session、authorization decision、token scope，并指出一个 confused-deputy/privilege-escalation 风险。
+
+**Next → [M23 系统判断](#m23)**
+
+---
+
+<a id="m23"></a>
+## M23 — Systems Thinking & Judgment：测量、成本、风险与技术选择
+
+**Repo companion:** [`book/23-systems-thinking-judgment/`](book/23-systems-thinking-judgment/)
+
+| 知识点 | 精确资源 |
+|---|---|
+| reliability 是成本/风险 trade-off，不是“越高越好” | **Core:** Google SRE **Ch.3 Embracing Risk**：<https://sre.google/sre-book/embracing-risk/> |
+| 简单性本身是可靠性策略 | **Core:** Google SRE **Ch.9 Simplicity**：<https://sre.google/sre-book/simplicity/> |
+| hypothesis-driven troubleshooting | **Core revisit:** [Effective Troubleshooting](https://sre.google/sre-book/effective-troubleshooting/) 的 theory/process |
+| 如何评估新技术 | **Core:** [`meta/TECHNOLOGY_EVALUATION_FRAMEWORK.md`](meta/TECHNOLOGY_EVALUATION_FRAMEWORK.md) — 明确 problem、baseline、evidence、failure modes、operational cost、reversibility |
+
+**Checkpoint:** 选一个“是否引入 cache/queue/new DB/container platform”的问题，先写“不引入”的 baseline，再列 benefit、new failure modes、measurement plan、reversibility；没有证据时允许结论是“不加”。
+
+**Next → [M24 最终系统答辩](#m24)**
+
+---
+
+<a id="m24"></a>
+## M24 — Final System Defense：把整条系统链说清楚
+
+**Repo companion:** [`book/24-final-system-defense/L24-01.md`](book/24-final-system-defense/L24-01.md) + [`L24-02.md`](book/24-final-system-defense/L24-02.md)
+
+这里不需要再找一门新课。你要把前面资源变成一个一致的 world model。
+
+**Core defense checklist：**
+
+1. **Representation:** 数据以什么 bytes/encoding/schema 表示？
+2. **Machine:** CPU/memory hierarchy 在哪里影响行为或成本？
+3. **OS:** process/thread/VM/files/system calls 的边界在哪里？
+4. **Network:** DNS/IP/TCP/TLS/HTTP 每层承诺什么？
+5. **Browser/client:** origin/process/state 如何影响安全与性能？
+6. **Data:** index/query/transaction/recovery 的 correctness contract 是什么？
+7. **Concurrency/distribution:** race、retry、idempotency、replication/consistency 在哪里出现？
+8. **Infrastructure:** isolation/build/provenance 如何影响部署可信度？
+9. **Observability:** 哪些 signals 能证伪你的解释？
+10. **Security/privacy:** trust boundary、identity、authorization、sensitive data 在哪里？
+11. **Judgment:** 哪些复杂度你明确选择**不**加入，为什么？
+
+**Reference when stuck:** 回到本页对应模块的 exact resource，不要继续横向搜更多教程。
+
+**Optional practice:** `project/` Mini Cloud 或你自己的真实小系统；重点是 defense evidence，不要求使用仓库项目。
+
+**Final checkpoint:** 用一张图 + 一页文字回答：“一个真实请求如何穿过整个系统？如果它慢、错、丢、重复、泄露或宕机，我分别从哪一层开始找证据？”如果你能把机制、证据、限制和 trade-off 连起来，Core traversal 完成。
+
+**Next → [回到顶部索引](#m00)**
+
+---
+
+## 结束后的三个方向
+
+1. **深挖系统实现：** 再回头做 Required Labs、Mini Cloud、Nand2Tetris/CS144/6.5840 的更多 project。
+2. **面向工作：** 按目标岗位从 M10–M23 选相关链路做真实系统 observation。
+3. **保持 current：** 对 RFC、browser、DB、observability、安全最佳实践等 CURRENT 资源优先看官方更新；稳定机制无需为了“新”而换教材。
+
+## 建议节奏
+
+- 每周 **1 个大模块** 或 **2 个轻模块**；M02/M05/M13–M18 可以放慢。
+- 每次学习最多：**一个 Core 主资源片段 + 一个 checkpoint**。
+- 一个主题卡住超过两次，再打开 Reference/Repo companion；不要同时开五份资料。
+- 不以“看完多少小时视频”为进度，而以“能否解释机制 + 做一个正确预测 + 知道去哪查证”为进度。
+
+维护和资源选择标准见 [`meta/RESOURCE_FIRST_CURRICULUM_POLICY.md`](meta/RESOURCE_FIRST_CURRICULUM_POLICY.md)；学生路径验收标准见 [`meta/STUDENT_ROUTE_ACCEPTANCE.md`](meta/STUDENT_ROUTE_ACCEPTANCE.md)。
