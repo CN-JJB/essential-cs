@@ -1,0 +1,11 @@
+=== Verifying pinned xv6 syscall route in: worktree ===
+[+] Pin: HEAD == 35b088427ef37611c38afdeed5a52a278cae38f9
+[+] syscall number: SYS_pause == 13
+[+] dispatcher: [SYS_pause] -> sys_pause
+[+] kernel implementation: sys_pause(void)
+[+] user declaration: int pause(int);
+[+] stub generator: pause entry -> a7 syscall number -> ecall -> ret
+[+] trap: U-mode ecall scause 8 -> syscall()
+[+] trampoline: uservec entry present
+[*] learner user/sleep.c not present yet; upstream route still checked
+STATUS: PASS — Exact pin and current pause/sys_pause route verified.

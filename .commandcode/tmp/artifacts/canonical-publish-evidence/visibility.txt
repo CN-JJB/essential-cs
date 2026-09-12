@@ -1,0 +1,13 @@
+Attempting GHCR visibility=public for the repository-linked package.
+If this fails, CI consumption uses the repository-owned GITHUB_TOKEN
+with packages:read, which is the minimum documented mechanism.
+{
+  "message": "Not Found",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "404"
+}VISIBILITY_USER_API=failed-or-unsupported
+{
+  "message": "Not Found",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "404"
+}VISIBILITY_USERS_API=failed-or-unsupported

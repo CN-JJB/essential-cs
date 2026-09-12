@@ -196,8 +196,8 @@ State; Abstraction; Representation; Indirection; Caching; Concurrency; Isolation
 | `Consensus` (共识) | Concept is Core at M17 `L17-02` (R10) — **no Registry ID yet** | #15 §8.5 deferral preserved: concept/implementation boundary and revisit semantics were resolved (#9), but a stable ID is postponed until a full boundary review so the ID cannot harden an architecture decision. |
 | Schema evolution / reader-writer compatibility / provenance / derived data | **Application pattern only** — M13 `L13-03` homes under State / Representation / Interface / Invariant (R6) | Existing canonical concepts are sufficient; no new ID, no new Big Idea, no PROV ontology. |
 | Queue, Replication, Transaction, RPC, Container, Observability | Not in first population | Important Module-level mechanisms; their ID boundaries depend on dossier/lab work, and premature IDs would harden architecture decisions. |
-| AI / model / evaluation concepts | Not in first population | OQ-BP-001 (bounded AI literacy) — RFC-gated; safe interim pattern is verification-of-AI-generated-claims (Current Case). |
-| HCI / accessibility / consent / user mental model | Not in first population | OQ-BP-003 (human-facing boundary) — RFC-gated. |
+| AI / model / evaluation concepts | Not in first population | Resolved for v1.0 by D-033 (OQ-BP-001 closed for v1.0); safe bounded pattern is verification-of-AI-generated-claims (Current Case). |
+| HCI / accessibility / consent / user mental model | Not in first population | Resolved for v1.0 by D-034 (OQ-BP-003 closed for v1.0); bounded human-facing evidence hooks in P2/P9/browser. |
 | Applied probability / statistics / uncertainty concepts | Not in first population (R1) | Treated as the measurement-uncertainty toolkit under Estimate/Diagnose; M04 `L04-02` owns the first assessed home; no ID. |
 | Product names, commands, frameworks, vendor services | Never concept IDs | Invariant 4 + Registry policy: principle before product; products are replaceable Current Cases. |
 

@@ -1,0 +1,16 @@
+=== IDENTITY SEPARATION TABLE ===
+registry_ref=ghcr.io/cn-jjb/essential-cs/canonical
+registry_digest=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+registry_digest_role=PIN (durable, content-addressed, retrievable)
+pull_reference=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+config_digest=sha256:24a926a0dcc9b98b7298b8728d68417233f15f32a23350bf1273bb26089d7805
+local_image_id=sha256:24a926a0dcc9b98b7298b8728d68417233f15f32a23350bf1273bb26089d7805
+local_image_id_role=NOT-PIN (daemon-local, ephemeral, not retrievable)
+mutable_tag_candidate=ghcr.io/cn-jjb/essential-cs/canonical:candidate
+mutable_tag_sha=ghcr.io/cn-jjb/essential-cs/canonical:sha-25804b02cdd89bc3e2ff386aaf60f7c0b41b9032
+mutable_tag_role=NOT-PIN (labels that may be repointed)
+git_sha=25804b02cdd89bc3e2ff386aaf60f7c0b41b9032
+git_sha_role=NOT-PIN (source revision)
+runner_image_version=20260907.300.1
+runner_image_role=NOT-PIN (moving execution substrate)
+=================================

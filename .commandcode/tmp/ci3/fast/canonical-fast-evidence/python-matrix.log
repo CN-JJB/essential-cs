@@ -1,0 +1,187 @@
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.093s
+
+OK
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+changed.field=text old='A中' new='A文'
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+reset.ok input=baseline state=baseline
+SUITE_PASS labs/foundations/m00-m01
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.003s
+
+OK
+SUITE_PASS labs/foundations/m02
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.034s
+
+OK
+SUITE_PASS labs/foundations/m05
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 1.090s
+
+OK
+SUITE_PASS labs/foundations/m06
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.160s
+
+OK
+SUITE_PASS labs/foundations/m07
+............
+----------------------------------------------------------------------
+Ran 12 tests in 0.040s
+
+OK
+=== Resetting M08 Lab Workspace: /work/labs/foundations/m08 ===
+  [x] Removed __pycache__/
+Cleanup complete. Total artifacts removed: 1
+SUITE_PASS labs/foundations/m08
+................
+----------------------------------------------------------------------
+Ran 16 tests in 0.077s
+
+OK
+=== Resetting M09 Lab Workspace: /work/labs/foundations/m09 ===
+  [x] Removed __pycache__/
+Cleanup complete. Total artifacts removed: 1
+SUITE_PASS labs/foundations/m09
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.756s
+
+OK
+SUITE_PASS labs/foundations/m10
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.527s
+
+OK
+SUITE_PASS labs/foundations/m11
+......
+----------------------------------------------------------------------
+Ran 6 tests in 1.628s
+
+OK
+SUITE_PASS labs/foundations/m12
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.018s
+
+OK
+SUITE_PASS labs/foundations/m13
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.016s
+
+OK
+SUITE_PASS labs/foundations/m14
+....
+----------------------------------------------------------------------
+Ran 4 tests in 1.828s
+
+OK
+SUITE_PASS labs/foundations/m15
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 2.396s
+
+OK
+SUITE_PASS labs/foundations/m16
+...............
+----------------------------------------------------------------------
+Ran 15 tests in 0.001s
+
+OK
+[RESET] M17 course-owned scratch is clean.
+[RESET] M17 course-owned scratch is clean.
+SUITE_PASS labs/foundations/m17
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.044s
+
+OK
+SUITE_PASS labs/foundations/m18
+....................
+----------------------------------------------------------------------
+Ran 20 tests in 0.009s
+
+OK
+SUITE_PASS labs/foundations/m19
+....................................
+----------------------------------------------------------------------
+Ran 36 tests in 10.953s
+
+OK
+SUITE_PASS labs/foundations/m20
+...............
+----------------------------------------------------------------------
+Ran 15 tests in 0.009s
+
+OK
+SUITE_PASS labs/foundations/m21
+....................
+----------------------------------------------------------------------
+Ran 20 tests in 0.029s
+
+OK
+SUITE_PASS labs/foundations/m22
+.......................
+----------------------------------------------------------------------
+Ran 23 tests in 0.002s
+
+OK
+SUITE_PASS labs/foundations/m23
+.......................
+----------------------------------------------------------------------
+Ran 23 tests in 0.013s
+
+OK
+SUITE_PASS labs/foundations/m24
+......
+----------------------------------------------------------------------
+Ran 6 tests in 1.115s
+
+OK
+SUITE_PASS labs/lab_req_01
+........
+----------------------------------------------------------------------
+Ran 8 tests in 4.131s
+
+OK
+SUITE_PASS labs/lab_req_03
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.035s
+
+OK
+SUITE_PASS labs/lab_req_04
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.057s
+
+OK
+SUITE_PASS labs/lab_req_05
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.557s
+
+OK

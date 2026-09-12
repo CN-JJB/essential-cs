@@ -1,0 +1,37 @@
+==================================================================
+ Essential CS: LAB-REQ-04 SQLite Indexing & Access Path Trace
+==================================================================
+ Disposition: PASS
+ CLI Used:    /usr/bin/sqlite3
+ CLI Version: 3.45.1 2024-01-30 16:01:20 e876e51a0ed5c5b3126f52e532044363a014bc594cfefa87ffb5b82257ccalt1 (64-bit)
+ Database:    /work/labs/lab_req_04/lab_orders.db
+ Verification: result_equivalence=True, semantic_eqp=True
+------------------------------------------------------------------
+ [Checkpoint 1: Unindexed Plan]
+   Raw EQP:   QUERY PLAN
+`--SCAN orders
+   Summary:   ['OTHER', 'SCAN']
+------------------------------------------------------------------
+ [Checkpoint 2: Indexed Plan & Result Equivalence]
+   Raw EQP:   QUERY PLAN
+`--SEARCH orders USING INDEX idx_orders_user (user_id=?)
+   Summary:   ['OTHER', 'SEARCH_INDEX']
+   Results Matched: True (rows=18, hash=cc7dfb921ab5...)
+------------------------------------------------------------------
+ [Checkpoint 3: Repeated Read Timing (Symmetric Protocol)]
+   Unindexed Median: 1.857 ms
+   Indexed Median:   1.463 ms
+------------------------------------------------------------------
+ [Checkpoint 4: Write & Storage Cost (200 rows)]
+   DB Size Before Index: 303104 bytes
+   DB Size After Index:  356352 bytes (Delta: 53248 bytes)
+   Bulk Insert Unindexed: 2.88 ms
+   Bulk Insert Indexed:   3.46 ms
+------------------------------------------------------------------
+ [Checkpoint 5: Changed Workload Planner Choice]
+   Query:          SELECT * FROM orders WHERE amount > 0.0;
+   Relevant Index: idx_orders_amount ON orders(amount)
+   Raw EQP:        QUERY PLAN
+`--SEARCH orders USING INDEX idx_orders_amount (amount>?)
+   Observed Path:  ['OTHER', 'SEARCH_INDEX']
+==================================================================

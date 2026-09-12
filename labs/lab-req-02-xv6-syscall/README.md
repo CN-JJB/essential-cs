@@ -75,6 +75,29 @@ The pinned base repo does not contain MIT's course-fork `grade-lab-util`, so tha
 
 Reset is scoped to this dedicated worktree/process group and returns the tree to the exact clean pin.
 
+## Prerequisites
+
+- Hard prerequisites: M06 (`L06-01` syscall boundaries & execution contexts, `L06-02` trap handling).
+- Toolchain: RISC-V cross-compiler (`riscv64-unknown-elf-gcc` or `riscv64-linux-gnu-gcc`), QEMU (`qemu-system-riscv64`), git (checked by `./preflight.sh`).
+
+## Prediction-Before-Observation
+
+1. Does `user/sleep.c` invoke the kernel function `sys_pause` directly across memory space? Predict how user-space transitions into supervisor mode via `ecall`.
+2. If `sleep` is invoked without arguments, predict the program's output and exit status.
+
+## Exit Criteria
+
+- `./preflight.sh` passes or truthfully records missing host tools.
+- `python3 verify_source_route.py worktree` verifies source anchors for `pause`/`sys_pause`/`ecall`.
+- `./smoke.sh` completes successfully: xv6 compiles, boots in QEMU, executes `sleep 10`, reaps QEMU process group cleanly.
+- Record evidence in `course/evidence/lab-req-02-evidence-template.md`.
+
+## Provenance & Attribution
+
+- Upstream: MIT 6.1810 Operating System Engineering (Fall 2025).
+- Upstream repo: `https://github.com/mit-pdos/xv6-riscv.git` @ `35b088427ef37611c38afdeed5a52a278cae38f9`.
+- License: MIT license in upstream `LICENSE`. All guidance and smoke scripts are Essential CS originals.
+
 ## Fallback
 
 If QEMU or the cross-toolchain is unavailable, use `verify_source_route.py` plus `fallback_trace.md`.

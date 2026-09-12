@@ -1,0 +1,5 @@
+retrieval_context=CLEAN (separate fresh runner, no prior local images)
+runner_image_version=20260907.300.1
+runner_arch=x86_64
+git_sha=25804b02cdd89bc3e2ff386aaf60f7c0b41b9032
+workflow_run_id=34673360717

@@ -518,7 +518,7 @@ def collect_preflight_report(module: str = "M21") -> Dict[str, Any]:
             },
             "policy_invariants": {
                 "OQ_BP_006": "OPEN / UNRESOLVED",
-                "OQ_BP_001": "OPEN / RFC-GATED (AI outputs treated as unverified candidate hypotheses)",
+                "OQ_BP_001": "RESOLVED FOR v1.0 BY D-033 (AI outputs treated as unverified candidate hypotheses)",
                 "measurement_stance": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
                 "technology_evaluation": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
                 "cost_modeling": "DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT",
@@ -631,7 +631,7 @@ class TestPreflightSecuritySynthesis(unittest.TestCase):
         self.assertEqual(report["policy_invariants"]["OQ_BP_006"], "OPEN / UNRESOLVED")
         self.assertEqual(
             report["policy_invariants"]["OQ_BP_001"],
-            "OPEN / RFC-GATED (AI outputs treated as unverified candidate hypotheses)",
+            "RESOLVED FOR v1.0 BY D-033 (AI outputs treated as unverified candidate hypotheses)",
         )
         self.assertEqual(
             report["policy_invariants"]["measurement_stance"],

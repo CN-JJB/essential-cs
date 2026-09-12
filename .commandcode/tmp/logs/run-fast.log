@@ -1,0 +1,1232 @@
+canonical-matrix	Set up job	﻿2026-09-12T04:41:28.0993694Z Current runner version: '2.337.0'
+canonical-matrix	Set up job	2026-09-12T04:41:28.1019779Z ##[group]Runner Image Provisioner
+canonical-matrix	Set up job	2026-09-12T04:41:28.1020768Z Hosted Compute Agent
+canonical-matrix	Set up job	2026-09-12T04:41:28.1021444Z Version: 20260828.587
+canonical-matrix	Set up job	2026-09-12T04:41:28.1022085Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+canonical-matrix	Set up job	2026-09-12T04:41:28.1022934Z Build Date: 2026-08-28T16:44:25Z
+canonical-matrix	Set up job	2026-09-12T04:41:28.1023620Z Worker ID: {2f825b75-b4e5-438e-9d38-9e4114a0ee92}
+canonical-matrix	Set up job	2026-09-12T04:41:28.1024389Z Azure Region: westus2
+canonical-matrix	Set up job	2026-09-12T04:41:28.1025283Z ##[endgroup]
+canonical-matrix	Set up job	2026-09-12T04:41:28.1026787Z ##[group]Operating System
+canonical-matrix	Set up job	2026-09-12T04:41:28.1027542Z Ubuntu
+canonical-matrix	Set up job	2026-09-12T04:41:28.1028075Z 24.04.5
+canonical-matrix	Set up job	2026-09-12T04:41:28.1028623Z LTS
+canonical-matrix	Set up job	2026-09-12T04:41:28.1029186Z ##[endgroup]
+canonical-matrix	Set up job	2026-09-12T04:41:28.1029752Z ##[group]Runner Image
+canonical-matrix	Set up job	2026-09-12T04:41:28.1030463Z Image: ubuntu-24.04
+canonical-matrix	Set up job	2026-09-12T04:41:28.1031039Z Version: 20260907.300.1
+canonical-matrix	Set up job	2026-09-12T04:41:28.1032138Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+canonical-matrix	Set up job	2026-09-12T04:41:28.1033925Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+canonical-matrix	Set up job	2026-09-12T04:41:28.1035374Z ##[endgroup]
+canonical-matrix	Set up job	2026-09-12T04:41:28.1036616Z ##[group]GITHUB_TOKEN Permissions
+canonical-matrix	Set up job	2026-09-12T04:41:28.1038653Z Contents: read
+canonical-matrix	Set up job	2026-09-12T04:41:28.1039294Z Metadata: read
+canonical-matrix	Set up job	2026-09-12T04:41:28.1039938Z Packages: read
+canonical-matrix	Set up job	2026-09-12T04:41:28.1040531Z ##[endgroup]
+canonical-matrix	Set up job	2026-09-12T04:41:28.1042603Z Secret source: Actions
+canonical-matrix	Set up job	2026-09-12T04:41:28.1043697Z Cache mode: write
+canonical-matrix	Set up job	2026-09-12T04:41:28.1044407Z Prepare workflow directory
+canonical-matrix	Set up job	2026-09-12T04:41:28.2659251Z Prepare all required actions
+canonical-matrix	Set up job	2026-09-12T04:41:28.2709164Z Getting action download info
+canonical-matrix	Set up job	2026-09-12T04:41:28.6301151Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+canonical-matrix	Set up job	2026-09-12T04:41:28.7561332Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+canonical-matrix	Set up job	2026-09-12T04:41:29.2149732Z Complete job name: canonical-matrix
+canonical-matrix	Checkout exact event revision	﻿2026-09-12T04:41:29.6427502Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6437087Z ##[group]Run actions/checkout@v4
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6437907Z with:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6438437Z   ref: d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6439069Z   fetch-depth: 0
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6439557Z   repository: CN-JJB/essential-cs
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6443795Z   token: ***
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6444266Z   ssh-strict: true
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6444728Z   ssh-user: git
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6445432Z   persist-credentials: true
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6445968Z   clean: true
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6446448Z   sparse-checkout-cone-mode: true
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6447002Z   fetch-tags: false
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6447485Z   show-progress: true
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6448025Z   lfs: false
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6448509Z   submodules: false
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6449001Z   set-safe-directory: true
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6449539Z   allow-unsafe-pr-checkout: false
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6450374Z env:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6450866Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.6451357Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7494025Z Syncing repository: CN-JJB/essential-cs
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7496697Z ##[group]Getting Git version info
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7497815Z Working directory is '/home/runner/work/essential-cs/essential-cs'
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7499537Z [command]/usr/bin/git version
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7611686Z git version 2.55.0
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7633527Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7649664Z Temporarily overriding HOME='/home/runner/work/_temp/775be88b-86d3-4440-823a-0c81f6c5b32a' before making global git config changes
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7652060Z Adding repository directory to the temporary git global config as a safe directory
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7656751Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/essential-cs/essential-cs
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7715455Z Deleting the contents of '/home/runner/work/essential-cs/essential-cs'
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7720488Z ##[group]Initializing the repository
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7726003Z [command]/usr/bin/git init /home/runner/work/essential-cs/essential-cs
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7861377Z hint: Using 'master' as the name for the initial branch. This default branch name
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7863200Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7864636Z hint: to use in all of your new repositories, which will suppress this warning,
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7866455Z hint: call:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7867313Z hint:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7869534Z hint: 	git config --global init.defaultBranch <name>
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7870910Z hint:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7872138Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7874190Z hint: 'development'. The just-created branch can be renamed via this command:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7876021Z hint:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7876812Z hint: 	git branch -m <name>
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7877724Z hint:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7879042Z hint: Disable this message with "git config set advice.defaultBranchName false"
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7881125Z Initialized empty Git repository in /home/runner/work/essential-cs/essential-cs/.git/
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7884214Z [command]/usr/bin/git remote add origin https://github.com/CN-JJB/essential-cs
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7955315Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7957260Z ##[group]Disabling automatic garbage collection
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7958965Z [command]/usr/bin/git config --local gc.auto 0
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7990979Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7991815Z ##[group]Setting up auth
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.7992596Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.8044636Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.8450830Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.8489771Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.8722345Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.8761230Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.8994148Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.9035247Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.9049670Z ##[group]Fetching the repository
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:29.9051206Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5519466Z From https://github.com/CN-JJB/essential-cs
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5521412Z  * [new branch]      architecture/issue-36-build-first -> origin/architecture/issue-36-build-first
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5523447Z  * [new branch]      audit/issue-140-post-v09-v10-gap-plan -> origin/audit/issue-140-post-v09-v10-gap-plan
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5526355Z  * [new branch]      audit/issue-2-external-curriculum-v0.1 -> origin/audit/issue-2-external-curriculum-v0.1
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5528975Z  * [new branch]      blueprint/issue-1-core-map -> origin/blueprint/issue-1-core-map
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5531327Z  * [new branch]      blueprint/issue-10-audit-disposition -> origin/blueprint/issue-10-audit-disposition
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5534012Z  * [new branch]      blueprint/issue-11-mini-cloud-alignment -> origin/blueprint/issue-11-mini-cloud-alignment
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5537472Z  * [new branch]      blueprint/issue-12-lab-source-selection -> origin/blueprint/issue-12-lab-source-selection
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5540945Z  * [new branch]      blueprint/issue-13-competency-concepts -> origin/blueprint/issue-13-competency-concepts
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5544167Z  * [new branch]      blueprint/issue-19-course-identity-entry -> origin/blueprint/issue-19-course-identity-entry
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5547908Z  * [new branch]      blueprint/issue-21-assessment-tech-map -> origin/blueprint/issue-21-assessment-tech-map
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5551249Z  * [new branch]      blueprint/issue-23-final-exit-audit -> origin/blueprint/issue-23-final-exit-audit
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5554560Z  * [new branch]      blueprint/issue-3-mini-cloud-evolution -> origin/blueprint/issue-3-mini-cloud-evolution
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5558379Z  * [new branch]      blueprint/issue-9-final-reconciliation -> origin/blueprint/issue-9-final-reconciliation
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5561991Z  * [new branch]      design/issue-114-s7-m21-m24-security-judgment -> origin/design/issue-114-s7-m21-m24-security-judgment
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5566064Z  * [new branch]      design/issue-50-m05-m09-runtime-os-persistence -> origin/design/issue-50-m05-m09-runtime-os-persistence
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5571202Z  * [new branch]      design/issue-71-m10-m12-network-web-browser -> origin/design/issue-71-m10-m12-network-web-browser
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5576082Z  * [new branch]      design/issue-86-m13-m15-data-concurrency -> origin/design/issue-86-m13-m15-data-concurrency
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5579905Z  * [new branch]      design/issue-99-m16-m20-distributed-infra -> origin/design/issue-99-m16-m20-distributed-infra
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5584089Z  * [new branch]      governance/issue-88-issue-pr-handoff -> origin/governance/issue-88-issue-pr-handoff
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5587595Z  * [new branch]      governance/role-specific-agent-guides -> origin/governance/role-specific-agent-guides
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5590720Z  * [new branch]      impl/issue-101-s6-b1-m16-rpc -> origin/impl/issue-101-s6-b1-m16-rpc
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5594500Z  * [new branch]      impl/issue-103-s6-b2-m17-replication-consensus -> origin/impl/issue-103-s6-b2-m17-replication-consensus
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5598463Z  * [new branch]      impl/issue-105-s6-b3-m18-coordination -> origin/impl/issue-105-s6-b3-m18-coordination
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5601834Z  * [new branch]      impl/issue-107-s6-b4-m19-infrastructure -> origin/impl/issue-107-s6-b4-m19-infrastructure
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5606665Z  * [new branch]      impl/issue-110-s6-b5-m20-observability -> origin/impl/issue-110-s6-b5-m20-observability
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5611865Z  * [new branch]      impl/issue-116-s7-b1-m21-trust-crypto -> origin/impl/issue-116-s7-b1-m21-trust-crypto
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5615979Z  * [new branch]      impl/issue-119-s7-b2-m22-auth-composition -> origin/impl/issue-119-s7-b2-m22-auth-composition
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5619678Z  * [new branch]      impl/issue-121-s7-b3-m23-systems-judgment -> origin/impl/issue-121-s7-b3-m23-systems-judgment
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5623762Z  * [new branch]      impl/issue-123-s7-b4-m24-final-system-defense -> origin/impl/issue-123-s7-b4-m24-final-system-defense
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5627656Z  * [new branch]      impl/issue-90-m13-sqlite-exp02 -> origin/impl/issue-90-m13-sqlite-exp02
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5631164Z  * [new branch]      impl/issue-93-m14-transactions-lab-req-05 -> origin/impl/issue-93-m14-transactions-lab-req-05
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5635074Z  * [new branch]      impl/issue-95-m15-concurrency-lab-req-03 -> origin/impl/issue-95-m15-concurrency-lab-req-03
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5640544Z  * [new branch]      implementation/durable-canonical-environment-pin-v0.1 -> origin/implementation/durable-canonical-environment-pin-v0.1
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5645959Z  * [new branch]      implementation/issue-145-stable-environment-ci-v0.1 -> origin/implementation/issue-145-stable-environment-ci-v0.1
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5650641Z  * [new branch]      implementation/issue-38-m02-computation-complexity -> origin/implementation/issue-38-m02-computation-complexity
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5655510Z  * [new branch]      implementation/issue-41-m03-machine-isa-execution -> origin/implementation/issue-41-m03-machine-isa-execution
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5660080Z  * [new branch]      implementation/issue-44-m04-memory-locality-measurement -> origin/implementation/issue-44-m04-memory-locality-measurement
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5664666Z  * [new branch]      implementation/issue-53-m05-languages-runtime-compiler -> origin/implementation/issue-53-m05-languages-runtime-compiler
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5669640Z  * [new branch]      implementation/issue-56-m06-processes-syscalls-lab-req-02 -> origin/implementation/issue-56-m06-processes-syscalls-lab-req-02
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5674793Z  * [new branch]      implementation/issue-59-m07-virtual-memory-isolation -> origin/implementation/issue-59-m07-virtual-memory-isolation
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5680012Z  * [new branch]      implementation/issue-62-m08-files-filesystems-io -> origin/implementation/issue-62-m08-files-filesystems-io
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5684478Z  * [new branch]      implementation/issue-65-m09-storage-engine-durable-storage -> origin/implementation/issue-65-m09-storage-engine-durable-storage
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5689988Z  * [new branch]      implementation/issue-74-m10-networking-ip-dns-transport -> origin/implementation/issue-74-m10-networking-ip-dns-transport
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5694496Z  * [new branch]      implementation/issue-77-m11-tls-http-caching-lab-req-01 -> origin/implementation/issue-77-m11-tls-http-caching-lab-req-01
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5700046Z  * [new branch]      implementation/issue-80-m12-web-browser-exp-03 -> origin/implementation/issue-80-m12-web-browser-exp-03
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5703607Z  * [new branch]      lead-smoke/pr-66-m09    -> origin/lead-smoke/pr-66-m09
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5706130Z  * [new branch]      lead-smoke/pr-66-m09-v2 -> origin/lead-smoke/pr-66-m09-v2
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5708357Z  * [new branch]      lead-smoke/pr-78-m11    -> origin/lead-smoke/pr-78-m11
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5710652Z  * [new branch]      lead-smoke/pr-78-m11-final -> origin/lead-smoke/pr-78-m11-final
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5713381Z  * [new branch]      lead-smoke/pr-78-m11-v2 -> origin/lead-smoke/pr-78-m11-v2
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5715879Z  * [new branch]      lead-smoke/pr-81-m12-final -> origin/lead-smoke/pr-81-m12-final
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5718139Z  * [new branch]      main                    -> origin/main
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5720574Z  * [new branch]      repair/issue-125-m22-layer56-report-key -> origin/repair/issue-125-m22-layer56-report-key
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5723929Z  * [new branch]      repair/issue-127-pre-v09-known-regressions -> origin/repair/issue-127-pre-v09-known-regressions
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5727754Z  * [new branch]      repair/issue-131-v09-smoke-license-gates -> origin/repair/issue-131-v09-smoke-license-gates
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5731184Z  * [new branch]      repair/issue-135-lab-req-02-executable-bits -> origin/repair/issue-135-lab-req-02-executable-bits
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5734609Z  * [new branch]      repair/issue-149-qemu-ci-false-green-v0.1 -> origin/repair/issue-149-qemu-ci-false-green-v0.1
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5738548Z  * [new branch]      research/issue-112-s7-m21-m24-security-judgment -> origin/research/issue-112-s7-m21-m24-security-judgment
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5742697Z  * [new branch]      research/issue-143-stable-environment-pin-decision-packet -> origin/research/issue-143-stable-environment-pin-decision-packet
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5746771Z  * [new branch]      research/issue-4-classic-labs-sources -> origin/research/issue-4-classic-labs-sources
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5750277Z  * [new branch]      research/issue-47-m05-m09-runtime-os-persistence -> origin/research/issue-47-m05-m09-runtime-os-persistence
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5753986Z  * [new branch]      research/issue-68-m10-m12-network-web-browser -> origin/research/issue-68-m10-m12-network-web-browser
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5757655Z  * [new branch]      research/issue-83-m13-m15-data-concurrency -> origin/research/issue-83-m13-m15-data-concurrency
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5761310Z  * [new branch]      research/issue-97-m16-m20-distributed-infra -> origin/research/issue-97-m16-m20-distributed-infra
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5764462Z  * [new branch]      status/advance-production-to-m08 -> origin/status/advance-production-to-m08
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5767493Z  * [new branch]      status/advance-production-to-m09 -> origin/status/advance-production-to-m09
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5770691Z  * [new branch]      status/record-m09-and-advance-to-s4-research -> origin/status/record-m09-and-advance-to-s4-research
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5773969Z  * [new branch]      status/record-m10-and-advance-to-m11 -> origin/status/record-m10-and-advance-to-m11
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5777108Z  * [new branch]      status/record-m11-and-advance-to-m12 -> origin/status/record-m11-and-advance-to-m12
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5780351Z  * [new branch]      status/record-m12-and-advance-to-s5-research -> origin/status/record-m12-and-advance-to-s5-research
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5783848Z  * [new branch]      status/record-s4-design-and-advance-to-m10 -> origin/status/record-s4-design-and-advance-to-m10
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5787883Z  * [new branch]      status/record-s4-research-and-advance-to-design -> origin/status/record-s4-research-and-advance-to-design
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5791658Z  * [new branch]      status/record-s5-research-and-advance-to-design -> origin/status/record-s5-research-and-advance-to-design
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5795332Z  * [new branch]      validation/issue-34-m00-m01-first-pilot -> origin/validation/issue-34-m00-m01-first-pilot
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5798812Z  * [new branch]      verification/issue-129-full-core-v09-rc-readiness -> origin/verification/issue-129-full-core-v09-rc-readiness
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5802506Z  * [new branch]      verification/issue-133-v09-rc-readiness-reverify -> origin/verification/issue-133-v09-rc-readiness-reverify
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5806516Z  * [new branch]      verification/issue-137-lab-req-02-direct-invocation -> origin/verification/issue-137-lab-req-02-direct-invocation
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5810832Z  * [new branch]      verification/issue-147-stable-environment-ci-independent -> origin/verification/issue-147-stable-environment-ci-independent
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5814380Z  * [new branch]      verification/issue-31-m00-m01-gate -> origin/verification/issue-31-m00-m01-gate
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5818236Z  * [new branch]      vertical-slice/issue-25-foundations-system-mechanics-research -> origin/vertical-slice/issue-25-foundations-system-mechanics-research
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5822755Z  * [new branch]      vertical-slice/issue-27-foundations-system-mechanics-design -> origin/vertical-slice/issue-27-foundations-system-mechanics-design
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5826868Z  * [new branch]      vertical-slice/issue-29-m00-m01-lesson-activity -> origin/vertical-slice/issue-29-m00-m01-lesson-activity
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5829810Z  * [new branch]      web-lead/post-pr30-status -> origin/web-lead/post-pr30-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5832080Z  * [new branch]      web-lead/post-pr33-status -> origin/web-lead/post-pr33-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5834326Z  * [new branch]      web-lead/post-pr39-status -> origin/web-lead/post-pr39-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5837028Z  * [new branch]      web-lead/post-pr42-issue-first -> origin/web-lead/post-pr42-issue-first
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5839404Z  * [new branch]      web-lead/post-pr45-status -> origin/web-lead/post-pr45-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5841612Z  * [new branch]      web-lead/post-pr48-status -> origin/web-lead/post-pr48-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5843816Z  * [new branch]      web-lead/post-pr51-status -> origin/web-lead/post-pr51-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5846276Z  * [new branch]      web-lead/post-pr54-status -> origin/web-lead/post-pr54-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5848488Z  * [new branch]      web-lead/post-pr57-status -> origin/web-lead/post-pr57-status
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5850290Z  * [new tag]         v0.9                    -> v0.9
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5854004Z [command]/usr/bin/git rev-parse --verify --quiet d2ca8556f4fd086edcf82e0d2b1197571a619dda^{object}
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5856508Z d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5859483Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5861012Z ##[group]Determining the checkout info
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5862730Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5863740Z [command]/usr/bin/git sparse-checkout disable
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5866972Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5870377Z ##[group]Checking out the ref
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.5872117Z [command]/usr/bin/git checkout --progress --force d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6191488Z Note: switching to 'd2ca8556f4fd086edcf82e0d2b1197571a619dda'.
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6193386Z 
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6194574Z You are in 'detached HEAD' state. You can look around, make experimental
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6197178Z changes and commit them, and you can discard any commits you make in this
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6199757Z state without impacting any branches by switching back to a branch.
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6200949Z 
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6202132Z If you want to create a new branch to retain commits you create, you may
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6205347Z do so (now or later) by using -c with the switch command. Example:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6206658Z 
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6207145Z   git switch -c <new-branch-name>
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6207881Z 
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6208329Z Or undo this operation with:
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6209019Z 
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6209420Z   git switch -
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6209939Z 
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6210826Z Turn off this advice by setting config variable advice.detachedHead to false
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6212101Z 
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6213256Z HEAD is now at d2ca855 feat(env): commit durable canonical digest pin and materialization path (#150)
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6217607Z ##[endgroup]
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6252309Z [command]/usr/bin/git log -1 --format=%H
+canonical-matrix	Checkout exact event revision	2026-09-12T04:41:30.6281390Z d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Assert exact checked-out revision	﻿2026-09-12T04:41:30.7686638Z ##[group]Run expected='d2ca8556f4fd086edcf82e0d2b1197571a619dda'
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7688587Z ^[[36;1mexpected='d2ca8556f4fd086edcf82e0d2b1197571a619dda'^[[0m
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7690059Z ^[[36;1mactual="$(git rev-parse HEAD)"^[[0m
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7691336Z ^[[36;1mecho "EXPECTED_REVISION=${expected}"^[[0m
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7692638Z ^[[36;1mecho "ACTUAL_REVISION=${actual}"^[[0m
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7693882Z ^[[36;1mtest "${actual}" = "${expected}"^[[0m
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7737231Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7738679Z env:
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7739534Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7740553Z ##[endgroup]
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7846538Z EXPECTED_REVISION=d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Assert exact checked-out revision	2026-09-12T04:41:30.7849704Z ACTUAL_REVISION=d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	﻿2026-09-12T04:41:30.9037956Z ##[group]Run cat /etc/os-release | head -n 3
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9039371Z ^[[36;1mcat /etc/os-release | head -n 3^[[0m
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9040721Z ^[[36;1mecho "runner_image_version=${ImageVersion}"^[[0m
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9042100Z ^[[36;1mecho "runner_arch=$(uname -m)"^[[0m
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9080352Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9081388Z env:
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9082234Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9083178Z ##[endgroup]
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9162453Z PRETTY_NAME="Ubuntu 24.04.5 LTS"
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9164010Z NAME="Ubuntu"
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9165174Z VERSION_ID="24.04"
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9169000Z runner_image_version=20260907.300.1
+canonical-matrix	Record hosted substrate identity (informational only, not the pin)	2026-09-12T04:41:30.9179135Z runner_arch=x86_64
+canonical-matrix	Materialize canonical environment by immutable registry digest	﻿2026-09-12T04:41:31.0424738Z ##[group]Run set -ueo pipefail
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:31.0427015Z ^[[36;1mset -ueo pipefail^[[0m
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:31.0447445Z ^[[36;1mecho "***" | docker login ghcr.io -u "CN-JJB" --password-stdin^[[0m
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:31.0450209Z ^[[36;1mbash scripts/canonical-image-pull.sh^[[0m
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:31.0506235Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:31.0507881Z env:
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:31.0509251Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:31.0510794Z ##[endgroup]
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.7935956Z 
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.7937091Z Login Succeeded
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.7938733Z WARNING! Your credentials are stored unencrypted in '/home/runner/.docker/config.json'.
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.7940626Z Configure a credential helper to remove this warning. See
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.7941719Z https://docs.docker.com/go/credential-store/
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.7942533Z 
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8061778Z RECIPE_DOCKERFILE=.devcontainer/Dockerfile
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8062854Z RECIPE_BLOB_COMMITTED=51198ea12c3c9ddfa18a2246bddef491ea729559
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8063547Z RECIPE_BLOB_ACTUAL=51198ea12c3c9ddfa18a2246bddef491ea729559
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8063977Z RECIPE_BLOB_MATCH=YES
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8082374Z === CANONICAL IMAGE IDENTITY (pre-pull) ===
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8083223Z intended_registry_digest=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8084167Z pull_reference=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8084842Z platform=linux/amd64
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8085429Z local_image_id=(not yet pulled)
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8085904Z mutable_tag_candidate=ghcr.io/cn-jjb/essential-cs/canonical:candidate
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8086418Z source_dockerfile=.devcontainer/Dockerfile
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8086940Z source_base_digest=sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8087483Z git_sha=d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8087840Z workflow_run_id=34673666673
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8088175Z runner_image_version=20260907.300.1
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8095228Z runner_arch=x86_64
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8096139Z NOTE: intended_registry_digest is the pin; local image ID, mutable tags,
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8097140Z       git SHA and runner image version are audit fields, NOT the pin.
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:33.8097784Z ===========================================
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:34.4522919Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460: Pulling from cn-jjb/essential-cs/canonical
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:34.4653500Z ef852a656105: Pulling fs layer
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:34.4654322Z facb0d65c012: Pulling fs layer
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:34.4655567Z 5affce2cbffd: Pulling fs layer
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:34.4656964Z 818d662cd74f: Pulling fs layer
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:34.4657923Z 818d662cd74f: Waiting
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:35.2684640Z ef852a656105: Verifying Checksum
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:35.2686803Z ef852a656105: Download complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:35.6068047Z 818d662cd74f: Verifying Checksum
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:35.6068785Z 818d662cd74f: Download complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:36.4071428Z ef852a656105: Pull complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:38.8637721Z facb0d65c012: Verifying Checksum
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:38.8638267Z facb0d65c012: Download complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:40.4837687Z 5affce2cbffd: Verifying Checksum
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:40.4838277Z 5affce2cbffd: Download complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:44.1019559Z facb0d65c012: Pull complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.5265051Z 5affce2cbffd: Pull complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.5376295Z 818d662cd74f: Pull complete
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.5601270Z Digest: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.5608019Z Status: Downloaded newer image for ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.5619768Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6023785Z === CANONICAL IMAGE IDENTITY (post-pull) ===
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6025469Z intended_registry_digest=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6026928Z pull_reference=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6027693Z platform=linux/amd64
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6028088Z local_image_id=sha256:24a926a0dcc9b98b7298b8728d68417233f15f32a23350bf1273bb26089d7805
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6028539Z repo_digests_begin
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6046479Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460 
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6047641Z repo_digests_end
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6048593Z NOTE: local_image_id is a daemon-local identifier produced by this pull;
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6049419Z       it is NOT durable, NOT retrievable by itself, and NOT the pin.
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6050189Z ===========================================
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6050659Z REPO_DIGESTS_CONTAIN_PIN=YES
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6051491Z INTENDED_REGISTRY_DIGEST=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize canonical environment by immutable registry digest	2026-09-12T04:41:48.6053129Z CANONICAL_IMAGE=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Assert this lane consumes the committed digest	﻿2026-09-12T04:41:48.6389955Z ##[group]Run set -ueo pipefail
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6390315Z ^[[36;1mset -ueo pipefail^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6390741Z ^[[36;1mdigest="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6391251Z ^[[36;1mecho "COMMITTED_CANONICAL_DIGEST=${digest}"^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6391622Z ^[[36;1mecho "CONSUMED_CANONICAL_IMAGE=${CANONICAL_IMAGE}"^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6391954Z ^[[36;1mcase "${CANONICAL_IMAGE}" in^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6392296Z ^[[36;1m  *"@${digest}") echo "DIGEST_CONSUMPTION_ASSERT=PASS" ;;^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6392815Z ^[[36;1m  *) echo "FAIL: canonical image reference does not carry the committed digest"; exit 1 ;;^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6393250Z ^[[36;1mesac^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6393723Z ^[[36;1mdocker image inspect "${CANONICAL_IMAGE}" --format 'CONSUMED_LOCAL_IMAGE_ID={{.Id}} ARCH={{.Architecture}} OS={{.Os}}'^[[0m
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6431656Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6431906Z env:
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6432098Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6432681Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6433452Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6433976Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6434300Z ##[endgroup]
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6507545Z COMMITTED_CANONICAL_DIGEST=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6508449Z CONSUMED_CANONICAL_IMAGE=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6509091Z DIGEST_CONSUMPTION_ASSERT=PASS
+canonical-matrix	Assert this lane consumes the committed digest	2026-09-12T04:41:48.6622956Z CONSUMED_LOCAL_IMAGE_ID=sha256:24a926a0dcc9b98b7298b8728d68417233f15f32a23350bf1273bb26089d7805 ARCH=amd64 OS=linux
+canonical-matrix	Materialize LF tree for course execution	﻿2026-09-12T04:41:48.6881076Z ##[group]Run rm -rf "${CI_TREE}"
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6881415Z ^[[36;1mrm -rf "${CI_TREE}"^[[0m
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6881666Z ^[[36;1mmkdir -p "${CI_TREE}/.ci-logs"^[[0m
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6882093Z ^[[36;1mgit -c core.autocrlf=false archive --format=tar HEAD | tar -x -C "${CI_TREE}"^[[0m
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6919704Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6919955Z env:
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6920150Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6920686Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6921462Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6921991Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Materialize LF tree for course execution	2026-09-12T04:41:48.6922315Z ##[endgroup]
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	﻿2026-09-12T04:41:48.7590307Z ##[group]Run set -ueo pipefail
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7590666Z ^[[36;1mset -ueo pipefail^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7590915Z ^[[36;1m{^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7591135Z ^[[36;1m  echo "lane=canonical-fast"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7591464Z ^[[36;1m  echo "canonical_image=${CANONICAL_IMAGE}"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7591857Z ^[[36;1m  echo "canonical_image_digest=${CANONICAL_IMAGE_DIGEST}"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7592636Z ^[[36;1m  echo "committed_pin_digest=$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7593320Z ^[[36;1m  echo "local_image_id=$(docker image inspect "${CANONICAL_IMAGE}" --format '{{.Id}}')"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7593844Z ^[[36;1m  echo "local_image_id_role=NOT-PIN (daemon-local)"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7594245Z ^[[36;1m  echo "runner_image_version=${ImageVersion}"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7594594Z ^[[36;1m  echo "git_sha=$(git rev-parse HEAD)"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7595301Z ^[[36;1m} | tee "${CI_TREE}/.ci-logs/canonical-digest-consumption.txt"^[[0m
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7632679Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7632937Z env:
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7633142Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7633703Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7634494Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7635409Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7635766Z ##[endgroup]
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7703905Z lane=canonical-fast
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7705093Z canonical_image=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7705982Z canonical_image_digest=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7712232Z committed_pin_digest=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7843223Z local_image_id=sha256:24a926a0dcc9b98b7298b8728d68417233f15f32a23350bf1273bb26089d7805
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7844119Z local_image_id_role=NOT-PIN (daemon-local)
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7844657Z runner_image_version=20260907.300.1
+canonical-matrix	Record canonical digest consumption in the retained evidence bundle	2026-09-12T04:41:48.7860799Z git_sha=d2ca8556f4fd086edcf82e0d2b1197571a619dda
+canonical-matrix	Canonical floor gate + version snapshot	﻿2026-09-12T04:41:48.8161600Z ##[group]Run docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" \
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8162674Z ^[[36;1mdocker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" \^[[0m
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8163836Z ^[[36;1m  bash /work/scripts/canonical-env-capture.sh | tee "${CI_TREE}/.ci-logs/canonical-env-snapshot.txt"^[[0m
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8218108Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8218519Z env:
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8218845Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8219823Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8221240Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8222216Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:48.8222753Z ##[endgroup]
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.8745556Z CANONICAL_ENV_CAPTURE version=2
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.8770030Z os=Ubuntu 24.04.4 LTS
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.8785546Z kernel=6.17.0-1022-azure
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.8800678Z arch=x86_64
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.8802770Z FLOOR PASS canonical-arch=x86_64
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9180825Z python_impl=CPython
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9181394Z python_version=3.12.3
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9204694Z FLOOR PASS python>=3.12 (CPython 3.12.3)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9365455Z sqlite_embedded=3.45.1
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9391396Z FLOOR PASS sqlite-engine>=3.45 (3.45.1)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9412271Z sqlite_cli=3.45.1
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9433326Z FLOOR PASS sqlite3-cli>=3.45 (3.45.1)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9472431Z gcc=13.3.0
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9494609Z FLOOR PASS gcc>=13 (13.3.0)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9786921Z FLOOR PASS gcc-c11-surface
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9865756Z curl=8.5.0
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:49.9906088Z FLOOR PASS curl>=8.5 (8.5.0)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0683426Z gdb=15.1
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0710583Z FLOOR PASS gdb>=15.0 (15.1) REQUIRED-present
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0833613Z qemu_riscv=QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0858095Z riscv_unknown_elf_gcc=riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0879788Z riscv_gnu_gcc=riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0904152Z binutils=GNU objdump (GNU Binutils for Ubuntu) 2.42
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0922430Z git=git version 2.43.0
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0929538Z strace=present-capability-gated
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.0947529Z bash=GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1078373Z qemu_system_misc_package=1:8.2.2+ds-0ubuntu1.18
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1079080Z gcc_riscv64_unknown_elf_package=13.2.0-11ubuntu1+12
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1079856Z gcc_riscv64_linux_gnu_package=4:13.2.0-7ubuntu1
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1080598Z FLOOR PASS qemu-system-misc exact package identity
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1081458Z FLOOR PASS gcc-riscv64-unknown-elf exact package identity
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1082162Z dpkg_lane_identities_BEGIN
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1136564Z ii  bash                         5.2.21-2ubuntu4        amd64        GNU Bourne Again SHell
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1137719Z ii  bc                           1.07.1-3ubuntu4        amd64        GNU bc arbitrary precision calculator language
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1138808Z ii  binutils                     2.42-4ubuntu2.10       amd64        GNU assembler, linker and binary utilities
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1141155Z ii  binutils-riscv64-linux-gnu   2.42-4ubuntu2.10       amd64        GNU binary utilities, for riscv64-linux-gnu target
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1143158Z ii  binutils-riscv64-unknown-elf 2.42-1ubuntu1+6        amd64        GNU assembler, linker and binary utilities for Risc-V processors
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1144835Z ii  build-essential              12.10ubuntu1           amd64        Informational list of build-essential packages
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1146261Z ii  ca-certificates              20260601~24.04.1       all          Common CA certificates
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1147738Z ii  curl                         8.5.0-2ubuntu10.13     amd64        command line tool for transferring data with URL syntax
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1149624Z ii  gcc-riscv64-linux-gnu        4:13.2.0-7ubuntu1      amd64        GNU C compiler for the riscv64 architecture
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1151390Z ii  gcc-riscv64-unknown-elf      13.2.0-11ubuntu1+12    amd64        GCC cross compiler for Risc-V processors
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1152754Z ii  gdb                          15.1-1ubuntu1~24.04.1  amd64        GNU Debugger
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1153356Z ii  git                          1:2.43.0-1ubuntu7.3    amd64        fast, scalable, distributed revision control system
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1154119Z ii  make                         4.3-4.1build2          amd64        utility for directing compilation
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1154738Z ii  perl                         5.38.2-3.2ubuntu0.4    amd64        Larry Wall's Practical Extraction and Report Language
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1156108Z ii  python3                      3.12.3-0ubuntu2.1      amd64        interactive high-level object-oriented language (default python3 version)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1157098Z ii  qemu-system-common           1:8.2.2+ds-0ubuntu1.18 amd64        QEMU full system emulation binaries (common files)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1158324Z ii  qemu-system-data             1:8.2.2+ds-0ubuntu1.18 all          QEMU full system emulation (data files)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1159007Z ii  qemu-system-misc             1:8.2.2+ds-0ubuntu1.18 amd64        QEMU full system emulation binaries (miscellaneous)
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1159664Z ii  sqlite3                      3.45.1-1ubuntu2.7      amd64        Command line interface for SQLite 3
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1160163Z ii  strace                       6.8-0ubuntu2           amd64        System call tracer
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1160526Z dpkg_lane_identities_END
+canonical-matrix	Canonical floor gate + version snapshot	2026-09-12T04:41:50.1160772Z CANONICAL_ENV_CAPTURE result=PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	﻿2026-09-12T04:41:50.2160641Z ##[group]Run docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2161283Z ^[[36;1mdocker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2161685Z ^[[36;1m  set -ueo pipefail^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2162125Z ^[[36;1m  python3 tests/preflight_network_web.py^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2162484Z ^[[36;1m  python3 tests/preflight_data_concurrency.py^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2162840Z ^[[36;1m  python3 tests/preflight_distributed_infra.py^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2163233Z ^[[36;1m  python3 tests/preflight_security_synthesis.py --module M21^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2163709Z ^[[36;1m  python3 tests/preflight_security_synthesis.py --module M22^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2164245Z ^[[36;1m  bash scripts/preflight-m05-m09.sh' 2>&1 | tee "${CI_TREE}/.ci-logs/preflights.log"^[[0m
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2199960Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2200200Z env:
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2200384Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2200917Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2201713Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2202259Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.2202586Z ##[endgroup]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4247193Z ============================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4248199Z  Essential CS: Network & Web Preflight Capability Report
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4249329Z ============================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4249970Z  Timestamp:          2026-09-12T04:41:50.423258+00:00
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4250621Z  Overall Status:     READY_M10_M11_M12_CORE_AND_LAB_REQ_01
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4251207Z  M10 Core Status:    READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4251630Z  M11 Core Status:    READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4252043Z  M12 Core Status:    READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4252462Z  LAB-REQ-01 Status:  READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4252979Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4253560Z  [Host Operating System]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4254030Z    System:           Linux 6.17.0-1022-azure (x86_64)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4254677Z    Version:          #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4255688Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4256238Z  [Python Runtime]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4256620Z    Implementation:   CPython
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4257056Z    Version:          3.12.3
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4257480Z    Socket Support:   YES
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4257951Z    SSL Support:      YES (OpenSSL 3.0.13 30 Jan 2024)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4258479Z    TLS 1.3:          YES
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4258941Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4259511Z  [Loopback Socket Capability]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4259980Z    Port 0 Bind:      YES (Assigned: 40521)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4260478Z    Loopback Conn:    YES
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4260941Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4261552Z  [curl Capability (Required for LAB-REQ-01)]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4262108Z    Usable:           YES (/usr/bin/curl)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4263684Z    Version:          curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4265432Z    TLS Backend:      OpenSSL/3.0.13
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4266736Z    Features:         alt-svc, AsynchDNS, brotli, GSS-API, HSTS, HTTP2, HTTPS-proxy, IDN, IPv6, Kerberos, Largefile, libz, NTLM, PSL, SPNEGO, SSL, threadsafe, TLS-SRP, UnixSockets, zstd
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4268181Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4268793Z  [Browser & GUI Observation Disposition]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4269328Z    Binary Detected:  NO
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4270153Z    GUI Disposition:  NO LIVE BROWSER OBSERVATION
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4270795Z    CORS Disposition: NO LIVE BROWSER CORS OBSERVATION
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4271470Z    DevTools Dispos:  NO LIVE DEVTOOLS OBSERVATION
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4272332Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4272928Z  [Chromium Source Reachability (EXP-03)]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4273494Z    Disposition:      NO LIVE CHROMIUM SOURCE RECHECK
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4274043Z    Reason:           NOT_REQUESTED
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4274546Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4275367Z  [Resolver Observation Capability]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4275876Z    Disposition:      LIVE_DNS_FAILURE_OBSERVED
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4276378Z    Available:        True
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4276958Z    Details:          {'errno': -2, 'strerror': '[Errno -2] Name or service not known'}
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4277679Z ------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4278231Z  [Optional / Auxiliary Tools]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4278735Z    ss            : AVAILABLE (ss utility, iproute2-6.1.0)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4279434Z    ip_route      : AVAILABLE (ip utility, iproute2-6.1.0, libbpf 1.3.0)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4280108Z    traceroute    : UNAVAILABLE (N/A)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4280590Z    tracert       : UNAVAILABLE (N/A)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4281108Z    tcpdump       : UNAVAILABLE (TOOL_UNAVAILABLE)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4281921Z    openssl_cli   : AVAILABLE (OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024))
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.4282746Z ============================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7816129Z ==================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7817448Z  Essential CS: Data & Concurrency Preflight Capability Report
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7818343Z ==================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7819170Z  Timestamp:              2026-09-12T04:41:50.781042+00:00
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7820160Z  Overall Status:         READY FOR M15 + LAB-REQ-03 EXECUTION (canonical Required capabilities satisfied)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7820778Z  M13 Core Status:        READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7821074Z  LAB-REQ-04 Status:      READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7821356Z  M14 Core Status:        READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7821613Z  LAB-REQ-05 Status:      READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7821882Z  M15 Host Capability:    CAPABLE
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7822151Z  M15 Core Status:        READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7822426Z  LAB-REQ-03 Status:      READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7822926Z  M15 Readiness Summary:  READY (Canonical Linux Host with GCC, C11 atomics, POSIX pthread/sync & watchdog)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7823485Z ------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7823832Z  [Host Operating System]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7824125Z    System:               Linux 6.17.0-1022-azure (x86_64)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7824509Z    Version:              #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7825152Z ------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7825593Z  [Python Runtime]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7825839Z    Implementation:       CPython
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7826119Z    Version:              3.12.3
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7826423Z ------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7826759Z  [SQLite Environment]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7827002Z    Embedded SQLite:      3.45.1
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7827330Z    sqlite3 CLI Usable:   YES (REQUIRED CAPABILITY PASS)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7827697Z    sqlite3 CLI Version:  3.45.1 (/usr/bin/sqlite3)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7828054Z ------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7828408Z  [Writable Filesystem & VFS Locking]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7828736Z    Disposition:          REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7829076Z    Writable FS:          YES
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7829339Z    VFS Locking Probed:   YES
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7829849Z    VFS Locking Conflict: OBSERVED
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7830163Z ------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7830560Z  [C Compiler & POSIX / C11 Concurrency (M15 / LAB-REQ-03)]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7831119Z    Compiler:             YES (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7831530Z    -std=c11 -pthread:    REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7831883Z    C11 Atomics:          REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7832236Z    POSIX Mutex/Cond:     REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7832594Z ------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7833008Z  [Process Watchdog & Recovery (M14 / LAB-REQ-05 / LAB-REQ-03)]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7833394Z    Child / Watchdog:     REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7833750Z ------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7834093Z  [Optional Tools & Source Recheck]
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7834437Z    psql Client:          OPTIONAL TOOL UNAVAILABLE / SKIP
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7834832Z    Docker/Podman:        OPTIONAL TOOL UNAVAILABLE / SKIP
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7835498Z    TSan Sanitizer:       OPTIONAL CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7835871Z    EXP-02 Disposition:   NO LIVE SOURCE RECHECK
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7836195Z    EXP-02 Reachability:  NOT PROBED
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7836507Z    Course Ref Revision:  7344937cbe64 (2026-09-04)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.7836839Z ==================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9889369Z ======================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9890303Z  Essential CS: Distributed Infrastructure Preflight Capability Report
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9891246Z ======================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9891873Z  Timestamp:                 2026-09-12T04:41:50.988438+00:00
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9892310Z  OQ-BP-006 Status:          OPEN / UNRESOLVED
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9892706Z  Selected Exit Gate:        m16
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9893026Z  M16 Core Status:           READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9893340Z  M17 Core Status:           READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9893649Z  M18 Core Status:           READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9893966Z  M19 Core Status:           READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9894265Z  M20 Core Status:           READY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9894632Z ----------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9895391Z  [Host OS]:                 Linux 6.17.0-1022-azure (x86_64)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9895799Z  [Python Runtime]:          CPython 3.12.3
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9896196Z  [Stdlib Socket]:           REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9896676Z  [Localhost Bind (0)]:      REQUIRED CAPABILITY PASS (Port: 32941)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9897197Z  [Embedded SQLite]:         REQUIRED CAPABILITY PASS (v3.45.1)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9897662Z  [Writable Temp Dir]:       REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9898095Z  [Subprocess Watchdog]:     REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9898562Z  [LAB-OPT-02 CS144]:        OPTIONAL / RIGHTS-GATED / LINK-ONLY
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9899099Z    Reachability:            SKIPPED (use --check-cs144-source to probe live)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9899618Z  [M17 Trace Capability]:    REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9900088Z  [EXP-05 MIT 6.033]:        SOURCE EXPEDITION / LINK-AND-PARAPHRASE
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9900636Z    Reachability:            SKIPPED (use --check-mit-source to probe live)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9901148Z  [M18 Coordination]:        REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9901581Z  [M19 Linux Read-Only]:     REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9901996Z  [M20 Observability]:       REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9902656Z  [Optional OpenTelemetry]:  OPTIONAL PACKAGE NOT INSTALLED / FALLBACK TO ZERO-SAAS CORE (NO CURRICULUM LOSS)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:50.9903325Z ======================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0569063Z ==============================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0569802Z   STAGE 7 BATCH S7-B1 / MODULE M21 PREFLIGHT CAPABILITY REPORT
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0570444Z ==============================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0571441Z   OS:             Linux 6.17.0-1022-azure (x86_64)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0572058Z   Python:         CPython 3.12.3
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0572824Z   OQ-BP-006:      OPEN / UNRESOLVED (capability-based evaluation; no course-wide pin)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0573849Z ------------------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0574517Z   CAPABILITY AUDIT:
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0575454Z     - stdlib_crypto                 : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0576294Z     - path_confinement_primitives   : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0577170Z     - symlink_creation              : SYMLINK CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0578148Z         Note:         Host environment permits creation and resolution of symbolic links.
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0579032Z     - scratch_writability           : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0579861Z     - optional_cryptography         : OPTIONAL PACKAGE NOT INSTALLED / NOT RUN
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0580856Z ------------------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0581566Z   POLICY INVARIANTS:
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0582057Z     - OQ_BP_006                   : OPEN / UNRESOLVED
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0583019Z     - safe_target_architecture    : CONFIRMED (Zero live targets, zero offensive tools)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0584321Z     - crypto_stance               : CONFIRMED (Crypto-use only, zero custom primitive implementation)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0585859Z     - ephemeral_storage           : CONFIRMED (Course-owned temporary scratch only)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.0586679Z ==============================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1223161Z ==============================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1223949Z   STAGE 7 BATCH S7-B2 / MODULE M22 PREFLIGHT CAPABILITY REPORT
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1224572Z ==============================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1225437Z   OS:             Linux 6.17.0-1022-azure (x86_64)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1225971Z   Python:         CPython 3.12.3
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1226684Z   OQ-BP-006:      OPEN / UNRESOLVED (capability-based evaluation; no course-wide pin)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1227573Z ------------------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1228222Z   CAPABILITY AUDIT:
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1228727Z     - stdlib_crypto                 : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1229439Z     - password_kdf                  : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1230129Z     - sqlite3                       : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1230815Z     - localhost_bind                : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1231544Z     - scratch_writability           : REQUIRED CAPABILITY PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1232330Z     - optional_argon2               : OPTIONAL PACKAGE NOT INSTALLED / NOT RUN
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1233152Z ------------------------------------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1233795Z   POLICY INVARIANTS:
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1234242Z     - OQ_BP_006                   : OPEN / UNRESOLVED
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1235330Z     - safe_target_architecture    : CONFIRMED (Loopback only, zero live targets, zero offensive tools)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1236486Z     - crypto_stance               : CONFIRMED (Crypto-use only, zero custom primitive implementation)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1237829Z     - fail_closed_teardown        : DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT (runtime verification belongs to activity/test)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1239153Z     - ephemeral_storage           : CONFIRMED (Course-owned temporary scratch & in-memory DB only)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1240206Z ==============================================================================
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1320457Z === Essential CS Shared Preflight (M05–M09) ===
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1336268Z Timestamp: 2026-09-12T04:41:51Z
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.1380206Z Host OS: Linux 6.17.0-1022-azure (x86_64)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2090629Z Python: PASS (CPython 3.12.3)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2091200Z os.fork capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2091653Z resource module: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2092090Z os.fsync capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2092549Z os.fdatasync capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2147816Z Native GCC: PASS gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2148211Z Native objdump: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2148446Z ps command: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2165205Z git: PASS git version 2.43.0
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2165792Z make: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2166255Z perl: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2166701Z bc: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2234537Z curl: PASS curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2239458Z procfs (/proc/self): PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2239971Z procfs maps (/proc/self/maps): PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2240477Z procfs fd (/proc/self/fd): PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2241031Z procfs meminfo (/proc/meminfo): PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2288001Z strace: PASS (functional bounded probe)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2290933Z RISC-V cross GCC: PASS (riscv64-linux-gnu)
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2291804Z RISC-V objdump: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2402000Z QEMU RISC-V: PASS (QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18))
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2402560Z ------------------------------------------------
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2404793Z Summary:
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2406504Z   M06 Host Activity Capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2407051Z   M06 Live strace Capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2407628Z   M07 Host Activity Capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2408100Z   M08 Host Activity Capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2408565Z   M08 Live strace Capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2409008Z   M09 Host Activity Capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2409474Z   M09 Network/Curl Capability: PASS
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2409952Z   LAB-REQ-02 Runnable Capability: RUNNABLE
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2419344Z   NOTE: RUNNABLE means capability-present; build/QEMU smoke still must run and pass separately.
+canonical-matrix	Shared preflights (all REQUIRED must PASS)	2026-09-12T04:41:51.2419861Z === Preflight Complete ===
+canonical-matrix	Shell syntax gates	﻿2026-09-12T04:41:51.3481405Z ##[group]Run docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3482471Z ^[[36;1mdocker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '^[[0m
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3483186Z ^[[36;1m  set -ueo pipefail^[[0m
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3485750Z ^[[36;1m  for f in labs/lab-req-02-xv6-syscall/preflight.sh labs/lab-req-02-xv6-syscall/setup.sh labs/lab-req-02-xv6-syscall/smoke.sh labs/lab-req-02-xv6-syscall/reset.sh scripts/preflight-m05-m09.sh labs/foundations/m03/preflight.sh labs/foundations/m03/build.sh labs/foundations/m03/capture-gdb.sh labs/foundations/m03/smoke-test.sh; do^[[0m
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3488290Z ^[[36;1m    bash -n "$f" || { echo "SYNTAX_FAIL $f"; exit 1; }^[[0m
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3488837Z ^[[36;1m  done^[[0m
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3489187Z ^[[36;1m  echo SYNTAX_ALL_OK'^[[0m
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3527144Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3527400Z env:
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3527593Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3528148Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3528959Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3529511Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.3529837Z ##[endgroup]
+canonical-matrix	Shell syntax gates	2026-09-12T04:41:51.5172671Z SYNTAX_ALL_OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	﻿2026-09-12T04:41:51.6089230Z ##[group]Run docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6089886Z ^[[36;1mdocker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6090301Z ^[[36;1m  set -ueo pipefail^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6090719Z ^[[36;1m  fail=0^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6092635Z ^[[36;1m  for d in labs/foundations/m00-m01 labs/foundations/m02 labs/foundations/m05 labs/foundations/m06 labs/foundations/m07 labs/foundations/m08 labs/foundations/m09 labs/foundations/m10 labs/foundations/m11 labs/foundations/m12 labs/foundations/m13 labs/foundations/m14 labs/foundations/m15 labs/foundations/m16 labs/foundations/m17 labs/foundations/m18 labs/foundations/m19 labs/foundations/m20 labs/foundations/m21 labs/foundations/m22 labs/foundations/m23 labs/foundations/m24 labs/lab_req_01 labs/lab_req_03 labs/lab_req_04 labs/lab_req_05; do^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6094716Z ^[[36;1m    if python3 -m unittest discover -s "$d" -p "test_*.py"; then^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6095326Z ^[[36;1m      echo "SUITE_PASS $d"^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6095575Z ^[[36;1m    else^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6095816Z ^[[36;1m      echo "SUITE_FAIL $d"^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6096056Z ^[[36;1m      fail=1^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6096265Z ^[[36;1m    fi^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6096450Z ^[[36;1m  done^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6096883Z ^[[36;1m  python3 -m unittest discover -s tests -p "preflight*.py" || { echo "SUITE_FAIL tests/preflight"; fail=1; }^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6097485Z ^[[36;1m  exit "$fail"' 2>&1 | tee "${CI_TREE}/.ci-logs/python-matrix.log"^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6097851Z ^[[36;1mtest "${PIPESTATUS[0]}" -eq 0^[[0m
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6132932Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6133179Z env:
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6133371Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6133915Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6134685Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6135573Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.6135904Z ##[endgroup]
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8913982Z ........
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8914776Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8915653Z Ran 8 tests in 0.081s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8915897Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8916033Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8916385Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8916881Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8917360Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8917823Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8918285Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8918754Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8919211Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8919998Z changed.field=text old='A中' new='A文'
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8920460Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8920943Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8921386Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8921845Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8922311Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8922759Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8923209Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8923657Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8924125Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8924568Z reset.ok input=baseline state=baseline
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.8998543Z SUITE_PASS labs/foundations/m00-m01
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.9493539Z .........
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.9494038Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.9494637Z Ran 9 tests in 0.004s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.9495145Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.9495282Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:51.9556519Z SUITE_PASS labs/foundations/m02
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:52.0419698Z .........
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:52.0420255Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:52.0420857Z Ran 9 tests in 0.039s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:52.0421052Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:52.0421137Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:52.0525323Z SUITE_PASS labs/foundations/m05
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.2031858Z .......
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.2032596Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.2033250Z Ran 7 tests in 1.097s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.2033502Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.2033642Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.2141797Z SUITE_PASS labs/foundations/m06
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.3987920Z ....
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.3988456Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.3988954Z Ran 4 tests in 0.128s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.3989151Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.3989298Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.4091289Z SUITE_PASS labs/foundations/m07
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5230135Z ............
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5230880Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5231542Z Ran 12 tests in 0.054s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5231797Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5231928Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5232408Z === Resetting M08 Lab Workspace: /work/labs/foundations/m08 ===
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5233044Z   [x] Removed __pycache__/
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5233499Z Cleanup complete. Total artifacts removed: 1
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.5312317Z SUITE_PASS labs/foundations/m08
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6756153Z ................
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6756788Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6757412Z Ran 16 tests in 0.071s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6757662Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6757770Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6758105Z === Resetting M09 Lab Workspace: /work/labs/foundations/m09 ===
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6758523Z   [x] Removed __pycache__/
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6758830Z Cleanup complete. Total artifacts removed: 1
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:53.6867077Z SUITE_PASS labs/foundations/m09
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.3813472Z ..........
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.3814030Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.3814668Z Ran 10 tests in 0.643s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.3815113Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.3815291Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.3895684Z SUITE_PASS labs/foundations/m10
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.9968811Z ....
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.9969346Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.9969907Z Ran 4 tests in 0.535s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.9970129Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:54.9970243Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:55.0086914Z SUITE_PASS labs/foundations/m11
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7171949Z ......
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7172813Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7173592Z Ran 6 tests in 1.635s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7173848Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7173995Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7298448Z SUITE_PASS labs/foundations/m12
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7959540Z ....
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7960071Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7960771Z Ran 4 tests in 0.021s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7961019Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.7961153Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.8025427Z SUITE_PASS labs/foundations/m13
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.8706066Z .....
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.8706650Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.8707291Z Ran 5 tests in 0.018s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.8707528Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.8707655Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:56.8786218Z SUITE_PASS labs/foundations/m14
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:58.8198655Z ....
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:58.8199299Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:58.8199901Z Ran 4 tests in 1.873s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:58.8200140Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:58.8200287Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:41:58.8312503Z SUITE_PASS labs/foundations/m15
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.2736510Z .....
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.2736925Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.2737361Z Ran 5 tests in 2.384s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.2737532Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.2737909Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.2823291Z SUITE_PASS labs/foundations/m16
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3351877Z ...............
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3352557Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3353140Z Ran 15 tests in 0.002s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3353773Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3353875Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3354084Z [RESET] M17 course-owned scratch is clean.
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3354379Z [RESET] M17 course-owned scratch is clean.
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.3419601Z SUITE_PASS labs/foundations/m17
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.4567590Z ..............
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.4568562Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.4569374Z Ran 14 tests in 0.039s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.4569650Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.4569785Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.4680760Z SUITE_PASS labs/foundations/m18
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.5684119Z ....................
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.5684635Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.5685246Z Ran 20 tests in 0.011s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.5685415Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.5685510Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:01.5801075Z SUITE_PASS labs/foundations/m19
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7006662Z ....................................
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7007204Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7007610Z Ran 36 tests in 11.022s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7007780Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7007870Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7165111Z SUITE_PASS labs/foundations/m20
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7892039Z ...............
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7892806Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7893355Z Ran 15 tests in 0.012s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7893519Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7893607Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:12.7985358Z SUITE_PASS labs/foundations/m21
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.4257399Z ....................
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.4257830Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.4258213Z Ran 20 tests in 0.539s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.4258402Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.4258485Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.4384749Z SUITE_PASS labs/foundations/m22
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.4996994Z .......................
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5004464Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5005595Z Ran 23 tests in 0.003s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5005973Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5006127Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5074403Z SUITE_PASS labs/foundations/m23
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5853301Z .......................
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5853963Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5854576Z Ran 23 tests in 0.017s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5854804Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5855191Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:13.5944800Z SUITE_PASS labs/foundations/m24
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:14.8091716Z ......
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:14.8092282Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:14.8092893Z Ran 6 tests in 1.140s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:14.8093126Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:14.8093269Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:14.8203676Z SUITE_PASS labs/lab_req_01
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.0193690Z ........
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.0194584Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.0195633Z Ran 8 tests in 4.155s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.0195921Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.0196098Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.0270772Z SUITE_PASS labs/lab_req_03
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.1007536Z ......
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.1008393Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.1009209Z Ran 6 tests in 0.018s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.1009578Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.1009797Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.1090273Z SUITE_PASS labs/lab_req_04
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.2218262Z .......
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.2219375Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.2220330Z Ran 7 tests in 0.059s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.2220766Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.2220954Z OK
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.2304282Z SUITE_PASS labs/lab_req_05
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.8842720Z ..........
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.8843713Z ----------------------------------------------------------------------
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.8844604Z Ran 10 tests in 0.553s
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.8845081Z 
+canonical-matrix	Full Python test surface (26 suites, no quarantine)	2026-09-12T04:42:19.8845211Z OK
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	﻿2026-09-12T04:42:19.9889929Z ##[group]Run docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9890765Z ^[[36;1mdocker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9891198Z ^[[36;1m  set -ueo pipefail^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9891473Z ^[[36;1m  cd labs/foundations/m03^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9891752Z ^[[36;1m  ./preflight.sh^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9892072Z ^[[36;1m  ./smoke-test.sh | tee /work/.ci-logs/m03-smoke.log^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9892503Z ^[[36;1m  grep -q "SMOKE result=PASS" /work/.ci-logs/m03-smoke.log^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9892914Z ^[[36;1m  grep -Fq "TRACE point=before-call" gdb-trace.txt^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9893289Z ^[[36;1m  grep -Fq "TRACE point=callee" gdb-trace.txt^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9893664Z ^[[36;1m  grep -Fq "TRACE point=after-return" gdb-trace.txt^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9894026Z ^[[36;1m  grep -Fq "TRACE local=30" gdb-trace.txt^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9894327Z ^[[36;1m  ./reset.sh^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9894581Z ^[[36;1m  echo M03_CANONICAL_EVIDENCE_DONE'^[[0m
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9929859Z shell: /usr/bin/bash -e {0}
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9930125Z env:
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9930333Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9930899Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9931710Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9932265Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:19.9932615Z ##[endgroup]
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1391117Z PREFLIGHT os=Linux 881cd34bdafb 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1404640Z PREFLIGHT arch=x86_64
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1410675Z PREFLIGHT cc           PASS /usr/bin/cc
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1417782Z PREFLIGHT objdump      PASS /usr/bin/objdump
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1424353Z PREFLIGHT nm           PASS /usr/bin/nm
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1429885Z PREFLIGHT gdb          PASS /usr/bin/gdb
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1435904Z PREFLIGHT git          PASS /usr/bin/git
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1455572Z PREFLIGHT compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.1480992Z PREFLIGHT objdump=GNU objdump (GNU Binutils for Ubuntu) 2.42
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2275239Z PREFLIGHT gdb=GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2293316Z PREFLIGHT git=git version 2.43.0
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2310376Z PREFLIGHT python=Python 3.12.3
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2327885Z PREFLIGHT shell=GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2328509Z PREFLIGHT result=PASS
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2446811Z PREFLIGHT os=Linux 881cd34bdafb 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2459012Z PREFLIGHT arch=x86_64
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2465244Z PREFLIGHT cc           PASS /usr/bin/cc
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2471356Z PREFLIGHT objdump      PASS /usr/bin/objdump
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2477205Z PREFLIGHT nm           PASS /usr/bin/nm
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2482661Z PREFLIGHT gdb          PASS /usr/bin/gdb
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2488921Z PREFLIGHT git          PASS /usr/bin/git
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2507374Z PREFLIGHT compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.2531138Z PREFLIGHT objdump=GNU objdump (GNU Binutils for Ubuntu) 2.42
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.3030473Z PREFLIGHT gdb=GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.3050536Z PREFLIGHT git=git version 2.43.0
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.3067302Z PREFLIGHT python=Python 3.12.3
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.3084811Z PREFLIGHT shell=GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.3085674Z PREFLIGHT result=PASS
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.3854610Z BUILD compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.3856064Z BUILD flags=-std=c11 -Wall -Wextra -Wpedantic -g3 -O0 -fno-omit-frame-pointer -fno-inline -no-pie
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.4837174Z ./smoke-test.sh: line 15:   103 Segmentation fault      (core dumped) ./failure > /tmp/m03-failure.stdout 2> /tmp/m03-failure.stderr
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.5596816Z warning: Error disabling address space randomization: Operation not permitted
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6828975Z SMOKE baseline=PASS value=37
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6829930Z SMOKE symbol=PASS helper
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6830639Z SMOKE disassembly=PASS helper
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6831340Z SMOKE direct_failure=OBSERVED exit=139 (hosted observation only)
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6832236Z SMOKE gdb=PASS
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6832582Z SMOKE preflight=PASS
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6832830Z SMOKE result=PASS
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6939214Z RESET result=clean
+canonical-matrix	M03 canonical evidence incl GDB trace (GDB is REQUIRED, not optional)	2026-09-12T04:42:20.6941104Z M03_CANONICAL_EVIDENCE_DONE
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	﻿2026-09-12T04:42:20.7922089Z ##[group]Run docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7922777Z ^[[36;1mdocker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7923201Z ^[[36;1m  set -ueo pipefail^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7923629Z ^[[36;1m  python3 labs/lab_req_01/harness.py | tee /work/.ci-logs/harness-req01.log^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7924077Z ^[[36;1m  python3 labs/lab_req_01/reset.py^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7924494Z ^[[36;1m  python3 labs/lab_req_03/runner.py | tee /work/.ci-logs/harness-req03.log^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7925256Z ^[[36;1m  python3 labs/lab_req_03/reset.py^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7925704Z ^[[36;1m  python3 labs/lab_req_04/harness.py | tee /work/.ci-logs/harness-req04.log^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7926136Z ^[[36;1m  python3 labs/lab_req_04/reset.py^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7926533Z ^[[36;1m  python3 labs/lab_req_05/runner.py | tee /work/.ci-logs/harness-req05.log^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7926956Z ^[[36;1m  python3 labs/lab_req_05/reset.py^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7927293Z ^[[36;1m  echo LAB_HARNESSES_DONE'^[[0m
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7965358Z shell: /usr/bin/bash -e {0}
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7965631Z env:
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7965830Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7966413Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7967267Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7967857Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:20.7968219Z ##[endgroup]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1300266Z ========================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1301015Z  LAB-REQ-01 HTTP ORIGIN / INTERMEDIARY TRACE
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1301581Z ========================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1302146Z Overall Status : ALL_STEPS_PASSED
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1302608Z curl binary    : /usr/bin/curl
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1304108Z curl version   : curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1305627Z Origin Port    : 41749
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1305875Z Proxy Port     : 40739
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1306169Z ------------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1306514Z step_1_direct_origin
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1306969Z   Command      : /usr/bin/curl -sS -v -i --http1.1 --max-time 5 http://127.0.0.1:41749/resource
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1307431Z   Status Code  : 200
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1307643Z   Via          : None
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1307853Z   Body Bytes   : 96
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1308068Z   curl -v trace:
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1308287Z     *   Trying 127.0.0.1:41749...
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1308578Z     * Connected to 127.0.0.1 (127.0.0.1) port 41749
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1308897Z     > GET /resource HTTP/1.1
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1309145Z     > Host: 127.0.0.1:41749
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1309383Z     > User-Agent: curl/8.5.0
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1309622Z     > Accept: */*
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1309817Z     > 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1309997Z     < HTTP/1.1 200 OK
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1310474Z     < Server: BaseHTTP/0.6 Python/3.12.3
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1310774Z     < Date: Sat, 12 Sep 2026 04:42:21 GMT
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1311074Z     < Content-Type: application/json
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1311352Z     < Content-Length: 96
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1311588Z     < ETag: "strong-v1"
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1311851Z     < Cache-Control: max-age=60, must-revalidate
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1312166Z     < Connection: close
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1312374Z     < 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1312554Z     { [96 bytes data]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1312772Z     * Closing connection
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1313055Z ------------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1313397Z step_2_proxy_forward
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1313969Z   Command      : /usr/bin/curl -sS -v -i --http1.1 --max-time 5 http://127.0.0.1:40739/resource
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1314444Z   Status Code  : 200
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1314688Z   Via          : 1.1 essential-cs-intermediary
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1315375Z   Body Bytes   : 96
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1315733Z   curl -v trace:
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1316054Z     *   Trying 127.0.0.1:40739...
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1316490Z     * Connected to 127.0.0.1 (127.0.0.1) port 40739
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1316805Z     > GET /resource HTTP/1.1
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1317040Z     > Host: 127.0.0.1:40739
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1317271Z     > User-Agent: curl/8.5.0
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1317501Z     > Accept: */*
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1317689Z     > 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1317867Z     < HTTP/1.1 200 OK
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1318092Z     < Server: BaseHTTP/0.6 Python/3.12.3
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1318379Z     < Date: Sat, 12 Sep 2026 04:42:21 GMT
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1318716Z     < Content-Type: application/json
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1318989Z     < Content-Length: 96
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1319224Z     < ETag: "strong-v1"
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1319472Z     < Cache-Control: max-age=60, must-revalidate
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1319784Z     < Via: 1.1 essential-cs-intermediary
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1320054Z     < Connection: close
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1320265Z     < 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1320438Z     { [96 bytes data]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1320652Z     * Closing connection
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1320931Z ------------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1321274Z step_3_conditional_304
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1321787Z   Command      : /usr/bin/curl -sS -v -i --http1.1 --max-time 5 -H 'If-None-Match: "strong-v1"' http://127.0.0.1:40739/resource
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1322333Z   Status Code  : 304
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1322575Z   Via          : 1.1 essential-cs-intermediary
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1322867Z   Body Bytes   : 0
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1323068Z   curl -v trace:
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1323271Z     *   Trying 127.0.0.1:40739...
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1323554Z     * Connected to 127.0.0.1 (127.0.0.1) port 40739
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1323867Z     > GET /resource HTTP/1.1
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1324103Z     > Host: 127.0.0.1:40739
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1324338Z     > User-Agent: curl/8.5.0
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1324574Z     > Accept: */*
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1324794Z     > If-None-Match: "strong-v1"
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1325348Z     > 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1325541Z     < HTTP/1.1 304 Not Modified
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1325807Z     < Server: BaseHTTP/0.6 Python/3.12.3
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1326096Z     < Date: Sat, 12 Sep 2026 04:42:21 GMT
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1326362Z     < ETag: "strong-v1"
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1326613Z     < Cache-Control: max-age=60, must-revalidate
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1326931Z     < Via: 1.1 essential-cs-intermediary
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1327206Z     < Connection: close
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1327405Z     < 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1327580Z     * Closing connection
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1327856Z ------------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1328215Z step_4_upstream_failure_502
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1328619Z   Command      : /usr/bin/curl -sS -v -i --http1.1 --max-time 5 http://127.0.0.1:40739/resource
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1329060Z   Status Code  : 502
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1329299Z   Via          : 1.1 essential-cs-intermediary
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1329759Z   Body Bytes   : 146
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1329969Z   curl -v trace:
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1330172Z     *   Trying 127.0.0.1:40739...
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1330445Z     * Connected to 127.0.0.1 (127.0.0.1) port 40739
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1330753Z     > GET /resource HTTP/1.1
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1330985Z     > Host: 127.0.0.1:40739
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1331213Z     > User-Agent: curl/8.5.0
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1331441Z     > Accept: */*
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1331628Z     > 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1331806Z     < HTTP/1.1 502 Bad Gateway
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1332061Z     < Server: BaseHTTP/0.6 Python/3.12.3
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1332352Z     < Date: Sat, 12 Sep 2026 04:42:21 GMT
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1332774Z     < Content-Type: application/json
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1333047Z     < Content-Length: 146
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1333313Z     < Via: 1.1 essential-cs-intermediary
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1333598Z     < Connection: close
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1333810Z     < 
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1333997Z     { [146 bytes data]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1334214Z     * Closing connection
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1334508Z ------------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1335399Z Cleanup       : reaped=True old_endpoints_closed=True
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1335774Z ========================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:21.1499777Z LAB_REQ_01_RESET_OK: CLEAN_NO_PERSISTENT_ARTIFACTS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3572620Z ======================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3573492Z  LAB-REQ-03: POSIX Threads Race, Rendezvous & Progress Boundaries
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3574220Z ======================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3574821Z  Status: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3575433Z  Environment: Linux (x86_64)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3575996Z  Compiler:    /usr/bin/gcc (-std=c11 -pthread)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3576678Z ----------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3577358Z  [CP1] Deterministic UB-Free Lost Update: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3577928Z        Rounds: 5, Expected: 10, Actual: 5
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3578526Z        Lost Updates: 5 (Shared-counter data-race UB: False)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3579426Z  [CP2] Supplemental Scheduler Observation: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3580411Z        Iterations: 10000, Expected: 20000, Actual: 10051
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3581337Z        Manifested Lost Update: True
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3582124Z  [CP3] POSIX Mutex Repair: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3582667Z        Iterations: 10000, Expected: 20000, Actual: 20000
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3583428Z        Invariant Preserved: True
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3583924Z  [CP4] Condition-Variable Rendezvous: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3584492Z        Consumed Data: 42, Predicate Evals: 2
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3585257Z        Predicate Recheck Guard: True
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3585721Z  [CP5] Controlled Deadlock & Watchdog: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3586248Z        Child PID: 62, Watchdog Timeout: 2.0s
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3586784Z        Preconditions Proven: True
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3587277Z        Child Reaped (Returncode: -15)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3587815Z ======================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3724796Z Removed artifact: cond_rendezvous
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3725515Z Removed artifact: broken_counter
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3726024Z Removed artifact: deadlock_preconditions
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3726564Z Removed artifact: mutex_counter
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.3727016Z Reset complete. 4 artifacts removed.
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5095066Z ==================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5096214Z  Essential CS: LAB-REQ-04 SQLite Indexing & Access Path Trace
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5096914Z ==================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5097428Z  Disposition: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5097802Z  CLI Used:    /usr/bin/sqlite3
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5098669Z  CLI Version: 3.45.1 2024-01-30 16:01:20 e876e51a0ed5c5b3126f52e532044363a014bc594cfefa87ffb5b82257ccalt1 (64-bit)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5099549Z  Database:    /work/labs/lab_req_04/lab_orders.db
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5099953Z  Verification: result_equivalence=True, semantic_eqp=True
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5100348Z ------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5100695Z  [Checkpoint 1: Unindexed Plan]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5100960Z    Raw EQP:   QUERY PLAN
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5101220Z `--SCAN orders
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5101429Z    Summary:   ['OTHER', 'SCAN']
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5101725Z ------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5102112Z  [Checkpoint 2: Indexed Plan & Result Equivalence]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5102588Z    Raw EQP:   QUERY PLAN
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5102881Z `--SEARCH orders USING INDEX idx_orders_user (user_id=?)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5103222Z    Summary:   ['OTHER', 'SEARCH_INDEX']
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5103548Z    Results Matched: True (rows=18, hash=cc7dfb921ab5...)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5103925Z ------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5104321Z  [Checkpoint 3: Repeated Read Timing (Symmetric Protocol)]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5104673Z    Unindexed Median: 1.857 ms
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5105098Z    Indexed Median:   1.463 ms
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5105423Z ------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5105811Z  [Checkpoint 4: Write & Storage Cost (200 rows)]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5106163Z    DB Size Before Index: 303104 bytes
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5106501Z    DB Size After Index:  356352 bytes (Delta: 53248 bytes)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5106836Z    Bulk Insert Unindexed: 2.88 ms
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5107100Z    Bulk Insert Indexed:   3.46 ms
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5107401Z ------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5107763Z  [Checkpoint 5: Changed Workload Planner Choice]
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5108118Z    Query:          SELECT * FROM orders WHERE amount > 0.0;
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5108497Z    Relevant Index: idx_orders_amount ON orders(amount)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5108821Z    Raw EQP:        QUERY PLAN
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5109129Z `--SEARCH orders USING INDEX idx_orders_amount (amount>?)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5109492Z    Observed Path:  ['OTHER', 'SEARCH_INDEX']
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5109798Z ==================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5251158Z LAB-REQ-04 reset complete. Removed 1 file(s): lab_orders.db
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5789874Z ====================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5790607Z  LAB-REQ-05: SQLite Transactions, Isolation & Recovery
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5791127Z ====================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5791482Z  Host: Linux 6.17.0-1022-azure (x86_64)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5791795Z  Python: 3.12.3 | Embedded SQLite: 3.45.1
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5792098Z  Journal Mode: DELETE | Synchronous: 1
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5792433Z --------------------------------------------------------------------
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5792876Z  [CP 1] Invariant Definition & Committed Visibility: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5793261Z         Conn 1 uncommitted: 500, Conn 2 observed: 600
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5793589Z  [CP 2] Bounded Writer Conflict: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5793952Z         Conflict caught: True (OperationalError: database is locked)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5794350Z  [CP 3] Explicit Rollback Restoration: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5794743Z         Post-rollback balances: {'A': 600, 'B': 400}, Invariant Sum: 1000
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5795528Z  [CP 4] Owned Child Interruption & Reopen Recovery: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5795898Z         Child PID: 111, Reaped exitcode: -9
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5796257Z         Recovered balances: {'A': 600, 'B': 400}, Total: 1000
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5796990Z         Inference limit: Client process kill proves client crash recovery via rollback journal, NOT OS crash survival or physical power-loss durability.
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5797718Z  [CP 5] Backup & Storage Boundary Verification: PASS
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5798317Z         Backup balances: {'A': 600, 'B': 400}, Total: 1000
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.5798658Z ====================================================================
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.6002932Z [RESET] Removed: lab_req_05.db
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.6003467Z [RESET] Removed: lab_req_05.db-journal
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.6004048Z [RESET] LAB-REQ-05 reset complete. (2 files removed)
+canonical-matrix	Required Lab harnesses 01/03/04/05 + resets	2026-09-12T04:42:23.6030703Z LAB_HARNESSES_DONE
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	﻿2026-09-12T04:42:23.6926051Z ##[group]Run if [ 'pull_request' = 'pull_request' ]; then
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6926503Z ^[[36;1mif [ 'pull_request' = 'pull_request' ]; then^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6926951Z ^[[36;1m  git diff --check 'd3eabc10e3dc2a330dda0c4ea4b7dc0520eca7ef...HEAD'^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6927353Z ^[[36;1melse^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6927577Z ^[[36;1m  git diff --check HEAD^...HEAD^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6927847Z ^[[36;1mfi^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6928131Z ^[[36;1mtest -z "$(pgrep -f '[q]emu-system-riscv64' || true)"^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6928570Z ^[[36;1mtest ! -e labs/lab-req-02-xv6-syscall/.qemu_smoke.pid^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6928923Z ^[[36;1mecho HYGIENE_DONE^[[0m
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6964279Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6964629Z env:
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6964828Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6965514Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6966297Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6966881Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.6967219Z ##[endgroup]
+canonical-matrix	Hygiene (PR diff-check, no stray QEMU, no PID markers)	2026-09-12T04:42:23.7259131Z HYGIENE_DONE
+canonical-matrix	Upload canonical evidence bundle	﻿2026-09-12T04:42:23.7709185Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7711250Z ##[group]Run actions/upload-artifact@v4
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7711517Z with:
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7711713Z   name: canonical-fast-evidence
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7711973Z   path: /tmp/ci-tree/.ci-logs/
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7712215Z   include-hidden-files: true
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7712452Z   if-no-files-found: warn
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7712678Z   compression-level: 6
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7712883Z   overwrite: false
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7713065Z env:
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7713244Z   CI_TREE: /tmp/ci-tree
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7713777Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7714570Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7715338Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.7715662Z ##[endgroup]
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.9411115Z (node:3984) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.9412451Z (Use `node --trace-deprecation ...` to show where the warning was created)
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.9608656Z With the provided path, there will be 9 files uploaded
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.9609929Z Artifact name is valid!
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:23.9610520Z Root directory input is valid!
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.3242370Z Beginning upload of artifact content to blob storage
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.3564473Z (node:3984) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.6395308Z Uploaded bytes 9658
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.7187354Z Finished uploading artifact content to blob storage!
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.7188541Z SHA256 digest of uploaded artifact zip is e6ba90c2ed2e1e82b3ddb395088212baebb6c4c6d3cfa967a47d7da7c9cf6649
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.7190059Z Finalizing artifact upload
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.9533634Z Artifact canonical-fast-evidence.zip successfully finalized. Artifact ID 10291338272
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.9535470Z Artifact canonical-fast-evidence has been successfully uploaded! Final size is 9658 bytes. Artifact ID is 10291338272
+canonical-matrix	Upload canonical evidence bundle	2026-09-12T04:42:24.9545733Z Artifact download URL: https://github.com/CN-JJB/essential-cs/actions/runs/34673666673/artifacts/10291338272
+canonical-matrix	Post Checkout exact event revision	﻿2026-09-12T04:42:25.0632548Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.0633876Z Post job cleanup.
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1488461Z [command]/usr/bin/git version
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1531518Z git version 2.55.0
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1572524Z Temporarily overriding HOME='/home/runner/work/_temp/594406dc-0140-461d-9c72-3d98c11aea1a' before making global git config changes
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1574403Z Adding repository directory to the temporary git global config as a safe directory
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1578867Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/essential-cs/essential-cs
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1619129Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1656608Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1948341Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1981828Z http.https://github.com/.extraheader
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.1994101Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.2031387Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.2289322Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+canonical-matrix	Post Checkout exact event revision	2026-09-12T04:42:25.2332895Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+canonical-matrix	Complete job	﻿2026-09-12T04:42:25.2853354Z Cleaning up orphan processes
+canonical-matrix	Complete job	2026-09-12T04:42:25.3210652Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

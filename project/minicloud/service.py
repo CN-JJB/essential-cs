@@ -292,7 +292,7 @@ class MiniCloudService:
         self._require_owner(identity, item_id)
         grantee = self.store.get_user_by_username(grantee_username)
         if grantee is None:
-            raise ValidationError(f"no such user: {grantee_username}")
+            raise ValidationError("invalid grantee user")
         if grantee["user_id"] == identity["user_id"]:
             raise ValidationError("cannot share an item with its owner")
         shares = self.store.share_item_atomic(
@@ -300,7 +300,7 @@ class MiniCloudService:
         )
         if shares is None:
             raise NotFoundError("item not found")
-        self.obs.log("item.shared", request_id=request_id, item_id=item_id, grantee=grantee_username)
+        self.obs.log("item.shared", request_id=request_id, item_id=item_id)
         return {
             "item_id": item_id,
             "grantee": grantee["username"],
@@ -314,14 +314,14 @@ class MiniCloudService:
         self._require_owner(identity, item_id)
         grantee = self.store.get_user_by_username(grantee_username)
         if grantee is None:
-            raise ValidationError(f"no such user: {grantee_username}")
+            raise ValidationError("invalid grantee user")
         result = self.store.revoke_share_atomic(
             item_id, identity["user_id"], grantee["user_id"]
         )
         if result is None:
             raise NotFoundError("item not found")
         revoked, remaining = result
-        self.obs.log("item.share_revoked", request_id=request_id, item_id=item_id, grantee=grantee_username)
+        self.obs.log("item.share_revoked", request_id=request_id, item_id=item_id)
         return {
             "item_id": item_id,
             "grantee": grantee["username"],

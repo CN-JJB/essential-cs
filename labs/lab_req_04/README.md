@@ -84,6 +84,25 @@ python labs/lab_req_04/harness.py
    ```
 3. Observe and record what SQLite's planner actually chose. Both `SCAN` and `SEARCH` are accepted truthfully based on SQLite's cost model and statistics; no single planner outcome is machine-hardcoded. Learner evidence records the observed choice and explains the planner's reasoning and inference limits.
 
+## Prerequisites
+
+- Hard prerequisites: M08 (Files, filesystems & I/O), M09 (Disks, Flash & WAL), M13 (`L13-01` storage & indexing).
+- Tools: `sqlite3` CLI binary in `PATH` (verified by `python tests/preflight_data_concurrency.py`).
+
+## Exit Criteria
+
+- Run `sqlite3` CLI query plan inspection (`SCAN` vs `SEARCH`).
+- Confirm result-set equivalence (identical SHA-256 hash before and after index).
+- Execute symmetric warmup read timing and record distribution medians.
+- Record write cost insert overhead and file size delta.
+- Test changed workload low-selectivity planner decision.
+- Record evidence in `course/evidence/lab-req-04-evidence-template.md`.
+
+## Provenance & Sources
+
+- SQLite Documentation: *The SQLite Query Planner* (https://www.sqlite.org/queryplanner.html).
+- SQLite Documentation: *EXPLAIN QUERY PLAN* (https://www.sqlite.org/eqp.html).
+
 ---
 
 ## Reset Utility
@@ -92,6 +111,13 @@ To clean up all database artifacts:
 
 ```bash
 python labs/lab_req_04/reset.py
+```
+
+### Multiple Data Sizes
+To exercise bounded data sizes (e.g. 1,000 vs 5,000 rows):
+```bash
+python labs/lab_req_04/harness.py --rows 1000
+python labs/lab_req_04/harness.py --rows 5000
 ```
 
 Record all findings using `course/evidence/lab-req-04-evidence-template.md`.

@@ -1,0 +1,212 @@
+============================================================
+ Essential CS: Network & Web Preflight Capability Report
+============================================================
+ Timestamp:          2026-09-12T04:41:50.423258+00:00
+ Overall Status:     READY_M10_M11_M12_CORE_AND_LAB_REQ_01
+ M10 Core Status:    READY
+ M11 Core Status:    READY
+ M12 Core Status:    READY
+ LAB-REQ-01 Status:  READY
+------------------------------------------------------------
+ [Host Operating System]
+   System:           Linux 6.17.0-1022-azure (x86_64)
+   Version:          #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026
+------------------------------------------------------------
+ [Python Runtime]
+   Implementation:   CPython
+   Version:          3.12.3
+   Socket Support:   YES
+   SSL Support:      YES (OpenSSL 3.0.13 30 Jan 2024)
+   TLS 1.3:          YES
+------------------------------------------------------------
+ [Loopback Socket Capability]
+   Port 0 Bind:      YES (Assigned: 40521)
+   Loopback Conn:    YES
+------------------------------------------------------------
+ [curl Capability (Required for LAB-REQ-01)]
+   Usable:           YES (/usr/bin/curl)
+   Version:          curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10
+   TLS Backend:      OpenSSL/3.0.13
+   Features:         alt-svc, AsynchDNS, brotli, GSS-API, HSTS, HTTP2, HTTPS-proxy, IDN, IPv6, Kerberos, Largefile, libz, NTLM, PSL, SPNEGO, SSL, threadsafe, TLS-SRP, UnixSockets, zstd
+------------------------------------------------------------
+ [Browser & GUI Observation Disposition]
+   Binary Detected:  NO
+   GUI Disposition:  NO LIVE BROWSER OBSERVATION
+   CORS Disposition: NO LIVE BROWSER CORS OBSERVATION
+   DevTools Dispos:  NO LIVE DEVTOOLS OBSERVATION
+------------------------------------------------------------
+ [Chromium Source Reachability (EXP-03)]
+   Disposition:      NO LIVE CHROMIUM SOURCE RECHECK
+   Reason:           NOT_REQUESTED
+------------------------------------------------------------
+ [Resolver Observation Capability]
+   Disposition:      LIVE_DNS_FAILURE_OBSERVED
+   Available:        True
+   Details:          {'errno': -2, 'strerror': '[Errno -2] Name or service not known'}
+------------------------------------------------------------
+ [Optional / Auxiliary Tools]
+   ss            : AVAILABLE (ss utility, iproute2-6.1.0)
+   ip_route      : AVAILABLE (ip utility, iproute2-6.1.0, libbpf 1.3.0)
+   traceroute    : UNAVAILABLE (N/A)
+   tracert       : UNAVAILABLE (N/A)
+   tcpdump       : UNAVAILABLE (TOOL_UNAVAILABLE)
+   openssl_cli   : AVAILABLE (OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024))
+============================================================
+==================================================================
+ Essential CS: Data & Concurrency Preflight Capability Report
+==================================================================
+ Timestamp:              2026-09-12T04:41:50.781042+00:00
+ Overall Status:         READY FOR M15 + LAB-REQ-03 EXECUTION (canonical Required capabilities satisfied)
+ M13 Core Status:        READY
+ LAB-REQ-04 Status:      READY
+ M14 Core Status:        READY
+ LAB-REQ-05 Status:      READY
+ M15 Host Capability:    CAPABLE
+ M15 Core Status:        READY
+ LAB-REQ-03 Status:      READY
+ M15 Readiness Summary:  READY (Canonical Linux Host with GCC, C11 atomics, POSIX pthread/sync & watchdog)
+------------------------------------------------------------------
+ [Host Operating System]
+   System:               Linux 6.17.0-1022-azure (x86_64)
+   Version:              #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026
+------------------------------------------------------------------
+ [Python Runtime]
+   Implementation:       CPython
+   Version:              3.12.3
+------------------------------------------------------------------
+ [SQLite Environment]
+   Embedded SQLite:      3.45.1
+   sqlite3 CLI Usable:   YES (REQUIRED CAPABILITY PASS)
+   sqlite3 CLI Version:  3.45.1 (/usr/bin/sqlite3)
+------------------------------------------------------------------
+ [Writable Filesystem & VFS Locking]
+   Disposition:          REQUIRED CAPABILITY PASS
+   Writable FS:          YES
+   VFS Locking Probed:   YES
+   VFS Locking Conflict: OBSERVED
+------------------------------------------------------------------
+ [C Compiler & POSIX / C11 Concurrency (M15 / LAB-REQ-03)]
+   Compiler:             YES (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0)
+   -std=c11 -pthread:    REQUIRED CAPABILITY PASS
+   C11 Atomics:          REQUIRED CAPABILITY PASS
+   POSIX Mutex/Cond:     REQUIRED CAPABILITY PASS
+------------------------------------------------------------------
+ [Process Watchdog & Recovery (M14 / LAB-REQ-05 / LAB-REQ-03)]
+   Child / Watchdog:     REQUIRED CAPABILITY PASS
+------------------------------------------------------------------
+ [Optional Tools & Source Recheck]
+   psql Client:          OPTIONAL TOOL UNAVAILABLE / SKIP
+   Docker/Podman:        OPTIONAL TOOL UNAVAILABLE / SKIP
+   TSan Sanitizer:       OPTIONAL CAPABILITY PASS
+   EXP-02 Disposition:   NO LIVE SOURCE RECHECK
+   EXP-02 Reachability:  NOT PROBED
+   Course Ref Revision:  7344937cbe64 (2026-09-04)
+==================================================================
+======================================================================
+ Essential CS: Distributed Infrastructure Preflight Capability Report
+======================================================================
+ Timestamp:                 2026-09-12T04:41:50.988438+00:00
+ OQ-BP-006 Status:          OPEN / UNRESOLVED
+ Selected Exit Gate:        m16
+ M16 Core Status:           READY
+ M17 Core Status:           READY
+ M18 Core Status:           READY
+ M19 Core Status:           READY
+ M20 Core Status:           READY
+----------------------------------------------------------------------
+ [Host OS]:                 Linux 6.17.0-1022-azure (x86_64)
+ [Python Runtime]:          CPython 3.12.3
+ [Stdlib Socket]:           REQUIRED CAPABILITY PASS
+ [Localhost Bind (0)]:      REQUIRED CAPABILITY PASS (Port: 32941)
+ [Embedded SQLite]:         REQUIRED CAPABILITY PASS (v3.45.1)
+ [Writable Temp Dir]:       REQUIRED CAPABILITY PASS
+ [Subprocess Watchdog]:     REQUIRED CAPABILITY PASS
+ [LAB-OPT-02 CS144]:        OPTIONAL / RIGHTS-GATED / LINK-ONLY
+   Reachability:            SKIPPED (use --check-cs144-source to probe live)
+ [M17 Trace Capability]:    REQUIRED CAPABILITY PASS
+ [EXP-05 MIT 6.033]:        SOURCE EXPEDITION / LINK-AND-PARAPHRASE
+   Reachability:            SKIPPED (use --check-mit-source to probe live)
+ [M18 Coordination]:        REQUIRED CAPABILITY PASS
+ [M19 Linux Read-Only]:     REQUIRED CAPABILITY PASS
+ [M20 Observability]:       REQUIRED CAPABILITY PASS
+ [Optional OpenTelemetry]:  OPTIONAL PACKAGE NOT INSTALLED / FALLBACK TO ZERO-SAAS CORE (NO CURRICULUM LOSS)
+======================================================================
+==============================================================================
+  STAGE 7 BATCH S7-B1 / MODULE M21 PREFLIGHT CAPABILITY REPORT
+==============================================================================
+  OS:             Linux 6.17.0-1022-azure (x86_64)
+  Python:         CPython 3.12.3
+  OQ-BP-006:      OPEN / UNRESOLVED (capability-based evaluation; no course-wide pin)
+------------------------------------------------------------------------------
+  CAPABILITY AUDIT:
+    - stdlib_crypto                 : REQUIRED CAPABILITY PASS
+    - path_confinement_primitives   : REQUIRED CAPABILITY PASS
+    - symlink_creation              : SYMLINK CAPABILITY PASS
+        Note:         Host environment permits creation and resolution of symbolic links.
+    - scratch_writability           : REQUIRED CAPABILITY PASS
+    - optional_cryptography         : OPTIONAL PACKAGE NOT INSTALLED / NOT RUN
+------------------------------------------------------------------------------
+  POLICY INVARIANTS:
+    - OQ_BP_006                   : OPEN / UNRESOLVED
+    - safe_target_architecture    : CONFIRMED (Zero live targets, zero offensive tools)
+    - crypto_stance               : CONFIRMED (Crypto-use only, zero custom primitive implementation)
+    - ephemeral_storage           : CONFIRMED (Course-owned temporary scratch only)
+==============================================================================
+==============================================================================
+  STAGE 7 BATCH S7-B2 / MODULE M22 PREFLIGHT CAPABILITY REPORT
+==============================================================================
+  OS:             Linux 6.17.0-1022-azure (x86_64)
+  Python:         CPython 3.12.3
+  OQ-BP-006:      OPEN / UNRESOLVED (capability-based evaluation; no course-wide pin)
+------------------------------------------------------------------------------
+  CAPABILITY AUDIT:
+    - stdlib_crypto                 : REQUIRED CAPABILITY PASS
+    - password_kdf                  : REQUIRED CAPABILITY PASS
+    - sqlite3                       : REQUIRED CAPABILITY PASS
+    - localhost_bind                : REQUIRED CAPABILITY PASS
+    - scratch_writability           : REQUIRED CAPABILITY PASS
+    - optional_argon2               : OPTIONAL PACKAGE NOT INSTALLED / NOT RUN
+------------------------------------------------------------------------------
+  POLICY INVARIANTS:
+    - OQ_BP_006                   : OPEN / UNRESOLVED
+    - safe_target_architecture    : CONFIRMED (Loopback only, zero live targets, zero offensive tools)
+    - crypto_stance               : CONFIRMED (Crypto-use only, zero custom primitive implementation)
+    - fail_closed_teardown        : DECLARED IMPLEMENTATION CONTRACT / NOT PROBED BY PREFLIGHT (runtime verification belongs to activity/test)
+    - ephemeral_storage           : CONFIRMED (Course-owned temporary scratch & in-memory DB only)
+==============================================================================
+=== Essential CS Shared Preflight (M05–M09) ===
+Timestamp: 2026-09-12T04:41:51Z
+Host OS: Linux 6.17.0-1022-azure (x86_64)
+Python: PASS (CPython 3.12.3)
+os.fork capability: PASS
+resource module: PASS
+os.fsync capability: PASS
+os.fdatasync capability: PASS
+Native GCC: PASS gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Native objdump: PASS
+ps command: PASS
+git: PASS git version 2.43.0
+make: PASS
+perl: PASS
+bc: PASS
+curl: PASS curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10
+procfs (/proc/self): PASS
+procfs maps (/proc/self/maps): PASS
+procfs fd (/proc/self/fd): PASS
+procfs meminfo (/proc/meminfo): PASS
+strace: PASS (functional bounded probe)
+RISC-V cross GCC: PASS (riscv64-linux-gnu)
+RISC-V objdump: PASS
+QEMU RISC-V: PASS (QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18))
+------------------------------------------------
+Summary:
+  M06 Host Activity Capability: PASS
+  M06 Live strace Capability: PASS
+  M07 Host Activity Capability: PASS
+  M08 Host Activity Capability: PASS
+  M08 Live strace Capability: PASS
+  M09 Host Activity Capability: PASS
+  M09 Network/Curl Capability: PASS
+  LAB-REQ-02 Runnable Capability: RUNNABLE
+  NOTE: RUNNABLE means capability-present; build/QEMU smoke still must run and pass separately.
+=== Preflight Complete ===

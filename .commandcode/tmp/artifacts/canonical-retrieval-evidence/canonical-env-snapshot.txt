@@ -1,0 +1,54 @@
+CANONICAL_ENV_CAPTURE version=2
+os=Ubuntu 24.04.4 LTS
+kernel=6.17.0-1022-azure
+arch=x86_64
+FLOOR PASS canonical-arch=x86_64
+python_impl=CPython
+python_version=3.12.3
+FLOOR PASS python>=3.12 (CPython 3.12.3)
+sqlite_embedded=3.45.1
+FLOOR PASS sqlite-engine>=3.45 (3.45.1)
+sqlite_cli=3.45.1
+FLOOR PASS sqlite3-cli>=3.45 (3.45.1)
+gcc=13.3.0
+FLOOR PASS gcc>=13 (13.3.0)
+FLOOR PASS gcc-c11-surface
+curl=8.5.0
+FLOOR PASS curl>=8.5 (8.5.0)
+gdb=15.1
+FLOOR PASS gdb>=15.0 (15.1) REQUIRED-present
+qemu_riscv=QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+riscv_unknown_elf_gcc=riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+riscv_gnu_gcc=riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+binutils=GNU objdump (GNU Binutils for Ubuntu) 2.42
+git=git version 2.43.0
+strace=present-capability-gated
+bash=GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+qemu_system_misc_package=1:8.2.2+ds-0ubuntu1.18
+gcc_riscv64_unknown_elf_package=13.2.0-11ubuntu1+12
+gcc_riscv64_linux_gnu_package=4:13.2.0-7ubuntu1
+FLOOR PASS qemu-system-misc exact package identity
+FLOOR PASS gcc-riscv64-unknown-elf exact package identity
+dpkg_lane_identities_BEGIN
+ii  bash                         5.2.21-2ubuntu4        amd64        GNU Bourne Again SHell
+ii  bc                           1.07.1-3ubuntu4        amd64        GNU bc arbitrary precision calculator language
+ii  binutils                     2.42-4ubuntu2.10       amd64        GNU assembler, linker and binary utilities
+ii  binutils-riscv64-linux-gnu   2.42-4ubuntu2.10       amd64        GNU binary utilities, for riscv64-linux-gnu target
+ii  binutils-riscv64-unknown-elf 2.42-1ubuntu1+6        amd64        GNU assembler, linker and binary utilities for Risc-V processors
+ii  build-essential              12.10ubuntu1           amd64        Informational list of build-essential packages
+ii  ca-certificates              20260601~24.04.1       all          Common CA certificates
+ii  curl                         8.5.0-2ubuntu10.13     amd64        command line tool for transferring data with URL syntax
+ii  gcc-riscv64-linux-gnu        4:13.2.0-7ubuntu1      amd64        GNU C compiler for the riscv64 architecture
+ii  gcc-riscv64-unknown-elf      13.2.0-11ubuntu1+12    amd64        GCC cross compiler for Risc-V processors
+ii  gdb                          15.1-1ubuntu1~24.04.1  amd64        GNU Debugger
+ii  git                          1:2.43.0-1ubuntu7.3    amd64        fast, scalable, distributed revision control system
+ii  make                         4.3-4.1build2          amd64        utility for directing compilation
+ii  perl                         5.38.2-3.2ubuntu0.4    amd64        Larry Wall's Practical Extraction and Report Language
+ii  python3                      3.12.3-0ubuntu2.1      amd64        interactive high-level object-oriented language (default python3 version)
+ii  qemu-system-common           1:8.2.2+ds-0ubuntu1.18 amd64        QEMU full system emulation binaries (common files)
+ii  qemu-system-data             1:8.2.2+ds-0ubuntu1.18 all          QEMU full system emulation (data files)
+ii  qemu-system-misc             1:8.2.2+ds-0ubuntu1.18 amd64        QEMU full system emulation binaries (miscellaneous)
+ii  sqlite3                      3.45.1-1ubuntu2.7      amd64        Command line interface for SQLite 3
+ii  strace                       6.8-0ubuntu2           amd64        System call tracer
+dpkg_lane_identities_END
+CANONICAL_ENV_CAPTURE result=PASS

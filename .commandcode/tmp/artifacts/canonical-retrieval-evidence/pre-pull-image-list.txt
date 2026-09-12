@@ -1,0 +1,6 @@
+ghcr.io/github/gh-aw-firewall/agent:latest bd7acdea5936
+ghcr.io/github/gh-aw-firewall/api-proxy:latest 9d8f8fbebb48
+ghcr.io/github/gh-aw-mcpg:latest 5f22df3c4a88
+ghcr.io/dependabot/dependabot-updater-core:latest 5c1f9f1da87f
+ghcr.io/github/github-mcp-server:latest 3e165e25be8d
+ghcr.io/github/gh-aw-firewall/squid:latest ebc9c9e5ccbd

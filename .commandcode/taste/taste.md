@@ -1,0 +1,29 @@
+- Prefers verifying the exact git base commit (SHA) before starting work, and refuses to silently switch base if HEAD does not match. Confidence: 0.9
+- Prefers strict scope discipline: no scope creep, no refactoring unrelated code, and no self-fixing out-of-scope blockers — report new blockers to the lead instead. Confidence: 0.9
+- Reports gate/verification results using only the PASS / FAIL / BLOCKED / NOT RUN vocabulary. Confidence: 0.9
+- Prefers no self-merge; a PR must be reviewed and accepted by the lead before merge. Confidence: 0.9
+- Prefers all runtime/test evidence to be attributed to the exact final commit SHA, and never relabels historical PASS results as current. Confidence: 0.9
+- Classifies any remaining test failure as REPAIR-INDUCED / PRE-EXISTING / ENVIRONMENT-BLOCKED / UNKNOWN via a base-vs-repair comparison rather than forcing green. Confidence: 0.8
+- Prefers narrow commits using conventional-commit messages that include the issue number. Confidence: 0.8
+- In tests, prefers asserting behavior and semantics over matching exact (possibly obsolete) string prose. Confidence: 0.8
+- Prefers fixing the parser/validator logic rather than altering correct fixtures/sample data to make tests pass. Confidence: 0.8
+- Prefers recording the runtime environment (OS/platform, Python version) as part of verification evidence. Confidence: 0.7
+- Prefers not hiding failed commands; records the exact reason and uses an equivalent standard-library invocation. Confidence: 0.7
+- Prefers a single PR per task with the exact required title, and no duplicate PRs. Confidence: 0.8
+- Prefers a minimal, fixed-format final handoff message with no extra explanation. Confidence: 0.8
+- Prefers honest environment/capability reporting: records BLOCKED (not PASS) when a required toolchain or mechanism is absent, and never substitutes a non-canonical runtime for the required one (e.g., a Python HTTP client for real curl, the Python sqlite3 module for the sqlite3 CLI, or WSL2 for bare-metal Linux). Confidence: 0.85
+- Keeps machine/structural PASS distinct from reviewer/learner PASS, and treats verification/merge as not implying VERIFIED / RELEASED / learner-validation status. Confidence: 0.8
+- Keeps inferences bounded: avoids extrapolating limited observations into universal claims (e.g., process-interruption observation ≠ power-loss durability; a WSL2 Linux userspace ≠ bare-metal Linux). Confidence: 0.7
+- Requires an independent verifier to be genuinely distinct in agent/session/harness lineage from the implementation agent, with a new clone/workspace and no reuse of the implementer's memory/worktree; a fresh checkout or runtime alone does not make the same lineage independent, and when the independence gate fails it must be declared FAIL rather than forced through. Confidence: 0.85
+- Locks the base to the repo's current main at claim time and treats SHAs quoted earlier in chat as non-authoritative. Confidence: 0.8
+- An independent verifier must not modify the object under verification. Confidence: 0.75
+- Wants the task actually carried out and evidenced (running the required commands, producing the report and PR) rather than a plan-only response. Confidence: 0.75
+- Prefers status/documentation reconciliations to preserve all historical records verbatim — never deleting historical SHAs, completion entries, or prior truthful NOT RUN/BLOCKED records — and to update only the designated current-state sections. Confidence: 0.8
+- Pushes for direct action over process caution: wants the agent to just execute the task ("干就完了") rather than blocking on procedural or gating concerns, gets impatient with refusals based on rules, and expects the agent to satisfy or route around prerequisite gates itself (e.g., "你自己换一个新环境跑即可") instead of escalating them to the user or lead. Confidence: 0.75
+- Prefers status-document updates to be bounded and status-only (often a single allowed file), adding no lifecycle claim such as VERIFIED / RELEASED. Confidence: 0.7
+- Prefers replies written in Chinese (Simplified), and explicitly asks the agent to switch to Chinese when it responds in English. Confidence: 0.7
+- Expects agents to work strictly within an explicitly assigned role, with separation of duties: an auditor is not the project lead and not the author/repair executor of the material under audit. Confidence: 0.75
+- Treats the tracked GitHub issue body as the binding task contract — the source of the assigned role, base/scope rules, deliverable allow-list, and handoff protocol — and expects the agent to read and follow it directly. Confidence: 0.7
+- Expects verification to include actually downloading and inspecting the CI-produced artifacts and cross-checking their digests, inventories and markers — not trusting reported green status or artifact metadata — recording run IDs, artifact IDs, sizes, digests, inventories and markers as evidence. Confidence: 0.8
+- Follows the latest revision of the issue contract as superseding earlier constraints: when a newer contract version explicitly allows execution (e.g., same-lineage technical re-verification), the agent must not self-disqualify based on stale memory, old worktrees, or reflog history from previous tickets. Confidence: 0.7
+- Does not self-close the lead's tracked open questions (e.g., OQ-BP-006); even when the evidence supports a disposition, the closing decision is left to the lead and the question stays open. Confidence: 0.7

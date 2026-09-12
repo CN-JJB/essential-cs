@@ -1,0 +1,12 @@
+=== LAB-REQ-02 xv6 Syscall Preflight ===
+[+] git: git version 2.43.0
+[+] make: GNU Make 4.3
+[+] python3: Python 3.12.3
+[+] perl: 
+[+] bc: bc 1.07.1
+[+] RISC-V GCC: riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+[+] RISC-V objdump: GNU objdump (GNU Binutils for Ubuntu) 2.42
+[+] QEMU RISC-V: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+----------------------------------------
+STATUS: PASS — Required LAB-REQ-02 build/smoke capabilities are present.
+NOTE: PASS means capability-present, not that xv6 build/QEMU execution has already succeeded.

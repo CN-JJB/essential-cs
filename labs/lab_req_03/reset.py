@@ -12,10 +12,12 @@ TARGET_BIN_NAMES = {
     "broken_counter",
     "mutex_counter",
     "cond_rendezvous",
+    "cond_predicate_break",
     "deadlock_preconditions",
     "broken_counter.exe",
     "mutex_counter.exe",
     "cond_rendezvous.exe",
+    "cond_predicate_break.exe",
     "deadlock_preconditions.exe",
 }
 

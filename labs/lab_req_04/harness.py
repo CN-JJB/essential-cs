@@ -242,9 +242,11 @@ def run_lab_req_04(db_path=None, trials=10, row_count=DEFAULT_ROW_COUNT):
 def main():
     parser = argparse.ArgumentParser(description="LAB-REQ-04 Execution Harness")
     parser.add_argument("--json", action="store_true", help="Print report in JSON format")
+    parser.add_argument("--rows", type=int, default=DEFAULT_ROW_COUNT, help=f"Dataset row count (default: {DEFAULT_ROW_COUNT}; e.g. 1000 vs 5000 for bounded data size comparison)")
+    parser.add_argument("--trials", type=int, default=10, help="Number of query trials (default: 10)")
     args = parser.parse_args()
 
-    report = run_lab_req_04()
+    report = run_lab_req_04(row_count=args.rows, trials=args.trials)
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))

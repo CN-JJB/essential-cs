@@ -1,0 +1,20 @@
+====================================================================
+ LAB-REQ-05: SQLite Transactions, Isolation & Recovery
+====================================================================
+ Host: Linux 6.17.0-1022-azure (x86_64)
+ Python: 3.12.3 | Embedded SQLite: 3.45.1
+ Journal Mode: DELETE | Synchronous: 1
+--------------------------------------------------------------------
+ [CP 1] Invariant Definition & Committed Visibility: PASS
+        Conn 1 uncommitted: 500, Conn 2 observed: 600
+ [CP 2] Bounded Writer Conflict: PASS
+        Conflict caught: True (OperationalError: database is locked)
+ [CP 3] Explicit Rollback Restoration: PASS
+        Post-rollback balances: {'A': 600, 'B': 400}, Invariant Sum: 1000
+ [CP 4] Owned Child Interruption & Reopen Recovery: PASS
+        Child PID: 112, Reaped exitcode: -9
+        Recovered balances: {'A': 600, 'B': 400}, Total: 1000
+        Inference limit: Client process kill proves client crash recovery via rollback journal, NOT OS crash survival or physical power-loss durability.
+ [CP 5] Backup & Storage Boundary Verification: PASS
+        Backup balances: {'A': 600, 'B': 400}, Total: 1000
+====================================================================

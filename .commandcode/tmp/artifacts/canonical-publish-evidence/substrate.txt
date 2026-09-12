@@ -1,0 +1,14 @@
+publish_kind=CANDIDATE
+recipe_dockerfile=.devcontainer/Dockerfile
+recipe_dockerfile_blob=51198ea12c3c9ddfa18a2246bddef491ea729559
+platform=linux/amd64
+source_revision=25804b02cdd89bc3e2ff386aaf60f7c0b41b9032
+workflow_run_id=34673360717
+workflow_run_url=https://github.com/CN-JJB/essential-cs/actions/runs/34673360717
+runner_image_version=20260907.300.1
+runner_arch=x86_64
+runner_os_release_begin
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+runner_os_release_end

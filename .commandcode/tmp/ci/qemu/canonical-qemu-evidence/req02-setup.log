@@ -1,0 +1,7 @@
+=== LAB-REQ-02 Setup ===
+[*] Cloning official xv6-riscv repository...
+[*] Checking out pinned commit 35b088427ef37611c38afdeed5a52a278cae38f9...
+[+] Pinned xv6 worktree: 35b088427ef37611c38afdeed5a52a278cae38f9
+[+] Canonical origin: https://github.com/mit-pdos/xv6-riscv.git
+[+] xv6 software license file present: /work/labs/lab-req-02-xv6-syscall/worktree/LICENSE
+=== Setup Complete ===

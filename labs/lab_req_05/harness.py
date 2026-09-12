@@ -371,6 +371,75 @@ class TransactionLabHarness:
                 except OSError:
                     pass
 
+    def run_controlled_break_transactionless_update(self) -> Dict[str, Any]:
+        """
+        Controlled break: remove transaction wrapper around multi-step update.
+        Executes step 1 in autocommit mode, then simulates an unexpected failure
+        before step 2. Demonstrates permanent invariant corruption (partial update).
+        """
+        conn = sqlite3.connect(self.db_path, isolation_level=None)
+        try:
+            cur = conn.cursor()
+            # Step 1 succeeds outside any explicit transaction
+            cur.execute("UPDATE accounts SET balance = balance - 200 WHERE id = 'A';")
+            # Failure occurs before Step 2 executes (transfer interrupted)
+
+            # Check balances: partial mutation was permanently committed
+            cur.execute("SELECT id, balance FROM accounts ORDER BY id ASC;")
+            broken_balances = dict(cur.fetchall())
+            total = sum(broken_balances.values())
+            invariant_broken = (total != 1000)
+
+            # Repair database state
+            cur.execute("UPDATE accounts SET balance = 600 WHERE id = 'A';")
+            cur.execute("UPDATE accounts SET balance = 400 WHERE id = 'B';")
+
+            return {
+                "break": "transactionless_multi_step_update",
+                "passed": invariant_broken and broken_balances.get("A") == 400,
+                "broken_balances": broken_balances,
+                "total_balance": total,
+                "invariant_broken": invariant_broken,
+                "inference_limit": "Without a transaction boundary (BEGIN/COMMIT), partial updates commit immediately, violating system-wide consistency invariants upon failure.",
+            }
+        finally:
+            conn.close()
+
+    def run_controlled_break_missing_backup_restore(self) -> Dict[str, Any]:
+        """
+        Controlled break: attempting to restore from a missing or non-existent backup.
+        Verifies fail-closed behavior without corrupting the active database.
+        """
+        non_existent_path = os.path.join(LAB_DIR, "non_existent_backup_file.db")
+        fail_closed = False
+        error_type = None
+
+        if not os.path.exists(non_existent_path):
+            try:
+                src_conn = sqlite3.connect(f"file:{non_existent_path}?mode=ro", uri=True)
+                src_conn.close()
+            except sqlite3.OperationalError as exc:
+                fail_closed = True
+                error_type = type(exc).__name__
+
+        # Verify active database remains intact
+        conn = sqlite3.connect(self.db_path, isolation_level=None)
+        cur = conn.cursor()
+        cur.execute("SELECT id, balance FROM accounts ORDER BY id ASC;")
+        current_balances = dict(cur.fetchall())
+        conn.close()
+
+        active_db_intact = (current_balances == {"A": 600, "B": 400})
+
+        return {
+            "break": "restore_missing_backup",
+            "passed": fail_closed and active_db_intact,
+            "fail_closed": fail_closed,
+            "error_type": error_type,
+            "active_db_intact": active_db_intact,
+            "inference_limit": "Restore operations must fail closed when backup source is missing or invalid, preserving active database integrity.",
+        }
+
     def run_all(self, verbose: bool = True) -> Dict[str, Any]:
         """Executes all 5 checkpoints end-to-end and returns full structured report."""
         meta = self.init_database()

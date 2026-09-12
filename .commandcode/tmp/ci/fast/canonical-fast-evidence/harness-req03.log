@@ -1,0 +1,24 @@
+======================================================================
+ LAB-REQ-03: POSIX Threads Race, Rendezvous & Progress Boundaries
+======================================================================
+ Status: PASS
+ Environment: Linux (x86_64)
+ Compiler:    /usr/bin/gcc (-std=c11 -pthread)
+----------------------------------------------------------------------
+ [CP1] Deterministic UB-Free Lost Update: PASS
+       Rounds: 5, Expected: 10, Actual: 5
+       Lost Updates: 5 (Shared-counter data-race UB: False)
+ [CP2] Supplemental Scheduler Observation: PASS
+       Iterations: 10000, Expected: 20000, Actual: 10051
+       Manifested Lost Update: True
+ [CP3] POSIX Mutex Repair: PASS
+       Iterations: 10000, Expected: 20000, Actual: 20000
+       Invariant Preserved: True
+ [CP4] Condition-Variable Rendezvous: PASS
+       Consumed Data: 42, Predicate Evals: 2
+       Predicate Recheck Guard: True
+ [CP5] Controlled Deadlock & Watchdog: PASS
+       Child PID: 62, Watchdog Timeout: 2.0s
+       Preconditions Proven: True
+       Child Reaped (Returncode: -15)
+======================================================================

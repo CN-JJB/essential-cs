@@ -29,12 +29,24 @@ This directory contains **course-owned, standard-library-only structural fixture
 python tests/preflight_security_synthesis.py --module M24
 ```
 
-### Audit the synthetic dossier
+### 1. Audit the synthetic reference dossier
 ```bash
 python labs/foundations/m24/activity_l24_01.py --dossier labs/foundations/m24/sample_dossier.md
 ```
+`sample_dossier.md` is a **course-owned synthetic structural reference** used to verify formatting and validator rules.
 
-### Present a changed-constraint prompt
+### 2. Generate Mini Cloud evidence & audit learner dossier
+```bash
+# Generate empirical system evidence from the runnable Mini Cloud
+export PYTHONPATH=project
+python3 -m minicloud.cli walkthrough
+bash project/scripts/smoke.sh
+
+# Audit the learner's actual Mini Cloud defense dossier
+python labs/foundations/m24/activity_l24_01.py --dossier course/evidence/foundations-m24-evidence-template.md
+```
+
+### 3. Present a changed-constraint prompt
 ```bash
 python labs/foundations/m24/activity_l24_01.py --scenario SCENARIO_01_HIGH_LATENCY
 ```

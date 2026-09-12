@@ -80,9 +80,10 @@ Use this template for **one actual learner run of LAB-REQ-03**. Do not prefill o
 - Predicate Evaluation Count: `<actual count, e.g. 2>`
 - Event Sequence Observed:
   1. `COND_WAIT_ENTER` (predicate: false)
-  2. `PRODUCER_READY` (produced: 42)
-  3. `COND_WAIT_RETURN` (predicate: true)
-  4. `COND_CONSUMED` (consumed: 42)
+  2. `PRODUCER_OBSERVED_CONSUMER_WAITING`
+  3. `PRODUCER_READY` (produced: 42)
+  4. `COND_WAIT_RETURN` (predicate: true)
+  5. `COND_CONSUMED` (consumed: 42)
 - Rendezvous Verified: `<YES / NO>`
 
 ---

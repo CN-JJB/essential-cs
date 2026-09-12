@@ -1,0 +1,725 @@
+classify	Set up job	﻿2026-09-12T04:39:25.6689729Z Current runner version: '2.337.0'
+classify	Set up job	2026-09-12T04:39:25.6724736Z ##[group]Runner Image Provisioner
+classify	Set up job	2026-09-12T04:39:25.6726021Z Hosted Compute Agent
+classify	Set up job	2026-09-12T04:39:25.6727062Z Version: 20260828.587
+classify	Set up job	2026-09-12T04:39:25.6728130Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+classify	Set up job	2026-09-12T04:39:25.6729437Z Build Date: 2026-08-28T16:44:25Z
+classify	Set up job	2026-09-12T04:39:25.6730630Z Worker ID: {05159bb6-c00c-4d4e-865a-8e1e28376e0e}
+classify	Set up job	2026-09-12T04:39:25.6732128Z Azure Region: eastus
+classify	Set up job	2026-09-12T04:39:25.6733239Z ##[endgroup]
+classify	Set up job	2026-09-12T04:39:25.6735586Z ##[group]Operating System
+classify	Set up job	2026-09-12T04:39:25.6736703Z Ubuntu
+classify	Set up job	2026-09-12T04:39:25.6737575Z 24.04.5
+classify	Set up job	2026-09-12T04:39:25.6738403Z LTS
+classify	Set up job	2026-09-12T04:39:25.6739388Z ##[endgroup]
+classify	Set up job	2026-09-12T04:39:25.6740281Z ##[group]Runner Image
+classify	Set up job	2026-09-12T04:39:25.6741550Z Image: ubuntu-24.04
+classify	Set up job	2026-09-12T04:39:25.6742673Z Version: 20260907.300.1
+classify	Set up job	2026-09-12T04:39:25.6744910Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+classify	Set up job	2026-09-12T04:39:25.6748122Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+classify	Set up job	2026-09-12T04:39:25.6749933Z ##[endgroup]
+classify	Set up job	2026-09-12T04:39:25.6752230Z ##[group]GITHUB_TOKEN Permissions
+classify	Set up job	2026-09-12T04:39:25.6755134Z Contents: read
+classify	Set up job	2026-09-12T04:39:25.6756122Z Metadata: read
+classify	Set up job	2026-09-12T04:39:25.6757182Z Packages: write
+classify	Set up job	2026-09-12T04:39:25.6758135Z ##[endgroup]
+classify	Set up job	2026-09-12T04:39:25.6761134Z Secret source: Actions
+classify	Set up job	2026-09-12T04:39:25.6763074Z Cache mode: write
+classify	Set up job	2026-09-12T04:39:25.6764578Z Prepare workflow directory
+classify	Set up job	2026-09-12T04:39:25.7315285Z Prepare all required actions
+classify	Set up job	2026-09-12T04:39:25.7364750Z Getting action download info
+classify	Set up job	2026-09-12T04:39:25.9107916Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+classify	Set up job	2026-09-12T04:39:26.1005705Z Complete job name: classify
+classify	Checkout exact event revision	﻿2026-09-12T04:39:26.1999740Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+classify	Checkout exact event revision	2026-09-12T04:39:26.2008789Z ##[group]Run actions/checkout@v4
+classify	Checkout exact event revision	2026-09-12T04:39:26.2009579Z with:
+classify	Checkout exact event revision	2026-09-12T04:39:26.2010081Z   ref: d2ca8556f4fd086edcf82e0d2b1197571a619dda
+classify	Checkout exact event revision	2026-09-12T04:39:26.2010697Z   fetch-depth: 0
+classify	Checkout exact event revision	2026-09-12T04:39:26.2011178Z   repository: CN-JJB/essential-cs
+classify	Checkout exact event revision	2026-09-12T04:39:26.2015627Z   token: ***
+classify	Checkout exact event revision	2026-09-12T04:39:26.2016101Z   ssh-strict: true
+classify	Checkout exact event revision	2026-09-12T04:39:26.2016563Z   ssh-user: git
+classify	Checkout exact event revision	2026-09-12T04:39:26.2017030Z   persist-credentials: true
+classify	Checkout exact event revision	2026-09-12T04:39:26.2017545Z   clean: true
+classify	Checkout exact event revision	2026-09-12T04:39:26.2018006Z   sparse-checkout-cone-mode: true
+classify	Checkout exact event revision	2026-09-12T04:39:26.2018546Z   fetch-tags: false
+classify	Checkout exact event revision	2026-09-12T04:39:26.2018997Z   show-progress: true
+classify	Checkout exact event revision	2026-09-12T04:39:26.2019502Z   lfs: false
+classify	Checkout exact event revision	2026-09-12T04:39:26.2019932Z   submodules: false
+classify	Checkout exact event revision	2026-09-12T04:39:26.2020397Z   set-safe-directory: true
+classify	Checkout exact event revision	2026-09-12T04:39:26.2020928Z   allow-unsafe-pr-checkout: false
+classify	Checkout exact event revision	2026-09-12T04:39:26.2021941Z env:
+classify	Checkout exact event revision	2026-09-12T04:39:26.2022531Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+classify	Checkout exact event revision	2026-09-12T04:39:26.2023225Z   PLATFORM: linux/amd64
+classify	Checkout exact event revision	2026-09-12T04:39:26.2023747Z   EVIDENCE_DIR: /tmp/canonical-publish
+classify	Checkout exact event revision	2026-09-12T04:39:26.2024304Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:26.3050770Z Syncing repository: CN-JJB/essential-cs
+classify	Checkout exact event revision	2026-09-12T04:39:26.3053717Z ##[group]Getting Git version info
+classify	Checkout exact event revision	2026-09-12T04:39:26.3054937Z Working directory is '/home/runner/work/essential-cs/essential-cs'
+classify	Checkout exact event revision	2026-09-12T04:39:26.3056730Z [command]/usr/bin/git version
+classify	Checkout exact event revision	2026-09-12T04:39:26.3173730Z git version 2.55.0
+classify	Checkout exact event revision	2026-09-12T04:39:26.3191595Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:26.3199351Z Temporarily overriding HOME='/home/runner/work/_temp/c514acba-b49d-48eb-b059-bfeafc36c4f4' before making global git config changes
+classify	Checkout exact event revision	2026-09-12T04:39:26.3201911Z Adding repository directory to the temporary git global config as a safe directory
+classify	Checkout exact event revision	2026-09-12T04:39:26.3203844Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/essential-cs/essential-cs
+classify	Checkout exact event revision	2026-09-12T04:39:26.3259983Z Deleting the contents of '/home/runner/work/essential-cs/essential-cs'
+classify	Checkout exact event revision	2026-09-12T04:39:26.3264082Z ##[group]Initializing the repository
+classify	Checkout exact event revision	2026-09-12T04:39:26.3267922Z [command]/usr/bin/git init /home/runner/work/essential-cs/essential-cs
+classify	Checkout exact event revision	2026-09-12T04:39:26.3395812Z hint: Using 'master' as the name for the initial branch. This default branch name
+classify	Checkout exact event revision	2026-09-12T04:39:26.3397660Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+classify	Checkout exact event revision	2026-09-12T04:39:26.3399245Z hint: to use in all of your new repositories, which will suppress this warning,
+classify	Checkout exact event revision	2026-09-12T04:39:26.3400498Z hint: call:
+classify	Checkout exact event revision	2026-09-12T04:39:26.3401130Z hint:
+classify	Checkout exact event revision	2026-09-12T04:39:26.3402153Z hint: 	git config --global init.defaultBranch <name>
+classify	Checkout exact event revision	2026-09-12T04:39:26.3403135Z hint:
+classify	Checkout exact event revision	2026-09-12T04:39:26.3404102Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+classify	Checkout exact event revision	2026-09-12T04:39:26.3405674Z hint: 'development'. The just-created branch can be renamed via this command:
+classify	Checkout exact event revision	2026-09-12T04:39:26.3406931Z hint:
+classify	Checkout exact event revision	2026-09-12T04:39:26.3407587Z hint: 	git branch -m <name>
+classify	Checkout exact event revision	2026-09-12T04:39:26.3408373Z hint:
+classify	Checkout exact event revision	2026-09-12T04:39:26.3409386Z hint: Disable this message with "git config set advice.defaultBranchName false"
+classify	Checkout exact event revision	2026-09-12T04:39:26.3416677Z Initialized empty Git repository in /home/runner/work/essential-cs/essential-cs/.git/
+classify	Checkout exact event revision	2026-09-12T04:39:26.3426677Z [command]/usr/bin/git remote add origin https://github.com/CN-JJB/essential-cs
+classify	Checkout exact event revision	2026-09-12T04:39:26.3478905Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:26.3480285Z ##[group]Disabling automatic garbage collection
+classify	Checkout exact event revision	2026-09-12T04:39:26.3485210Z [command]/usr/bin/git config --local gc.auto 0
+classify	Checkout exact event revision	2026-09-12T04:39:26.3516548Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:26.3517745Z ##[group]Setting up auth
+classify	Checkout exact event revision	2026-09-12T04:39:26.3523707Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+classify	Checkout exact event revision	2026-09-12T04:39:26.3574820Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+classify	Checkout exact event revision	2026-09-12T04:39:26.3982830Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+classify	Checkout exact event revision	2026-09-12T04:39:26.4020396Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+classify	Checkout exact event revision	2026-09-12T04:39:26.4247938Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+classify	Checkout exact event revision	2026-09-12T04:39:26.4284708Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+classify	Checkout exact event revision	2026-09-12T04:39:26.4514398Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+classify	Checkout exact event revision	2026-09-12T04:39:26.4554593Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:26.4555531Z ##[group]Fetching the repository
+classify	Checkout exact event revision	2026-09-12T04:39:26.4565312Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+classify	Checkout exact event revision	2026-09-12T04:39:26.9813186Z From https://github.com/CN-JJB/essential-cs
+classify	Checkout exact event revision	2026-09-12T04:39:26.9815107Z  * [new branch]      architecture/issue-36-build-first -> origin/architecture/issue-36-build-first
+classify	Checkout exact event revision	2026-09-12T04:39:26.9816638Z  * [new branch]      audit/issue-140-post-v09-v10-gap-plan -> origin/audit/issue-140-post-v09-v10-gap-plan
+classify	Checkout exact event revision	2026-09-12T04:39:26.9818089Z  * [new branch]      audit/issue-2-external-curriculum-v0.1 -> origin/audit/issue-2-external-curriculum-v0.1
+classify	Checkout exact event revision	2026-09-12T04:39:26.9819351Z  * [new branch]      blueprint/issue-1-core-map -> origin/blueprint/issue-1-core-map
+classify	Checkout exact event revision	2026-09-12T04:39:26.9820563Z  * [new branch]      blueprint/issue-10-audit-disposition -> origin/blueprint/issue-10-audit-disposition
+classify	Checkout exact event revision	2026-09-12T04:39:26.9823074Z  * [new branch]      blueprint/issue-11-mini-cloud-alignment -> origin/blueprint/issue-11-mini-cloud-alignment
+classify	Checkout exact event revision	2026-09-12T04:39:26.9826416Z  * [new branch]      blueprint/issue-12-lab-source-selection -> origin/blueprint/issue-12-lab-source-selection
+classify	Checkout exact event revision	2026-09-12T04:39:26.9828594Z  * [new branch]      blueprint/issue-13-competency-concepts -> origin/blueprint/issue-13-competency-concepts
+classify	Checkout exact event revision	2026-09-12T04:39:26.9830377Z  * [new branch]      blueprint/issue-19-course-identity-entry -> origin/blueprint/issue-19-course-identity-entry
+classify	Checkout exact event revision	2026-09-12T04:39:26.9832175Z  * [new branch]      blueprint/issue-21-assessment-tech-map -> origin/blueprint/issue-21-assessment-tech-map
+classify	Checkout exact event revision	2026-09-12T04:39:26.9833561Z  * [new branch]      blueprint/issue-23-final-exit-audit -> origin/blueprint/issue-23-final-exit-audit
+classify	Checkout exact event revision	2026-09-12T04:39:26.9834939Z  * [new branch]      blueprint/issue-3-mini-cloud-evolution -> origin/blueprint/issue-3-mini-cloud-evolution
+classify	Checkout exact event revision	2026-09-12T04:39:26.9836345Z  * [new branch]      blueprint/issue-9-final-reconciliation -> origin/blueprint/issue-9-final-reconciliation
+classify	Checkout exact event revision	2026-09-12T04:39:26.9837852Z  * [new branch]      design/issue-114-s7-m21-m24-security-judgment -> origin/design/issue-114-s7-m21-m24-security-judgment
+classify	Checkout exact event revision	2026-09-12T04:39:26.9839470Z  * [new branch]      design/issue-50-m05-m09-runtime-os-persistence -> origin/design/issue-50-m05-m09-runtime-os-persistence
+classify	Checkout exact event revision	2026-09-12T04:39:26.9841009Z  * [new branch]      design/issue-71-m10-m12-network-web-browser -> origin/design/issue-71-m10-m12-network-web-browser
+classify	Checkout exact event revision	2026-09-12T04:39:26.9843273Z  * [new branch]      design/issue-86-m13-m15-data-concurrency -> origin/design/issue-86-m13-m15-data-concurrency
+classify	Checkout exact event revision	2026-09-12T04:39:26.9844834Z  * [new branch]      design/issue-99-m16-m20-distributed-infra -> origin/design/issue-99-m16-m20-distributed-infra
+classify	Checkout exact event revision	2026-09-12T04:39:26.9846207Z  * [new branch]      governance/issue-88-issue-pr-handoff -> origin/governance/issue-88-issue-pr-handoff
+classify	Checkout exact event revision	2026-09-12T04:39:26.9847559Z  * [new branch]      governance/role-specific-agent-guides -> origin/governance/role-specific-agent-guides
+classify	Checkout exact event revision	2026-09-12T04:39:26.9849101Z  * [new branch]      impl/issue-101-s6-b1-m16-rpc -> origin/impl/issue-101-s6-b1-m16-rpc
+classify	Checkout exact event revision	2026-09-12T04:39:26.9850687Z  * [new branch]      impl/issue-103-s6-b2-m17-replication-consensus -> origin/impl/issue-103-s6-b2-m17-replication-consensus
+classify	Checkout exact event revision	2026-09-12T04:39:26.9852689Z  * [new branch]      impl/issue-105-s6-b3-m18-coordination -> origin/impl/issue-105-s6-b3-m18-coordination
+classify	Checkout exact event revision	2026-09-12T04:39:26.9854088Z  * [new branch]      impl/issue-107-s6-b4-m19-infrastructure -> origin/impl/issue-107-s6-b4-m19-infrastructure
+classify	Checkout exact event revision	2026-09-12T04:39:26.9855478Z  * [new branch]      impl/issue-110-s6-b5-m20-observability -> origin/impl/issue-110-s6-b5-m20-observability
+classify	Checkout exact event revision	2026-09-12T04:39:26.9856839Z  * [new branch]      impl/issue-116-s7-b1-m21-trust-crypto -> origin/impl/issue-116-s7-b1-m21-trust-crypto
+classify	Checkout exact event revision	2026-09-12T04:39:26.9858222Z  * [new branch]      impl/issue-119-s7-b2-m22-auth-composition -> origin/impl/issue-119-s7-b2-m22-auth-composition
+classify	Checkout exact event revision	2026-09-12T04:39:26.9859687Z  * [new branch]      impl/issue-121-s7-b3-m23-systems-judgment -> origin/impl/issue-121-s7-b3-m23-systems-judgment
+classify	Checkout exact event revision	2026-09-12T04:39:26.9861551Z  * [new branch]      impl/issue-123-s7-b4-m24-final-system-defense -> origin/impl/issue-123-s7-b4-m24-final-system-defense
+classify	Checkout exact event revision	2026-09-12T04:39:26.9863156Z  * [new branch]      impl/issue-90-m13-sqlite-exp02 -> origin/impl/issue-90-m13-sqlite-exp02
+classify	Checkout exact event revision	2026-09-12T04:39:26.9864492Z  * [new branch]      impl/issue-93-m14-transactions-lab-req-05 -> origin/impl/issue-93-m14-transactions-lab-req-05
+classify	Checkout exact event revision	2026-09-12T04:39:26.9865930Z  * [new branch]      impl/issue-95-m15-concurrency-lab-req-03 -> origin/impl/issue-95-m15-concurrency-lab-req-03
+classify	Checkout exact event revision	2026-09-12T04:39:26.9867575Z  * [new branch]      implementation/durable-canonical-environment-pin-v0.1 -> origin/implementation/durable-canonical-environment-pin-v0.1
+classify	Checkout exact event revision	2026-09-12T04:39:26.9869347Z  * [new branch]      implementation/issue-145-stable-environment-ci-v0.1 -> origin/implementation/issue-145-stable-environment-ci-v0.1
+classify	Checkout exact event revision	2026-09-12T04:39:26.9871109Z  * [new branch]      implementation/issue-38-m02-computation-complexity -> origin/implementation/issue-38-m02-computation-complexity
+classify	Checkout exact event revision	2026-09-12T04:39:26.9873667Z  * [new branch]      implementation/issue-41-m03-machine-isa-execution -> origin/implementation/issue-41-m03-machine-isa-execution
+classify	Checkout exact event revision	2026-09-12T04:39:26.9875581Z  * [new branch]      implementation/issue-44-m04-memory-locality-measurement -> origin/implementation/issue-44-m04-memory-locality-measurement
+classify	Checkout exact event revision	2026-09-12T04:39:26.9878158Z  * [new branch]      implementation/issue-53-m05-languages-runtime-compiler -> origin/implementation/issue-53-m05-languages-runtime-compiler
+classify	Checkout exact event revision	2026-09-12T04:39:26.9880826Z  * [new branch]      implementation/issue-56-m06-processes-syscalls-lab-req-02 -> origin/implementation/issue-56-m06-processes-syscalls-lab-req-02
+classify	Checkout exact event revision	2026-09-12T04:39:26.9883669Z  * [new branch]      implementation/issue-59-m07-virtual-memory-isolation -> origin/implementation/issue-59-m07-virtual-memory-isolation
+classify	Checkout exact event revision	2026-09-12T04:39:26.9885897Z  * [new branch]      implementation/issue-62-m08-files-filesystems-io -> origin/implementation/issue-62-m08-files-filesystems-io
+classify	Checkout exact event revision	2026-09-12T04:39:26.9889815Z  * [new branch]      implementation/issue-65-m09-storage-engine-durable-storage -> origin/implementation/issue-65-m09-storage-engine-durable-storage
+classify	Checkout exact event revision	2026-09-12T04:39:26.9893781Z  * [new branch]      implementation/issue-74-m10-networking-ip-dns-transport -> origin/implementation/issue-74-m10-networking-ip-dns-transport
+classify	Checkout exact event revision	2026-09-12T04:39:26.9897486Z  * [new branch]      implementation/issue-77-m11-tls-http-caching-lab-req-01 -> origin/implementation/issue-77-m11-tls-http-caching-lab-req-01
+classify	Checkout exact event revision	2026-09-12T04:39:26.9899589Z  * [new branch]      implementation/issue-80-m12-web-browser-exp-03 -> origin/implementation/issue-80-m12-web-browser-exp-03
+classify	Checkout exact event revision	2026-09-12T04:39:26.9900929Z  * [new branch]      lead-smoke/pr-66-m09    -> origin/lead-smoke/pr-66-m09
+classify	Checkout exact event revision	2026-09-12T04:39:26.9902964Z  * [new branch]      lead-smoke/pr-66-m09-v2 -> origin/lead-smoke/pr-66-m09-v2
+classify	Checkout exact event revision	2026-09-12T04:39:26.9904254Z  * [new branch]      lead-smoke/pr-78-m11    -> origin/lead-smoke/pr-78-m11
+classify	Checkout exact event revision	2026-09-12T04:39:26.9905269Z  * [new branch]      lead-smoke/pr-78-m11-final -> origin/lead-smoke/pr-78-m11-final
+classify	Checkout exact event revision	2026-09-12T04:39:26.9906906Z  * [new branch]      lead-smoke/pr-78-m11-v2 -> origin/lead-smoke/pr-78-m11-v2
+classify	Checkout exact event revision	2026-09-12T04:39:26.9908955Z  * [new branch]      lead-smoke/pr-81-m12-final -> origin/lead-smoke/pr-81-m12-final
+classify	Checkout exact event revision	2026-09-12T04:39:26.9910671Z  * [new branch]      main                    -> origin/main
+classify	Checkout exact event revision	2026-09-12T04:39:26.9913055Z  * [new branch]      repair/issue-125-m22-layer56-report-key -> origin/repair/issue-125-m22-layer56-report-key
+classify	Checkout exact event revision	2026-09-12T04:39:26.9916652Z  * [new branch]      repair/issue-127-pre-v09-known-regressions -> origin/repair/issue-127-pre-v09-known-regressions
+classify	Checkout exact event revision	2026-09-12T04:39:26.9919420Z  * [new branch]      repair/issue-131-v09-smoke-license-gates -> origin/repair/issue-131-v09-smoke-license-gates
+classify	Checkout exact event revision	2026-09-12T04:39:26.9921554Z  * [new branch]      repair/issue-135-lab-req-02-executable-bits -> origin/repair/issue-135-lab-req-02-executable-bits
+classify	Checkout exact event revision	2026-09-12T04:39:26.9923222Z  * [new branch]      repair/issue-149-qemu-ci-false-green-v0.1 -> origin/repair/issue-149-qemu-ci-false-green-v0.1
+classify	Checkout exact event revision	2026-09-12T04:39:26.9924787Z  * [new branch]      research/issue-112-s7-m21-m24-security-judgment -> origin/research/issue-112-s7-m21-m24-security-judgment
+classify	Checkout exact event revision	2026-09-12T04:39:26.9926555Z  * [new branch]      research/issue-143-stable-environment-pin-decision-packet -> origin/research/issue-143-stable-environment-pin-decision-packet
+classify	Checkout exact event revision	2026-09-12T04:39:26.9928205Z  * [new branch]      research/issue-4-classic-labs-sources -> origin/research/issue-4-classic-labs-sources
+classify	Checkout exact event revision	2026-09-12T04:39:26.9929706Z  * [new branch]      research/issue-47-m05-m09-runtime-os-persistence -> origin/research/issue-47-m05-m09-runtime-os-persistence
+classify	Checkout exact event revision	2026-09-12T04:39:26.9931555Z  * [new branch]      research/issue-68-m10-m12-network-web-browser -> origin/research/issue-68-m10-m12-network-web-browser
+classify	Checkout exact event revision	2026-09-12T04:39:26.9933140Z  * [new branch]      research/issue-83-m13-m15-data-concurrency -> origin/research/issue-83-m13-m15-data-concurrency
+classify	Checkout exact event revision	2026-09-12T04:39:26.9934848Z  * [new branch]      research/issue-97-m16-m20-distributed-infra -> origin/research/issue-97-m16-m20-distributed-infra
+classify	Checkout exact event revision	2026-09-12T04:39:26.9936250Z  * [new branch]      status/advance-production-to-m08 -> origin/status/advance-production-to-m08
+classify	Checkout exact event revision	2026-09-12T04:39:26.9937489Z  * [new branch]      status/advance-production-to-m09 -> origin/status/advance-production-to-m09
+classify	Checkout exact event revision	2026-09-12T04:39:26.9938969Z  * [new branch]      status/record-m09-and-advance-to-s4-research -> origin/status/record-m09-and-advance-to-s4-research
+classify	Checkout exact event revision	2026-09-12T04:39:26.9942128Z  * [new branch]      status/record-m10-and-advance-to-m11 -> origin/status/record-m10-and-advance-to-m11
+classify	Checkout exact event revision	2026-09-12T04:39:26.9944838Z  * [new branch]      status/record-m11-and-advance-to-m12 -> origin/status/record-m11-and-advance-to-m12
+classify	Checkout exact event revision	2026-09-12T04:39:26.9947673Z  * [new branch]      status/record-m12-and-advance-to-s5-research -> origin/status/record-m12-and-advance-to-s5-research
+classify	Checkout exact event revision	2026-09-12T04:39:26.9950885Z  * [new branch]      status/record-s4-design-and-advance-to-m10 -> origin/status/record-s4-design-and-advance-to-m10
+classify	Checkout exact event revision	2026-09-12T04:39:26.9954249Z  * [new branch]      status/record-s4-research-and-advance-to-design -> origin/status/record-s4-research-and-advance-to-design
+classify	Checkout exact event revision	2026-09-12T04:39:26.9957438Z  * [new branch]      status/record-s5-research-and-advance-to-design -> origin/status/record-s5-research-and-advance-to-design
+classify	Checkout exact event revision	2026-09-12T04:39:26.9959631Z  * [new branch]      validation/issue-34-m00-m01-first-pilot -> origin/validation/issue-34-m00-m01-first-pilot
+classify	Checkout exact event revision	2026-09-12T04:39:26.9961514Z  * [new branch]      verification/issue-129-full-core-v09-rc-readiness -> origin/verification/issue-129-full-core-v09-rc-readiness
+classify	Checkout exact event revision	2026-09-12T04:39:26.9963346Z  * [new branch]      verification/issue-133-v09-rc-readiness-reverify -> origin/verification/issue-133-v09-rc-readiness-reverify
+classify	Checkout exact event revision	2026-09-12T04:39:26.9965376Z  * [new branch]      verification/issue-137-lab-req-02-direct-invocation -> origin/verification/issue-137-lab-req-02-direct-invocation
+classify	Checkout exact event revision	2026-09-12T04:39:26.9968484Z  * [new branch]      verification/issue-147-stable-environment-ci-independent -> origin/verification/issue-147-stable-environment-ci-independent
+classify	Checkout exact event revision	2026-09-12T04:39:26.9970258Z  * [new branch]      verification/issue-31-m00-m01-gate -> origin/verification/issue-31-m00-m01-gate
+classify	Checkout exact event revision	2026-09-12T04:39:26.9972333Z  * [new branch]      vertical-slice/issue-25-foundations-system-mechanics-research -> origin/vertical-slice/issue-25-foundations-system-mechanics-research
+classify	Checkout exact event revision	2026-09-12T04:39:26.9974508Z  * [new branch]      vertical-slice/issue-27-foundations-system-mechanics-design -> origin/vertical-slice/issue-27-foundations-system-mechanics-design
+classify	Checkout exact event revision	2026-09-12T04:39:26.9976394Z  * [new branch]      vertical-slice/issue-29-m00-m01-lesson-activity -> origin/vertical-slice/issue-29-m00-m01-lesson-activity
+classify	Checkout exact event revision	2026-09-12T04:39:26.9978149Z  * [new branch]      web-lead/post-pr30-status -> origin/web-lead/post-pr30-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9980367Z  * [new branch]      web-lead/post-pr33-status -> origin/web-lead/post-pr33-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9982881Z  * [new branch]      web-lead/post-pr39-status -> origin/web-lead/post-pr39-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9985098Z  * [new branch]      web-lead/post-pr42-issue-first -> origin/web-lead/post-pr42-issue-first
+classify	Checkout exact event revision	2026-09-12T04:39:26.9987420Z  * [new branch]      web-lead/post-pr45-status -> origin/web-lead/post-pr45-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9989550Z  * [new branch]      web-lead/post-pr48-status -> origin/web-lead/post-pr48-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9991772Z  * [new branch]      web-lead/post-pr51-status -> origin/web-lead/post-pr51-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9993680Z  * [new branch]      web-lead/post-pr54-status -> origin/web-lead/post-pr54-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9995536Z  * [new branch]      web-lead/post-pr57-status -> origin/web-lead/post-pr57-status
+classify	Checkout exact event revision	2026-09-12T04:39:26.9997247Z  * [new tag]         v0.9                    -> v0.9
+classify	Checkout exact event revision	2026-09-12T04:39:26.9999207Z [command]/usr/bin/git rev-parse --verify --quiet d2ca8556f4fd086edcf82e0d2b1197571a619dda^{object}
+classify	Checkout exact event revision	2026-09-12T04:39:27.0000488Z d2ca8556f4fd086edcf82e0d2b1197571a619dda
+classify	Checkout exact event revision	2026-09-12T04:39:27.0002418Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:27.0003267Z ##[group]Determining the checkout info
+classify	Checkout exact event revision	2026-09-12T04:39:27.0004209Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:27.0004977Z [command]/usr/bin/git sparse-checkout disable
+classify	Checkout exact event revision	2026-09-12T04:39:27.0007639Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+classify	Checkout exact event revision	2026-09-12T04:39:27.0009510Z ##[group]Checking out the ref
+classify	Checkout exact event revision	2026-09-12T04:39:27.0010390Z [command]/usr/bin/git checkout --progress --force d2ca8556f4fd086edcf82e0d2b1197571a619dda
+classify	Checkout exact event revision	2026-09-12T04:39:27.0543375Z Note: switching to 'd2ca8556f4fd086edcf82e0d2b1197571a619dda'.
+classify	Checkout exact event revision	2026-09-12T04:39:27.0544798Z 
+classify	Checkout exact event revision	2026-09-12T04:39:27.0545785Z You are in 'detached HEAD' state. You can look around, make experimental
+classify	Checkout exact event revision	2026-09-12T04:39:27.0547946Z changes and commit them, and you can discard any commits you make in this
+classify	Checkout exact event revision	2026-09-12T04:39:27.0550184Z state without impacting any branches by switching back to a branch.
+classify	Checkout exact event revision	2026-09-12T04:39:27.0551661Z 
+classify	Checkout exact event revision	2026-09-12T04:39:27.0552236Z If you want to create a new branch to retain commits you create, you may
+classify	Checkout exact event revision	2026-09-12T04:39:27.0553502Z do so (now or later) by using -c with the switch command. Example:
+classify	Checkout exact event revision	2026-09-12T04:39:27.0554323Z 
+classify	Checkout exact event revision	2026-09-12T04:39:27.0554665Z   git switch -c <new-branch-name>
+classify	Checkout exact event revision	2026-09-12T04:39:27.0555412Z 
+classify	Checkout exact event revision	2026-09-12T04:39:27.0556166Z Or undo this operation with:
+classify	Checkout exact event revision	2026-09-12T04:39:27.0557190Z 
+classify	Checkout exact event revision	2026-09-12T04:39:27.0557671Z   git switch -
+classify	Checkout exact event revision	2026-09-12T04:39:27.0558257Z 
+classify	Checkout exact event revision	2026-09-12T04:39:27.0558977Z Turn off this advice by setting config variable advice.detachedHead to false
+classify	Checkout exact event revision	2026-09-12T04:39:27.0560058Z 
+classify	Checkout exact event revision	2026-09-12T04:39:27.0561219Z HEAD is now at d2ca855 feat(env): commit durable canonical digest pin and materialization path (#150)
+classify	Checkout exact event revision	2026-09-12T04:39:27.0565050Z ##[endgroup]
+classify	Checkout exact event revision	2026-09-12T04:39:27.0606555Z [command]/usr/bin/git log -1 --format=%H
+classify	Checkout exact event revision	2026-09-12T04:39:27.0634694Z d2ca8556f4fd086edcf82e0d2b1197571a619dda
+classify	Classify run — push may publish only while the committed pin is the sentinel	﻿2026-09-12T04:39:27.0899308Z ##[group]Run set -ueo pipefail
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0900612Z ^[[36;1mset -ueo pipefail^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0902199Z ^[[36;1mif [ 'push' = 'workflow_dispatch' ]; then^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0903546Z ^[[36;1m  mode=''^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0904446Z ^[[36;1melse^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0906032Z ^[[36;1m  digest="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0908274Z ^[[36;1m  if printf '%s' "${digest}" | grep -q '^sha256:0\{64\}$'; then^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0909849Z ^[[36;1m    mode=publish-bootstrap^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0912084Z ^[[36;1m    echo "Push observed an unpublished sentinel pin: this is the one-shot bootstrap publication."^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0914263Z ^[[36;1m  else^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0915152Z ^[[36;1m    mode=verify-pin^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0917333Z ^[[36;1m    echo "Push observed a committed digest pin (${digest}): verify only. A push can never publish or move the pin."^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0919640Z ^[[36;1m  fi^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0920512Z ^[[36;1mfi^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0921474Z ^[[36;1mcase "${mode}" in^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0922811Z ^[[36;1m  publish-bootstrap|publish-candidate|verify-pin) ;;^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0924501Z ^[[36;1m  *) echo "FAIL: unknown mode '${mode}'"; exit 1 ;;^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0925851Z ^[[36;1mesac^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0926835Z ^[[36;1mecho "mode=${mode}" >> "${GITHUB_OUTPUT}"^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0928214Z ^[[36;1mecho "CLASSIFIED_MODE=${mode}"^[[0m
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0969910Z shell: /usr/bin/bash -e {0}
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0970974Z env:
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0972282Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0973768Z   PLATFORM: linux/amd64
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0974809Z   EVIDENCE_DIR: /tmp/canonical-publish
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.0975961Z ##[endgroup]
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.1097418Z Push observed a committed digest pin (sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460): verify only. A push can never publish or move the pin.
+classify	Classify run — push may publish only while the committed pin is the sentinel	2026-09-12T04:39:27.1101841Z CLASSIFIED_MODE=verify-pin
+classify	Post Checkout exact event revision	﻿2026-09-12T04:39:27.1440544Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.1446301Z Post job cleanup.
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2327169Z [command]/usr/bin/git version
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2380470Z git version 2.55.0
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2427279Z Temporarily overriding HOME='/home/runner/work/_temp/3e11b7e6-ddc6-45aa-8cff-306b4d04afad' before making global git config changes
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2431136Z Adding repository directory to the temporary git global config as a safe directory
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2435265Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/essential-cs/essential-cs
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2472207Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2510029Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2763789Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2792254Z http.https://github.com/.extraheader
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2804851Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.2840657Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.3106901Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+classify	Post Checkout exact event revision	2026-09-12T04:39:27.3146893Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+classify	Complete job	﻿2026-09-12T04:39:27.3562805Z Evaluate and set job outputs
+classify	Complete job	2026-09-12T04:39:27.3570420Z Set output 'mode'
+classify	Complete job	2026-09-12T04:39:27.3574341Z Cleaning up orphan processes
+classify	Complete job	2026-09-12T04:39:27.4071460Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+verify-pin	Set up job	﻿2026-09-12T04:39:32.4741234Z Current runner version: '2.337.0'
+verify-pin	Set up job	2026-09-12T04:39:32.4763472Z ##[group]Runner Image Provisioner
+verify-pin	Set up job	2026-09-12T04:39:32.4764497Z Hosted Compute Agent
+verify-pin	Set up job	2026-09-12T04:39:32.4765062Z Version: 20260828.587
+verify-pin	Set up job	2026-09-12T04:39:32.4765642Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+verify-pin	Set up job	2026-09-12T04:39:32.4766373Z Build Date: 2026-08-28T16:44:25Z
+verify-pin	Set up job	2026-09-12T04:39:32.4767050Z Worker ID: {b3a8db07-4383-4315-a532-8ede02e87104}
+verify-pin	Set up job	2026-09-12T04:39:32.4767762Z Azure Region: westcentralus
+verify-pin	Set up job	2026-09-12T04:39:32.4768328Z ##[endgroup]
+verify-pin	Set up job	2026-09-12T04:39:32.4769837Z ##[group]Operating System
+verify-pin	Set up job	2026-09-12T04:39:32.4770458Z Ubuntu
+verify-pin	Set up job	2026-09-12T04:39:32.4770944Z 24.04.5
+verify-pin	Set up job	2026-09-12T04:39:32.4771455Z LTS
+verify-pin	Set up job	2026-09-12T04:39:32.4772034Z ##[endgroup]
+verify-pin	Set up job	2026-09-12T04:39:32.4772566Z ##[group]Runner Image
+verify-pin	Set up job	2026-09-12T04:39:32.4773511Z Image: ubuntu-24.04
+verify-pin	Set up job	2026-09-12T04:39:32.4774064Z Version: 20260907.300.1
+verify-pin	Set up job	2026-09-12T04:39:32.4775093Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+verify-pin	Set up job	2026-09-12T04:39:32.4776693Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+verify-pin	Set up job	2026-09-12T04:39:32.4777885Z ##[endgroup]
+verify-pin	Set up job	2026-09-12T04:39:32.4779478Z ##[group]GITHUB_TOKEN Permissions
+verify-pin	Set up job	2026-09-12T04:39:32.4781888Z Contents: read
+verify-pin	Set up job	2026-09-12T04:39:32.4782453Z Metadata: read
+verify-pin	Set up job	2026-09-12T04:39:32.4782991Z Packages: write
+verify-pin	Set up job	2026-09-12T04:39:32.4783527Z ##[endgroup]
+verify-pin	Set up job	2026-09-12T04:39:32.4785506Z Secret source: Actions
+verify-pin	Set up job	2026-09-12T04:39:32.4786421Z Cache mode: write
+verify-pin	Set up job	2026-09-12T04:39:32.4787062Z Prepare workflow directory
+verify-pin	Set up job	2026-09-12T04:39:32.5163581Z Prepare all required actions
+verify-pin	Set up job	2026-09-12T04:39:32.5213442Z Getting action download info
+verify-pin	Set up job	2026-09-12T04:39:32.7988730Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+verify-pin	Set up job	2026-09-12T04:39:32.9166660Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+verify-pin	Set up job	2026-09-12T04:39:33.1507031Z Complete job name: verify-pin
+verify-pin	Checkout exact event revision	﻿2026-09-12T04:39:33.2150477Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2159136Z ##[group]Run actions/checkout@v4
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2159900Z with:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2160502Z   ref: d2ca8556f4fd086edcf82e0d2b1197571a619dda
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2161126Z   fetch-depth: 0
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2161639Z   repository: CN-JJB/essential-cs
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2165599Z   token: ***
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2166074Z   ssh-strict: true
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2166573Z   ssh-user: git
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2167071Z   persist-credentials: true
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2167605Z   clean: true
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2168130Z   sparse-checkout-cone-mode: true
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2168823Z   fetch-tags: false
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2169330Z   show-progress: true
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2169984Z   lfs: false
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2170458Z   submodules: false
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2170965Z   set-safe-directory: true
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2171516Z   allow-unsafe-pr-checkout: false
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2172267Z env:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2172861Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2173574Z   PLATFORM: linux/amd64
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2174129Z   EVIDENCE_DIR: /tmp/canonical-publish
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.2174701Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3189658Z Syncing repository: CN-JJB/essential-cs
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3192060Z ##[group]Getting Git version info
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3192931Z Working directory is '/home/runner/work/essential-cs/essential-cs'
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3194072Z [command]/usr/bin/git version
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3267198Z git version 2.55.0
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3286432Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3298698Z Temporarily overriding HOME='/home/runner/work/_temp/3c410735-963d-431c-9011-5d6846c76f03' before making global git config changes
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3300852Z Adding repository directory to the temporary git global config as a safe directory
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3305519Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/essential-cs/essential-cs
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3367667Z Deleting the contents of '/home/runner/work/essential-cs/essential-cs'
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3370516Z ##[group]Initializing the repository
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3374684Z [command]/usr/bin/git init /home/runner/work/essential-cs/essential-cs
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3483229Z hint: Using 'master' as the name for the initial branch. This default branch name
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3484827Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3486162Z hint: to use in all of your new repositories, which will suppress this warning,
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3487379Z hint: call:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3488005Z hint:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3489037Z hint: 	git config --global init.defaultBranch <name>
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3490046Z hint:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3490959Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3492295Z hint: 'development'. The just-created branch can be renamed via this command:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3493411Z hint:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3494025Z hint: 	git branch -m <name>
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3494806Z hint:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3495759Z hint: Disable this message with "git config set advice.defaultBranchName false"
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3497263Z Initialized empty Git repository in /home/runner/work/essential-cs/essential-cs/.git/
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3499503Z [command]/usr/bin/git remote add origin https://github.com/CN-JJB/essential-cs
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3542061Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3543366Z ##[group]Disabling automatic garbage collection
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3545457Z [command]/usr/bin/git config --local gc.auto 0
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3573055Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3574373Z ##[group]Setting up auth
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3579036Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3606730Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3947175Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.3990596Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.4173537Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.4205121Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.4386508Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.4419424Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.4420836Z ##[group]Fetching the repository
+verify-pin	Checkout exact event revision	2026-09-12T04:39:33.4430138Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7325627Z From https://github.com/CN-JJB/essential-cs
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7328873Z  * [new branch]      architecture/issue-36-build-first -> origin/architecture/issue-36-build-first
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7332241Z  * [new branch]      audit/issue-140-post-v09-v10-gap-plan -> origin/audit/issue-140-post-v09-v10-gap-plan
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7335834Z  * [new branch]      audit/issue-2-external-curriculum-v0.1 -> origin/audit/issue-2-external-curriculum-v0.1
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7339520Z  * [new branch]      blueprint/issue-1-core-map -> origin/blueprint/issue-1-core-map
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7343024Z  * [new branch]      blueprint/issue-10-audit-disposition -> origin/blueprint/issue-10-audit-disposition
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7346811Z  * [new branch]      blueprint/issue-11-mini-cloud-alignment -> origin/blueprint/issue-11-mini-cloud-alignment
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7352154Z  * [new branch]      blueprint/issue-12-lab-source-selection -> origin/blueprint/issue-12-lab-source-selection
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7356981Z  * [new branch]      blueprint/issue-13-competency-concepts -> origin/blueprint/issue-13-competency-concepts
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7362203Z  * [new branch]      blueprint/issue-19-course-identity-entry -> origin/blueprint/issue-19-course-identity-entry
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7367138Z  * [new branch]      blueprint/issue-21-assessment-tech-map -> origin/blueprint/issue-21-assessment-tech-map
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7371689Z  * [new branch]      blueprint/issue-23-final-exit-audit -> origin/blueprint/issue-23-final-exit-audit
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7375443Z  * [new branch]      blueprint/issue-3-mini-cloud-evolution -> origin/blueprint/issue-3-mini-cloud-evolution
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7387401Z  * [new branch]      blueprint/issue-9-final-reconciliation -> origin/blueprint/issue-9-final-reconciliation
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7391698Z  * [new branch]      design/issue-114-s7-m21-m24-security-judgment -> origin/design/issue-114-s7-m21-m24-security-judgment
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7395795Z  * [new branch]      design/issue-50-m05-m09-runtime-os-persistence -> origin/design/issue-50-m05-m09-runtime-os-persistence
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7400433Z  * [new branch]      design/issue-71-m10-m12-network-web-browser -> origin/design/issue-71-m10-m12-network-web-browser
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7405317Z  * [new branch]      design/issue-86-m13-m15-data-concurrency -> origin/design/issue-86-m13-m15-data-concurrency
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7409069Z  * [new branch]      design/issue-99-m16-m20-distributed-infra -> origin/design/issue-99-m16-m20-distributed-infra
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7412366Z  * [new branch]      governance/issue-88-issue-pr-handoff -> origin/governance/issue-88-issue-pr-handoff
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7415516Z  * [new branch]      governance/role-specific-agent-guides -> origin/governance/role-specific-agent-guides
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7419081Z  * [new branch]      impl/issue-101-s6-b1-m16-rpc -> origin/impl/issue-101-s6-b1-m16-rpc
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7422511Z  * [new branch]      impl/issue-103-s6-b2-m17-replication-consensus -> origin/impl/issue-103-s6-b2-m17-replication-consensus
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7426425Z  * [new branch]      impl/issue-105-s6-b3-m18-coordination -> origin/impl/issue-105-s6-b3-m18-coordination
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7430213Z  * [new branch]      impl/issue-107-s6-b4-m19-infrastructure -> origin/impl/issue-107-s6-b4-m19-infrastructure
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7433925Z  * [new branch]      impl/issue-110-s6-b5-m20-observability -> origin/impl/issue-110-s6-b5-m20-observability
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7437294Z  * [new branch]      impl/issue-116-s7-b1-m21-trust-crypto -> origin/impl/issue-116-s7-b1-m21-trust-crypto
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7440958Z  * [new branch]      impl/issue-119-s7-b2-m22-auth-composition -> origin/impl/issue-119-s7-b2-m22-auth-composition
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7445228Z  * [new branch]      impl/issue-121-s7-b3-m23-systems-judgment -> origin/impl/issue-121-s7-b3-m23-systems-judgment
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7449265Z  * [new branch]      impl/issue-123-s7-b4-m24-final-system-defense -> origin/impl/issue-123-s7-b4-m24-final-system-defense
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7452969Z  * [new branch]      impl/issue-90-m13-sqlite-exp02 -> origin/impl/issue-90-m13-sqlite-exp02
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7456711Z  * [new branch]      impl/issue-93-m14-transactions-lab-req-05 -> origin/impl/issue-93-m14-transactions-lab-req-05
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7460343Z  * [new branch]      impl/issue-95-m15-concurrency-lab-req-03 -> origin/impl/issue-95-m15-concurrency-lab-req-03
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7464561Z  * [new branch]      implementation/durable-canonical-environment-pin-v0.1 -> origin/implementation/durable-canonical-environment-pin-v0.1
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7469348Z  * [new branch]      implementation/issue-145-stable-environment-ci-v0.1 -> origin/implementation/issue-145-stable-environment-ci-v0.1
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7474449Z  * [new branch]      implementation/issue-38-m02-computation-complexity -> origin/implementation/issue-38-m02-computation-complexity
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7478953Z  * [new branch]      implementation/issue-41-m03-machine-isa-execution -> origin/implementation/issue-41-m03-machine-isa-execution
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7483380Z  * [new branch]      implementation/issue-44-m04-memory-locality-measurement -> origin/implementation/issue-44-m04-memory-locality-measurement
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7487952Z  * [new branch]      implementation/issue-53-m05-languages-runtime-compiler -> origin/implementation/issue-53-m05-languages-runtime-compiler
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7492629Z  * [new branch]      implementation/issue-56-m06-processes-syscalls-lab-req-02 -> origin/implementation/issue-56-m06-processes-syscalls-lab-req-02
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7497119Z  * [new branch]      implementation/issue-59-m07-virtual-memory-isolation -> origin/implementation/issue-59-m07-virtual-memory-isolation
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7501524Z  * [new branch]      implementation/issue-62-m08-files-filesystems-io -> origin/implementation/issue-62-m08-files-filesystems-io
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7505866Z  * [new branch]      implementation/issue-65-m09-storage-engine-durable-storage -> origin/implementation/issue-65-m09-storage-engine-durable-storage
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7510487Z  * [new branch]      implementation/issue-74-m10-networking-ip-dns-transport -> origin/implementation/issue-74-m10-networking-ip-dns-transport
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7514824Z  * [new branch]      implementation/issue-77-m11-tls-http-caching-lab-req-01 -> origin/implementation/issue-77-m11-tls-http-caching-lab-req-01
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7518947Z  * [new branch]      implementation/issue-80-m12-web-browser-exp-03 -> origin/implementation/issue-80-m12-web-browser-exp-03
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7521938Z  * [new branch]      lead-smoke/pr-66-m09    -> origin/lead-smoke/pr-66-m09
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7524166Z  * [new branch]      lead-smoke/pr-66-m09-v2 -> origin/lead-smoke/pr-66-m09-v2
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7526674Z  * [new branch]      lead-smoke/pr-78-m11    -> origin/lead-smoke/pr-78-m11
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7529222Z  * [new branch]      lead-smoke/pr-78-m11-final -> origin/lead-smoke/pr-78-m11-final
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7531672Z  * [new branch]      lead-smoke/pr-78-m11-v2 -> origin/lead-smoke/pr-78-m11-v2
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7534143Z  * [new branch]      lead-smoke/pr-81-m12-final -> origin/lead-smoke/pr-81-m12-final
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7536362Z  * [new branch]      main                    -> origin/main
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7539078Z  * [new branch]      repair/issue-125-m22-layer56-report-key -> origin/repair/issue-125-m22-layer56-report-key
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7542528Z  * [new branch]      repair/issue-127-pre-v09-known-regressions -> origin/repair/issue-127-pre-v09-known-regressions
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7546001Z  * [new branch]      repair/issue-131-v09-smoke-license-gates -> origin/repair/issue-131-v09-smoke-license-gates
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7549457Z  * [new branch]      repair/issue-135-lab-req-02-executable-bits -> origin/repair/issue-135-lab-req-02-executable-bits
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7552905Z  * [new branch]      repair/issue-149-qemu-ci-false-green-v0.1 -> origin/repair/issue-149-qemu-ci-false-green-v0.1
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7556411Z  * [new branch]      research/issue-112-s7-m21-m24-security-judgment -> origin/research/issue-112-s7-m21-m24-security-judgment
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7560649Z  * [new branch]      research/issue-143-stable-environment-pin-decision-packet -> origin/research/issue-143-stable-environment-pin-decision-packet
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7564613Z  * [new branch]      research/issue-4-classic-labs-sources -> origin/research/issue-4-classic-labs-sources
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7568102Z  * [new branch]      research/issue-47-m05-m09-runtime-os-persistence -> origin/research/issue-47-m05-m09-runtime-os-persistence
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7572004Z  * [new branch]      research/issue-68-m10-m12-network-web-browser -> origin/research/issue-68-m10-m12-network-web-browser
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7575626Z  * [new branch]      research/issue-83-m13-m15-data-concurrency -> origin/research/issue-83-m13-m15-data-concurrency
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7579156Z  * [new branch]      research/issue-97-m16-m20-distributed-infra -> origin/research/issue-97-m16-m20-distributed-infra
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7582205Z  * [new branch]      status/advance-production-to-m08 -> origin/status/advance-production-to-m08
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7584978Z  * [new branch]      status/advance-production-to-m09 -> origin/status/advance-production-to-m09
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7588043Z  * [new branch]      status/record-m09-and-advance-to-s4-research -> origin/status/record-m09-and-advance-to-s4-research
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7591293Z  * [new branch]      status/record-m10-and-advance-to-m11 -> origin/status/record-m10-and-advance-to-m11
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7594313Z  * [new branch]      status/record-m11-and-advance-to-m12 -> origin/status/record-m11-and-advance-to-m12
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7597492Z  * [new branch]      status/record-m12-and-advance-to-s5-research -> origin/status/record-m12-and-advance-to-s5-research
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7601086Z  * [new branch]      status/record-s4-design-and-advance-to-m10 -> origin/status/record-s4-design-and-advance-to-m10
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7604681Z  * [new branch]      status/record-s4-research-and-advance-to-design -> origin/status/record-s4-research-and-advance-to-design
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7608556Z  * [new branch]      status/record-s5-research-and-advance-to-design -> origin/status/record-s5-research-and-advance-to-design
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7612039Z  * [new branch]      validation/issue-34-m00-m01-first-pilot -> origin/validation/issue-34-m00-m01-first-pilot
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7615459Z  * [new branch]      verification/issue-129-full-core-v09-rc-readiness -> origin/verification/issue-129-full-core-v09-rc-readiness
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7619165Z  * [new branch]      verification/issue-133-v09-rc-readiness-reverify -> origin/verification/issue-133-v09-rc-readiness-reverify
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7622976Z  * [new branch]      verification/issue-137-lab-req-02-direct-invocation -> origin/verification/issue-137-lab-req-02-direct-invocation
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7626964Z  * [new branch]      verification/issue-147-stable-environment-ci-independent -> origin/verification/issue-147-stable-environment-ci-independent
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7630443Z  * [new branch]      verification/issue-31-m00-m01-gate -> origin/verification/issue-31-m00-m01-gate
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7633976Z  * [new branch]      vertical-slice/issue-25-foundations-system-mechanics-research -> origin/vertical-slice/issue-25-foundations-system-mechanics-research
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7638318Z  * [new branch]      vertical-slice/issue-27-foundations-system-mechanics-design -> origin/vertical-slice/issue-27-foundations-system-mechanics-design
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7642316Z  * [new branch]      vertical-slice/issue-29-m00-m01-lesson-activity -> origin/vertical-slice/issue-29-m00-m01-lesson-activity
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7645399Z  * [new branch]      web-lead/post-pr30-status -> origin/web-lead/post-pr30-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7647839Z  * [new branch]      web-lead/post-pr33-status -> origin/web-lead/post-pr33-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7650292Z  * [new branch]      web-lead/post-pr39-status -> origin/web-lead/post-pr39-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7652642Z  * [new branch]      web-lead/post-pr42-issue-first -> origin/web-lead/post-pr42-issue-first
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7654960Z  * [new branch]      web-lead/post-pr45-status -> origin/web-lead/post-pr45-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7657223Z  * [new branch]      web-lead/post-pr48-status -> origin/web-lead/post-pr48-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7659494Z  * [new branch]      web-lead/post-pr51-status -> origin/web-lead/post-pr51-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7661628Z  * [new branch]      web-lead/post-pr54-status -> origin/web-lead/post-pr54-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7663779Z  * [new branch]      web-lead/post-pr57-status -> origin/web-lead/post-pr57-status
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7665584Z  * [new tag]         v0.9                    -> v0.9
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7669409Z [command]/usr/bin/git rev-parse --verify --quiet d2ca8556f4fd086edcf82e0d2b1197571a619dda^{object}
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7671474Z d2ca8556f4fd086edcf82e0d2b1197571a619dda
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7674656Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7676287Z ##[group]Determining the checkout info
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7678087Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7679476Z [command]/usr/bin/git sparse-checkout disable
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7682504Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7686117Z ##[group]Checking out the ref
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7687833Z [command]/usr/bin/git checkout --progress --force d2ca8556f4fd086edcf82e0d2b1197571a619dda
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7903930Z Note: switching to 'd2ca8556f4fd086edcf82e0d2b1197571a619dda'.
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7905178Z 
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7906088Z You are in 'detached HEAD' state. You can look around, make experimental
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7908087Z changes and commit them, and you can discard any commits you make in this
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7910268Z state without impacting any branches by switching back to a branch.
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7911387Z 
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7912217Z If you want to create a new branch to retain commits you create, you may
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7914140Z do so (now or later) by using -c with the switch command. Example:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7915646Z 
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7916138Z   git switch -c <new-branch-name>
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7916915Z 
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7917364Z Or undo this operation with:
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7918091Z 
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7919037Z   git switch -
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7919678Z 
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7920582Z Turn off this advice by setting config variable advice.detachedHead to false
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7921790Z 
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7922965Z HEAD is now at d2ca855 feat(env): commit durable canonical digest pin and materialization path (#150)
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7927136Z ##[endgroup]
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7950777Z [command]/usr/bin/git log -1 --format=%H
+verify-pin	Checkout exact event revision	2026-09-12T04:39:34.7973014Z d2ca8556f4fd086edcf82e0d2b1197571a619dda
+verify-pin	Assert exact checked-out revision	﻿2026-09-12T04:39:34.8190874Z ##[group]Run set -ueo pipefail
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8192455Z ^[[36;1mset -ueo pipefail^[[0m
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8193761Z ^[[36;1mactual="$(git rev-parse HEAD)"^[[0m
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8195237Z ^[[36;1mecho "EXPECTED_REVISION=${GITHUB_SHA}"^[[0m
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8196742Z ^[[36;1mecho "ACTUAL_REVISION=${actual}"^[[0m
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8198082Z ^[[36;1mtest "${actual}" = "${GITHUB_SHA}"^[[0m
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8226774Z shell: /usr/bin/bash -e {0}
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8228123Z env:
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8229833Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8231378Z   PLATFORM: linux/amd64
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8232647Z   EVIDENCE_DIR: /tmp/canonical-publish
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8233904Z ##[endgroup]
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8326863Z EXPECTED_REVISION=d2ca8556f4fd086edcf82e0d2b1197571a619dda
+verify-pin	Assert exact checked-out revision	2026-09-12T04:39:34.8329782Z ACTUAL_REVISION=d2ca8556f4fd086edcf82e0d2b1197571a619dda
+verify-pin	Login to repository-owned GHCR	﻿2026-09-12T04:39:34.8425621Z ##[group]Run set -ueo pipefail
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8426846Z ^[[36;1mset -ueo pipefail^[[0m
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8436658Z ^[[36;1mecho "***" | docker login ghcr.io -u "CN-JJB" --password-stdin^[[0m
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8459606Z shell: /usr/bin/bash -e {0}
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8460838Z env:
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8462148Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8463742Z   PLATFORM: linux/amd64
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8464934Z   EVIDENCE_DIR: /tmp/canonical-publish
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:34.8466187Z ##[endgroup]
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:35.7104891Z 
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:35.7105737Z WARNING! Your credentials are stored unencrypted in '/home/runner/.docker/config.json'.
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:35.7106560Z Configure a credential helper to remove this warning. See
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:35.7107284Z https://docs.docker.com/go/credential-store/
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:35.7107639Z 
+verify-pin	Login to repository-owned GHCR	2026-09-12T04:39:35.7107829Z Login Succeeded
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	﻿2026-09-12T04:39:35.7214039Z ##[group]Run set -ueo pipefail
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7214559Z ^[[36;1mset -ueo pipefail^[[0m
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7215136Z ^[[36;1mmkdir -p "${EVIDENCE_DIR}"^[[0m
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7215737Z ^[[36;1mbash scripts/canonical-image-pull.sh 2>&1 | tee "${EVIDENCE_DIR}/pin-materialization.log"^[[0m
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7240610Z shell: /usr/bin/bash -e {0}
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7241063Z env:
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7241523Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7242077Z   PLATFORM: linux/amd64
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7242499Z   EVIDENCE_DIR: /tmp/canonical-publish
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7242916Z ##[endgroup]
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7389025Z RECIPE_DOCKERFILE=.devcontainer/Dockerfile
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7389887Z RECIPE_BLOB_COMMITTED=51198ea12c3c9ddfa18a2246bddef491ea729559
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7390584Z RECIPE_BLOB_ACTUAL=51198ea12c3c9ddfa18a2246bddef491ea729559
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7391169Z RECIPE_BLOB_MATCH=YES
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7406147Z === CANONICAL IMAGE IDENTITY (pre-pull) ===
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7407319Z intended_registry_digest=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7409010Z pull_reference=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7410066Z platform=linux/amd64
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7410498Z local_image_id=(not yet pulled)
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7411052Z mutable_tag_candidate=ghcr.io/cn-jjb/essential-cs/canonical:candidate
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7411595Z source_dockerfile=.devcontainer/Dockerfile
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7412152Z source_base_digest=sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7412764Z git_sha=d2ca8556f4fd086edcf82e0d2b1197571a619dda
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7413210Z workflow_run_id=34673576341
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7413668Z runner_image_version=20260907.300.1
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7419009Z runner_arch=x86_64
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7419953Z NOTE: intended_registry_digest is the pin; local image ID, mutable tags,
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7420956Z       git SHA and runner image version are audit fields, NOT the pin.
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:35.7421560Z ===========================================
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:36.3920370Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460: Pulling from cn-jjb/essential-cs/canonical
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:36.3927028Z ef852a656105: Pulling fs layer
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:36.3927765Z facb0d65c012: Pulling fs layer
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:36.3928715Z 5affce2cbffd: Pulling fs layer
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:36.3929388Z 818d662cd74f: Pulling fs layer
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:36.3929998Z 818d662cd74f: Waiting
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:37.0331560Z ef852a656105: Download complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:37.3120747Z 818d662cd74f: Verifying Checksum
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:37.3121585Z 818d662cd74f: Download complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:37.9327446Z ef852a656105: Pull complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:38.5685526Z facb0d65c012: Verifying Checksum
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:38.5686417Z facb0d65c012: Download complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:39.5732895Z 5affce2cbffd: Verifying Checksum
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:39.5734156Z 5affce2cbffd: Download complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:46.1484903Z facb0d65c012: Pull complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.7817709Z 5affce2cbffd: Pull complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.7930495Z 818d662cd74f: Pull complete
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.7984868Z Digest: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.7992726Z Status: Downloaded newer image for ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8004130Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8278233Z === CANONICAL IMAGE IDENTITY (post-pull) ===
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8279425Z intended_registry_digest=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8280601Z pull_reference=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8282395Z platform=linux/amd64
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8288704Z local_image_id=sha256:24a926a0dcc9b98b7298b8728d68417233f15f32a23350bf1273bb26089d7805
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8289665Z repo_digests_begin
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8290575Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460 
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8291309Z repo_digests_end
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8291870Z NOTE: local_image_id is a daemon-local identifier produced by this pull;
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8292618Z       it is NOT durable, NOT retrievable by itself, and NOT the pin.
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8293258Z ===========================================
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8296771Z REPO_DIGESTS_CONTAIN_PIN=YES
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8297795Z INTENDED_REGISTRY_DIGEST=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Materialize committed pin by immutable digest (fail-closed)	2026-09-12T04:39:52.8299344Z CANONICAL_IMAGE=ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	﻿2026-09-12T04:39:52.8342318Z ##[group]Run set -ueo pipefail
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8342793Z ^[[36;1mset -ueo pipefail^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8343276Z ^[[36;1mDIGEST="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8343817Z ^[[36;1mPIN="${CANONICAL_IMAGE_REF}@${DIGEST}"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8344373Z ^[[36;1mdocker buildx imagetools inspect "${PIN}" | tee "${EVIDENCE_DIR}/pin-imagetools-inspect.txt"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8344962Z ^[[36;1mdocker pull --platform "${PLATFORM}" "${PIN}"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8345505Z ^[[36;1mREPO_DIGESTS="$(docker image inspect "${PIN}" --format '{{range .RepoDigests}}{{.}} {{end}}')"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8346068Z ^[[36;1mprintf '%s\n' "${REPO_DIGESTS}" | grep -Fq "${PIN}" || {^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8346593Z ^[[36;1m  echo "FAIL: registry no longer serves the committed canonical digest ${PIN}"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8347058Z ^[[36;1m  exit 1^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8347311Z ^[[36;1m}^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8347644Z ^[[36;1mecho "COMMITTED_PIN_RETRIEVABLE=PASS"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8348091Z ^[[36;1mecho "COMMITTED_PIN_DIGEST=${DIGEST}"^[[0m
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8374394Z shell: /usr/bin/bash -e {0}
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8374800Z env:
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8375185Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8375576Z   PLATFORM: linux/amd64
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8375973Z   EVIDENCE_DIR: /tmp/canonical-publish
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8376586Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8377382Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:39:52.8377904Z ##[endgroup]
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.3392048Z Name:      ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.3393382Z MediaType: application/vnd.docker.distribution.manifest.v2+json
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.3394728Z Digest:    sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.5416823Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460: Pulling from cn-jjb/essential-cs/canonical
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.5434793Z Digest: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.5436296Z Status: Image is up to date for ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.5447171Z ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.5610579Z COMMITTED_PIN_RETRIEVABLE=PASS
+verify-pin	Assert registry content still equals the committed digest	2026-09-12T04:40:04.5611612Z COMMITTED_PIN_DIGEST=sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Canonical environment capture from the pinned digest	﻿2026-09-12T04:40:04.5650305Z ##[group]Run set -ueo pipefail
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5650711Z ^[[36;1mset -ueo pipefail^[[0m
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5651250Z ^[[36;1mDIGEST="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"^[[0m
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5651924Z ^[[36;1mPIN="${CANONICAL_IMAGE_REF}@${DIGEST}"^[[0m
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5652393Z ^[[36;1mdocker run --rm -v "${GITHUB_WORKSPACE}:/work" -w /work "${PIN}" \^[[0m
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5653036Z ^[[36;1m  bash /work/scripts/canonical-env-capture.sh | tee "${EVIDENCE_DIR}/canonical-env-snapshot.txt"^[[0m
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5677469Z shell: /usr/bin/bash -e {0}
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5677846Z env:
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5678221Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5678971Z   PLATFORM: linux/amd64
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5679312Z   EVIDENCE_DIR: /tmp/canonical-publish
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5679961Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5680885Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.5681440Z ##[endgroup]
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.7643157Z CANONICAL_ENV_CAPTURE version=2
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.7659851Z os=Ubuntu 24.04.4 LTS
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.7673276Z kernel=6.17.0-1022-azure
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.7688180Z arch=x86_64
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.7688968Z FLOOR PASS canonical-arch=x86_64
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8039579Z python_impl=CPython
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8040341Z python_version=3.12.3
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8060108Z FLOOR PASS python>=3.12 (CPython 3.12.3)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8204543Z sqlite_embedded=3.45.1
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8222755Z FLOOR PASS sqlite-engine>=3.45 (3.45.1)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8241178Z sqlite_cli=3.45.1
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8262403Z FLOOR PASS sqlite3-cli>=3.45 (3.45.1)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8297253Z gcc=13.3.0
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8320513Z FLOOR PASS gcc>=13 (13.3.0)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8570769Z FLOOR PASS gcc-c11-surface
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8632450Z curl=8.5.0
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.8651719Z FLOOR PASS curl>=8.5 (8.5.0)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9334679Z gdb=15.1
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9353705Z FLOOR PASS gdb>=15.0 (15.1) REQUIRED-present
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9445215Z qemu_riscv=QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9465076Z riscv_unknown_elf_gcc=riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9482333Z riscv_gnu_gcc=riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9502446Z binutils=GNU objdump (GNU Binutils for Ubuntu) 2.42
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9517446Z git=git version 2.43.0
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9523199Z strace=present-capability-gated
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9539036Z bash=GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9654175Z qemu_system_misc_package=1:8.2.2+ds-0ubuntu1.18
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9655035Z gcc_riscv64_unknown_elf_package=13.2.0-11ubuntu1+12
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9655794Z gcc_riscv64_linux_gnu_package=4:13.2.0-7ubuntu1
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9656425Z FLOOR PASS qemu-system-misc exact package identity
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9657052Z FLOOR PASS gcc-riscv64-unknown-elf exact package identity
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9657660Z dpkg_lane_identities_BEGIN
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9701897Z ii  bash                         5.2.21-2ubuntu4        amd64        GNU Bourne Again SHell
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9703559Z ii  bc                           1.07.1-3ubuntu4        amd64        GNU bc arbitrary precision calculator language
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9704472Z ii  binutils                     2.42-4ubuntu2.10       amd64        GNU assembler, linker and binary utilities
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9705978Z ii  binutils-riscv64-linux-gnu   2.42-4ubuntu2.10       amd64        GNU binary utilities, for riscv64-linux-gnu target
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9707011Z ii  binutils-riscv64-unknown-elf 2.42-1ubuntu1+6        amd64        GNU assembler, linker and binary utilities for Risc-V processors
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9707966Z ii  build-essential              12.10ubuntu1           amd64        Informational list of build-essential packages
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9709089Z ii  ca-certificates              20260601~24.04.1       all          Common CA certificates
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9709832Z ii  curl                         8.5.0-2ubuntu10.13     amd64        command line tool for transferring data with URL syntax
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9710945Z ii  gcc-riscv64-linux-gnu        4:13.2.0-7ubuntu1      amd64        GNU C compiler for the riscv64 architecture
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9711864Z ii  gcc-riscv64-unknown-elf      13.2.0-11ubuntu1+12    amd64        GCC cross compiler for Risc-V processors
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9712409Z ii  gdb                          15.1-1ubuntu1~24.04.1  amd64        GNU Debugger
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9712967Z ii  git                          1:2.43.0-1ubuntu7.3    amd64        fast, scalable, distributed revision control system
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9713644Z ii  make                         4.3-4.1build2          amd64        utility for directing compilation
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9714374Z ii  perl                         5.38.2-3.2ubuntu0.4    amd64        Larry Wall's Practical Extraction and Report Language
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9715282Z ii  python3                      3.12.3-0ubuntu2.1      amd64        interactive high-level object-oriented language (default python3 version)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9716315Z ii  qemu-system-common           1:8.2.2+ds-0ubuntu1.18 amd64        QEMU full system emulation binaries (common files)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9717860Z ii  qemu-system-data             1:8.2.2+ds-0ubuntu1.18 all          QEMU full system emulation (data files)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9718958Z ii  qemu-system-misc             1:8.2.2+ds-0ubuntu1.18 amd64        QEMU full system emulation binaries (miscellaneous)
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9719748Z ii  sqlite3                      3.45.1-1ubuntu2.7      amd64        Command line interface for SQLite 3
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9720724Z ii  strace                       6.8-0ubuntu2           amd64        System call tracer
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9721362Z dpkg_lane_identities_END
+verify-pin	Canonical environment capture from the pinned digest	2026-09-12T04:40:04.9721937Z CANONICAL_ENV_CAPTURE result=PASS
+verify-pin	Upload pin verification evidence bundle	﻿2026-09-12T04:40:05.0498214Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0500444Z ##[group]Run actions/upload-artifact@v4
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0500787Z with:
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0501094Z   name: canonical-pin-verification-evidence
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0501462Z   path: /tmp/canonical-publish/
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0501805Z   include-hidden-files: true
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0502138Z   if-no-files-found: warn
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0502490Z   compression-level: 6
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0502788Z   overwrite: false
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0503061Z env:
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0503400Z   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0503811Z   PLATFORM: linux/amd64
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0504113Z   EVIDENCE_DIR: /tmp/canonical-publish
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0504839Z   CANONICAL_IMAGE: ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0505603Z   CANONICAL_IMAGE_DIGEST: sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.0506133Z ##[endgroup]
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.2063026Z (node:2770) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.2064180Z (Use `node --trace-deprecation ...` to show where the warning was created)
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.2137220Z With the provided path, there will be 3 files uploaded
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.2138593Z Artifact name is valid!
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.2142269Z Root directory input is valid!
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.5402322Z Beginning upload of artifact content to blob storage
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.5603999Z (node:2770) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.7881704Z Uploaded bytes 2813
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.8461069Z Finished uploading artifact content to blob storage!
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.8462526Z SHA256 digest of uploaded artifact zip is 8782c517e109ddbb07dea82827e878081f352cfcc81d26b14c818857d69488d3
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:05.8464121Z Finalizing artifact upload
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:06.1222809Z Artifact canonical-pin-verification-evidence.zip successfully finalized. Artifact ID 10291108604
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:06.1224033Z Artifact canonical-pin-verification-evidence has been successfully uploaded! Final size is 2813 bytes. Artifact ID is 10291108604
+verify-pin	Upload pin verification evidence bundle	2026-09-12T04:40:06.1228312Z Artifact download URL: https://github.com/CN-JJB/essential-cs/actions/runs/34673576341/artifacts/10291108604
+verify-pin	Post Checkout exact event revision	﻿2026-09-12T04:40:06.1420331Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.1421627Z Post job cleanup.
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2243659Z [command]/usr/bin/git version
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2286537Z git version 2.55.0
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2327286Z Temporarily overriding HOME='/home/runner/work/_temp/38c1655c-5b1e-41e8-8961-ddb2ba26b6e4' before making global git config changes
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2328644Z Adding repository directory to the temporary git global config as a safe directory
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2334275Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/essential-cs/essential-cs
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2371777Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2403952Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2615995Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2640229Z http.https://github.com/.extraheader
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2650998Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2684433Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2895723Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+verify-pin	Post Checkout exact event revision	2026-09-12T04:40:06.2924737Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+verify-pin	Complete job	﻿2026-09-12T04:40:06.3264338Z Cleaning up orphan processes
+verify-pin	Complete job	2026-09-12T04:40:06.3572753Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

@@ -3,7 +3,13 @@
 activity_l24_01.py — M24 Architecture Defense Structural Activity
 =================================================================
 
-The default activity audits a course-owned synthetic reference dossier.
+Audits an architecture defense dossier against the 16 required trace headings
+and 12-evidence-area matrix:
+- By default or with `--dossier labs/foundations/m24/sample_dossier.md`, audits
+  the course-owned synthetic reference dossier.
+- To audit the learner's actual Mini Cloud system defense dossier, specify
+  `--dossier course/evidence/foundations-m24-evidence-template.md` (or completed file).
+
 Changed-constraint cards provide only scenario facts and learner questions. They do
 not pre-fill the bottleneck, affected invariants, adaptation, or evidence conclusion.
 """
@@ -108,7 +114,10 @@ def run_scenario_drill(scenario_id: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="L24-01 Architecture Defense structural activity")
-    parser.add_argument("--dossier", help="Path to learner defense dossier Markdown")
+    parser.add_argument(
+        "--dossier",
+        help="Path to defense dossier Markdown (default: labs/foundations/m24/sample_dossier.md; pass course/evidence/foundations-m24-evidence-template.md for learner Mini Cloud dossier)",
+    )
     parser.add_argument("--scenario", choices=list(SCENARIOS), help="Run one changed-constraint prompt")
     parser.add_argument("--list-scenarios", action="store_true")
     args = parser.parse_args()

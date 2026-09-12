@@ -1,0 +1,23 @@
+PREFLIGHT os=Linux 881cd34bdafb 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+PREFLIGHT arch=x86_64
+PREFLIGHT cc           PASS /usr/bin/cc
+PREFLIGHT objdump      PASS /usr/bin/objdump
+PREFLIGHT nm           PASS /usr/bin/nm
+PREFLIGHT gdb          PASS /usr/bin/gdb
+PREFLIGHT git          PASS /usr/bin/git
+PREFLIGHT compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+PREFLIGHT objdump=GNU objdump (GNU Binutils for Ubuntu) 2.42
+PREFLIGHT gdb=GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1
+PREFLIGHT git=git version 2.43.0
+PREFLIGHT python=Python 3.12.3
+PREFLIGHT shell=GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+PREFLIGHT result=PASS
+BUILD compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+BUILD flags=-std=c11 -Wall -Wextra -Wpedantic -g3 -O0 -fno-omit-frame-pointer -fno-inline -no-pie
+SMOKE baseline=PASS value=37
+SMOKE symbol=PASS helper
+SMOKE disassembly=PASS helper
+SMOKE direct_failure=OBSERVED exit=139 (hosted observation only)
+SMOKE gdb=PASS
+SMOKE preflight=PASS
+SMOKE result=PASS

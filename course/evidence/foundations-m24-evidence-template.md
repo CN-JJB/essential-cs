@@ -7,8 +7,8 @@ Use this template for **one actual learner system**. All volatile values and rev
 ## A — Environment / Execution Identity
 
 - Execution commit/ref: `[Record actual ref]`
-- Actual system under defense: `[Record actual project/system]`
-- Exact command(s): `[Record exact commands]`
+- Actual system under defense: Mini Cloud (`project/minicloud/`) — multi-user note/bookmark service
+- Exact command(s): `python3 -m minicloud.cli walkthrough` and `bash project/scripts/smoke.sh`
 - Runtime disposition per command: `[PASS / FAIL / BLOCKED / NOT RUN]`
 - Host/runtime facts actually observed: `[Record, or NOT RUN]`
 - OQ-BP-006: `OPEN / UNRESOLVED`
@@ -28,54 +28,54 @@ Register at least five claims.
 ## C — 16-Trace Defense Dossier
 
 ### 1. Request Trace
-`[Trace the actual request path and evidence anchors]`
+`[Trace actual request path in Mini Cloud: HTTP client -> minicloud.httpd -> minicloud.auth -> minicloud.service -> minicloud.store -> SQLite WAL, and response write-back]`
 
 ### 2. Data & State Trace
-`[Trace actual volatile/durable/config/replicated state transitions]`
+`[Trace actual volatile/durable/config state transitions: request JSON body -> in-memory model -> parameterized SQL in minicloud.store -> SQLite WAL frame committed to disk in project/var/]`
 
 ### 3. Control & Authority Trace
-`[Trace actual identity, authority, and authorization decisions]`
+`[Trace actual identity, authority, and authorization decisions: Bearer token parsed in minicloud.auth -> caller subject passed to minicloud.service -> owner/share validation -> 404 on unowned item]`
 
 ### 4. State Inventory
-`[List actual volatile, durable, configuration, and replicated state; write NONE where truly absent]`
+`[List actual volatile (server sockets, active sessions), durable (project/var/minicloud.db, WAL, backups), and configuration state in minicloud.config; write NONE where truly absent]`
 
 ### 5. Invariants & Specifications
-`[Record actual invariants/specifications and where enforced]`
+`[Record actual invariants: unique usernames, stable item IDs, read-after-write consistency, optimistic version bump (no lost update) enforced in minicloud.store]`
 
 ### 6. Trust Boundaries
-`[Record actual trust-boundary crossings, controls, and residual risks]`
+`[Record actual trust-boundary crossings: untrusted network -> httpd.py -> auth.py token validation -> service.py resource authorization -> store.py parameterized SQL]`
 
 ### 7. Isolation Boundaries
-`[Record actual process/filesystem/transaction/tenant isolation that exists]`
+`[Record actual process boundary (cli.py serve), filesystem isolation (project/var/), and SQLite transaction isolation (BEGIN IMMEDIATE)]`
 
 ### 8. Failure & Risk Walkthrough
-`[Walk through actual failure models; distinguish process crash, power loss, resource exhaustion, and downstream failure as applicable]`
+`[Walk through actual failure models: indexer dependency timeout reported as ambiguous in minicloud.dependency, process kill -9 recovery via SQLite WAL crash recovery and cli.py backup/restore]`
 
 ### 9. Security & Privacy Decisions
-`[Record only controls actually implemented/evidenced]`
+`[Record PBKDF2 password hashing in auth.py, token generation, parameterized SQL in store.py, and credential/body redaction in minicloud.observability]`
 
 ### 10. Measurements & Performance Evidence
-`[Record actual M20/M23 measurement evidence, or explicitly NOT MEASURED]`
+`[Record actual measurement evidence from python -m minicloud.cli bench --rows 2000 --repeats 10, or explicitly NOT MEASURED]`
 
 ### 11. Cost & Scale Estimates
-`[Record assumption-first units/arithmetic and sensitivity, or NOT RUN]`
+`[Record single-process memory RSS, disk growth per item, and napkin math estimates for 10x/100x items in Mini Cloud, or NOT RUN]`
 
 ### 12. Alternatives Considered
-`[Record actual D-015 alternatives]`
+`[Record actual D-015 alternatives: SQLite WAL single-node vs PostgreSQL, sync HTTP server vs async, custom protocol vs HTTP/JSON]`
 
 ### 13. When-Not-To-Use & Rejected Choices
-`[Record rejected choice, rationale, and reconsideration condition]`
+`[Record rejected choices: distributed consensus/Raft rejected due to single-node simplicity, microservices rejected for bounded failure domain]`
 
 ### 14. Explicit Unknowns
-- `[UNK-01]`: `[Record a real bounded unknown]`
+- `[UNK-01]`: `[Record a real bounded unknown in Mini Cloud, e.g. behavior under extreme write-lock contention with 50+ concurrent writer threads]`
 - `[UNK-02]`: `[Record another real bounded unknown, if applicable]`
 
 ### 15. Learning Plan
-- `[UNK-01]` → `[Record verification/learning action]`
+- `[UNK-01]` → `[Record verification/learning action using minicloud.cli race or stress harness]`
 - `[UNK-02]` → `[Record verification/learning action]`
 
 ### 16. Changed-Constraint Adaptation
-`[Record changed assumption, affected invariants/evidence, candidate adaptation, trade-off, and new evidence required]`
+`[Record changed assumption from scenario card, affected invariants/evidence in Mini Cloud, candidate adaptation, trade-off, and new evidence required]`
 
 ## D — 12-Evidence-Area Traceability Matrix
 
