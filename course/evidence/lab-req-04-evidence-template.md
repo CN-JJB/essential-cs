@@ -25,6 +25,27 @@ Use this form for **one actual execution**. Do not copy example outputs, timing,
 
 ---
 
+## A2 — Two Bounded Data Sizes (required learner evidence)
+
+Command (executes BOTH sizes through the real `sqlite3` CLI):
+
+```bash
+python labs/lab_req_04/harness.py --compare-sizes --json
+```
+
+Record (one row per size; copy the actual observed values, never another host's):
+
+| Size (rows) | Bounded (<= 10000) | CLI path | Result equivalence | Unindexed plan (observed) | Indexed plan (observed) | Unindexed median | Indexed median |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `<1000>` | `<YES>` | `<actual>` | `<YES: rows=<actual> hash=<actual>>` | `<actual: SCAN / SEARCH>` | `<actual: SCAN / SEARCH>` | `<actual ms>` | `<actual ms>` |
+| `<5000>` | `<YES>` | `<actual>` | `<YES: rows=<actual> hash=<actual>>` | `<actual: SCAN / SEARCH>` | `<actual: SCAN / SEARCH>` | `<actual ms>` | `<actual ms>` |
+
+- Both sizes actually executed: `<YES / ENVIRONMENT-BLOCKED + reason>`
+- Inference limit: medians and planner categories are recorded as observed per
+  size; no universal speedup ratio and no fixed plan category is asserted.
+
+---
+
 ## B — Checkpoint 1: Prediction Before Plan & Unindexed Trace
 
 Command:

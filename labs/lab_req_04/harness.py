@@ -21,6 +21,7 @@ import sqlite3
 import statistics
 import subprocess
 import sys
+import tempfile
 import time
 
 from eqp_parser import parse_eqp_output, summarize_eqp_paths
@@ -29,6 +30,11 @@ from generator import generate_lab_dataset, get_default_lab_db_path
 # Bounded implementation-smoke defaults (not curriculum thresholds)
 DEFAULT_ROW_COUNT = 5000
 WRITE_BATCH_SIZE = 200
+
+# Accepted bounded two-size learner evidence pair (F-05-03). Both sizes are
+# small enough for a self-study host; neither is a curriculum threshold.
+COMPARE_ROW_COUNTS = (1000, 5000)
+MAX_COMPARE_ROWS = 10000
 
 
 def check_sqlite_cli():
@@ -239,12 +245,104 @@ def run_lab_req_04(db_path=None, trials=10, row_count=DEFAULT_ROW_COUNT):
     }
 
 
+def run_lab_req_04_compare(row_counts=COMPARE_ROW_COUNTS, trials=10, workdir=None):
+    """Run the full LAB-REQ-04 harness once per bounded data size.
+
+    This is the learner evidence surface for the accepted "two bounded data
+    sizes" requirement (F-05-03): the default learner evidence command executes
+    BOTH sizes through the real sqlite3 CLI and records, per size, the actual
+    planner result and result-equivalence truthfully. No fixed timing ratio and
+    no fixed plan category is required or asserted; both SCAN and SEARCH
+    outcomes are accepted as observed.
+    """
+    sizes = list(row_counts)
+    bounded = (
+        len(sizes) == 2
+        and all(isinstance(n, int) and 0 < n <= MAX_COMPARE_ROWS for n in sizes)
+        and sizes[0] != sizes[1]
+    )
+    if not bounded:
+        return {
+            "disposition": "FAIL",
+            "reason": (
+                f"compare mode requires exactly two distinct bounded sizes "
+                f"(1..{MAX_COMPARE_ROWS}); got {sizes}"
+            ),
+            "row_counts": sizes,
+            "per_size": {},
+        }
+
+    cli_usable, cli_path = check_sqlite_cli()
+    if not cli_usable:
+        return {
+            "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+            "reason": "sqlite3 CLI binary not found or not executable on this host",
+            "row_counts": sizes,
+            "per_size": {},
+        }
+
+    own_dir = workdir or tempfile.mkdtemp(prefix="lab-req-04-compare-")
+    per_size = {}
+    for n in sizes:
+        db_path = os.path.join(own_dir, f"lab04_{n}.db")
+        rep = run_lab_req_04(db_path=db_path, trials=trials, row_count=n)
+        if rep["disposition"] == "ENVIRONMENT-BLOCKED / NOT RUN":
+            return {
+                "disposition": "ENVIRONMENT-BLOCKED / NOT RUN",
+                "reason": rep.get("reason", "sqlite3 CLI became unavailable mid-compare"),
+                "row_counts": sizes,
+                "per_size": per_size,
+            }
+        cp2 = rep["checkpoints"]["2_indexed_plan_and_equivalence"]
+        cp3 = rep["checkpoints"]["3_read_timing"]
+        cp1 = rep["checkpoints"]["1_unindexed_plan"]
+        per_size[str(n)] = {
+            "disposition": rep["disposition"],
+            "row_count": n,
+            "bounded": n <= MAX_COMPARE_ROWS,
+            "cli_path": rep["cli_path"],
+            "sqlite3_cli_version": rep["environment"]["sqlite3_cli_version"],
+            "result_equivalence": cp2["result_equivalence"],
+            "unindexed_plan_categories": cp1["summary"]["categories"],
+            "indexed_plan_categories": cp2["summary"]["categories"],
+            "unindexed_median_ms": cp3["unindexed_median_ms"],
+            "indexed_median_ms": cp3["indexed_median_ms"],
+            "trials": cp3["trials"],
+        }
+
+    both_pass = all(info["disposition"] == "PASS" for info in per_size.values())
+    both_equivalent = all(info["result_equivalence"]["matched"] for info in per_size.values())
+    return {
+        "disposition": "PASS" if (both_pass and both_equivalent) else "FAIL",
+        "row_counts": sizes,
+        "both_bounded": True,
+        "both_cli": True,
+        "both_equivalent": both_equivalent,
+        "per_size": per_size,
+        "inference_limit_note": (
+            "Timing medians and planner categories are recorded as observed per size; "
+            "no fixed timing ratio and no fixed plan category is required. "
+            "Cache state is not controlled beyond the symmetric application-level warmup."
+        ),
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="LAB-REQ-04 Execution Harness")
     parser.add_argument("--json", action="store_true", help="Print report in JSON format")
+    parser.add_argument("--rows", type=int, default=DEFAULT_ROW_COUNT, help=f"Dataset row count (default: {DEFAULT_ROW_COUNT}; single-size mode)")
+    parser.add_argument("--trials", type=int, default=10, help="Number of query trials (default: 10)")
+    parser.add_argument(
+        "--compare-sizes",
+        action="store_true",
+        help=f"Run the accepted two-size learner evidence mode (rows {COMPARE_ROW_COUNTS[0]} vs {COMPARE_ROW_COUNTS[1]} through the real sqlite3 CLI)",
+    )
     args = parser.parse_args()
 
-    report = run_lab_req_04()
+    if args.compare_sizes:
+        return _main_compare(args)
+
+    report = run_lab_req_04(row_count=args.rows, trials=args.trials)
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
@@ -295,6 +393,40 @@ def main():
     print(f"   Relevant Index: {cp5['relevant_index']}")
     print(f"   Raw EQP:        {cp5['raw_eqp']}")
     print(f"   Observed Path:  {cp5['observed_categories']}")
+    print("=" * 66)
+    return 0 if report["disposition"] == "PASS" else 1
+
+
+def _main_compare(args):
+    report = run_lab_req_04_compare(trials=args.trials)
+
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0 if report["disposition"] == "PASS" else 1
+
+    print("=" * 66)
+    print(" Essential CS: LAB-REQ-04 Two-Size Learner Evidence (1000 vs 5000)")
+    print("=" * 66)
+    print(f" Disposition: {report['disposition']}")
+    if report["disposition"] == "ENVIRONMENT-BLOCKED / NOT RUN":
+        print(f" Reason:      {report['reason']}")
+        print(" Note:        sqlite3 CLI is a mandatory learner gate for LAB-REQ-04.")
+        print("=" * 66)
+        return 0
+    if report["disposition"] == "FAIL" and not report.get("per_size"):
+        print(f" Reason:      {report['reason']}")
+        print("=" * 66)
+        return 1
+    for size in report["row_counts"]:
+        info = report["per_size"][str(size)]
+        eq = info["result_equivalence"]
+        print(f" [Size {size}: rows={info['row_count']}, bounded={info['bounded']}, CLI={info['cli_path']}]")
+        print(f"   Result equivalence: {eq['matched']} (rows={eq['indexed_rows']}, hash={eq['indexed_sha256'][:12]}...)")
+        print(f"   Unindexed plan: {info['unindexed_plan_categories']}")
+        print(f"   Indexed plan:   {info['indexed_plan_categories']}")
+        print(f"   Medians (ms):   unindexed={info['unindexed_median_ms']:.3f} indexed={info['indexed_median_ms']:.3f}")
+    print(f" Both equivalent: {report['both_equivalent']}")
+    print(f" Note: {report['inference_limit_note']}")
     print("=" * 66)
     return 0 if report["disposition"] == "PASS" else 1
 

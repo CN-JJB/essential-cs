@@ -30,11 +30,13 @@ class ConcurrencyLabHarness:
         self.broken_src = os.path.join(self.lab_dir, "broken_counter.c")
         self.mutex_src = os.path.join(self.lab_dir, "mutex_counter.c")
         self.cond_src = os.path.join(self.lab_dir, "cond_rendezvous.c")
+        self.cond_break_src = os.path.join(self.lab_dir, "cond_predicate_break.c")
         self.deadlock_src = os.path.join(self.lab_dir, "deadlock_preconditions.c")
 
         self.broken_bin = os.path.join(self.lab_dir, f"broken_counter{self.bin_ext}")
         self.mutex_bin = os.path.join(self.lab_dir, f"mutex_counter{self.bin_ext}")
         self.cond_bin = os.path.join(self.lab_dir, f"cond_rendezvous{self.bin_ext}")
+        self.cond_break_bin = os.path.join(self.lab_dir, f"cond_predicate_break{self.bin_ext}")
         self.deadlock_bin = os.path.join(self.lab_dir, f"deadlock_preconditions{self.bin_ext}")
 
     def canonical_environment_status(self):
@@ -149,6 +151,7 @@ class ConcurrencyLabHarness:
             (self.broken_src, self.broken_bin),
             (self.mutex_src, self.mutex_bin),
             (self.cond_src, self.cond_bin),
+            (self.cond_break_src, self.cond_break_bin),
             (self.deadlock_src, self.deadlock_bin),
         ]
 
@@ -427,6 +430,66 @@ class ConcurrencyLabHarness:
             "predicate_eval_count": predicate_eval_count,
             "event_sequence": event_names,
             "predicate_recheck_verified": predicate_recheck_verified,
+        }
+
+    def run_controlled_break_predicate_if(self, timeout_sec=3.0):
+        """
+        Runs cond_predicate_break to demonstrate the danger of 'if' instead of 'while'.
+        Verifies that when a condition variable is signaled prematurely/spuriously,
+        the consumer fails to recheck the predicate and prematurely consumes unready state.
+        """
+        if not os.path.exists(self.cond_break_bin):
+            c_res = self.compile_all()
+            if not c_res["passed"]:
+                return {"passed": False, "error": c_res["error"]}
+
+        proc = subprocess.run(
+            [self.cond_break_bin],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=timeout_sec,
+            check=False,
+        )
+
+        events = []
+        result_event = None
+        for line in proc.stdout.splitlines():
+            line = line.strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                ev = json.loads(line)
+                events.append(ev)
+                if ev.get("event") == "PREDICATE_BREAK_RESULT":
+                    result_event = ev
+            except json.JSONDecodeError:
+                pass
+
+        if not result_event:
+            return {
+                "passed": False,
+                "error": "No PREDICATE_BREAK_RESULT event received",
+                "raw_stdout": proc.stdout,
+                "raw_stderr": proc.stderr,
+            }
+
+        break_manifested = result_event.get("break_manifested", False)
+        predicate_eval_count = result_event.get("predicate_eval_count", 0)
+
+        # The break is verified if break_manifested is True and eval count is 1 (never re-evaluated)
+        passed = (
+            proc.returncode == 0
+            and break_manifested
+            and predicate_eval_count == 1
+        )
+
+        return {
+            "passed": passed,
+            "break_manifested": break_manifested,
+            "predicate_eval_count": predicate_eval_count,
+            "events": [e.get("event") for e in events],
+            "inference_limit": "Demonstrates why POSIX condition variables require a while loop: spurious/early wakeup without loop causes premature consumption of invalid shared state.",
         }
 
     def run_checkpoint_5_deadlock_preconditions(self, timeout_sec=2.0):

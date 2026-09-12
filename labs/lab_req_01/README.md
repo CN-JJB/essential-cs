@@ -142,6 +142,36 @@ python labs/lab_req_01/reset.py
 
 It should report `CLEAN_NO_PERSISTENT_ARTIFACTS`; this only means no persistent course artifact needs deletion.
 
+## Prerequisites
+
+- Hard prerequisites: M10 (IP, DNS, TCP sockets), M11 (`L11-01` HTTP message format, `L11-02` caching & validation).
+- Tools: curl (evaluated by `python tests/preflight_network_web.py --json`).
+
+## Prediction-Before-Observation
+
+1. Does an HTTP 304 Not Modified response carry a message body? Predict whether curl will receive 0 body bytes.
+2. If a request includes `Connection: X-Course-Hop, Close` and `X-Course-Hop: secret`, predict whether the upstream origin will observe `X-Course-Hop`.
+3. If the origin process terminates unexpectedly, what status code should the intermediary report, and what header proves intermediary forwarding?
+
+## Controlled Breaks & Failure Modes
+
+- **Method Not Allowed**: Sending `POST` / `PUT` / `DELETE` to the bounded intermediary returns 405 with `Allow: GET, HEAD`.
+- **Cache Validator Mismatch**: Sending `If-None-Match: "non-matching"` returns 200 OK with full body rather than 304.
+- **Upstream Connection Failure**: Intermediary maps unreachable origin to 502 Bad Gateway with truthful `Via`.
+
+## Exit Criteria
+
+- Execute all 4 curl trace steps through `harness.py`.
+- Confirm 304 response carries exactly 0 body bytes.
+- Confirm 502 error contains `Via: ... essential-cs-intermediary`.
+- Confirm all child processes are cleanly reaped and closed endpoints reject new TCP connections.
+- Record evidence in `course/evidence/lab-req-01-evidence-template.md`.
+
+## Provenance & Standards
+
+- RFC 9110: *HTTP Semantics* (Section 7.6.1 Connection, Section 7.6.3 Via).
+- RFC 9111: *HTTP Caching* (Section 3.2 If-None-Match and 304 Not Modified).
+
 ## Tests
 
 ```bash

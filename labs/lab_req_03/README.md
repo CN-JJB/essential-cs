@@ -30,13 +30,50 @@
 - `broken_counter.c`: C11 source for deterministic and natural lost-update demonstration.
 - `mutex_counter.c`: C11 source for POSIX mutex repair.
 - `cond_rendezvous.c`: C11 source for condition-variable rendezvous with predicate recheck.
+- `cond_predicate_break.c`: C11 source demonstrating premature consumption bug when using `if` instead of a `while` predicate loop.
 - `deadlock_preconditions.c`: C11 source for circular wait deadlock preconditions in child process.
-- `harness.py`: Python orchestration harness running all 5 checkpoints.
+- `harness.py`: Python orchestration harness running all 5 checkpoints plus controlled breaks.
 - `runner.py`: CLI entry point supporting human-readable and `--json` machine reporting.
 - `reset.py`: Idempotent cleanup script.
 - `test_lab.py`: Comprehensive unittest suite.
 
+## Prerequisites
+
+- Hard prerequisites: M15 (`L15-01` races & shared memory, `L15-02` mutexes & condition variables, `L15-03` concurrency execution models).
+- Preflight Gate: `python tests/preflight_data_concurrency.py` (checks Linux + GCC C11 pthreads capability).
+
+## Prediction-Before-Observation
+
+1. If two threads execute `count += 1` using strictly atomic C11 load and store primitives without a mutex, predict whether lost updates can still occur.
+2. If a condition variable is signaled before data is ready, predict what happens if the consumer tests the predicate with `if` rather than `while`.
+3. Can a timeout alone prove deadlock? Predict why verifying circular wait preconditions (Thread 1 holding A wanting B, Thread 2 holding B wanting A) is required before timeout proves deadlock.
+
+## Controlled Breaks & Failure Modes
+
+- **Unprotected Compound Update**: `broken_counter.c` demonstrates deterministic lost update under C11 atomic load/store without mutual exclusion.
+- **Flawed Predicate Check (`if` vs `while`)**: `cond_predicate_break.c` demonstrates premature consumption of invalid shared state when an early/spurious signal wakes an `if`-guarded consumer.
+- **Circular Wait Deadlock**: `deadlock_preconditions.c` demonstrates deadlock under reverse lock acquisition, trapped and reaped by parent watchdog.
+
+## Exit Criteria
+
+- Execute all 5 checkpoints via `python labs/lab_req_03/runner.py`.
+- Confirm 0 data-race UB in `broken_counter.c`.
+- Confirm invariant restoration under `mutex_counter.c`.
+- Confirm condition rendezvous evaluates predicate $\ge 2$ times across `cond_rendezvous.c`.
+- Confirm circular wait deadlock preconditions and child process reaping under watchdog.
+- Record evidence in `course/evidence/lab-req-03-evidence-template.md`.
+
+## Provenance & Standards
+
+- IEEE Std 1003.1-2017 (POSIX.1-2017) pthreads specification (`pthread_mutex_*`, `pthread_cond_*`).
+- ISO/IEC 9899:2011 (C11) `<stdatomic.h>` relaxed memory ordering.
+
 ## Execution
+
+### Preflight Gate
+```bash
+python tests/preflight_data_concurrency.py
+```
 
 ### Compile & Run All Checkpoints
 ```bash

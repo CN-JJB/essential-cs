@@ -81,7 +81,8 @@ Reconciled additions (Issue #9, per accepted audit dispositions):
 
 - **Applied measurement-uncertainty toolkit** (R1/R7) — sub-thread under Measurement & Performance: repeated measurements, distributions, median/percentiles when useful, uncertainty/variation, inference limits, order-of-magnitude reasoning. First assessed home: M04 `L04-02`; revisited at M13/M16/M17/M20/M23. Reliability/failure probability remains just-in-time inside M16/M17.
 - **Experimental pattern** (R7) — question/hypothesis → baseline → controlled change → metric/environment/workload → repetitions/distribution when relevant → observation → competing explanation → bounded conclusion. First assessed home: M04 `L04-02`; revisited at M20 `L20-01`; consolidated at M23 `L23-01`.
-- **Horizontal security/privacy evidence** (R8) — M07 `L07-01` is the first concrete **trust-boundary** home (while distinguishing trust from isolation); M11 TLS and M12 origin/site isolation revisit it; M19 adds deployment/supply-chain boundaries; synthesis at M21/M22; judgment at M23/M24. Evidence is required across P0–P9. Accessibility stays with OQ-BP-003, not resolved by security.
+- **Horizontal security/privacy evidence** (R8) — M07 `L07-01` is the first concrete **trust-boundary** home (while distinguishing trust from isolation); M11 TLS and M12 origin/site isolation revisit it; M19 adds deployment/supply-chain boundaries; synthesis at M21/M22; judgment at M23/M24. Evidence is required across P0–P9. Accessibility stays bounded per D-034 (resolving OQ-BP-003 for v1.0), not resolved by security.
+- **Privacy / Data Responsibility thread** (F-09-01) — formal horizontal progression tracking how systems handle sensitive data and metadata across life cycles: M08 `L08-01` (data at rest, remanence, unlink vs physical wipe, metadata leakage, crypto-shredding); M10 `L10-01` (in-transit metadata exposure, DNS/SNI leakage, IP tracking vs IPv6 privacy extensions); M11 `L11-01` (channel encryption, SNI vs ECH); M12 `L12-03` (third-party storage, stateful tracking, site isolation); M13 `L13-02` (database index PII, query logs, unredacted backups, data minimization); M16 `L16-01` (inter-service RPC cleartext boundaries, distributed trace baggage leakage); M20 `L20-01`/`L20-02` (telemetry PII sanitization, high-cardinality user tags, redaction at source per P8); M22 `L22-03` (token minimization, least privilege, P2 trust boundaries); and M24 `L24-01`/`L24-02` (system defense against data leakage and credential exposure).
 
 ## Mini Cloud App (P0–P9)
 
@@ -140,11 +141,13 @@ Selection per `meta/blueprint/lab-source-selection-map-v0.1.md` (Adopt → Adapt
 
 No Required Lab bundles third-party material with unresolved reuse rights. OSTEP remains Optional/link-only. No full consensus implementation, full kernel/network-stack/compiler/DB-engine build is assigned to Core (Deep Dive boundaries per map §9).
 
+**Companion status note:** Exactly 3 Optional Labs (`LAB-OPT-02`, `LAB-OPT-03`, `LAB-OPT-05`) and 3 Source Expeditions (`EXP-02`, `EXP-03`, `EXP-05`) carry standalone companion documents in `book/`. The remaining candidates (`LAB-OPT-01/04`, `EXP-01/04`) are link-only / rights-gated items integrated directly within their home Lesson narratives and foundation fixtures rather than separate standalone chapters.
+
 ## Concept Registry
 
 Initial canonical population: 18 concepts `EC-CON-001`–`EC-CON-018` (the 15 Big Ideas as concepts + Process, Durability, Trust Boundary as concepts only). Big Ideas remain 15; no new Big Idea was created. Trust Boundary's first home is M07 `L07-01`; M21 is its security-synthesis revisit.
 
-Deferred from first population (explicit): `Consensus` (concept is Core at M17 per R10; stable ID deferred), schema-evolution/provenance (application pattern over Representation/State/Interface/Invariant), AI-literacy/HCI concepts (OQ-BP-001 / OQ-BP-003 RFC-gated). No product names/commands/frameworks are concept IDs.
+Deferred from first population (explicit): `Consensus` (concept is Core at M17 per R10; stable ID deferred), schema-evolution/provenance (application pattern over Representation/State/Interface/Invariant), AI-literacy/HCI concepts (resolved for v1.0 by D-033 / D-034 without expanding Core concept family). No product names/commands/frameworks are concept IDs.
 
 ## Assessment
 
