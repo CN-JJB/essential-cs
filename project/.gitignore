@@ -1,0 +1,8 @@
+# Mini Cloud generated state — never commit these.
+var/
+__pycache__/
+*.pyc
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
