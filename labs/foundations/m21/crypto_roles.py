@@ -220,7 +220,9 @@ def optional_signature_demo(message: bytes) -> Dict[str, Any]:
                 "in-memory material. Does not prove signer identity, key custody, host "
                 "integrity, verifier policy, or legal/organizational non-repudiation. "
                 "Observed package version is implementation-time currentness, not a "
-                "course-wide pin (OQ-BP-006 remains OPEN)."
+                "course-wide pin (OQ-BP-006 is CLOSED as the technical "
+                "environment-definition/realization question per #167; #158 must still "
+                "independently re-check the canonical environment before v1.0)."
             ),
         }
     except Exception as exc:

@@ -158,22 +158,63 @@ def check_governance_truth() -> list[str]:
         ("meta/CURRICULUM_MAP.md", "D-034"),
         # OQ-BP-006 CLOSED as technical question; #153 same-lineage; #158 pending.
         ("tests/preflight_security_synthesis.py", "CLOSED (technical environment-definition/realization per #167"),
+        ("tests/preflight_security_synthesis.py", "#158 re-check still required"),
+        ("tests/preflight_distributed_infra.py", "CLOSED — TECHNICAL ENVIRONMENT ACCEPTED; #158 INDEPENDENT RE-CHECK REQUIRED"),
+        ("tests/preflight_distributed_infra.py", "#158 must still independently re-check before v1.0"),
+        ("tests/preflight_data_concurrency.py", "OQ-BP-006 CLOSED — canonical environment definition/realization accepted"),
+        ("tests/preflight_data_concurrency.py", "#158 independent re-check required"),
         ("meta/OPEN_QUESTIONS.md", "CLOSED — realized pin technically re-verified"),
         ("meta/OPEN_QUESTIONS.md", "#158 must independently re-check"),
-        ("tests/preflight_security_synthesis.py", "#158 re-check still required"),
     ]
     for rel, needle in expected:
         ok, why = _contains(rel, needle)
         if not ok:
             failures.append(why)
-    # No learner/test surface may still assert the pre-decision lifecycle states.
+    # Every active foundations evidence template must carry the accepted label.
+    for module in ("11", "12", "16", "17", "18", "19", "20", "21", "22", "23", "24"):
+        rel = f"course/evidence/foundations-m{module}-evidence-template.md"
+        ok, why = _contains(rel, "CLOSED (technical environment-definition/realization per #167")
+        if not ok:
+            failures.append(why)
+    # Active runtime/learner surfaces outside the preflights must match too.
+    for rel, needle in (
+        ("labs/foundations/m21/crypto_roles.py", "OQ-BP-006 is CLOSED as the technical"),
+        ("labs/foundations/m03/README.md", "OQ-BP-006 已按 #167 关闭"),
+        ("labs/foundations/m11/README.md", "OQ-BP-006 is CLOSED as the technical"),
+        ("project/README.md", "CLOSED as the"),
+    ):
+        ok, why = _contains(rel, needle)
+        if not ok:
+            failures.append(why)
+    # No active preflight or learner/test surface may still assert the
+    # pre-decision lifecycle states (blocks regression to OPEN / UNRESOLVED).
     stale = [
         ("tests/preflight_security_synthesis.py", '"OQ_BP_006": "OPEN / UNRESOLVED"'),
         ("tests/preflight_security_synthesis.py", '"OQ_BP_001": "OPEN / RFC-GATED'),
         ("tests/preflight_security_synthesis.py", "OQ_BP_001 == \"OPEN / RFC-GATED"),
+        ("tests/preflight_distributed_infra.py", '"oq_bp_006_status": "OPEN / UNRESOLVED"'),
+        ("tests/preflight_distributed_infra.py", "OQ-BP-006 remains OPEN"),
+        ("tests/preflight_distributed_infra.py", "OQ-BP-006 remains open"),
+        ("tests/preflight_data_concurrency.py", "OQ-BP-006 remains OPEN"),
+        ("tests/preflight_data_concurrency.py", '"oq_bp_006_host_baseline": "OPEN'),
         ("book/00-the-map/L00-02.md", "does not close that Open Question"),
         ("book/23-systems-thinking-judgment/L23-02.md", "RFC-GATED"),
         ("course/evidence/foundations-m24-evidence-template.md", "OPEN / UNRESOLVED"),
+        # Other active learner/runtime surfaces, not just the CI-executed preflights.
+        ("labs/foundations/m21/crypto_roles.py", "OQ-BP-006 remains OPEN"),
+        ("labs/foundations/m03/README.md", "OQ-BP-006 仍然 OPEN"),
+        ("labs/foundations/m11/README.md", "OQ-BP-006 remains OPEN"),
+        ("project/README.md", "`OQ-BP-006` is untouched"),
+        ("course/evidence/foundations-m11-evidence-template.md", "OQ-BP-006: **OPEN**"),
+        ("course/evidence/foundations-m12-evidence-template.md", "OQ-BP-006 status: **OPEN**"),
+        ("course/evidence/foundations-m16-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m17-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m18-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m19-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m20-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m21-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m22-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m23-evidence-template.md", "OPEN / UNRESOLVED"),
     ]
     for rel, needle in stale:
         try:

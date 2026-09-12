@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Preflight verification script for Data & Concurrency modules (M13-M15).
-Evaluates and records host capabilities empirically without permanently pinning OQ-BP-006.
+Evaluates and records host capabilities empirically. Capability evaluation here
+does not replace the canonical environment pin
+(OQ-BP-006 CLOSED per #167; #158 re-check still required).
 
 Probes the 14 accepted dimensions:
 1. OS / kernel / architecture
@@ -717,11 +719,11 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
             lab_req_03_reason = (
                 f"Host operating system is {os_info['system']}; canonical Required baseline for LAB-REQ-03 requires Linux with GCC. "
                 f"Host compiler is capable ({compiler_info.get('compiler', 'unknown')}), but a non-Linux host cannot satisfy canonical Linux baseline. "
-                "(OQ-BP-006 remains OPEN)"
+                "(OQ-BP-006 CLOSED per #167; this host is simply not the accepted canonical environment)"
             )
             m15_readiness_summary = (
                 f"CAPABLE HOST ({os_info['system']}), NON-CANONICAL "
-                "(Compiler & atomics capable, but canonical Required environment is Linux with GCC; OQ-BP-006 remains OPEN)"
+                "(Compiler & atomics capable, but canonical Required environment is Linux with GCC; OQ-BP-006 CLOSED per #167 — this host is not the canonical environment)"
             )
         elif not is_gcc_compiler:
             lab_req_03_reason = (
@@ -770,7 +772,7 @@ def run_preflight(check_postgres_source=False, workspace_root=None):
         "lab_req_03_reason": lab_req_03_reason,
         "m15_readiness_summary": m15_readiness_summary,
         "governance_invariants": {
-            "oq_bp_006_host_baseline": "OPEN (No single host pinned as permanent universal baseline)",
+            "oq_bp_006_host_baseline": "OQ-BP-006 CLOSED — canonical environment definition/realization accepted; #153 same-lineage technical re-verification; #158 independent re-check required",
             "m15_canonical_host": "Linux",
             "m15_canonical_compiler": "gcc",
         },

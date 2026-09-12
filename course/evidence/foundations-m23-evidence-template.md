@@ -21,7 +21,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
   - Adjustable flag: `[Record True/False]`
   - Note: `[Record: Integer nanosecond reporting units do not imply nanosecond hardware clock resolution]`
 - Course-Owned Scratch Writability (only if a run actually creates persistent scratch): `[Record PASS / BLOCKED / NOT RUN / NOT APPLICABLE; scratch is not an M23 preflight hard dependency]`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED (Capability-based evaluation; no course-wide CPython pin frozen in learner truth)`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`; evaluation here stays capability-based — no course-wide CPython pin is frozen in learner truth
 
 ---
 

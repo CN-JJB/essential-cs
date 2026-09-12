@@ -14,7 +14,7 @@ Use this template for **actual execution evidence**. Do not pre-fill another hos
 - curl path / `curl --version`: `<actual>`
 - optional OpenSSL CLI: `<actual AVAILABLE / TOOL_UNAVAILABLE>`
 - preflight disposition: `<actual>`
-- OQ-BP-006: **OPEN**
+- OQ-BP-006: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`
 
 ## B — L11-01 TLS 1.3 course path
 

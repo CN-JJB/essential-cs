@@ -15,7 +15,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Localhost Ephemeral Port Bind Capability (`127.0.0.1:0`): `<PASS / FAIL / BLOCKED>`
 - Course-owned / Writable Temp Directory Capability: `<PASS / FAIL / BLOCKED>`
 - Subprocess Watchdog / Reaping Capability: `<PASS / FAIL / BLOCKED>`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`
 
 ---
 

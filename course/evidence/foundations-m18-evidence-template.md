@@ -12,7 +12,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Embedded SQLite Library Version: `<actual sqlite3.sqlite_version>`
 - Local Writable Scratch Capability: `<PASS / FAIL / BLOCKED>`
 - Preflight Distributed Infra M18 Status: `<READY / BLOCKED>`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`
 
 ---
 

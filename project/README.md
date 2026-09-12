@@ -21,7 +21,9 @@ implementation milestone, not a curriculum verdict:
 
 - no learner-validation evidence is claimed (Issue #34 remains a human gate);
 - no `VERIFIED` / `RELEASED` / v1.0 claim follows from this document;
-- `OQ-BP-006` is untouched.
+- `OQ-BP-006` is not closed or modified by this project: it is CLOSED as the
+  technical environment-definition/realization question (#167), and `#158` must
+  still independently re-check the canonical environment before v1.0.
 
 ## 0.1 Milestone numbering — read this first
 

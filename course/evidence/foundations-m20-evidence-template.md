@@ -13,7 +13,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Localhost Ephemeral Bind Capability (`127.0.0.1:0`): `[Record bind disposition and sample port]`
 - Course-Owned Scratch Directory Readiness: `[Record scratch path writability status]`
 - Optional OpenTelemetry SDK Disposition: `[Record OPTIONAL PACKAGE AVAILABLE or OPTIONAL PACKAGE NOT INSTALLED / FALLBACK TO ZERO-SAAS CORE]`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`
 
 ---
 

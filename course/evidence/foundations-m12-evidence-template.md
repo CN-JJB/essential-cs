@@ -20,7 +20,7 @@ Record empirical preflight data from `python tests/preflight_network_web.py --js
 - EXP-03 opt-in command: `python tests/preflight_network_web.py --json --check-chromium-source`
 - Opt-in Chromium source access disposition: `LIVE_CHROMIUM_SOURCE_ACCESSIBLE` / `NO LIVE CHROMIUM SOURCE RECHECK`
 - curl path / version: `<actual>`
-- OQ-BP-006 status: **OPEN**
+- OQ-BP-006 status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`
 
 ---
 

@@ -12,7 +12,7 @@ Use this template for **one actual learner observation**. Do not prefill or copy
 - Canonical Linux Environment Status: `[Record observed Linux presence and /proc access]`
 - Required Read-Only Capability Disposition: `[Record REQUIRED CAPABILITY PASS or ENVIRONMENT-BLOCKED / NOT RUN]`
 - Optional `unshare` Extension Disposition: `[Record CAPABILITY PASS, ENVIRONMENT-BLOCKED, or NOT RUN]`
-- OQ-BP-006 Environment Policy Status: `OPEN / UNRESOLVED`
+- OQ-BP-006 Environment Policy Status: `CLOSED (technical environment-definition/realization per #167; #158 re-check still required)`
 
 ---
 
