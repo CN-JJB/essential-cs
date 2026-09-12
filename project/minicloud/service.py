@@ -157,8 +157,54 @@ class MiniCloudService:
                 url=url, title=title, request_id=request_id
             )
 
+        item_id = uuid.uuid4().hex
+        if scoped_idempotency_key:
+            # The replay decision, item insert and replay-record insert must be
+            # one SQLite transaction. A pre-check alone is racy under concurrent
+            # duplicate requests.
+            now = utcnow()
+            candidate = {
+                "item_id": item_id,
+                "owner_id": identity["user_id"],
+                "kind": kind,
+                "title": title,
+                "body": body,
+                "url": url,
+                "visibility": visibility,
+                "version": 1,
+                "created_at": now,
+                "updated_at": now,
+                "index_status": index_status,
+                "index_summary": index_summary,
+            }
+            view = self._item_view(candidate, viewer_id=identity["user_id"])
+            if index_note:
+                view["index"]["note"] = index_note
+            stored = self.store.insert_item_idempotent(
+                item_id=item_id,
+                owner_id=identity["user_id"],
+                kind=kind,
+                title=title,
+                body=body,
+                url=url,
+                visibility=visibility,
+                index_status=index_status,
+                index_summary=index_summary,
+                created_at=now,
+                idempotency_key=scoped_idempotency_key,
+                operation="create_item",
+                response_json=json.dumps(view, sort_keys=True),
+            )
+            if stored["replayed"]:
+                replay = json.loads(stored["response_json"])
+                replay["idempotent_replay"] = True
+                self.obs.log("item.create.idempotent_replay", request_id=request_id)
+                return replay
+            self.obs.log("item.created", request_id=request_id, item_id=item_id, kind=kind)
+            return view
+
         item = self.store.insert_item(
-            item_id=uuid.uuid4().hex,
+            item_id=item_id,
             owner_id=identity["user_id"],
             kind=kind,
             title=title,
@@ -171,13 +217,6 @@ class MiniCloudService:
         view = self._item_view(item, viewer_id=identity["user_id"])
         if index_note:
             view["index"]["note"] = index_note
-        if scoped_idempotency_key:
-            self.store.put_idempotent(
-                scoped_idempotency_key,
-                identity["user_id"],
-                "create_item",
-                json.dumps(view, sort_keys=True),
-            )
         self.obs.log("item.created", request_id=request_id, item_id=item["item_id"], kind=kind)
         return view
 
@@ -248,49 +287,46 @@ class MiniCloudService:
     def share_item(
         self, identity: dict, item_id: str, grantee_username: str, *, request_id: str | None = None
     ) -> dict:
-        item = self._require_owner(identity, item_id)
+        # Preserve the non-enumeration boundary: prove ownership before looking
+        # up the named grantee, then re-check ownership inside the write tx.
+        self._require_owner(identity, item_id)
         grantee = self.store.get_user_by_username(grantee_username)
         if grantee is None:
             raise ValidationError(f"no such user: {grantee_username}")
         if grantee["user_id"] == identity["user_id"]:
             raise ValidationError("cannot share an item with its owner")
-        self.store.upsert_share(item_id, grantee["user_id"], utcnow())
-        self.store.update_item(
-            item_id=item_id,
-            owner_id=identity["user_id"],
-            expected_version=item["version"],
-            fields={"visibility": "shared"},
+        shares = self.store.share_item_atomic(
+            item_id, identity["user_id"], grantee["user_id"], utcnow()
         )
+        if shares is None:
+            raise NotFoundError("item not found")
         self.obs.log("item.shared", request_id=request_id, item_id=item_id, grantee=grantee_username)
         return {
             "item_id": item_id,
             "grantee": grantee["username"],
             "active": True,
-            "shares": self.store.list_shares(item_id),
+            "shares": shares,
         }
 
     def revoke_share(
         self, identity: dict, item_id: str, grantee_username: str, *, request_id: str | None = None
     ) -> dict:
-        item = self._require_owner(identity, item_id)
+        self._require_owner(identity, item_id)
         grantee = self.store.get_user_by_username(grantee_username)
         if grantee is None:
             raise ValidationError(f"no such user: {grantee_username}")
-        revoked = self.store.revoke_share(item_id, grantee["user_id"])
-        remaining = [s for s in self.store.list_shares(item_id) if s["revoked_at"] is None]
-        if not remaining:
-            self.store.update_item(
-                item_id=item_id,
-                owner_id=identity["user_id"],
-                expected_version=item["version"],
-                fields={"visibility": "private"},
-            )
+        result = self.store.revoke_share_atomic(
+            item_id, identity["user_id"], grantee["user_id"]
+        )
+        if result is None:
+            raise NotFoundError("item not found")
+        revoked, remaining = result
         self.obs.log("item.share_revoked", request_id=request_id, item_id=item_id, grantee=grantee_username)
         return {
             "item_id": item_id,
             "grantee": grantee["username"],
             "revoked": revoked,
-            "remaining_active_shares": len(remaining),
+            "remaining_active_shares": remaining,
         }
 
     def list_shares(self, identity: dict, item_id: str, *, request_id: str | None = None) -> dict:

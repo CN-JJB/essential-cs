@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import http.client
 import shutil
+import threading
 import unittest
 from unittest import mock
 
@@ -64,6 +65,96 @@ class TestLeadTrustBoundaryRegressions(unittest.TestCase):
             self.assertTrue(replay.body["idempotent_replay"])
             self.assertEqual(first.body["item_id"], replay.body["item_id"])
             self.assertEqual(replay.body["title"], "once")
+
+    def test_concurrent_same_key_commits_only_one_item(self):
+        with RunningStack(self.tmp) as stack:
+            alice = stack.register_and_login("alice")
+            barrier = threading.Barrier(3)
+            outcomes = []
+            errors = []
+
+            def create(title: str) -> None:
+                try:
+                    barrier.wait(timeout=5)
+                    outcomes.append(
+                        stack.client.create_item(
+                            alice,
+                            kind="note",
+                            title=title,
+                            idempotency_key="concurrent-key",
+                        )
+                    )
+                except BaseException as exc:  # surfaced in the owning test thread below
+                    errors.append(exc)
+
+            threads = [
+                threading.Thread(target=create, args=("writer-a",)),
+                threading.Thread(target=create, args=("writer-b",)),
+            ]
+            for thread in threads:
+                thread.start()
+            barrier.wait(timeout=5)
+            for thread in threads:
+                thread.join(timeout=10)
+
+            self.assertFalse(errors, errors)
+            self.assertTrue(all(not thread.is_alive() for thread in threads))
+            self.assertEqual(len(outcomes), 2)
+            self.assertTrue(all(outcome.status == 201 for outcome in outcomes))
+            self.assertEqual(len({outcome.body["item_id"] for outcome in outcomes}), 1)
+            self.assertEqual(stack.client.list_items(alice).body["count"], 1)
+            self.assertEqual(
+                sum(bool(outcome.body.get("idempotent_replay")) for outcome in outcomes), 1
+            )
+
+    def test_share_rolls_back_if_visibility_update_fails(self):
+        with RunningStack(self.tmp) as stack:
+            alice = stack.register_and_login("alice")
+            bob = stack.register_and_login("bob")
+            bob_identity = stack.service.authenticate(bob)
+            item_id = stack.client.create_item(alice, kind="note", title="private").body[
+                "item_id"
+            ]
+            conn = stack.service.store.connect()
+            try:
+                conn.execute(
+                    "CREATE TRIGGER fail_share_visibility BEFORE UPDATE OF visibility ON items "
+                    "BEGIN SELECT RAISE(ABORT, 'forced visibility failure'); END"
+                )
+            finally:
+                conn.close()
+
+            outcome = stack.client.share_item(alice, item_id, "bob")
+            self.assertEqual(outcome.status, 500)
+            self.assertIsNone(
+                stack.service.store.active_share(item_id, bob_identity["user_id"])
+            )
+            self.assertEqual(stack.client.get_item(bob, item_id).status, 404)
+
+    def test_revoke_rolls_back_if_private_visibility_update_fails(self):
+        with RunningStack(self.tmp) as stack:
+            alice = stack.register_and_login("alice")
+            bob = stack.register_and_login("bob")
+            bob_identity = stack.service.authenticate(bob)
+            item_id = stack.client.create_item(alice, kind="note", title="shared").body[
+                "item_id"
+            ]
+            self.assertEqual(stack.client.share_item(alice, item_id, "bob").status, 201)
+            conn = stack.service.store.connect()
+            try:
+                conn.execute(
+                    "CREATE TRIGGER fail_revoke_visibility BEFORE UPDATE OF visibility ON items "
+                    "BEGIN SELECT RAISE(ABORT, 'forced visibility failure'); END"
+                )
+            finally:
+                conn.close()
+
+            outcome = stack.client.revoke_share(alice, item_id, "bob")
+            self.assertEqual(outcome.status, 500)
+            self.assertIsNotNone(
+                stack.service.store.active_share(item_id, bob_identity["user_id"])
+            )
+            self.assertEqual(stack.client.get_item(bob, item_id).status, 200)
 
 
 class TestLeadNetworkAmbiguityRegressions(unittest.TestCase):

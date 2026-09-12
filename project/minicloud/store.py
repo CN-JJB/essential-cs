@@ -193,6 +193,68 @@ class Store:
             raise ValidationError(f"cannot create item: {exc}") from exc
         return dict(row)
 
+    def insert_item_idempotent(
+        self,
+        *,
+        item_id: str,
+        owner_id: str,
+        kind: str,
+        title: str,
+        body: str,
+        url: str | None,
+        visibility: str,
+        index_status: str,
+        index_summary: str | None,
+        created_at: str,
+        idempotency_key: str,
+        operation: str,
+        response_json: str,
+    ) -> dict:
+        """Atomically create an item and record its idempotent response.
+
+        ``BEGIN IMMEDIATE`` serializes competing writers before the replay check,
+        so two concurrent requests with the same scoped key cannot both commit
+        an item. The durable effect and replay record either commit together or
+        roll back together.
+        """
+        try:
+            with self._tx() as conn:
+                existing = conn.execute(
+                    "SELECT user_id, operation, response_json FROM idempotency WHERE key = ?",
+                    (idempotency_key,),
+                ).fetchone()
+                if existing is not None:
+                    if existing["user_id"] != owner_id or existing["operation"] != operation:
+                        raise StorageError("idempotency key scope collision")
+                    return {"replayed": True, "response_json": existing["response_json"]}
+
+                conn.execute(
+                    "INSERT INTO items (item_id, owner_id, kind, title, body, url, visibility,"
+                    " version, created_at, updated_at, index_status, index_summary)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
+                    (
+                        item_id,
+                        owner_id,
+                        kind,
+                        title,
+                        body,
+                        url,
+                        visibility,
+                        created_at,
+                        created_at,
+                        index_status,
+                        index_summary,
+                    ),
+                )
+                conn.execute(
+                    "INSERT INTO idempotency (key, user_id, operation, response_json, created_at)"
+                    " VALUES (?, ?, ?, ?, ?)",
+                    (idempotency_key, owner_id, operation, response_json, created_at),
+                )
+                return {"replayed": False, "response_json": response_json}
+        except sqlite3.IntegrityError as exc:
+            raise ValidationError(f"cannot create item: {exc}") from exc
+
     def get_item(self, item_id: str) -> dict | None:
         conn = self.connect()
         try:
@@ -292,6 +354,37 @@ class Store:
                 (item_id, grantee_id, granted_at),
             )
 
+    def share_item_atomic(
+        self, item_id: str, owner_id: str, grantee_id: str, granted_at: str
+    ) -> list[dict] | None:
+        """Grant a share and publish shared visibility in one transaction."""
+        with self._tx() as conn:
+            item = conn.execute(
+                "SELECT item_id FROM items WHERE item_id = ? AND owner_id = ?",
+                (item_id, owner_id),
+            ).fetchone()
+            if item is None:
+                return None
+            conn.execute(
+                "INSERT INTO shares (item_id, grantee_id, granted_at, revoked_at)"
+                " VALUES (?, ?, ?, NULL)"
+                " ON CONFLICT(item_id, grantee_id)"
+                " DO UPDATE SET granted_at = excluded.granted_at, revoked_at = NULL",
+                (item_id, grantee_id, granted_at),
+            )
+            conn.execute(
+                "UPDATE items SET visibility = 'shared', version = version + 1, updated_at = ?"
+                " WHERE item_id = ? AND owner_id = ?",
+                (utcnow(), item_id, owner_id),
+            )
+            rows = conn.execute(
+                "SELECT s.grantee_id, u.username, s.granted_at, s.revoked_at"
+                " FROM shares s JOIN users u ON u.user_id = s.grantee_id"
+                " WHERE s.item_id = ? ORDER BY s.granted_at",
+                (item_id,),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
     def revoke_share(self, item_id: str, grantee_id: str) -> bool:
         with self._tx() as conn:
             cur = conn.execute(
@@ -300,6 +393,36 @@ class Store:
                 (utcnow(), item_id, grantee_id),
             )
             return cur.rowcount > 0
+
+    def revoke_share_atomic(
+        self, item_id: str, owner_id: str, grantee_id: str
+    ) -> tuple[bool, int] | None:
+        """Revoke a share and, when last, restore private visibility atomically."""
+        with self._tx() as conn:
+            item = conn.execute(
+                "SELECT item_id FROM items WHERE item_id = ? AND owner_id = ?",
+                (item_id, owner_id),
+            ).fetchone()
+            if item is None:
+                return None
+            cur = conn.execute(
+                "UPDATE shares SET revoked_at = ? WHERE item_id = ? AND grantee_id = ?"
+                " AND revoked_at IS NULL",
+                (utcnow(), item_id, grantee_id),
+            )
+            remaining = int(
+                conn.execute(
+                    "SELECT COUNT(*) FROM shares WHERE item_id = ? AND revoked_at IS NULL",
+                    (item_id,),
+                ).fetchone()[0]
+            )
+            if remaining == 0:
+                conn.execute(
+                    "UPDATE items SET visibility = 'private', version = version + 1, updated_at = ?"
+                    " WHERE item_id = ? AND owner_id = ?",
+                    (utcnow(), item_id, owner_id),
+                )
+            return cur.rowcount > 0, remaining
 
     def active_share(self, item_id: str, grantee_id: str) -> dict | None:
         conn = self.connect()
