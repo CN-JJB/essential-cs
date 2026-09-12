@@ -1,0 +1,140 @@
+# Essential CS Mini Cloud CI (durable pin + exact head).
+#
+# Execution model (mirrors canonical-fast — read before "optimizing"):
+# - runs-on ubuntu-24.04 is the MOVING execution substrate, not the canonical pin.
+# - Every release-relevant command below runs INSIDE the canonical environment
+#   materialized by pulling the immutable registry digest committed in
+#   .devcontainer/canonical-image.env. This lane builds no environment.
+# - On pull_request we checkout the PR HEAD SHA, not GitHub's synthetic merge
+#   commit, and assert the revision before producing any evidence.
+# - Course execution happens in a fresh LF archive copy (/tmp/ci-tree-mini-cloud),
+#   never in the checkout working tree.
+# - Fail closed: a missing tool, a failed test, a missing evidence line, or a
+#   non-empty hygiene check fails the job. Nothing here is "informational".
+# - The Mini Cloud binds 127.0.0.1 INSIDE the container; loopback there is
+#   private to that container and is never exposed on the runner.
+#
+# This is a NEW workflow file. GitHub will not run it until it exists on main;
+# after merge it runs on push/PR like the other canonical lanes.
+
+name: mini-cloud
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  CI_TREE: /tmp/ci-tree-minicloud
+
+jobs:
+  mini-cloud:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact event revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Assert exact checked-out revision
+        shell: bash
+        run: |
+          expected='${{ github.event.pull_request.head.sha || github.sha }}'
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_REVISION=${expected}"
+          echo "ACTUAL_REVISION=${actual}"
+          test "${actual}" = "${expected}"
+
+      - name: Materialize canonical environment by immutable registry digest
+        run: |
+          set -ueo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          bash scripts/canonical-image-pull.sh
+
+      - name: Assert this lane consumes the committed digest
+        run: |
+          set -ueo pipefail
+          digest="$(sed -n 's/^CANONICAL_IMAGE_DIGEST=//p' .devcontainer/canonical-image.env)"
+          echo "COMMITTED_CANONICAL_DIGEST=${digest}"
+          echo "CONSUMED_CANONICAL_IMAGE=${CANONICAL_IMAGE}"
+          case "${CANONICAL_IMAGE}" in
+            *"@${digest}") echo "DIGEST_CONSUMPTION_ASSERT=PASS" ;;
+            *) echo "FAIL: canonical image reference does not carry the committed digest"; exit 1 ;;
+          esac
+
+      - name: Materialize LF tree for execution
+        run: |
+          rm -rf "${CI_TREE}"
+          mkdir -p "${CI_TREE}/.ci-logs"
+          git -c core.autocrlf=false archive --format=tar HEAD | tar -x -C "${CI_TREE}"
+
+      - name: Mini Cloud preflight inside the canonical environment
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work -e PYTHONPATH=/work/project "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            bash project/scripts/preflight.sh
+            python3 -m minicloud.cli preflight
+            echo MINICLOUD_PREFLIGHT_STEP_DONE'
+
+      - name: Mini Cloud Python test suite (P0–P9)
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work -e PYTHONPATH=/work/project "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            python3 -m unittest discover -s project/tests -p "test_*.py"
+            echo MINICLOUD_UNITTESTS_DONE' 2>&1 | tee "${CI_TREE}/.ci-logs/minicloud-unittests.log"
+          test "${PIPESTATUS[0]}" -eq 0
+
+      - name: P4 measurement, P5 concurrency, backup/restore demonstrations
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work -e PYTHONPATH=/work/project "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            python3 -m minicloud.cli bench | tee /work/.ci-logs/minicloud-bench.json
+            python3 -m minicloud.cli race  | tee /work/.ci-logs/minicloud-race.json
+            echo MINICLOUD_DEMOS_DONE' 2>&1 | tee "${CI_TREE}/.ci-logs/minicloud-demos.log"
+          test "${PIPESTATUS[0]}" -eq 0
+
+      - name: Mini Cloud end-to-end smoke (real processes, real HTTP)
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            export MINICLOUD_DB_PATH=/work/project/var/ci/minicloud.db
+            bash project/scripts/smoke.sh --keep
+            echo MINICLOUD_SMOKE_STEP_DONE' 2>&1 | tee "${CI_TREE}/.ci-logs/minicloud-smoke.log"
+          test "${PIPESTATUS[0]}" -eq 0
+          grep -q "MINICLOUD_SMOKE_STATUS: PASS" "${CI_TREE}/.ci-logs/minicloud-smoke.log"
+          grep -q "MINICLOUD_SMOKE_OK" "${CI_TREE}/.ci-logs/minicloud-smoke.log"
+
+      - name: Reset generated state and assert no residue
+        run: |
+          docker run --rm -v "${CI_TREE}:/work" -w /work "${CANONICAL_IMAGE}" bash -c '
+            set -ueo pipefail
+            bash project/scripts/reset.sh
+            test ! -d /work/project/var
+            echo MINICLOUD_RESET_DONE'
+
+      - name: Hygiene (PR diff-check, no tracked generated files)
+        shell: bash
+        run: |
+          if [ '${{ github.event_name }}' = 'pull_request' ]; then
+            git diff --check '${{ github.event.pull_request.base.sha }}...HEAD'
+          else
+            git diff --check HEAD^...HEAD
+          fi
+          # Generated state must never be part of the source tree.
+          test ! -e project/var
+          echo HYGIENE_DONE
+
+      - name: Upload Mini Cloud evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-cloud-evidence
+          path: /tmp/ci-tree-minicloud/.ci-logs/
+          include-hidden-files: true
