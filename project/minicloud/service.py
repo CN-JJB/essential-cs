@@ -130,8 +130,15 @@ class MiniCloudService:
         idempotency_key: str | None = None,
         request_id: str | None = None,
     ) -> dict:
+        scoped_idempotency_key = None
         if idempotency_key:
-            replay = self._replay(idempotency_key)
+            # Client-provided idempotency keys are only meaningful inside an
+            # authenticated principal + operation scope. Persisting the raw key
+            # globally would let another user replay a cached response.
+            scoped_idempotency_key = self._scoped_idempotency_key(
+                identity["user_id"], "create_item", idempotency_key
+            )
+            replay = self._replay(scoped_idempotency_key)
             if replay is not None:
                 self.obs.log("item.create.idempotent_replay", request_id=request_id)
                 return replay
@@ -164,9 +171,12 @@ class MiniCloudService:
         view = self._item_view(item, viewer_id=identity["user_id"])
         if index_note:
             view["index"]["note"] = index_note
-        if idempotency_key:
+        if scoped_idempotency_key:
             self.store.put_idempotent(
-                idempotency_key, identity["user_id"], "create_item", json.dumps(view, sort_keys=True)
+                scoped_idempotency_key,
+                identity["user_id"],
+                "create_item",
+                json.dumps(view, sort_keys=True),
             )
         self.obs.log("item.created", request_id=request_id, item_id=item["item_id"], kind=kind)
         return view
@@ -365,6 +375,16 @@ class MiniCloudService:
             return "pending", None, f"dependency_timeout: {exc.message}"
         except DependencyUnavailableError as exc:
             return "pending", None, f"dependency_unavailable: {exc.message}"
+
+    @staticmethod
+    def _scoped_idempotency_key(user_id: str, operation: str, key: str) -> str:
+        """Namespace an opaque client key by principal and operation.
+
+        JSON encoding keeps the tuple unambiguous without changing the schema.
+        The stored key is an implementation detail; callers still send their
+        original opaque Idempotency-Key value.
+        """
+        return json.dumps([user_id, operation, key], separators=(",", ":"), ensure_ascii=False)
 
     def _replay(self, key: str) -> dict | None:
         record = self.store.get_idempotent(key)

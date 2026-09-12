@@ -8,9 +8,9 @@ This is where the P3 lesson is made concrete and testable:
   repeating it cannot change state.
 * A **mutation** may only be retried when the caller supplied an
   ``Idempotency-Key``; otherwise a retry could duplicate the effect.
-* A **timeout on a mutation is reported as ambiguous**, never as "failed".
-  ``Outcome.ambiguous`` is the machine-readable form of "we do not know whether
-  this committed".
+* A **timeout or post-submission disconnect on a mutation is reported as
+  ambiguous**, never as "failed". ``Outcome.ambiguous`` is the machine-readable
+  form of "we do not know whether this committed".
 """
 
 from __future__ import annotations
@@ -78,8 +78,10 @@ class MiniCloudClient:
         request_id: str | None = None,
     ) -> Outcome:
         retryable = safe or bool(idempotency_key)
+        mutation = method.upper() not in {"GET", "HEAD", "OPTIONS"}
         attempts = 0
         last_error: str | None = None
+        saw_ambiguous_failure = False
 
         while attempts < (self.max_attempts if retryable else 1):
             attempts += 1
@@ -108,21 +110,34 @@ class MiniCloudClient:
                     request_id=response.getheader("X-Request-ID") or request_id,
                 )
             except socket.timeout:
-                # Do not retry: the remote may have completed the work.
+                # Do not retry after a deadline: for a mutation the remote may
+                # already have committed, so the only honest answer is unknown.
                 if self.obs is not None:
                     self.obs.log("client.timeout", request_id=request_id, path=path, attempts=attempts, level="warning")
                 return Outcome(
                     status=None,
                     body=None,
                     attempts=attempts,
-                    ambiguous=True,
+                    ambiguous=mutation,
                     error="timeout",
                     request_id=request_id,
                 )
-            except (ConnectionRefusedError, ConnectionResetError, http.client.HTTPException, OSError) as exc:
+            except ConnectionRefusedError as exc:
+                # Refusal happens before an application connection is
+                # established, so there is no remote commit to be ambiguous
+                # about. Safe/keyed operations may still retry it.
                 last_error = type(exc).__name__
                 if self.obs is not None:
-                    self.obs.log("client.connection_error", request_id=request_id, path=path, attempts=attempts, error=last_error, level="warning")
+                    self.obs.log("client.connection_refused", request_id=request_id, path=path, attempts=attempts, error=last_error, level="warning")
+                continue
+            except (ConnectionResetError, http.client.HTTPException, OSError) as exc:
+                # Once a connection existed, a reset/protocol/socket failure can
+                # occur after the request reached the server but before its
+                # response reached us. Mutations therefore remain ambiguous.
+                last_error = type(exc).__name__
+                saw_ambiguous_failure = saw_ambiguous_failure or mutation
+                if self.obs is not None:
+                    self.obs.log("client.connection_lost", request_id=request_id, path=path, attempts=attempts, error=last_error, level="warning")
                 continue
             finally:
                 conn.close()
@@ -131,7 +146,7 @@ class MiniCloudClient:
             status=None,
             body=None,
             attempts=attempts,
-            ambiguous=False,
+            ambiguous=saw_ambiguous_failure,
             error=last_error or "unreachable",
             request_id=request_id,
         )

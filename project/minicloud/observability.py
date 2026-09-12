@@ -54,6 +54,8 @@ def _should_redact(key: str) -> bool:
 
 def redact(value: object, _key: str = "") -> object:
     """Recursively redact/truncate a value so it is safe to persist."""
+    if _key and _should_redact(_key):
+        return REDACTED
     if isinstance(value, dict):
         return {k: redact(v, k) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
