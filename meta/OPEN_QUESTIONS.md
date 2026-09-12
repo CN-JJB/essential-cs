@@ -4,23 +4,27 @@ Only unresolved questions that can materially affect curriculum architecture, te
 
 ## Active — post-Blueprint
 
-Blueprint v0.1 passed the Final Exit Audit in Issue #23 / PR #24 and is closed. The only remaining post-Blueprint Open Question relevant to the first stable release is the realized canonical-environment verification below.
+Blueprint v0.1 passed the Final Exit Audit in Issue #23 / PR #24 and is closed.
 
-### OQ-BP-006 — What versions define the first stable environment? (OPEN — independent verification pending)
-
-**Strategy decided in D-032:** use a digest-addressed Ubuntu 24.04 LTS (Noble)-based canonical learner/test environment; standard GitHub-hosted `ubuntu-24.04` is only a moving execution substrate, not the immutable pin. Compatibility floors are Python >= 3.12, SQLite engine + `sqlite3` CLI >= 3.45, GCC >= 13/C11, curl >= 8.5, and GDB >= 15.0, with GDB required for canonical M03 evidence. LAB-REQ-02 retains exact xv6 source identity and lane-scoped full QEMU/RISC-V package/image identity. strace, browser/Chromium, PostgreSQL/psql, live observability backends, Docker/Podman, and arm64 remain capability-gated or optional according to the accepted curriculum boundary.
-
-**Implementation realization accepted:** Issue #150 / PR #152 produced and Web-Lead accepted the committed canonical definition, durable GHCR digest, resolved package identities, least-privilege publication/retrieval workflow, canonical-fast evidence, and real LAB-REQ-02 QEMU evidence. The accepted immutable identity is:
-
-`ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460`
-
-**Still OPEN:** Issue #153 requires genuinely independent re-verification by a different harness from #145/#149/#150 and not Web Lead. OQ-BP-006 closes only after that independent report is accepted and Web Lead performs the final disposition.
-
-**Provenance:** Issue #143 / PR #144 (D-032); Issue #150 / PR #152 (realized pin); Issue #153 (independent verification gate).
+**No post-Blueprint Open Question currently blocks the first stable-release candidate.** Final stable release still remains gated by the explicit verification/audit/learner-validation/release Issues; closing an Open Question does not satisfy those gates.
 
 Closely related but separately tracked: the canonical latency-constant list (R11) and its refresh cadence (CURRENT per Living Curriculum Policy).
 
 ## Resolved after Blueprint closure
+
+### OQ-BP-006 — What versions define the first stable environment? (CLOSED — realized pin technically re-verified)
+
+**Strategy decided in D-032:** use a digest-addressed Ubuntu 24.04 LTS (Noble)-based canonical learner/test environment; standard GitHub-hosted `ubuntu-24.04` is only a moving execution substrate, not the immutable pin. Compatibility floors are Python >= 3.12, SQLite engine + `sqlite3` CLI >= 3.45, GCC >= 13/C11, curl >= 8.5, and GDB >= 15.0, with GDB required for canonical M03 evidence. LAB-REQ-02 retains exact xv6 source identity and lane-scoped full QEMU/RISC-V package/image identity. strace, browser/Chromium, PostgreSQL/psql, live observability backends, Docker/Podman, and arm64 remain capability-gated or optional according to the accepted curriculum boundary.
+
+**Realized immutable identity:** Issue #150 / PR #152 produced and Web Lead accepted the committed canonical definition, durable GHCR digest, resolved package identities, least-privilege publication/retrieval workflow, canonical-fast evidence, and real LAB-REQ-02 QEMU evidence:
+
+`ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460`
+
+**Technical re-verification accepted:** Issue #153 v0.2 / PR #165 re-verified that exact durable object against locked base `cd7396cad6ca746c55217968aafc59a8d3dd7369`. Web Lead accepted verifier-owned exact-base canonical-fast and QEMU evidence, fresh digest retrieval/environment capture, package-floor truth, least-privilege/pin-refresh governance, and downloaded artifact digests/inventories. PR #165 merged as `8c1c30a7c20ac8631675e798a3c535cef8bf1c3c`.
+
+Issue #153 v0.2 is explicitly **same-lineage technical re-verification**, not final role-independent evidence. Closing OQ-BP-006 means the environment version/identity question itself is technically decided and realized; it does **not** waive the final independent stable gate. Issue #158 must independently re-check the canonical environment as part of final multi-role verification before v1.0.
+
+**Provenance:** Issue #143 / PR #144 (D-032); Issue #150 / PR #152 (realized pin); Issue #153 v0.2 / PR #165 (accepted technical re-verification); Issue #158 (remaining final independent stable verification gate).
 
 ### OQ-BP-001 — Where does bounded AI literacy belong? (CLOSED for v1.0)
 
