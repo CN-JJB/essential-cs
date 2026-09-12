@@ -1,9 +1,17 @@
 {
-  "name": "Essential CS canonical stable environment (candidate v0.1)",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "name": "Essential CS canonical environment v0.1 (durable pin)",
+  "image": "ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460",
   "workspaceFolder": "/work",
   "workspaceMount": "source=${localWorkspaceFolder},target=/work,type=bind",
-  "remoteUser": "root"
+  "remoteUser": "root",
+  "hostRequirements": {
+    "cpus": 2
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
 }
