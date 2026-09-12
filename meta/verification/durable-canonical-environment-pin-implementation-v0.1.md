@@ -158,8 +158,27 @@ Full resolved distro identity: `bash 5.2.21-2ubuntu4`, `bc 1.07.1-3ubuntu4`,
 
 ## 7. Exact-head lane evidence
 
-Both lanes ran at implementation head `d2ca8556f4fd086edcf82e0d2b1197571a619dda`
-and consumed the **same** digest:
+### Head relationship
+
+Two heads are relevant and they must not be confused:
+
+- **Substantive implementation head `d2ca8556f4fd086edcf82e0d2b1197571a619dda`** — all
+  executable content (pin file, helper scripts, publication workflow, both CI lanes,
+  devcontainer docs/config). The runs cited immediately below were produced here.
+- **Final head** — the commit that adds this report file. It changes **markdown only**
+  (`meta/verification/durable-canonical-environment-pin-implementation-v0.1.md`); it
+  alters no executable behaviour, no CI definition, and no pin. Both lanes were
+  re-run green at that final head.
+
+The final head's own run IDs cannot be cited *inside* the commit that precedes their
+existence, so per the Issue #150 PR contract they are recorded in the PR body
+("Exact-head Actions evidence at the final head"). Both heads consumed the identical
+digest `sha256:766ce07b…19e460`.
+
+### Runs at the substantive implementation head
+
+Both lanes ran at `d2ca8556f4fd086edcf82e0d2b1197571a619dda` and consumed the
+**same** digest:
 
 | Lane | Run | Event | Result |
 | --- | --- | --- | --- |
