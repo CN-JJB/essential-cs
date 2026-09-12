@@ -1,16 +1,24 @@
 # Project Status
 
-Last updated: 2026-09-10
+Last updated: 2026-09-12
 
 ## Current phase
 
 **Curriculum Blueprint v0.1 — COMPLETE / CLOSED**
 
-**v0.9 Release Candidate — PUBLISHED / POST-v0.9 STABILIZATION ACTIVE**
+**v0.9 Release Candidate — PUBLISHED / IMMUTABLE HISTORY**
+
+**post-v0.9 v1.0 stabilization — ACTIVE / STABLE-GATE QUEUE**
 
 Requirements / Grill Me is complete. GitHub remains the persistent source of truth. Issue #23 / PR #24 completed the independent Blueprint Final Exit Audit. The audit initially found two narrow production-facing consistency blockers; Web Lead direct fixes reconciled prerequisite metadata and competency labels without changing the accepted architecture. The narrow re-audit passed **30/30 Blueprint exit criteria**, and Blueprint v0.1 closed on 2026-08-30.
 
 Blueprint closure means the project may now build and validate the curriculum through stage-by-stage vertical slices. It does **not** mean Lessons/Labs are VERIFIED or released, and it does not satisfy the later v1.0 gate.
+
+M00–M24 / 70 learner Lessons / 5 Required Labs authoring is complete, and the full v0.9 technical verification chain is complete. The **Essential CS v0.9 Release Candidate** is published as immutable history at annotated tag object `f8e702ed5deda9d750414574feb95dbe3cf3eb97`, peeled target `aee26770b177a6fbbd2039c90f4e0d110ebfb301`; v0.9 and all historical tags must not be moved or rewritten.
+
+Post-v0.9 stabilization has subsequently closed: the durable canonical environment implementation (#150 / PR #152) is accepted with immutable digest `sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460`; Mini Cloud P0–P9 (PR #154) is accepted/merged as `d8b6305b6849cec69a5ef3a089256414f49f6bb7` lineage; maintenance/review operating evidence (#156 / PR #159) is accepted; and Issue #155 / PR #160 accepted D-033 / D-034, resolving OQ-BP-001 / OQ-BP-003 for v1.0 scope. OQ-BP-006 remains OPEN pending independent verification in Issue #153.
+
+The project is now at the **v1.0 stabilization checkpoint**. The remaining stable gates are real target-learner validation (#34; AI simulation forbidden), independent durable canonical pin verification (#153, which gates Web Lead OQ-BP-006 disposition), the final external curriculum/coverage audit (#157), the final stable multi-role verification (#158, dependency-gated on accepted #153 and #157), this bounded PROJECT_STATUS reconciliation (#162), and the Web Lead-owned v1.0 final release gate (#161). No `VERIFIED` / `RELEASED` / v1.0 claim is made at this checkpoint.
 
 ## Completed
 
@@ -85,7 +93,9 @@ Blueprint closure means the project may now build and validate the curriculum th
 
 ## Active workstream
 
-The project is in **post-v0.9 v1.0 stabilization**. The post-v0.9 gap audit in Issue #140 / PR #142 is Lead-accepted. Stable-environment strategy research in Issue #143 / PR #144 is also Lead-accepted and persisted as D-032. **Issue #145 — Canonical stable environment + CI matrix v0.1** is now the active AI implementation task. OQ-BP-006 remains OPEN until the realized canonical artifact/digest, resolved package identities, and runtime/CI evidence are accepted. Issue #34 remains OPEN in parallel as mandatory real-human learner validation; AI cannot satisfy it.
+The project is at the **post-v0.9 v1.0 stabilization checkpoint**. The post-v0.9 gap audit (#140 / PR #142), the stable-environment pin decision (#143 / PR #144, persisted as D-032), and the accepted closure chain through v0.9 RC publication are complete. The durable canonical environment implementation (#150 / PR #152) is accepted with immutable digest `sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460`. Mini Cloud P0–P9 (PR #154) is accepted/merged as `d8b6305b6849cec69a5ef3a089256414f49f6bb7` lineage. Maintenance/review operating evidence (#156 / PR #159) is accepted. Issue #155 / PR #160 accepted D-033 / D-034, resolving OQ-BP-001 / OQ-BP-003 for v1.0 scope. OQ-BP-006 remains OPEN pending independent durable-pin verification in Issue #153. Issue #34 remains OPEN in parallel as mandatory real-human learner validation; AI cannot satisfy it.
+
+The remaining stable-gate queue is: Issue #162 (this bounded PROJECT_STATUS reconciliation), Issue #153 (independent durable canonical pin verification, which gates Web Lead OQ-BP-006 disposition), Issue #157 (final external curriculum/coverage audit), Issue #158 (final stable multi-role verification, dependency-gated on accepted #153 and #157), Issue #34 (real target-learner pilot), and finally Issue #161 (Web Lead-owned v1.0 final release gate).
 
 Completed closure sequence:
 
@@ -108,27 +118,27 @@ Production now follows D-027's bounded build-first sequence:
 
 `Research → Design → Lesson/Lab/Project Implementation → Independent Verification/Lead Review → Next Ready Batch`
 
-Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is fully consumed; M05–M09 implementations are Lead-reviewed and merged, including LAB-REQ-02**. The complete **M10–M12 S4 Research + Design slice is fully consumed and Lead-reviewed**. The complete **M13–M15 S5 Data & Concurrency Research + Design slice is fully consumed and Lead-reviewed**, including LAB-REQ-04, LAB-REQ-05, LAB-REQ-03, EXP-02, LAB-OPT-03 Optional, and LAB-OPT-05 Optional/link-only. **S6 M16–M20 Research, Design, and all five bounded implementation batches are now fully consumed and Lead-reviewed.** **S7 Research/Design and all four learner implementation batches M21–M24 are Lead-accepted; M00–M24 learner authoring is complete.** The full v0.9 technical verification chain is complete and the **Essential CS v0.9 Release Candidate is published** at tag `v0.9`, exact target `aee26770b177a6fbbd2039c90f4e0d110ebfb301`. The post-v0.9 gap audit (#140/#142) and stable-environment decision packet (#143/#144) are Lead-accepted. D-032 now selects the environment implementation strategy while deliberately leaving OQ-BP-006 OPEN until realized evidence exists. The active formal AI task is **Issue #145 — Canonical stable environment + CI matrix v0.1**. Issue #34 remains a separate real-human learner-validation gate. Mini Cloud implementation, stable re-verification, final external coverage audit, operating maintenance evidence, learner validation, and truthful zero-critical-blocker status remain required before v1.0 / `RELEASED`.
+Learner Validation is deferred during authoring but remains mandatory before v1.0 / `RELEASED`. The accepted Research + Design slice for **M00–M04 is fully implemented through M04 after Lead review**. The **M05–M09 Research + Design slice is fully consumed; M05–M09 implementations are Lead-reviewed and merged, including LAB-REQ-02**. The complete **M10–M12 S4 Research + Design slice is fully consumed and Lead-reviewed**. The complete **M13–M15 S5 Data & Concurrency Research + Design slice is fully consumed and Lead-reviewed**, including LAB-REQ-04, LAB-REQ-05, LAB-REQ-03, EXP-02, LAB-OPT-03 Optional, and LAB-OPT-05 Optional/link-only. **S6 M16–M20 Research, Design, and all five bounded implementation batches are now fully consumed and Lead-reviewed.** **S7 Research/Design and all four learner implementation batches M21–M24 are Lead-accepted; M00–M24 learner authoring is complete.** The full v0.9 technical verification chain is complete and the **Essential CS v0.9 Release Candidate is published** at tag `v0.9`, exact target `aee26770b177a6fbbd2039c90f4e0d110ebfb301`. The post-v0.9 gap audit (#140 / PR #142) and stable-environment decision packet (#143 / PR #144) are Lead-accepted and persisted as D-032. Post-v0.9 stabilization has since advanced through the durable canonical environment implementation (#150 / PR #152), Mini Cloud P0–P9 (PR #154), maintenance/review operating evidence (#156 / PR #159), and the v1.0 Core-scope decisions D-033 / D-034 (#155 / PR #160). OQ-BP-006 remains OPEN until independent durable-pin verification (#153) is accepted and Web Lead dispositions it. Issue #34 remains a separate real-human learner-validation gate; final stable multi-role verification (#158), the final external audit (#157), and the Web Lead v1.0 release gate (#161) remain required before v1.0 / `RELEASED`.
 
 ## Current priority
 
-1. **Formal active AI task: Issue #145 — Canonical stable environment + CI matrix v0.1.** Implement the D-032 candidate canonical environment, hosted CI execution matrix, required M03 GDB evidence, real LAB-REQ-02 QEMU lane, and truthful M10/m20 characterization. Do not modify learner-facing labs/tests/preflights to force green and do not self-close OQ-BP-006.
-2. **Parallel mandatory human task: Issue #34 — M00–M01 First Real Learner Pilot v0.1.** This remains OPEN and cannot be satisfied by AI simulation. At least one real target learner session is required before this gate can advance.
-3. After #145 returns, Web Lead must exact-head review the environment definition, artifact/digest truth, Actions evidence, GDB/QEMU results, and m20 disposition. If the implementation is materially complete, route an independent stable-environment verification before closing OQ-BP-006.
-4. Standard GitHub-hosted `ubuntu-24.04` is a moving execution substrate, **not** the canonical immutable pin. D-032 requires a digest-addressed Ubuntu-24.04-based canonical learner/test environment artifact/definition.
-5. Mini Cloud design work may prepare in parallel, but final acceptance remains dependent on the stable environment.
-6. OQ-BP-001 / OQ-BP-003 governance can proceed in parallel; neither may be silently treated as decided by an Executor.
-7. Do not change lifecycle state to stable `VERIFIED` or `RELEASED`, and do not claim v1.0 readiness until all accepted Issue #140 gate work is truthfully closed.
-8. v0.9 tag history is immutable. Do not move or rewrite `v0.9`; all post-v0.9 work belongs on `main` and later release/version decisions.
+1. **Complete this bounded PROJECT_STATUS reconciliation (Issue #162).** Status-only change to `meta/PROJECT_STATUS.md`; it creates no lifecycle claim.
+2. **Issue #153 — Independent durable canonical environment pin re-verification.** Requires a genuinely different harness from #145/#149/#150 and not Web Lead. It locks current `main` at claim time as `VERIFICATION_BASE`, runs fresh exact-base canonical-fast + QEMU evidence, downloads artifacts, and returns a report. Only Web Lead may then disposition OQ-BP-006, which remains OPEN until then.
+3. **Issue #157 — Final external curriculum/coverage audit.** Requires an independent external auditor; audit-only, with no silent repair.
+4. **Issue #158 — Final stable multi-role verification.** Dependency-gated on Web Lead acceptance of #153/OQ-BP-006 and #157 plus any repairs; independent verifier.
+5. **Issue #34 — M00–M01 first real learner pilot v0.1.** Mandatory human evidence; at least one real target learner session. AI may assist with capture/reporting but may not impersonate the learner or fabricate evidence. It locks current `main` at pilot start as `PILOT_BASE`.
+6. **Issue #161 — v1.0 final stable disposition + release operation.** Web Lead-owned; execute only after #34/#162/#153/#157/#158 and all routed repairs are accepted. Recompute D-024, then persist final stable lifecycle status, tag immutable `v1.0`, and publish the non-prerelease release.
+7. Do not change lifecycle state to stable `VERIFIED` or `RELEASED`, and do not claim v1.0 readiness until every above gate and routed repair is truthfully accepted/closed. A merge does not by itself establish learner validation, `VERIFIED`, `RELEASED`, or v1.0.
+8. v0.9 tag history is immutable. Do not move or rewrite `v0.9` or any historical tag; all post-v0.9 work belongs on `main` and later release/version decisions.
 
 ## Current architecture attention points
 
-- bounded AI literacy (OQ-BP-001): Core thread/module vs Current Case — RFC candidate exists, undecided;
-- bounded HCI/accessibility/user-boundary reasoning (OQ-BP-003) — RFC candidate exists, undecided; P2/P9 evidence hooks remain interim-safe;
+- bounded AI literacy (OQ-BP-001): **resolved for v1.0 by D-033** — no late AI/ML/LLM Core expansion; retain bounded CURRENT CASE verification practice;
+- bounded HCI/accessibility/user-boundary reasoning (OQ-BP-003): **resolved for v1.0 by D-034** — no late HCI/accessibility Core first-home/module; retain accepted human-facing evidence hooks;
 - default S4/S5 learner narrative — decided (request-centric preference, not a hard dependency);
 - just-in-time applied MSF/statistics (M04 `L04-02` first home) and explicit toolchain/SDF outcomes (M00 `L00-02` + lab-entry gate);
-- canonical software/environment versions and hardware-dependent latency/cost baselines (OQ-BP-006) — D-032 strategy selected; active realization in Issue #145; final pin still OPEN pending artifact/runtime evidence;
-- Lab implementation dossiers (setup validation, smoke tests, license/pinning audits) — post-Blueprint.
+- canonical software/environment versions and hardware-dependent latency/cost baselines (OQ-BP-006) — D-032 strategy selected and the durable immutable pin implemented (#150 / PR #152, digest `sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460`); final closure still requires independent verification (#153) and Web Lead OQ-BP-006 disposition;
+- Lab implementation dossiers (setup validation, smoke tests, license/pinning audits) — complete through the accepted v0.9 chain.
 
 ## Lifecycle
 
