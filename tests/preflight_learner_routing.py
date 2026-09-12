@@ -19,6 +19,7 @@ Static only: reads committed text, runs nothing. Usable as a preflight script
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import unittest
@@ -163,6 +164,9 @@ def check_governance_truth() -> list[str]:
         ("tests/preflight_distributed_infra.py", "#158 must still independently re-check before v1.0"),
         ("tests/preflight_data_concurrency.py", "OQ-BP-006 CLOSED — canonical environment definition/realization accepted"),
         ("tests/preflight_data_concurrency.py", "#158 independent re-check required"),
+        ("course/evidence/foundations-m23-evidence-template.md", "RESOLVED FOR v1.0 BY D-033"),
+        (".devcontainer/CANONICAL_ENVIRONMENT.md", "OQ-BP-006 CLOSED as the technical environment-definition/realization question"),
+        (".github/workflows/ci-qemu-lane.yml", "#158 must still independently re-check"),
         ("meta/OPEN_QUESTIONS.md", "CLOSED — realized pin technically re-verified"),
         ("meta/OPEN_QUESTIONS.md", "#158 must independently re-check"),
     ]
@@ -215,6 +219,10 @@ def check_governance_truth() -> list[str]:
         ("course/evidence/foundations-m21-evidence-template.md", "OPEN / UNRESOLVED"),
         ("course/evidence/foundations-m22-evidence-template.md", "OPEN / UNRESOLVED"),
         ("course/evidence/foundations-m23-evidence-template.md", "OPEN / UNRESOLVED"),
+        ("course/evidence/foundations-m23-evidence-template.md", "OPEN / RFC-GATED"),
+        ("course/evidence/foundations-m23-evidence-template.md", "safe interim state"),
+        (".devcontainer/CANONICAL_ENVIRONMENT.md", "OQ-BP-006 remains OPEN"),
+        (".github/workflows/ci-qemu-lane.yml", "OQ-BP-006 stays OPEN"),
     ]
     for rel, needle in stale:
         try:
@@ -224,6 +232,63 @@ def check_governance_truth() -> list[str]:
             continue
         if needle in text:
             failures.append(f"{rel} still asserts stale lifecycle {needle!r}")
+    return failures
+
+
+LESSON_ID_RE = re.compile(r"^L\d{2}-\d{2}\.md$")
+
+# Every learner Lesson must expose a prerequisite declaration. Two accepted
+# conventions exist in the repository (canonical header block field, or a
+# `前置知识` / Prerequisites section); either satisfies the DoD requirement.
+_PREREQ_PATTERNS = (
+    re.compile(r"^>\s*\*\*Canonical (Lesson )?Predecessors?\*\*", re.M),
+    re.compile(r"^>\s*\*\*Canonical Lesson Predecessor Refinement\*\*", re.M),
+    re.compile(r"^#{2,3}[^\n]*?(前置知识|Prerequisites)", re.M),
+)
+
+_DOD_PATTERNS = (
+    ("Exit Criteria", re.compile(r"Exit Criteria|达标退出标准|达标通关标准|退出标准")),
+    ("Competency Mapping", re.compile(r"Competency Mapping|能力映射|能力等级对齐", re.I)),
+    ("Provenance", re.compile(r"Provenance|出处|源流|时效")),
+    ("Common Misconceptions", re.compile(r"Common Misconceptions|认知谬误|认知误区|常见误解")),
+    (
+        "What You Can Ignore - for Now",
+        re.compile(r"^#{2,4}[^\n]*?(Ignore\s*[—\-–]\s*for\s*Now|暂缓深入|暂时可以忽略)", re.M | re.I),
+    ),
+)
+
+
+def _lesson_files() -> list:
+    book = REPO_ROOT / "book"
+    return sorted(
+        p for p in book.rglob("L*.md") if LESSON_ID_RE.match(p.name)
+    )
+
+
+def check_lesson_contracts() -> list[str]:
+    """Every learner Lesson keeps numbering, prerequisites, and DoD blocks."""
+    failures = []
+    lessons = _lesson_files()
+    if len(lessons) != 70:
+        failures.append(f"expected 70 learner Lessons, found {len(lessons)}")
+
+    per_module: dict[str, list[int]] = {}
+    for path in lessons:
+        stem = path.stem
+        per_module.setdefault(stem[1:3], []).append(int(stem[4:6]))
+    for module in sorted(per_module):
+        numbers = sorted(per_module[module])
+        if numbers != list(range(1, len(numbers) + 1)):
+            failures.append(f"M{module} Lesson numbering not contiguous: {numbers}")
+
+    for path in lessons:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if not any(pattern.search(text) for pattern in _PREREQ_PATTERNS):
+            failures.append(f"{rel} declares no prerequisites")
+        for label, pattern in _DOD_PATTERNS:
+            if not pattern.search(text):
+                failures.append(f"{rel} lacks the DoD block {label!r}")
     return failures
 
 
@@ -255,6 +320,7 @@ def collect_report() -> dict:
     return {
         "required_lab_routes": check_required_lab_routes(),
         "minicloud_routes": check_minicloud_routes(),
+        "lesson_contracts": check_lesson_contracts(),
         "governance_truth": check_governance_truth(),
         "hygiene": check_hygiene(),
     }
@@ -266,6 +332,9 @@ class TestLearnerRoutingRegressions(unittest.TestCase):
 
     def test_minicloud_routes(self):
         self.assertEqual(check_minicloud_routes(), [])
+
+    def test_lesson_contracts(self):
+        self.assertEqual(check_lesson_contracts(), [])
 
     def test_governance_truth(self):
         self.assertEqual(check_governance_truth(), [])

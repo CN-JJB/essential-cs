@@ -139,14 +139,14 @@ Distinguish claim categories to prevent marketing self-deception:
 ## H — AI Hypothesis Audit (If AI is Used)
 
 - AI-Generated Claim / Recommendation: `[Record exact suggestion, e.g. "AI suggested migrating to Cassandra for infinite scale"]`
-- Safe Classification: `UNTRUSTED CANDIDATE HYPOTHESIS (Per Curriculum Invariant 6 & OQ-BP-001 safe interim state)`
+- Safe Classification: `UNTRUSTED CANDIDATE HYPOTHESIS (Per Curriculum Invariant 6; OQ-BP-001 resolved for v1.0 by D-033)`
 - Verification Route Executed:
   - Source / Specification Cross-Reference: `[Record finding from formal documentation]`
   - Quantitative Napkin-Math Check: `[Record Fermi calculation refuting or bounding the claim]`
   - Local Test / Prototype Observation: `[Record test result]`
 - Verification Outcome: `[CONFIRMED / REFUTED / DEFERRED]`
 - Architectural Conclusion: `[Explain how the AI suggestion was corrected or rejected based on engineering constraints]`
-- OQ-BP-001 Policy Status: `OPEN / RFC-GATED (AI literacy remains safe candidate capability; zero Core AI module creep)`
+- OQ-BP-001 Policy Status: `RESOLVED FOR v1.0 BY D-033 (AI outputs treated as unverified candidate hypotheses; zero Core AI module creep)`
 
 ---
 

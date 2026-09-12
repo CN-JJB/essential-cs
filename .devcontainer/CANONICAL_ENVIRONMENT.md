@@ -1,11 +1,13 @@
 # Canonical Environment Identity (v0.1 — Issue #150, V-147-02)
 
-Governance: **D-032**. Status: **durable canonical artifact published and pinned; OQ-BP-006 remains OPEN.**
+Governance: **D-032**. Status: **durable canonical artifact published and pinned; OQ-BP-006 CLOSED as the technical environment-definition/realization question (Web Lead disposition #167).**
 
-OQ-BP-006 closes only after the Web Lead accepts this pin following **independent
-verification by a different verifier/harness than this implementation**. No v1.0 /
-`VERIFIED` / stable `RELEASED` claim follows from this document, and no learner
-validation is claimed.
+OQ-BP-006 was closed on the basis of the accepted **same-lineage** technical
+re-verification (Issue #153 v0.2 / PR #165), which is **not** final
+role-independent evidence. Closure of the version/identity question does **not**
+waive the independent stable gate: `#158` must still independently re-check the
+canonical environment before v1.0. No v1.0 / `VERIFIED` / stable `RELEASED` claim
+follows from this document, and no learner validation is claimed.
 
 ---
 
@@ -195,7 +197,7 @@ standalone `LAB_REQ_02_OK` marker, the final PASS banner, `QEMU_REAPED: TRUE`, a
    `.devcontainer/canonical-image.env` plus `CANONICAL_IMAGE_SOURCE_DOCKERFILE_BLOB`
    if the recipe changed. CI fails closed on recipe drift.
 7. **Independently re-verify with a different verifier/harness** before the Web
-   Lead advances the pin or closes OQ-BP-006.
+   Lead advances the pin.
 
 A mutable-tag rebuild must never move the accepted canonical digest: the
 publication workflow cannot write the pin, and the CI lanes refuse to run unless
