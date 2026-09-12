@@ -1,59 +1,145 @@
-# Canonical Environment Identity (candidate v0.1 — Issue #145)
+# Canonical Environment Identity (v0.1 — Issue #150, V-147-02)
 
-Governance: **D-032**. Status: **candidate definition, not the final realized pin**.
-OQ-BP-006 remains OPEN until Web Lead acceptance after independent verification and a durable/retrievable built-environment identity is established.
-No v1.0 / VERIFIED / RELEASED claim follows from this document.
+Governance: **D-032**. Status: **durable canonical artifact published and pinned; OQ-BP-006 remains OPEN.**
 
-## 1. Base image reference (immutable input)
+OQ-BP-006 closes only after the Web Lead accepts this pin following **independent
+verification by a different verifier/harness than this implementation**. No v1.0 /
+`VERIFIED` / stable `RELEASED` claim follows from this document, and no learner
+validation is claimed.
 
-- Reference: `ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254`
-- What the digest is: manifest-list digest for the `24.04` tag of `library/ubuntu`.
-- Retrieved: 2026-09-10 via the Docker Registry HTTP API
-  (`GET /v2/library/ubuntu/manifests/24.04`, `Accept: manifest.list.v2+json`,
-  `docker-content-digest` response header).
-- Cross-checked the same day: `docker pull ubuntu:24.04` resolved to the identical digest.
-- Observed per-arch amd64 image manifest the same day:
-  `sha256:a61567bd31828687156d735ea8eb01ba4e37636e225dd6a48ba94136a70d9d61`.
-- The `FROM ...@sha256:` reference is immutable. Re-querying the moving `ubuntu:24.04` tag is a **refresh check**, not reconstruction of a previously built Essential CS image.
-- Never float on `ubuntu-latest`, and never treat the moving GitHub-hosted runner image as the canonical pin.
+---
 
-## 2. Build inputs and reproducibility boundary
+## 1. What the canonical identity actually is
 
-- Definition: `.devcontainer/Dockerfile` (+ `devcontainer.json`) at the implementation head.
-- Build command: `docker build -f .devcontainer/Dockerfile -t <name>:<tag> .`
-- Layer 1 intentionally implements D-032 **version floors** from Noble apt repositories: python3, sqlite3, build-essential, binutils, gdb, git, curl, ca-certificates, perl, bc, bash, procps, iproute2, file, strace.
-- Layer 2 has lane-scoped exact package tripwires for `qemu-system-misc=1:8.2.2+ds-0ubuntu1.18` and `gcc-riscv64-unknown-elf=13.2.0-11ubuntu1+12`; `gcc-riscv64-linux-gnu` remains a captured fallback package identity.
-- Deliberately absent: PostgreSQL server, browsers, observability/SaaS backends, Docker-in-Docker, arm64 cross-toolchains.
-- `LANG=C.UTF-8 LC_ALL=C.UTF-8` is set so Python uses UTF-8 under the minimal base.
+The canonical environment identity is a **published OCI image manifest digest in
+repository-owned GHCR**, committed in `.devcontainer/canonical-image.env`:
 
-**Important boundary:** the base digest is fixed, but general apt packages allowed by D-032 floors are resolved at build time. Therefore this committed definition is reproducible as a **policy/configuration recipe**, but it does **not** guarantee a byte-identical built image across dates or hosts. A future Noble package update that remains above the floors may legitimately change the image ID. Exact package identities must be captured for each evidence run.
+```text
+ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+```
 
-## 3. Observed candidate build identities (not durable pins)
+That reference is content-addressed. Retrieving it returns the same bytes
+whenever and wherever it is pulled, for as long as the package exists.
 
-### Implementer-local build
+### Identity separation (do not conflate these)
 
-- Image ID: `sha256:9b862cb417234bb72e7c1869eb8d33e3cd8c98eda6c9628eb811ba13af907d32`
-- Local tag: `essential-cs-canonical:v0.1-issue145`
-- Platform: amd64/linux; approximately 1.53 GB.
-- Not published; not independently retrievable by this ID after the local daemon is gone.
+| Thing | Value in this pin | Role |
+| --- | --- | --- |
+| **Registry manifest digest** | `sha256:766ce07b…19e460` | **THE PIN** — durable, retrievable, content-addressed |
+| Config blob digest | `sha256:24a926a0…9d7805` | build output detail; not the pull address |
+| Docker local image ID | `sha256:24a926a0…9d7805` | daemon-local and ephemeral; **not** identity |
+| Mutable tags | `…canonical:candidate`, `…canonical:sha-<sha>` | convenience labels; may be repointed; **not** identity |
+| Git commit / workflow SHA | `25804b02…b9032` (publication source) | source revision; **not** identity |
+| Hosted runner image | `ubuntu-24.04` / `20260907.300.1` | moving execution substrate; **not** identity |
 
-### First GitHub Actions build
+A local image ID, a mutable tag, a workflow SHA, a hosted-runner image version, or
+a pinned base-image digest **alone** is not a canonical environment identity. The
+durable identity is the registry digest.
 
-- Run: `34439909872` (`canonical-fast`).
-- Built image ID: `sha256:495067c9d967ae892fbaea29c04570b2ad6c8d4975c6a18b0786766ebaf7e2ae`.
-- This differs from the implementer-local image ID, which is direct evidence that the current floor-based recipe is not a byte-identical built-image pin.
-- The image itself was not published/exported as a container artifact. A workflow log recording an image ID is evidence about that ephemeral build, not a retrievable image pin.
+---
 
-No repository-owned durable container/package artifact exists yet. **OQ-BP-006 therefore remains OPEN.** The next independent verification may accept the functional candidate, but final Web Lead pin closure requires a durable/retrievable built-environment digest (or an equivalently immutable package snapshot strategy) plus accepted runtime evidence.
+## 2. Retrieval
 
-## 4. Resolved package identities observed in the first candidate builds
+Pull by digest only — never by tag:
 
-The implementer-local build recorded:
+```bash
+docker pull --platform linux/amd64 \
+  ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460
+```
+
+The repository helper does the same thing with fail-closed checks:
+
+```bash
+scripts/canonical-image-pull.sh
+```
+
+It refuses to run if the digest is the unpublished sentinel, malformed, if the
+committed Dockerfile no longer matches the recipe the digest was built from, or if
+`RepoDigests` do not contain the pinned reference.
+
+**Access:** the package is retrievable **anonymously (credential-free)** via the
+standard GHCR token flow — a manifest `GET` with no credentials returns
+`docker-content-digest: sha256:766ce07b…19e460`, and re-hashing the returned
+manifest bytes reproduces that digest. No learner credentials are required.
+Repository CI additionally consumes it with the repository-owned `GITHUB_TOKEN`
+(`packages: read`), which is the minimum mechanism and needs no new secrets.
+
+---
+
+## 3. Publication architecture and permission boundary
+
+- Workflow: `.github/workflows/publish-canonical-environment.yml`.
+- Permissions: `contents: read`, `packages: write` — nothing else.
+- Build: `scripts/canonical-image-publish.sh`, `--platform linux/amd64`, from the
+  committed recipe `.devcontainer/Dockerfile` (which itself `FROM`s an immutable
+  Ubuntu base digest).
+- Registry digest is taken from the publication metadata and cross-checked against
+  `docker buildx imagetools inspect` and against a **separate fresh runner's**
+  clean pull-by-digest. The builder's local daemon cannot satisfy that proof.
+- The workflow **cannot** write `.devcontainer/canonical-image.env`; a guard step
+  asserts the pin file is unmodified after publication.
+- A push can publish **only** while the committed pin is still the sentinel
+  (one-shot bootstrap). Once a real digest is committed, a push can only verify —
+  it can never publish or move the pin. Deliberate candidate publication requires
+  an explicit `workflow_dispatch` (`mode: publish-candidate`) and still cannot move
+  the pin.
+
+---
+
+## 4. Build inputs and the honest reproducibility boundary
+
+- Recipe: `.devcontainer/Dockerfile` (+ `devcontainer.json`), blob
+  `51198ea12c3c9ddfa18a2246bddef491ea729559`.
+- Base input: `ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254`
+  (manifest-list digest for the `24.04` tag of `library/ubuntu`, retrieved
+  2026-09-10 via the Docker Registry HTTP API).
+- Layer 1 implements D-032 **version floors** from Noble apt repositories
+  (python3, sqlite3, build-essential, binutils, gdb, git, curl, ca-certificates,
+  perl, bc, bash, procps, iproute2, file, strace).
+- Layer 2 keeps lane-scoped exact tripwires: `qemu-system-misc=1:8.2.2+ds-0ubuntu1.18`
+  and `gcc-riscv64-unknown-elf=13.2.0-11ubuntu1+12`; `gcc-riscv64-linux-gnu`
+  remains a captured fallback identity.
+- Deliberately absent: PostgreSQL server, browsers, observability/SaaS backends,
+  Docker-in-Docker, arm64 cross-toolchains.
+- `LANG=C.UTF-8 LC_ALL=C.UTF-8` so Python uses UTF-8 under the minimal base.
+
+**What is *not* claimed:** rebuilding `.devcontainer/Dockerfile` from live Noble
+apt repositories on a later date is **not** byte-for-byte reproducible. Floor-allowed
+package updates legitimately change the resulting image. This was directly observed:
+repeated builds of the same definition produced different local image IDs, and on
+2026-09-11 a per-run build failed outright at `apt-get install` because the archive
+was unreachable.
+
+**What *is* claimed:** the already-published immutable image above can be retrieved
+by digest indefinitely, and that retrieval — not recipe replay — is the stability
+guarantee. Any environment a lane actually executes is that published digest.
+
+---
+
+## 5. Observed identity inside the pinned digest
+
+Captured by running `scripts/canonical-env-capture.sh` inside the image pulled
+from the pinned digest (`CANONICAL_ENV_CAPTURE result=PASS`):
+
+```text
+os=Ubuntu 24.04.4 LTS        arch=x86_64
+python=CPython 3.12.3        sqlite_embedded=3.45.1     sqlite3_cli=3.45.1
+gcc=13.3.0                   gdb=15.1                  curl=8.5.0
+qemu-system-riscv64=8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+riscv64-unknown-elf-gcc=13.2.0-11ubuntu1+12
+riscv64-linux-gnu-gcc=13.3.0 (4:13.2.0-7ubuntu1)
+binutils=2.42                 git=2.43.0               bash=5.2.21
+strace=present-capability-gated
+```
+
+Resolved distro package identities observed in the pinned image:
 
 ```text
 bash                    5.2.21-2ubuntu4
 bc                      1.07.1-3ubuntu4
 binutils                2.42-4ubuntu2.10
+binutils-riscv64-linux-gnu   2.42-4ubuntu2.10
+binutils-riscv64-unknown-elf 2.42-1ubuntu1+6
 build-essential         12.10ubuntu1
 ca-certificates         20260601~24.04.1
 curl                    8.5.0-2ubuntu10.13
@@ -64,26 +150,62 @@ git                     1:2.43.0-1ubuntu7.3
 make                    4.3-4.1build2
 perl                    5.38.2-3.2ubuntu0.4
 python3                 3.12.3-0ubuntu2.1
+qemu-system-common      1:8.2.2+ds-0ubuntu1.18
+qemu-system-data        1:8.2.2+ds-0ubuntu1.18
 qemu-system-misc        1:8.2.2+ds-0ubuntu1.18
 sqlite3                 3.45.1-1ubuntu2.7
 strace                  6.8-0ubuntu2
 ```
 
-The first Actions build independently observed the same headline floor versions and exact QEMU/unknown-elf package tripwires. `scripts/canonical-env-capture.sh` now fail-closes the x86-64 architecture, D-032 floors, and the two lane exact-package tripwires while recording a broader QEMU/RISC-V dependency table.
+---
 
-Observed tool surface: CPython 3.12.3, embedded SQLite 3.45.1, gcc 13.3.0, GDB 15.1, QEMU 8.2.2, riscv64-unknown-elf-gcc 13.2.0, riscv64-linux-gnu-gcc 13.3.0, git 2.43.0, curl 8.5.0 / OpenSSL 3.0.13, Ubuntu 24.04.4 LTS, x86_64.
+## 6. How canonical CI consumes it
 
-## 5. CI identity discipline
+Both canonical lanes pull the **same** committed digest and build nothing:
 
-- Standard GitHub-hosted `ubuntu-24.04` is a moving execution substrate. Its runner image version is recorded separately and is never the pin.
-- On `pull_request`, `canonical-fast` explicitly checks out and asserts the PR **head SHA**, rather than accepting GitHub's synthetic merge ref as exact-head evidence.
-- Evidence logs are retained as workflow artifacts; those logs document the observed build and runtime but are not the built container image itself.
-- Scheduled/manual QEMU work similarly asserts its dispatched revision before producing evidence.
+- `canonical-fast` (`.github/workflows/ci-fast.yml`) — `canonical-matrix`.
+- `canonical-qemu-lane` (`.github/workflows/ci-qemu-lane.yml`) — `qemu-smoke` and
+  the diagnostic `m20-timing-triage`.
 
-## 6. Refresh / final-pin runbook
+Each lane logs `COMMITTED_CANONICAL_DIGEST`, asserts that the reference it consumes
+carries that digest, and separately records the hosted-runner image identity as an
+explicit non-pin audit field. Environment capture, D-032 floors, and the lane
+package tripwires still run **inside** the pulled image. There is no
+`ubuntu-latest` assumption anywhere.
 
-- Re-check the upstream Ubuntu tag/base digest quarterly or on security need. Any base change requires an explicit Dockerfile re-pin and full re-verification.
-- If a lane lock stops resolving, do not delete the exact version. Deliberately update the package identity and run a real LAB-REQ-02 QEMU smoke before acceptance.
-- Floor-allowed package updates may change the built image. Capture those identities every run and treat any behavior change as evidence requiring disposition.
-- Before OQ-BP-006 closes, establish and record a **durable/retrievable final built-environment digest or equivalent immutable package snapshot**, then independently run the required matrix against that realized identity.
-- `main` may forward-test newer toolchains without silently moving the accepted stable pin.
+The #149 fail-closed QEMU evidence contract is unchanged: a green `qemu-smoke` job
+still requires the real learner-owned `./smoke.sh` to have executed and retained a
+non-empty `.ci-logs/req02-smoke.log` containing `QEMU_SMOKE_STATUS: PASS`, the
+standalone `LAB_REQ_02_OK` marker, the final PASS banner, `QEMU_REAPED: TRUE`, and
+`PID_MARKER_CLEAN: YES`.
+
+---
+
+## 7. Pin refresh governance (bounded sequence)
+
+1. **Explicit trigger** — a committed Dockerfile/source change, or an intentional
+   refresh decision. Never an automatic rebuild.
+2. **Build candidate** — `workflow_dispatch` with `mode: publish-candidate`.
+3. **Run required validation** — capture/floors, M10, m20, M03 GDB, the five
+   Required Labs, and a real LAB-REQ-02 QEMU smoke against the candidate.
+4. **Publish** — push to repository-owned GHCR under `packages: write`.
+5. **Capture the immutable registry digest** — the manifest digest, not a tag and
+   not a local image ID.
+6. **Update the canonical digest only through a reviewed PR** — edit
+   `.devcontainer/canonical-image.env` plus `CANONICAL_IMAGE_SOURCE_DOCKERFILE_BLOB`
+   if the recipe changed. CI fails closed on recipe drift.
+7. **Independently re-verify with a different verifier/harness** before the Web
+   Lead advances the pin or closes OQ-BP-006.
+
+A mutable-tag rebuild must never move the accepted canonical digest: the
+publication workflow cannot write the pin, and the CI lanes refuse to run unless
+the committed digest still resolves to the published content.
+
+---
+
+## 8. devcontainer materialization
+
+`.devcontainer/devcontainer.json` points at the pinned digest directly, so a
+devcontainer materializes the durable identity rather than rebuilding a
+look-alike. `.devcontainer/Dockerfile` is retained as the **recipe of record** for
+the next candidate refresh, not as the canonical identity.
