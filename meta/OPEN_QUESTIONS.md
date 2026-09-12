@@ -4,41 +4,45 @@ Only unresolved questions that can materially affect curriculum architecture, te
 
 ## Active — post-Blueprint
 
-Blueprint v0.1 passed the Final Exit Audit in Issue #23 / PR #24 and is closed. The following remain **open** after Blueprint closure — each is either a Core-scope escalation (requires RFC/Decision) or an implementation-time pin deliberately deferred to the first affected vertical slice / implementation work. Their open status does not by itself reopen Blueprint.
+Blueprint v0.1 passed the Final Exit Audit in Issue #23 / PR #24 and is closed. The only remaining post-Blueprint Open Question relevant to the first stable release is the realized canonical-environment verification below.
 
-### OQ-BP-001 — Where does bounded AI literacy belong? (OPEN — Core-scope escalation)
-
-**Question:** For a 2026 modern computing-system worldview, should bounded AI literacy be a Core thread/module, a Current Case, or another explicitly justified placement?
-
-The stable capability candidates: problem suitability vs data/model/evaluation failure; uncertainty; resource cost; security/privacy/impact; when-not-to-use reasoning. The external audit found a real coverage gap, but CS2023 inclusion alone is not sufficient reason to expand Essential CS Core.
-
-**Safe interim state (already accepted, do not weaken):** AI-generated output verification = Current Case / technical-literacy practice (R5: generated code/doc/claim is an untrusted hypothesis checked by source, test, measurement, security review — homes M00 `L00-02`, M23 `L23-02`); **no AI/ML/LLM Core module yet**.
-
-**Escalation:** Core-scope change requires RFC/Decision. RFC candidate: `meta/rfcs/RFC-CAND-001-bounded-ai-literacy.md` (candidate only — it does not decide the question).
-
-### OQ-BP-003 — What bounded human-facing system boundary belongs in Core? (OPEN — Core-scope escalation)
-
-**Question:** Where should user mental models, feedback/error recovery, accessibility, consent/privacy interaction, and human-facing failure enter the system journey?
-
-The goal is not a full HCI course. Evidence hooks (denial/error/privacy interaction at P2; affected users, accessibility, consent, recovery where relevant at P9) are already accepted and remain **without** turning them into canonical Core HCI content.
-
-**Escalation:** Core-scope change requires RFC/Decision. RFC candidate: `meta/rfcs/RFC-CAND-002-human-facing-boundary.md` (candidate only — does not decide the question).
-
-### OQ-BP-006 — What versions define the first stable environment? (OPEN — implementation realization after D-032)
+### OQ-BP-006 — What versions define the first stable environment? (OPEN — independent verification pending)
 
 **Strategy decided in D-032:** use a digest-addressed Ubuntu 24.04 LTS (Noble)-based canonical learner/test environment; standard GitHub-hosted `ubuntu-24.04` is only a moving execution substrate, not the immutable pin. Compatibility floors are Python >= 3.12, SQLite engine + `sqlite3` CLI >= 3.45, GCC >= 13/C11, curl >= 8.5, and GDB >= 15.0, with GDB required for canonical M03 evidence. LAB-REQ-02 retains exact xv6 source identity and lane-scoped full QEMU/RISC-V package/image identity. strace, browser/Chromium, PostgreSQL/psql, live observability backends, Docker/Podman, and arm64 remain capability-gated or optional according to the accepted curriculum boundary.
 
-**Still OPEN:** the final canonical environment artifact has not yet been implemented or accepted. The implementation task must produce the committed environment definition, immutable digest, resolved package identities, CI execution matrix, and exact-head runtime evidence (including canonical M10, m20 triage/resolution, GDB, and real LAB-REQ-02 QEMU smoke). Only after Web Lead acceptance of that realized pin may this Open Question close.
+**Implementation realization accepted:** Issue #150 / PR #152 produced and Web-Lead accepted the committed canonical definition, durable GHCR digest, resolved package identities, least-privilege publication/retrieval workflow, canonical-fast evidence, and real LAB-REQ-02 QEMU evidence. The accepted immutable identity is:
 
-**Provenance:** Issue #143 / PR #144; D-032.
+`ghcr.io/cn-jjb/essential-cs/canonical@sha256:766ce07ba3073cc28049ff07d6d4f643bd6e3cc7a7967a3ebd2bb8738219e460`
+
+**Still OPEN:** Issue #153 requires genuinely independent re-verification by a different harness from #145/#149/#150 and not Web Lead. OQ-BP-006 closes only after that independent report is accepted and Web Lead performs the final disposition.
+
+**Provenance:** Issue #143 / PR #144 (D-032); Issue #150 / PR #152 (realized pin); Issue #153 (independent verification gate).
 
 Closely related but separately tracked: the canonical latency-constant list (R11) and its refresh cadence (CURRENT per Living Curriculum Policy).
 
 ## Resolved after Blueprint closure
 
-### OQ-BP-007 — Must learner validation block each subsequent authoring slice? (CLOSED)
+### OQ-BP-001 — Where does bounded AI literacy belong? (CLOSED for v1.0)
 
-**Question:** After a bounded slice passes Research, Design, implementation, and independent Verification, must real learner validation complete before authoring the next learner-facing slice?
+**Decision:** For the first stable v1.0 curriculum, do **not** expand the accepted M00–M24 Core spine with an AI/ML/LLM module or new canonical Core thread. Retain the already accepted safe coverage: AI-generated code/document/claim is an untrusted hypothesis checked by source, test, measurement, and security review, with homes such as M00 `L00-02` and M23 `L23-02`. This remains a CURRENT CASE / technical-literacy practice, not a new Core theory obligation.
+
+**Why:** The external audit identified a real modern-literacy consideration, but the RFC candidate also records the bloat, assessment, and durability trade-offs. The current first stable candidate already has a complete reviewed M00–M24 systems spine. A late Core expansion is not justified for v1.0 and would destabilize the accepted architecture without evidence of proportional learning value.
+
+This does not say AI literacy is unimportant and does not freeze the decision forever. Post-v1.0 evidence may reopen the question through the normal Open Question → Research → RFC → Decision process.
+
+**Provenance:** RFC candidate `meta/rfcs/RFC-CAND-001-bounded-ai-literacy.md`; Issue #155; D-033.
+
+### OQ-BP-003 — What bounded human-facing system boundary belongs in Core? (CLOSED for v1.0)
+
+**Decision:** For the first stable v1.0 curriculum, do **not** add a new canonical HCI/accessibility Core first home or module. Retain the already accepted human-facing evidence hooks in Mini Cloud P2/P9 and relevant browser/security/privacy lessons: observable denial/error behavior, recovery, consent/privacy interaction, affected-user reasoning, and accessibility consideration where relevant.
+
+**Why:** The gap is legitimate, but the project is a computing-systems curriculum rather than a full HCI course. The accepted project hooks expose the boundary without introducing a late new Core concept family and assessment surface. The RFC's explicit exclusions and bloat-control concern support keeping the first stable scope bounded.
+
+Post-v1.0 learner/external-audit evidence may reopen the question through the normal architecture process.
+
+**Provenance:** RFC candidate `meta/rfcs/RFC-CAND-002-human-facing-boundary.md`; Issue #155; D-034.
+
+### OQ-BP-007 — Must learner validation block each subsequent authoring slice? (CLOSED)
 
 **Decision:** No. Production uses a build-first bounded-batch sequence. Real learner validation remains mandatory before v1.0 / `RELEASED`, but it is non-blocking for continued course authoring.
 
@@ -46,22 +50,22 @@ Closely related but separately tracked: the canonical latency-constant list (R11
 
 **Provenance:** Issue #36; `research/build-first-production-sequencing-v0.1.md`; `meta/rfcs/RFC-003-build-first-production-sequencing.md`; D-027.
 
-## Resolved during Issue #9 reconciliation (closed, for provenance)
+## Resolved during Issue #9 reconciliation
 
 ### OQ-BP-002 — Applied foundations and toolchain prerequisites (CLOSED)
 
-- Applied measurement/statistics: canonical first home = M04 `L04-02` (R1: repeated measurements, distributions, median/percentiles when useful, uncertainty/variation, inference limits, order-of-magnitude reasoning; pattern = question/hypothesis → baseline → controlled change → metric/environment/workload → repetitions/distribution → observation → competing explanation → bounded conclusion). Revisits: M13, M16/M17 (reliability/failure probability just-in-time), M20, M23 (consolidation). No standalone mathematics Module; no math gate before M01.
-- Toolchain/SDF: explicit learner outcomes at M00 `L00-02` (shell/task execution, code/file reading, debugger-light investigation, Git evidence, reproducibility/version/environment record, baseline + evidence preservation) + REQUIRED-lab entry gate (course discipline, not a DAG edge); environment preflight repeated at M03/M06/M13.
-- The open sub-note (whether the M04 bridge also carries percentile-of-latency vocabulary) is answered by the same home: yes as application, no new theory.
-- Source: `meta/blueprint/audit-to-architecture-disposition-v0.1.md` §4.1–4.2; `core-stage-module-lesson-map-v0.1.md` §4 (M00/M04).
+- Applied measurement/statistics: canonical first home = M04 `L04-02`; revisits M13, M16/M17, M20, M23.
+- Toolchain/SDF: explicit learner outcomes at M00 `L00-02` plus REQUIRED-lab entry gate; environment preflight repeated at M03/M06/M13.
+- Percentile-of-latency vocabulary is an application at the same M04 home, not new theory.
+- Source: `meta/blueprint/audit-to-architecture-disposition-v0.1.md` §4.1–4.2; `core-stage-module-lesson-map-v0.1.md` §4.
 
 ### OQ-BP-004 — Default S4/S5 learner narrative (CLOSED)
 
-Default = **request-centric narrative S4-before-S5**; explicitly labeled pedagogical preference, **not** a hard dependency. S4/S5 partial independence preserved; Module DAG authoritative; a state-centric path (M13–M15 after S3, then M10–M12) is equally supported. No Stage names changed.
+Default = **request-centric narrative S4-before-S5**; explicitly a pedagogical preference, not a hard dependency. S4/S5 partial independence and the authoritative Module DAG are preserved.
 
 ### OQ-BP-005 — Final classic lab adoption/adaptation (CLOSED at Blueprint level)
 
-Resolved by the accepted selection map (`lab-source-selection-map-v0.1.md`, PR #16): 5 Required (LAB-REQ-01..05), 5 Optional (LAB-OPT-01..05), 5 Source Expeditions (EXP-01..05). Remaining items are **not** architecture decisions: optional-rights gates (CS:APP, CS144, OSTEP link-only), environment setup validation, and per-lab dossier smoke tests.
+Resolved by the accepted selection map (`lab-source-selection-map-v0.1.md`, PR #16): 5 Required, 5 Optional, 5 Source Expeditions. Remaining rights/environment/smoke work is implementation/review work rather than an architecture decision.
 
 ## Rule
 
