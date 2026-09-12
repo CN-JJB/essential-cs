@@ -1,55 +1,45 @@
 # RFC Candidate — Human-Facing System Boundary (OQ-BP-003)
 
-**Status:** CANDIDATE — records the question and evidence requirements. **This document does not decide anything.** A decision requires the project's RFC/Decision process, Web Lead review, and, if Core scope changes, a Decision Record.
+**Status:** RESOLVED FOR v1.0 BY D-034 — historical candidate retained for provenance.
 
-**Open Question:** `meta/OPEN_QUESTIONS.md` — OQ-BP-003
+**Open Question:** `meta/OPEN_QUESTIONS.md` — OQ-BP-003 (CLOSED for v1.0)
 **Source of the question:** External Curriculum Audit R3 (`external-curriculum-audit-v0.1.md` §5.3) + accepted disposition (`audit-to-architecture-disposition-v0.1.md` §6.1)
 **Created:** 2026-08-30 (Issue #9 integration)
+**Resolved:** 2026-09-12 (Issue #155; D-034)
 
-## 1. Question
+## Resolution
 
-Should an explicit Core requirement for the human-facing system boundary — user goals/mental models, feedback and error recovery, accessibility (keyboard/assistive-technology awareness), consent/privacy interaction, human-facing failure — belong in the first shared traversal, and where is the one canonical first home?
+For the first stable v1.0 curriculum, do **not** add a new canonical HCI/accessibility Core first home or module. Retain the already accepted human-facing evidence hooks in Mini Cloud P2/P9 and relevant browser/security/privacy contexts: observable denial/error behavior, recovery, consent/privacy interaction, affected-user reasoning, and accessibility consideration where relevant.
 
-Options:
-- (A) M00-anchored spiral: boundary vocabulary at M00, browser-facing accessibility mechanics at M12, evidence hooks at P2/P9, judgment at M23/M24;
-- (B) one bounded M12 module with the browser's visible interface;
-- (C) project/journal rubric only (current state: P2/P9 evidence hooks, no Core admission);
-- (D) CURRENT CASE only.
+The question may be reopened post-v1.0 if real learner evidence or final external-audit evidence shows these bounded hooks are insufficient.
 
-## 2. Why it matters
+## 1. Original question
 
-Accepting would change what "complete shared modern-system world model" means (Invariants 1 and 9), adding a human-facing dimension absent from the macro spine. Rejecting outright ignores a genuine gap for modern-system judgment: W3C's framing (live-verified 2026-08-30) treats accessibility as a system property that requires knowledgeable human evaluation — no tool alone determines it. Neither choice is a local placement decision, so it is not decided in a disposition table.
+Should an explicit Core requirement for the human-facing system boundary — user goals/mental models, feedback and error recovery, accessibility, consent/privacy interaction, human-facing failure — belong in the first shared traversal, and where is the canonical first home?
 
-## 3. Stable capability at stake (conditional on admission)
+Original options included an M00 spiral, M12 home, project/journal rubric only, or CURRENT CASE only.
 
-- naming user goals and the failure/error-recovery interaction of a system boundary;
-- basic keyboard/assistive-technology and perception/operation-awareness reasoning;
-- consent/privacy interaction reasoning (explicit, bounded);
-- one human-evaluation checkpoint (not tool-only evaluation).
+## 2. Why it mattered
 
-Exclusions if admitted: visual/UX design, interaction history, usability-research methods, design systems, exhaustive WCAG, legal/compliance survey.
+Accepting a new Core first home would change the shared world model and assessment surface. Rejecting all treatment would ignore a legitimate systems boundary. The accepted project hooks provide a middle path without turning Essential CS into an HCI course.
 
-## 4. Evidence already gathered
+## 3. Stable capability considered
 
-- W3C *Introduction to Web Accessibility* (updated 2026-02-03): accessibility = perceive / understand / navigate / interact.
-- W3C *Evaluating Web Accessibility*: tools assist, but knowledgeable human evaluation is required.
-- Accepted interim: P2 denial/error/privacy interaction; P9 affected users, accessibility, consent, recovery "where relevant" (Mini Cloud App alignment, Issue #11) — evidence hooks only, no Core admission; #15 assigns no HCI/accessibility/consent IDs.
+- naming user goals and user-observable failure/recovery behavior;
+- basic accessibility awareness where system behavior makes it relevant;
+- bounded consent/privacy interaction reasoning;
+- affected-user reasoning in system defense.
 
-## 5. Trade-offs
+Explicit exclusions considered: visual/UX design, interaction history, usability-research methods, design systems, exhaustive WCAG, legal/compliance survey.
 
-Admission adds a first home and a checkpoint; non-admission risks the reported gap. A spiral avoids new modules but needs an explicit first home to satisfy Teach Once → Revisit Many (Invariant 11). Evidence hooks in the project exist without turning into canonical Core HCI content — that distinction must survive any decision.
+## 4. Evidence considered
 
-## 6. Evidence required before decision
+- W3C accessibility framing and human-evaluation requirement;
+- accepted P2 denial/error/privacy interaction hooks;
+- accepted P9 affected-user/accessibility/consent/recovery hooks;
+- existing browser/security/privacy contexts;
+- absence of a need to create a hidden prerequisite or late new concept family for M23/M24.
 
-- one canonical first home consistent with the Module DAG (candidate homes use existing edges; no new H edge, no hidden prerequisite for M23/M24);
-- one assessed human-facing evidence artifact (e.g., a bounded user-observable failure/error-recovery record);
-- the exact list of exclusions (§3);
-- bloat-control check.
+## 5. Trade-off disposition
 
-## 7. Decision owner
-
-Web Lead (architecture process) with reviewer roles per review policy; recorded via Decision Record if Core scope changes.
-
-## 8. Integration status
-
-**Not blocked for other Blueprint work.** Safe interim state retained: evidence hooks at P2/P9 remain without turning them into canonical Core HCI content; no concept ID assigned; no lesson or registry change until the RFC is decided. Security horizontal evidence (R8) does **not** resolve accessibility — this question remains its own.
+The bounded evidence hooks expose the human-facing system boundary sufficiently for the first stable systems curriculum while keeping Core scope coherent. D-034 therefore closes the escalation for v1.0 without claiming the topic is permanently out of scope.
