@@ -56,9 +56,10 @@ on:
       - scripts/canonical-image-*.sh
       - .github/workflows/publish-canonical-environment.yml
 
+# Default jobs need only repository contents. GHCR permissions are scoped to the
+# exact jobs that publish or retrieve the image below.
 permissions:
   contents: read
-  packages: write
 
 env:
   CANONICAL_IMAGE_REF: ghcr.io/cn-jjb/essential-cs/canonical
@@ -103,6 +104,9 @@ jobs:
   publish-candidate:
     needs: classify
     if: needs.classify.outputs.mode == 'publish-bootstrap' || needs.classify.outputs.mode == 'publish-candidate'
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     outputs:
@@ -168,6 +172,9 @@ jobs:
   retrieve-by-digest:
     needs: [classify, publish-candidate]
     if: needs.classify.outputs.mode == 'publish-bootstrap' || needs.classify.outputs.mode == 'publish-candidate'
+    permissions:
+      contents: read
+      packages: read
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -235,6 +242,9 @@ jobs:
   verify-pin:
     needs: classify
     if: needs.classify.outputs.mode == 'verify-pin'
+    permissions:
+      contents: read
+      packages: read
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
